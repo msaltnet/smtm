@@ -1,5 +1,5 @@
 import unittest
-from context import loopback
+from simulator import loopback
 
 class TestLoopback(unittest.TestCase):
     def test_hi(self):
