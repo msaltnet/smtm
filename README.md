@@ -54,3 +54,10 @@ How to convert `.ipynb` to `.py`:
 ```
 jupyter nbconvert --to script [YOUR_NOTEBOOK].ipynb
 ```
+
+### How to test
+Just run below
+
+```
+python -m unittest discover ./tests *test.py -v
+```
