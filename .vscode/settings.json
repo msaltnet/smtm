@@ -1,4 +1,5 @@
 {
+    "python.venvPath": "D:\\venv",
     "python.testing.unittestArgs": [
         "-v",
         "-s",
