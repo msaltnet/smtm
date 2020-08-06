@@ -1,4 +1,4 @@
-# smtm project
+# smtm
 [![Travis](https://travis-ci.org/msaltnet/smtm.svg?branch=master&style=flat-square&colorB=green)](https://travis-ci.org/msaltnet/smtm)
 [![license](https://img.shields.io/github/license/msaltnet/smtm.svg?style=flat-square)](https://github.com/msaltnet/smtm/blob/master/LICENSE)
 ![language](https://img.shields.io/github/languages/top/msaltnet/smtm.svg?style=flat-square&colorB=green)
@@ -22,14 +22,14 @@ C:\> virtualenv --system-site-packages -p python3 ./venv
 
 Install packages within a virtual environment without affecting the host system setup. Start by upgrading pip:
 ```
-C:\> pip install --upgrade pip
+(venv) C:\> pip install --upgrade pip
 
-C:\> pip list  # show packages installed within the virtual environment
+(venv) C:\> pip list  # show packages installed within the virtual environment
 ```
 
 And to exit virtualenv later:
 ```
-C:\> deactivate
+(venv) C:\> deactivate
 ```
 
 ### Install Required Packages
