@@ -4,7 +4,7 @@ from unittest.mock import *
 import requests
 
 class LiveDataProviderTests(unittest.TestCase):
-    url = 'https://api.upbit.com/v1/candles/minutes/1?market=KRW-BTC&count=100'
+    url = 'https://api.upbit.com/v1/candles/minutes/1?market=KRW-BTC&count=2'
 
     def setUp(self):
         pass
@@ -23,7 +23,9 @@ class LiveDataProviderTests(unittest.TestCase):
 
     def test_get_info_with_initialized(self):
         http = Mock()
-        http.get = MagicMock(side_effect=lambda value: value)
+        jd = lambda: None
+        jd.text = '[{"market": "test"}]'
+        http.get = MagicMock(return_value=jd)
         dp = LiveDataProvider()
         dp.initialize(http, "Mock Url")
-        self.assertEqual(dp.get_info(), "Mock Url")
+        self.assertEqual(dp.get_info()['market'], "test")
