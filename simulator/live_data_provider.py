@@ -3,7 +3,8 @@ import json
 
 # 거래소로부터 실시간 데이터를 수집해서 정보를 제공
 class LiveDataProvider(DataProvider):
-    url = None
+    url = "https://api.upbit.com/v1/candles/minutes/1"
+    querystring = {"market":"KRW-BTC", "count":"1"}
     http = None
     state = None
     # 현재 거래 정보 전달
@@ -11,12 +12,11 @@ class LiveDataProvider(DataProvider):
         if self.http is None or self.state is None:
             return False
 
-        response = self.http.get(self.url)
+        response = self.http.request("GET", self.url, params=self.querystring)
         data = json.loads(response.text)
         return data[0]
 
-    def initialize(self, http, url):
-        self.url = url
+    def initialize(self, http):
         self.http = http
         self.state = "initialized"
 
