@@ -9,5 +9,5 @@ class DataProvider(metaclass=ABCMeta):
 
     # 초기화
     @abstractmethod
-    def initialize(self):
+    def initialize(self, http):
         pass

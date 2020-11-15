@@ -23,6 +23,9 @@ class SimulatorDataProvider(DataProvider):
             return None
         return self.data[now]
 
+    def initialize(self, http):
+        self.initialize(http, None, 100)
+
     def initialize(self, http, end, count):
         self.index = 0
         self.http = http
@@ -37,9 +40,13 @@ class SimulatorDataProvider(DataProvider):
 
         if self.end is not None :
             self.querystring["to"] = self.end
+        else :
+            self.querystring["to"] = "2020-11-11 00:00:00"
 
         if self.count is not None :
             self.querystring["count"] = self.count
+        else :
+            self.querystring["count"] = 100
 
         response = self.http.request("GET", self.url, params=self.querystring)
         self.data = json.loads(response.text)
