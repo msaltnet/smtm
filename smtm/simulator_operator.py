@@ -4,3 +4,6 @@ from . import Operator
 class SimulatorOperator(Operator):
     def initialize(self, http, dataProvider, algorithm, trader):
         super().initialize(http, dataProvider, algorithm, trader)
+
+    def setup(self, interval):
+        super().setup(interval)

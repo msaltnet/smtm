@@ -10,7 +10,7 @@ class SimulatorOperatorTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_initialize_with_string(self):
+    def test_initialize(self):
         operator = SimulatorOperator()
         dpMock = Mock()
         dpMock.initialize = MagicMock(return_value="")
@@ -20,3 +20,9 @@ class SimulatorOperatorTests(unittest.TestCase):
         self.assertEqual(operator.dp, dpMock)
         self.assertEqual(operator.algorithm, "banana")
         self.assertEqual(operator.trader, "orange")
+
+    def test_setup(self):
+        operator = SimulatorOperator()
+        operator.setup(10)
+
+        self.assertEqual(operator.interval, 10)

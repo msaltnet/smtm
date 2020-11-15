@@ -17,3 +17,9 @@ class Operator(metaclass=ABCMeta):
 
         if self.dp is not None:
             self.dp(self.http)
+
+    # 운영에 필요한 기본 정보를 전달 받는다.
+    # interval : 거래 간격
+    @abstractmethod
+    def setup(self, interval):
+        self.interval = interval
