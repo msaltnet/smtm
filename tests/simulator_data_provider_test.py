@@ -1,5 +1,5 @@
 import unittest
-from simulator import SimulatorDataProvider
+from smtm import SimulatorDataProvider
 from unittest.mock import *
 import requests
 

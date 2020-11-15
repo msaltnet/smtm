@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import *
-from simulator import Base
+from smtm import Base
 
 class BaseTests(unittest.TestCase):
     def setUp(self):

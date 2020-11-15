@@ -1,5 +1,5 @@
 import unittest
-from simulator import LiveDataProvider
+from smtm import LiveDataProvider
 from unittest.mock import *
 import requests
 

@@ -1,5 +1,5 @@
 import unittest
-from simulator import Runner, RunnerStatus, RunnerOrderType, RunnerItem
+from smtm import Runner, RunnerStatus, RunnerOrderType, RunnerItem
 
 class RunnerTests(unittest.TestCase):
 

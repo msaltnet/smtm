@@ -1,5 +1,5 @@
 import unittest
-from simulator import Record
+from smtm import Record
 
 class RecordTests(unittest.TestCase):
 
