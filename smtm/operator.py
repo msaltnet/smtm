@@ -14,3 +14,6 @@ class Operator(metaclass=ABCMeta):
         self.dp = dataProvider
         self.algorithm = algorithm
         self.trader = trader
+
+        if self.dp is not None:
+            self.dp(self.http)
