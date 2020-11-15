@@ -7,3 +7,9 @@ class SimulatorOperator(Operator):
 
     def setup(self, interval):
         super().setup(interval)
+
+    def start(self, threading):
+        return super().start(threading)
+
+    def process(self):
+        return super().process()
