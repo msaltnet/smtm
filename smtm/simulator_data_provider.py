@@ -24,9 +24,9 @@ class SimulatorDataProvider(DataProvider):
         return self.data[now]
 
     def initialize(self, http):
-        self.initialize(http, None, 100)
+        self.initializeWithPeriod(http, None, 100)
 
-    def initialize(self, http, end, count):
+    def initializeWithPeriod(self, http, end, count):
         self.index = 0
         self.http = http
         self.state = "initialized"

@@ -10,16 +10,16 @@ class LiveDataProviderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_get_info_without_initialize(self):
+    def test_get_info_return_false_without_initialize(self):
         dp = LiveDataProvider()
         self.assertEqual(dp.get_info(), False)
 
-    def test_get_info_with_none_initialized(self):
+    def test_get_info_return_false_with_none_initialized(self):
         dp = LiveDataProvider()
         dp.initialize(None)
         self.assertEqual(dp.get_info(), False)
 
-    def test_get_info_with_initialized(self):
+    def test_get_info_return_correct_info_with_initialized(self):
         http = Mock()
         jd = lambda: None
         jd.text = '[{"market": "test"}]'
