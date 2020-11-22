@@ -11,5 +11,7 @@ from .simulator_data_provider import SimulatorDataProvider
 from .simulator_operator import SimulatorOperator
 
 __all__ = [
-    'LiveDataProvider']
+    'SimulatorDataProvider',
+    'Operator',
+    'SimulatorOperator']
 __version__ = '0.1.0'
