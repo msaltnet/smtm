@@ -1,1 +1,5 @@
 __pycache__
+/smtm.egg-info/
+/build/
+/dist/
+/.vscode/
