@@ -22,4 +22,8 @@ setup(name='smtm',
           'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3.6',
           ],
+      install_requires=[
+          'matplotlib==3.3.3',
+          'zipline==1.4.1'
+          ],
       zip_safe=False)
