@@ -21,5 +21,5 @@ class Strategy(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def initialize(self, balance):
+    def initialize(self, budget):
         pass
