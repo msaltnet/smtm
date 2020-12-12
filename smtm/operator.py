@@ -1,5 +1,7 @@
-# 전체 시스템을 운영하는 운영자
 class Operator():
+    '''
+    전체 시스템의 운영을 담당하는 클래스
+    '''
     dp = None
     algorithm = None
     trader = None
@@ -7,9 +9,15 @@ class Operator():
     isTimerRunning = False
     threading = None
 
-    # 초기화 할 때 필수 모듈의 인스턴스를 전달 받는다
-    # Data Provider, Algorithm, Trader
     def initialize(self, http, threading, dataProvider, algorithm, trader):
+        '''
+        운영에 필요한 모듈과 정보를 설정 및 각 모듈 초기화 수행
+
+        Http: http 클라이언트 requests 인스턴스
+        Data Provider: Data Provider 인스턴스
+        Algorithm: Algorithm 인스턴스
+        Trader: Trader 인스턴스
+        '''
         self.http = http
         self.dp = dataProvider
         self.algorithm = algorithm
@@ -19,13 +27,17 @@ class Operator():
         if self.dp is not None:
             self.dp.initialize(self.http)
 
-    # 운영에 필요한 기본 정보를 전달 받는다
-    # interval : 거래 간격
     def setup(self, interval):
+        '''
+        운영에 필요한 기본 정보를 설정한다
+
+        interval : 매매 프로세스 간격
+        '''
         self.interval = interval
 
-    # 일정 시간 뒤 자동 거래를 시작한다
     def start(self):
+        '''설정된 간격의 시간이 지난 후 자동 거래를 시작한다'''
+
         if self.dp is None or self.threading is None:
             return False
 
@@ -39,8 +51,8 @@ class Operator():
         self.isTimerRunning = True
         return True
 
-    # 자동 거래를 실행 후 일정 시간 뒤 거래를 트리거한다
     def process(self):
+        '''자동 거래를 실행 후 일정 시간 뒤 거래를 트리거한다'''
         if self.dp is None or self.isTimerRunning == False:
             return False
         self.isTimerRunning = False
@@ -49,7 +61,7 @@ class Operator():
         self.start()
         return True
 
-    # 거래를 중단한다
     def stop(self):
+        '''거래를 중단한다'''
         self.timer.cancel()
         self.isTimerRunning = False

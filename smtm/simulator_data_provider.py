@@ -1,8 +1,11 @@
 from . import DataProvider
 import json
 
-# 거래소로부터 과거 데이터를 수집해서 순차적으로 제공
 class SimulatorDataProvider(DataProvider):
+    '''
+    거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
+    '''
+
     url = "https://api.upbit.com/v1/candles/minutes/1"
     querystring = {"market":"KRW-BTC"}
     end = None #"2020-01-19 20:34:42"
@@ -12,8 +15,8 @@ class SimulatorDataProvider(DataProvider):
     data = None
     index = 0
 
-    # 현재 거래 정보 전달
     def get_info(self):
+        '''순차적으로 거래 정보 전달'''
         if self.data is None or self.state is None:
             return False
 

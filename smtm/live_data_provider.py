@@ -1,14 +1,18 @@
 from . import DataProvider
 import json
 
-# 거래소로부터 실시간 데이터를 수집해서 정보를 제공
 class LiveDataProvider(DataProvider):
+    '''
+    거래소로부터 실시간 데이터를 수집해서 정보를 제공하는 클래스
+    '''
+
     url = "https://api.upbit.com/v1/candles/minutes/1"
     querystring = {"market":"KRW-BTC", "count":"1"}
     http = None
     state = None
-    # 현재 거래 정보 전달
+
     def get_info(self):
+        '''현재 거래 정보 전달'''
         if self.http is None or self.state is None:
             return False
 
