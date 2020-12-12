@@ -16,8 +16,9 @@ class StrategyBuyAndHold(Strategy):
         self.budget = 0
         self.balance = 0
 
-    def update_trading_info(self):
+    def update_trading_info(self, info):
         '''새로운 거래 정보를 업데이트'''
+        self.data.append(info)
         pass
 
     def update_result(self):
