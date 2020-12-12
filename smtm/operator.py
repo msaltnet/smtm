@@ -41,7 +41,7 @@ class Operator():
         self.interval = interval
 
     def start(self):
-        '''설정된 간격의 시간이 지난 후 자동 거래를 시작한다'''
+        '''자동 거래를 시작한다'''
 
         if self.dp is None or self.threading is None:
             return False
@@ -49,24 +49,40 @@ class Operator():
         if self.isTimerRunning:
             return False
 
-        self.timer = self.threading.Timer(self.interval, self.process)
+        self.__process()
+        return True
+
+    def __start_timer(self):
+        '''설정된 간격의 시간이 지난 후 자동 거래를 시작하도록 타이머 설정'''
+
+        if self.dp is None or self.threading is None:
+            return False
+
+        if self.isTimerRunning:
+            return False
+
+        self.timer = self.threading.Timer(self.interval, self.__process)
         self.timer.start()
-        self.logger.debug("timer is started")
 
         self.isTimerRunning = True
         return True
 
-    def process(self):
+    def __process(self):
         '''자동 거래를 실행 후 일정 시간 뒤 거래를 트리거한다'''
-        if self.dp is None or self.isTimerRunning == False:
+        if self.dp is None:
             return False
+        self.logger.debug("process is started")
         self.isTimerRunning = False
         self.dp.get_info()
         self.logger.debug("process is completed")
-        self.start()
+        self.__start_timer()
         return True
 
     def stop(self):
         '''거래를 중단한다'''
-        self.timer.cancel()
+        try:
+            self.timer.cancel()
+        except AttributeError as identifier:
+            self.logger.warning(identifier)
+            pass
         self.isTimerRunning = False

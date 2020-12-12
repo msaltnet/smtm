@@ -16,8 +16,7 @@ import threading
 
 class SmtmSimulator:
     def __init__(self, mode=None):
-        logging.basicConfig(level=logging.INFO, format='%(message)s')
-        self.logger = logging.getLogger("SmtmSimulator")
+        self.logger = LogManager.get_logger("SmtmSimulator")
         self.__stop = False
 
         self.logger.info(mode)
@@ -30,10 +29,11 @@ class SmtmSimulator:
         dp = SimulatorDataProvider()
         operator.initialize(requests, threading, dp, None, None)
         operator.setup(2)
-        operator.start()
+        if operator.start() is False:
+            self.logger.warning("Fail start")
+            return
 
         while not self.__stop:
-            self.logger.info('hello!')
             time.sleep(1)
 
     def stop(self, signum, frame):

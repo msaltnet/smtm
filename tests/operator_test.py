@@ -42,7 +42,7 @@ class OperatorTests(unittest.TestCase):
 
         self.assertEqual(operator.start(), False)
 
-    def test_start_return_true_after_initialization(self):
+    def test_start_should_call_get_info_and_set_timer_after_initialization(self):
         timerMock = Mock()
         threadingMock = Mock()
         threadingMock.Timer = MagicMock(return_value=timerMock)
@@ -56,44 +56,9 @@ class OperatorTests(unittest.TestCase):
         operator.setup(27)
 
         self.assertEqual(operator.start(), True)
-        threadingMock.Timer.assert_called_once_with(27, operator.process)
+        threadingMock.Timer.assert_called_once_with(27, ANY)
         timerMock.start.assert_called_once()
         self.assertEqual(operator.start(), False)
-
-    def test_process_return_false_without_initialization(self):
-        operator = Operator()
-        self.assertEqual(operator.process(), False)
-
-    def test_process_return_false_when_isTimerRunning_is_False(self):
-        timerMock = Mock()
-        threadingMock = Mock()
-        threadingMock.Timer = MagicMock(return_value=timerMock)
-
-        operator = Operator()
-        dpMock = Mock()
-        dpMock.initialize = MagicMock(return_value="")
-        dpMock.get_info = MagicMock(return_value="mango")
-
-        operator.initialize("apple", threadingMock, dpMock, "banana", "orange")
-        operator.isTimerRunning = True
-        self.assertEqual(operator.process(), True)
-
-        operator.isTimerRunning = False
-        self.assertEqual(operator.process(), False)
-
-    def test_process_should_call_get_info_after_initialization(self):
-        timerMock = Mock()
-        threadingMock = Mock()
-        threadingMock.Timer = MagicMock(return_value=timerMock)
-
-        operator = Operator()
-        dpMock = Mock()
-        dpMock.initialize = MagicMock(return_value="")
-        dpMock.get_info = MagicMock(return_value="mango")
-
-        operator.initialize("apple", threadingMock, dpMock, "banana", "orange")
-        operator.isTimerRunning = True
-        self.assertTrue(operator.process())
         dpMock.get_info.assert_called_once()
 
     def test_stop_should_cancel_timer_and_set_false_isRunning(self):
