@@ -1,3 +1,5 @@
+from . import LogManager
+
 class Operator():
     '''
     전체 시스템의 운영을 담당하는 클래스
@@ -8,6 +10,9 @@ class Operator():
     interval = 10 # default 10 second
     isTimerRunning = False
     threading = None
+
+    def __init__(self):
+        self.logger = LogManager.get_logger(__name__)
 
     def initialize(self, http, threading, dataProvider, algorithm, trader):
         '''
@@ -46,7 +51,7 @@ class Operator():
 
         self.timer = self.threading.Timer(self.interval, self.process)
         self.timer.start()
-        print("timer is started")
+        self.logger.debug("timer is started")
 
         self.isTimerRunning = True
         return True
@@ -57,7 +62,7 @@ class Operator():
             return False
         self.isTimerRunning = False
         self.dp.get_info()
-        print("process is completed")
+        self.logger.debug("process is completed")
         self.start()
         return True
 
