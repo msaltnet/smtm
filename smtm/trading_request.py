@@ -1,13 +1,17 @@
+import time
+
 class TradingRequest():
     '''
     거래 요청 정보를 담고 있는 클래스
 
+    id: 요청 정보 id "1607862457.560075"
     type: 거래 유형 sell, buy
     price: 거래 가격
     amount: 거래 수량
     '''
 
     def __init__(self, type=None, price=0, amount=0):
+        self.__id = self.id = time.time()
         self.__type = self.type = type
         self.__price = self.price = price
         self.__amount = self.amount = amount
@@ -36,8 +40,9 @@ class TradingRequest():
 
     def is_stained(self):
         return (self.__type != self.type or
-                self.__price != self.price or 
-                self.__amount != self.amount)
+                self.__price != self.price or
+                self.__amount != self.amount or
+                self.__id != self.id)
 
     def is_submitted(self):
         return self.__is_submitted

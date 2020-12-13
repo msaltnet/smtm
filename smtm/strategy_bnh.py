@@ -37,7 +37,13 @@ class StrategyBuyAndHold(Strategy):
         if self.isIntialized == False:
             return
 
-        self.result.append(result)
+        try:
+            if result.type == 'buy':
+                self.balance -= result.amount * result.price
+                self.logger.info(f'update balance to {self.balance}')
+            self.result.append(result)
+        except AttributeError as msg:
+            self.logger.warning(msg)
 
     def get_request(self):
         '''

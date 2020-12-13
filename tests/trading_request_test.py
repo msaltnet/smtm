@@ -26,6 +26,8 @@ class TradingRequestTests(unittest.TestCase):
     def test_is_stained_should_find_stain(self):
         trading_request = TradingRequest('banana', 1234, 5678)
         self.assertEqual(trading_request.is_stained(), False)
+        trading_request.id = 1234
+        self.assertEqual(trading_request.is_stained(), True)
 
         trading_request.type = 'mango'
         self.assertEqual(trading_request.is_stained(), True)
