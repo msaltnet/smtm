@@ -7,7 +7,7 @@ class DataProvider(metaclass=ABCMeta):
 
     @abstractmethod
     def get_info(self):
-        '''현재 거래 정보 전달'''
+        '''현재 거래 정보를 CandleInfo로 전달'''
         pass
 
     @abstractmethod

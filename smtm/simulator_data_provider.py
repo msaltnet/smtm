@@ -1,4 +1,6 @@
 from . import DataProvider
+from .candle_info import CandleInfo
+from . import LogManager
 import json
 
 class SimulatorDataProvider(DataProvider):
@@ -15,6 +17,9 @@ class SimulatorDataProvider(DataProvider):
     data = None
     index = 0
 
+    def __init__(self):
+        self.logger = LogManager.get_logger(__name__)
+
     def get_info(self):
         '''순차적으로 거래 정보 전달'''
         if self.data is None or self.state is None:
@@ -24,7 +29,7 @@ class SimulatorDataProvider(DataProvider):
         self.index = now + 1
         if now >= len(self.data):
             return None
-        return self.data[now]
+        return self.__create_candle_info(self.data[now])
 
     def initialize(self, http):
         self.initializeWithPeriod(http, None, 100)
@@ -37,6 +42,22 @@ class SimulatorDataProvider(DataProvider):
         self.count = count
         self.__get_data()
 
+    def __create_candle_info(self, data):
+        candle = CandleInfo()
+        try:
+            candle.market = data["market"]
+            candle.date_time = data["candle_date_time_utc"]
+            candle.opening_price = data["opening_price"]
+            candle.high_price = data["high_price"]
+            candle.low_price = data["low_price"]
+            candle.closing_price = data["trade_price"]
+            candle.acc_price = data["candle_acc_trade_price"]
+            candle.acc_volume = data["candle_acc_trade_volume"]
+        except KeyError:
+            self.logger.warning("invalid data for candle info")
+            return None
+
+        return candle
     def __get_data(self):
         if self.http is None or self.state is None:
             return False

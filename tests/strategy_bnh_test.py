@@ -36,22 +36,29 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
     def test_update_result_append_result(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 10)
-        bnh.update_result("orange")
-        self.assertEqual(bnh.result.pop(), "orange")
+        class DummyResult():
+            pass
+        dummy_result = DummyResult()
+        dummy_result.type = "orange"
+        dummy_result.request_id = "orange"
+
+        bnh.update_result(dummy_result)
+        self.assertEqual(bnh.result.pop(), dummy_result)
 
     def test_update_result_update_balance(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 10)
         self.assertEqual(bnh.balance, 100)
-        class DummyInfo():
+        class DummyResult():
             pass
-        dummy_info = DummyInfo()
-        dummy_info.type = "buy"
-        dummy_info.price = 10
-        dummy_info.amount = 5
-        bnh.update_result(dummy_info)
+        dummy_result = DummyResult()
+        dummy_result.type = "buy"
+        dummy_result.request_id = "orange"
+        dummy_result.price = 10
+        dummy_result.amount = 5
+        bnh.update_result(dummy_result)
         self.assertEqual(bnh.balance, 50)
-        self.assertEqual(bnh.result.pop(), dummy_info)
+        self.assertEqual(bnh.result.pop(), dummy_result)
 
     def test_update_result_ignore_result_when_not_yet_initialized(self):
         bnh = StrategyBuyAndHold()

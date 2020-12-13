@@ -30,6 +30,7 @@ class StrategyBuyAndHold(Strategy):
         if self.isIntialized == False:
             return
 
+        self.logger.info("update trading info")
         self.data.append(info)
 
     def update_result(self, result):
@@ -41,6 +42,7 @@ class StrategyBuyAndHold(Strategy):
             if result.type == 'buy':
                 self.balance -= result.amount * result.price
                 self.logger.info(f'update balance to {self.balance}')
+            self.logger.info(f"update result id: {result.request_id}")
             self.result.append(result)
         except AttributeError as msg:
             self.logger.warning(msg)
@@ -65,6 +67,7 @@ class StrategyBuyAndHold(Strategy):
 
             target_amount = target_budget / last_data.closing_price
             trading_request = TradingRequest('buy', last_data.closing_price, target_amount)
+            self.logger.info(f"create request id: {trading_request.id}")
             return trading_request
         except IndexError:
             self.logger.warning('empty data')

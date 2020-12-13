@@ -20,7 +20,7 @@ class OperatorTests(unittest.TestCase):
         self.assertEqual(operator.http, "apple")
         self.assertEqual(operator.threading, "kiwi")
         self.assertEqual(operator.dp, dpMock)
-        self.assertEqual(operator.algorithm, "banana")
+        self.assertEqual(operator.strategy, "banana")
         self.assertEqual(operator.trader, "orange")
 
     def test_setup_set_interval_correctly(self):
@@ -51,8 +51,10 @@ class OperatorTests(unittest.TestCase):
         dpMock = Mock()
         dpMock.initialize = MagicMock(return_value="")
         dpMock.get_info = MagicMock(return_value="mango")
-
-        operator.initialize("apple", threadingMock, dpMock, "banana", "orange")
+        strategyMock = Mock()
+        strategyMock.update_trading_info = MagicMock(return_value="orange")
+        strategyMock.get_request = MagicMock(return_value="papaya")
+        operator.initialize("apple", threadingMock, dpMock, strategyMock, "orange")
         operator.setup(27)
 
         self.assertEqual(operator.start(), True)
@@ -70,9 +72,12 @@ class OperatorTests(unittest.TestCase):
         dpMock = Mock()
         dpMock.initialize = MagicMock(return_value="")
         dpMock.get_info = MagicMock(return_value="mango")
+        strategyMock = Mock()
+        strategyMock.update_trading_info = MagicMock(return_value="orange")
+        strategyMock.get_request = MagicMock(return_value="papaya")
 
         self.assertFalse(operator.isTimerRunning)
-        operator.initialize("apple", threadingMock, dpMock, "banana", "orange")
+        operator.initialize("apple", threadingMock, dpMock, strategyMock, "orange")
         operator.start()
         self.assertTrue(operator.isTimerRunning)
         operator.stop()
