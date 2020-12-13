@@ -2,6 +2,7 @@
 Description for Package
 """
 from .log_manager import LogManager
+from .trading_request import TradingRequest
 from .data_provider import DataProvider
 from .operator import Operator
 from .live_data_provider import LiveDataProvider
@@ -11,6 +12,7 @@ from .strategy_bnh import StrategyBuyAndHold
 
 __all__ = [
     'LogManager',
+    'TradingRequest',
     'SimulatorDataProvider',
     'Operator',
     'StrategyBuyAndHold',
