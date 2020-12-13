@@ -24,3 +24,8 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh = StrategyBuyAndHold()
         bnh.update_trading_info("mango")
         self.assertEqual(bnh.data.pop(), "mango")
+
+    def test_update_result_append_result(self):
+        bnh = StrategyBuyAndHold()
+        bnh.update_result("orange")
+        self.assertEqual(bnh.result.pop(), "orange")
