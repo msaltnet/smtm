@@ -84,5 +84,4 @@ class Operator():
             self.timer.cancel()
         except AttributeError as identifier:
             self.logger.warning(identifier)
-            pass
         self.isTimerRunning = False

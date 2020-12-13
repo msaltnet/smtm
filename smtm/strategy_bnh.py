@@ -1,4 +1,6 @@
 from .strategy import Strategy
+from .trading_request import TradingRequest
+from .log_manager import LogManager
 
 class StrategyBuyAndHold(Strategy):
     '''
@@ -10,6 +12,7 @@ class StrategyBuyAndHold(Strategy):
     request: 마지막 거래 요청
     budget: 시작 잔고
     balance: 현재 잔고
+    min_price: 최소 주문 금액
     '''
 
     def __init__(self):
@@ -17,28 +20,56 @@ class StrategyBuyAndHold(Strategy):
         self.data = []
         self.budget = 0
         self.balance = 0
+        self.min_price = 0
         self.result = []
         self.request = None
+        self.logger = LogManager.get_logger(__name__)
 
     def update_trading_info(self, info):
         '''새로운 거래 정보를 업데이트'''
+        if self.isIntialized == False:
+            return
+
         self.data.append(info)
-        pass
 
     def update_result(self, result):
         '''요청한 거래의 결과를 업데이트'''
+        if self.isIntialized == False:
+            return
+
         self.result.append(result)
-        pass
 
     def get_request(self):
-        '''데이터 분석 결과에 따라 거래 요청 정보를 생성한다'''
-        pass
+        '''
+        데이터 분석 결과에 따라 거래 요청 정보를 생성한다
 
-    def initialize(self, budget):
+        10번에 걸쳐 분할 매수 후 홀딩하는 전략
+        마지막 종가로 처음 예산의 1/10에 해당하는 양 만큼 매수시도
+        '''
+        if self.isIntialized == False:
+            return None
+
+        try:
+            last_data = self.data.pop()
+            target_budget = self.budget / 10
+
+            if self.min_price > target_budget or self.min_price > self.balance:
+                self.logger.info('blance is too small')
+                return None
+
+            target_amount = target_budget / last_data.closing_price
+            trading_request = TradingRequest('buy', last_data.closing_price, target_amount)
+            return trading_request
+        except IndexError:
+            self.logger.warning('empty data')
+        except AttributeError as msg:
+            self.logger.warning(msg)
+
+    def initialize(self, budget, min_price):
         if self.isIntialized:
             return
 
         self.isIntialized = True
         self.budget = budget
         self.balance = budget
-        pass
+        self.min_price = min_price
