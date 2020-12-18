@@ -1,14 +1,6 @@
-import os
-import sys
 import time
-import os
 import signal
 import argparse
-import logging
-
-parentsDir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-sys.path.append(parentsDir)
-print(parentsDir)
 
 from smtm import *
 import requests
