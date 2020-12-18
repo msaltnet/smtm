@@ -11,12 +11,14 @@ from .live_data_provider import LiveDataProvider
 from .simulator_data_provider import SimulatorDataProvider
 from .simulator_operator import SimulatorOperator
 from .strategy_bnh import StrategyBuyAndHold
+from .virtual_market import VirtualMarket
 
 __all__ = [
     'LogManager',
     'TradingRequest',
     'TradingResult',
     'Trader',
+    'VirtualMarket',
     'SimulatorDataProvider',
     'Operator',
     'StrategyBuyAndHold',
