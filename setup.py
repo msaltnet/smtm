@@ -1,12 +1,17 @@
 import io
+import unittest
 from setuptools import find_packages, setup
-
 
 # Read in the README for the long description on PyPI
 def long_description():
     with io.open('README.md', 'r', encoding='utf-8') as f:
         readme = f.read()
     return readme
+
+def smtm_test_suite():
+    test_loader = unittest.TestLoader()
+    test_suite = test_loader.discover('tests', pattern='*test.py')
+    return test_suite
 
 setup(name='smtm',
       version='0.1',
@@ -25,4 +30,5 @@ setup(name='smtm',
       install_requires=[
           'requests==2.25.0'
           ],
+      test_suite='setup.smtm_test_suite',
       zip_safe=False)
