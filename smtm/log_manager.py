@@ -7,10 +7,13 @@ class LogManager():
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(file_formatter)
     stream_formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s - %(name)s - %(message)s")
+    logger_map = {}
 
     @classmethod
     def get_logger(cls, name):
         logger = logging.getLogger(name)
+        if name in cls.logger_map:
+            return logger
 
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.DEBUG)
@@ -19,4 +22,5 @@ class LogManager():
         logger.addHandler(stream_handler)
         logger.addHandler(cls.file_handler)
         logger.setLevel(logging.DEBUG)
+        cls.logger_map[name] = True
         return logger
