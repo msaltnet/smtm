@@ -24,8 +24,16 @@ class VirtualMarket():
         self.count = None
         self.data = None
         self.turn_count = 0
+        self.balance = 0
 
     def initialize(self, http, end, count):
+        '''
+        실제 거래소에서 거래 데이터를 가져와서 초기화
+
+        http: http client
+        end: 거래기간의 끝
+        count: 거래기간까지 가져올 데이터의 갯수
+        '''
         if self.is_initialized == True:
             return
 
@@ -34,7 +42,19 @@ class VirtualMarket():
         self.count = count
         self.__update_data()
 
+    def deposit(self, balance):
+        '''자산 입출금'''
+        self.balance += balance
+        self.logger.info(f"Balance update {balance} to {self.balance}")
+
     def initialize_from_file(self, filepath, end, count):
+        '''
+        파일로부터 거래 데이터를 가져와서 초기화
+
+        filepath: 거래 데이터 파일
+        end: 거래기간의 끝
+        count: 거래기간까지 가져올 데이터의 갯수
+        '''
         if self.is_initialized == True:
             return
 
@@ -69,6 +89,12 @@ class VirtualMarket():
         self.is_initialized = True
 
     def handle_request(self, request):
+        '''
+        거래 요청을 처리해서 결과를 반환
+
+        request: 거래 요청 정보
+        '''
+
         if self.is_initialized == False:
             return TradingResult(None, None, None, None)
         next = self.turn_count + 1

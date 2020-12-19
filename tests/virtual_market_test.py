@@ -161,3 +161,11 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.handle_request(dummy_request)
         self.assertEqual(result.price, -1)
         self.assertEqual(result.amount, -1)
+
+    def test_deposit_update_balance_correctly(self):
+        market = VirtualMarket()
+        self.assertEqual(market.balance, 0)
+        market.deposit(1000)
+        self.assertEqual(market.balance, 1000)
+        market.deposit(-500)
+        self.assertEqual(market.balance, 500)
