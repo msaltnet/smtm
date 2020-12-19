@@ -33,6 +33,20 @@ class VirtualMarket():
         self.count = count
         self.__update_data()
 
+    def initialize_from_file(self, filepath, end, count):
+        if self.is_initialized == True:
+            return
+
+        self.end = end
+        self.count = count
+        try :
+            with open(filepath, 'r') as data_file:
+                self.data = json.loads(data_file.read())
+                print(data_file.read())
+                self.is_initialized = True
+        except FileNotFoundError as msg:
+            self.logger.warning(msg)
+
     def __update_data(self):
         if self.end is not None :
             self.querystring["to"] = self.end

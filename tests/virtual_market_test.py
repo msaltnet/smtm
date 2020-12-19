@@ -1,3 +1,4 @@
+import os
 import unittest
 from smtm import VirtualMarket
 from unittest.mock import *
@@ -44,6 +45,27 @@ class VirtualMarketTests(unittest.TestCase):
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
         self.assertEqual(market.data[0]['market'], "mango")
+
+    def test_intialize_from_file_update_trading_data(self):
+        market = VirtualMarket()
+        market.initialize_from_file("banana_data", None, None)
+        self.assertEqual(market.data, None)
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+        self.assertEqual(market.data[0]['market'], "mango")
+
+    def test_intialize_from_file_ignore_after_initialized(self):
+        market = VirtualMarket()
+        http = Mock()
+        class DummyResponse():
+            pass
+        dummy_response = DummyResponse()
+        dummy_response.text = '[{"market": "banana"}]'
+        http.request = MagicMock(return_value=dummy_response)
+        market.initialize(http, None, None)
+        self.assertEqual(market.data[0]['market'], "banana")
+
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+        self.assertEqual(market.data[0]['market'], "banana")
 
     def test_handle_request_return_trading_result_with_same_id_and_type(self):
         trader = VirtualMarket()
