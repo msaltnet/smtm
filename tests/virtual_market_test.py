@@ -192,7 +192,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.amount, 0)
         self.assertEqual(result.msg, "no money")
 
-    def test_handle_request_handle_update_balance(self):
+    def test_handle_request_handle_update_balance_correctly(self):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
@@ -227,7 +227,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.price, 2000)
         self.assertEqual(result.amount, 0.1)
         self.assertEqual(result.msg, "success")
-        self.assertEqual(market.balance, 1800)
+        self.assertEqual(market.balance, 1790)
 
         dummy_request2 = DummyRequest()
         dummy_request2.id = "orange"
@@ -241,7 +241,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.price, 1900)
         self.assertEqual(result.amount, 0.5)
         self.assertEqual(result.msg, "success")
-        self.assertEqual(market.balance, 850)
+        self.assertEqual(market.balance, 792)
 
     def test_handle_request_return_error_result_when_turn_is_overed(self):
         market = VirtualMarket()
@@ -273,3 +273,9 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(market.balance, 1000)
         market.deposit(-500)
         self.assertEqual(market.balance, 500)
+
+    def test_set_commission_ratio_update_commision_ratio_correctly(self):
+        market = VirtualMarket()
+        self.assertEqual(market.commission_ratio, 0.05)
+        market.set_commission_ratio(0.01)
+        self.assertEqual(market.commission_ratio, 0.01)

@@ -7,10 +7,13 @@ class VirtualMarket():
     '''
     거래 요청 정보를 받아서 처리하여 가상의 거래 결과 정보를 생성한다
 
-    id: 요청 정보 id "1607862457.560075" request_id로 저장됨
-    type: 거래 유형 sell, buy
-    price: 거래 가격
-    amount: 거래 수량
+    http: http client 모듈(requests)
+    end: 거래기간의 끝
+    count: 거래기간까지 가져올 데이터의 갯수
+    data: 사용될 거래 정보
+    turn_count: 현재까지 진행된 턴수
+    balance: 잔고
+    commission_ratio: 수수료율
     '''
 
     url = "https://api.upbit.com/v1/candles/minutes/1"
@@ -25,6 +28,7 @@ class VirtualMarket():
         self.data = None
         self.turn_count = 0
         self.balance = 0
+        self.commission_ratio = 0.05
 
     def initialize(self, http, end, count):
         '''
@@ -46,6 +50,9 @@ class VirtualMarket():
         '''자산 입출금'''
         self.balance += balance
         self.logger.info(f"Balance update {balance} to {self.balance}")
+
+    def set_commission_ratio(self, ratio):
+        self.commission_ratio = ratio
 
     def initialize_from_file(self, filepath, end, count):
         '''
@@ -109,7 +116,10 @@ class VirtualMarket():
 
         if request.price >= self.data[next]["low_price"] and request.amount <= self.data[next]["candle_acc_trade_volume"]:
             result = TradingResult(request.id, request.type, request.price, request.amount, "success")
-            self.balance -= total_amount
+            self.balance -= total_amount * (1 + self.commission_ratio)
+            self.logger.info(f'update balance total:{total_amount} to {self.balance}')
+            self.balance = round(self.balance)
+            self.logger.info(f'update balance total:{total_amount} to {self.balance}')
         else:
             result = TradingResult(request.id, request.type, 0, 0, "not matched")
         self.turn_count = next
