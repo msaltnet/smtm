@@ -6,11 +6,13 @@ class TradingResult():
     type: 거래 유형 sell, buy
     price: 거래 가격
     amount: 거래 수량
+    msg: 거래 결과 메세지
     '''
 
-    def __init__(self, request_id, type, price, amount):
+    def __init__(self, request_id, type, price, amount, msg=""):
         self.request_id = request_id
         self.type = type
         self.price = price
         self.amount = amount
+        self.msg = msg
         pass

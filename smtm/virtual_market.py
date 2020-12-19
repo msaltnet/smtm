@@ -101,12 +101,17 @@ class VirtualMarket():
         result = None
 
         if next >= len(self.data):
-            return TradingResult(request.id, request.type, -1, -1)
+            return TradingResult(request.id, request.type, -1, -1, "game-over")
+
+        total_amount = request.price * request.amount
+        if total_amount > self.balance:
+            return TradingResult(request.id, request.type, 0, 0, "no money")
 
         if request.price >= self.data[next]["low_price"] and request.amount <= self.data[next]["candle_acc_trade_volume"]:
-            result = TradingResult(request.id, request.type, request.price, request.amount)
+            result = TradingResult(request.id, request.type, request.price, request.amount, "success")
+            self.balance -= total_amount
         else:
-            result = TradingResult(request.id, request.type, 0, 0)
+            result = TradingResult(request.id, request.type, 0, 0, "not matched")
         self.turn_count = next
 
         return result
