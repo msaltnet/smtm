@@ -87,6 +87,8 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "orange"
+        dummy_request.price = 2000
+        dummy_request.amount = 10
         market.initialize_from_file("./tests/mango_data.json", None, None)
         self.assertEqual(market.data[0]['market'], "mango")
 
@@ -94,15 +96,47 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.request_id, "mango")
         self.assertEqual(result.type, "orange")
 
-    # def test_handle_request_return_result_corresponding_next_data(self):
-    #     trader = VirtualMarket()
-    #     class DummyRequest():
-    #         pass
-    #     dummy_request = DummyRequest()
-    #     dummy_request.id = "mango"
-    #     dummy_request.type = "orange"
-    #     dummy_request.price = 2000
-    #     dummy_request.amount = 150
-    #     result = trader.handle_request(dummy_request)
-    #     self.assertEqual(result.request_id, "mango")
-    #     self.assertEqual(result.type, "orange")
+    def test_handle_request_handle_buy_return_result_corresponding_next_data(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+
+        market.data[0]["opening_price"] = 2000.00000000
+        market.data[0]["high_price"] = 2100.00000000
+        market.data[0]["low_price"] = 1900.00000000
+        market.data[0]["trade_price"] = 2050.00000000
+
+        market.data[1]["opening_price"] = 2000.00000000
+        market.data[1]["high_price"] = 2100.00000000
+        market.data[1]["low_price"] = 1900.00000000
+        market.data[1]["trade_price"] = 2050.00000000
+
+        market.data[2]["opening_price"] = 2000.00000000
+        market.data[2]["high_price"] = 2100.00000000
+        market.data[2]["low_price"] = 1900.00000000
+        market.data[2]["trade_price"] = 2050.00000000
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "buy"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+
+        result = market.handle_request(dummy_request)
+        self.assertEqual(result.request_id, "mango")
+        self.assertEqual(result.type, "buy")
+        self.assertEqual(result.price, 2000)
+        self.assertEqual(result.amount, 0.1)
+
+        dummy_request2 = DummyRequest()
+        dummy_request2.id = "orange"
+        dummy_request2.type = "buy"
+        dummy_request2.price = 1800
+        dummy_request2.amount = 0.1
+
+        result = market.handle_request(dummy_request2)
+        self.assertEqual(result.request_id, "orange")
+        self.assertEqual(result.type, "buy")
+        self.assertEqual(result.price, 0)
+        self.assertEqual(result.amount, 0)

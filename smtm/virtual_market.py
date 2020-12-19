@@ -23,6 +23,7 @@ class VirtualMarket():
         self.end = None
         self.count = None
         self.data = None
+        self.turn_count = 0
 
     def initialize(self, http, end, count):
         if self.is_initialized == True:
@@ -48,17 +49,17 @@ class VirtualMarket():
             self.logger.warning(msg)
 
     def __update_data(self):
-        if self.end is not None :
+        if self.end is not None:
             self.querystring["to"] = self.end
-        else :
+        else:
             self.querystring["to"] = "2020-11-11 00:00:00"
 
-        if self.count is not None :
+        if self.count is not None:
             self.querystring["count"] = self.count
-        else :
+        else:
             self.querystring["count"] = 100
 
-        try :
+        try:
             response = self.http.request("GET", self.url, params=self.querystring)
             self.data = json.loads(response.text)
         except AttributeError as msg:
@@ -70,5 +71,13 @@ class VirtualMarket():
     def handle_request(self, request):
         if self.is_initialized == False:
             return TradingResult(None, None, None, None)
+        next = self.turn_count + 1
+        result = None
 
-        return TradingResult(request.id, request.type, None, None)
+        if request.price >= self.data[next]["low_price"] and request.amount <= self.data[next]["candle_acc_trade_volume"]:
+            result = TradingResult(request.id, request.type, request.price, request.amount)
+        else:
+            result = TradingResult(request.id, request.type, 0, 0)
+        self.turn_count = next
+
+        return result
