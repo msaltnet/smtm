@@ -140,3 +140,24 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.type, "buy")
         self.assertEqual(result.price, 0)
         self.assertEqual(result.amount, 0)
+
+    def test_handle_request_return_error_result_when_turn_is_overed(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "buy"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+
+        for i in market.data:
+            result = market.handle_request(dummy_request)
+            self.assertEqual(result.request_id, "mango")
+            self.assertEqual(result.type, "buy")
+
+        result = market.handle_request(dummy_request)
+        self.assertEqual(result.price, -1)
+        self.assertEqual(result.amount, -1)

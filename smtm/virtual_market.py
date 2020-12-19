@@ -74,6 +74,9 @@ class VirtualMarket():
         next = self.turn_count + 1
         result = None
 
+        if next >= len(self.data):
+            return TradingResult(request.id, request.type, -1, -1)
+
         if request.price >= self.data[next]["low_price"] and request.amount <= self.data[next]["candle_acc_trade_volume"]:
             result = TradingResult(request.id, request.type, request.price, request.amount)
         else:
