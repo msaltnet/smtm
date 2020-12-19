@@ -1,6 +1,7 @@
 from .log_manager import LogManager
 from .trading_result import TradingResult
 from .trading_request import TradingRequest
+import json
 
 class VirtualMarket():
     '''
@@ -12,8 +13,45 @@ class VirtualMarket():
     amount: 거래 수량
     '''
 
+    url = "https://api.upbit.com/v1/candles/minutes/1"
+    querystring = {"market":"KRW-BTC", "count":"1"}
+
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
+        self.is_initialized = False
+        self.http = None
+        self.end = None
+        self.count = None
+        self.data = None
+
+    def initialize(self, http, end, count):
+        if self.is_initialized == True:
+            return
+
+        self.http = http
+        self.end = end
+        self.count = count
+        self.__update_data()
+
+    def __update_data(self):
+        if self.end is not None :
+            self.querystring["to"] = self.end
+        else :
+            self.querystring["to"] = "2020-11-11 00:00:00"
+
+        if self.count is not None :
+            self.querystring["count"] = self.count
+        else :
+            self.querystring["count"] = 100
+
+        try :
+            response = self.http.request("GET", self.url, params=self.querystring)
+            self.data = json.loads(response.text)
+        except AttributeError as msg:
+            self.logger.warning(msg)
+            return
+
+        self.is_initialized = True
 
     def handle_request(self, request):
         return TradingResult(request.id, request.type, None, None)
