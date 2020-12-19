@@ -68,4 +68,7 @@ class VirtualMarket():
         self.is_initialized = True
 
     def handle_request(self, request):
+        if self.is_initialized == False:
+            return TradingResult(None, None, None, None)
+
         return TradingResult(request.id, request.type, None, None)

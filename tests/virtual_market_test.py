@@ -67,13 +67,42 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/mango_data.json", None, None)
         self.assertEqual(market.data[0]['market'], "banana")
 
-    def test_handle_request_return_trading_result_with_same_id_and_type(self):
-        trader = VirtualMarket()
+    def test_handle_request_return_emtpy_result_when_NOT_initialized(self):
+        market = VirtualMarket()
         class DummyRequest():
             pass
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "orange"
-        result = trader.handle_request(dummy_request)
+        result = market.handle_request(dummy_request)
+        self.assertEqual(result.request_id, None)
+        self.assertEqual(result.type, None)
+        self.assertEqual(result.price, None)
+        self.assertEqual(result.amount, None)
+
+    def test_handle_request_return_trading_result_with_same_id_and_type(self):
+        market = VirtualMarket()
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "orange"
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+        self.assertEqual(market.data[0]['market'], "mango")
+
+        result = market.handle_request(dummy_request)
         self.assertEqual(result.request_id, "mango")
         self.assertEqual(result.type, "orange")
+
+    # def test_handle_request_return_result_corresponding_next_data(self):
+    #     trader = VirtualMarket()
+    #     class DummyRequest():
+    #         pass
+    #     dummy_request = DummyRequest()
+    #     dummy_request.id = "mango"
+    #     dummy_request.type = "orange"
+    #     dummy_request.price = 2000
+    #     dummy_request.amount = 150
+    #     result = trader.handle_request(dummy_request)
+    #     self.assertEqual(result.request_id, "mango")
+    #     self.assertEqual(result.type, "orange")
