@@ -140,6 +140,9 @@ class VirtualMarket():
         if next >= len(self.data):
             return TradingResult(request.id, request.type, -1, -1, "game-over")
 
+        if request.price == 0 or request.amount == 0:
+            return TradingResult(request.id, request.type, 0, 0, "turn over")
+
         total_amount = request.price * request.amount
         if total_amount > self.balance:
             return TradingResult(request.id, request.type, 0, 0, "no money")
