@@ -28,6 +28,7 @@ class Operator():
         self.strategy = strategy
         self.trader = trader
         self.threading = threading
+        self.trader = trader
 
         if self.dp is not None:
             self.dp.initialize(self.http)
@@ -75,7 +76,11 @@ class Operator():
         self.isTimerRunning = False
         try:
             self.strategy.update_trading_info(self.dp.get_info())
-            self.strategy.get_request()
+            def handle_request_callback(result):
+                self.logger.info("handle_request_callback is called")
+                self.strategy.update_result(result)
+
+            self.trader.handle_request(self.strategy.get_request(), handle_request_callback)
         finally:
             self.logger.debug("process is completed")
         self.__start_timer()

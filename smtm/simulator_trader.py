@@ -2,6 +2,7 @@ from .log_manager import LogManager
 from .trading_result import TradingResult
 from .trading_request import TradingRequest
 from .trader import Trader
+from .virtual_market import VirtualMarket
 
 class SimulatorTrader(Trader):
     '''
@@ -15,6 +16,12 @@ class SimulatorTrader(Trader):
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
+        self.market = VirtualMarket()
 
     def handle_request(self, request, callback):
-        callback(TradingResult(request.id, request.type, None, None))
+        result = self.market.handle_request(request)
+        callback(result)
+
+    def initialize(self, http, end, count, budget):
+        self.market.initialize(http, end, count)
+        self.market.deposit(budget)

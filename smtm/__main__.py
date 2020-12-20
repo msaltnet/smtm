@@ -20,8 +20,9 @@ class SmtmSimulator:
         self.operator = operator
         dp = SimulatorDataProvider()
         strategy = StrategyBuyAndHold()
+        trader = SimulatorTrader()
         strategy.initialize(500000, 1000)
-        operator.initialize(requests, threading, dp, strategy, None)
+        operator.initialize(requests, threading, dp, strategy, trader)
         operator.setup(2)
         if operator.start() is False:
             self.logger.warning("Fail start")

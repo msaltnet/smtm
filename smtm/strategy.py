@@ -17,7 +17,7 @@ class Strategy(metaclass=ABCMeta):
 
     @abstractmethod
     def get_request(self):
-        '''거래 요청 정보를 가져온다'''
+        '''전략에 따라 거래 요청 정보를 생성한다'''
         pass
 
     @abstractmethod
