@@ -144,6 +144,109 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.amount, 0)
         self.assertEqual(result.msg, "not matched")
 
+    def test_handle_request_handle_sell_return_result_corresponding_next_data(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.deposit(2000)
+
+        market.data[0]["opening_price"] = 2000.00000000
+        market.data[0]["high_price"] = 2100.00000000
+        market.data[0]["low_price"] = 1900.00000000
+        market.data[0]["trade_price"] = 2050.00000000
+
+        market.data[1]["opening_price"] = 2000.00000000
+        market.data[1]["high_price"] = 2100.00000000
+        market.data[1]["low_price"] = 1900.00000000
+        market.data[1]["trade_price"] = 2050.00000000
+
+        market.data[2]["opening_price"] = 2000.00000000
+        market.data[2]["high_price"] = 2100.00000000
+        market.data[2]["low_price"] = 1900.00000000
+        market.data[2]["trade_price"] = 2050.00000000
+
+        market.data[3]["opening_price"] = 2000.00000000
+        market.data[3]["high_price"] = 2100.00000000
+        market.data[3]["low_price"] = 1900.00000000
+        market.data[3]["trade_price"] = 2050.00000000
+
+        market.data[4]["opening_price"] = 2000.00000000
+        market.data[4]["high_price"] = 2100.00000000
+        market.data[4]["low_price"] = 1900.00000000
+        market.data[4]["trade_price"] = 2050.00000000
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "buy"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+
+        result = market.handle_request(dummy_request)
+        self.assertEqual(result.request_id, "mango")
+        self.assertEqual(result.type, "buy")
+        self.assertEqual(result.price, 2000)
+        self.assertEqual(result.amount, 0.1)
+        self.assertEqual(result.msg, "success")
+
+        dummy_request2 = DummyRequest()
+        dummy_request2.id = "orange"
+        dummy_request2.type = "sell"
+        dummy_request2.price = 2000
+        dummy_request2.amount = 0.05
+
+        result = market.handle_request(dummy_request2)
+        self.assertEqual(result.request_id, "orange")
+        self.assertEqual(result.type, "sell")
+        self.assertEqual(result.price, 2000)
+        self.assertEqual(result.amount, 0.05)
+        self.assertEqual(result.msg, "success")
+
+        dummy_request3 = DummyRequest()
+        dummy_request3.id = "apple"
+        dummy_request3.type = "sell"
+        dummy_request3.price = 2500
+        dummy_request3.amount = 0.05
+
+        result = market.handle_request(dummy_request3)
+        self.assertEqual(result.request_id, "apple")
+        self.assertEqual(result.type, "sell")
+        self.assertEqual(result.price, 0)
+        self.assertEqual(result.amount, 0)
+        self.assertEqual(result.msg, "not matched")
+
+        dummy_request4 = DummyRequest()
+        dummy_request4.id = "banana"
+        dummy_request4.type = "sell"
+        dummy_request4.price = 2000
+        dummy_request4.amount = 0.1
+
+        result = market.handle_request(dummy_request4)
+        self.assertEqual(result.request_id, "banana")
+        self.assertEqual(result.type, "sell")
+        self.assertEqual(result.price, 2000)
+        self.assertEqual(result.amount, 0.05)
+        self.assertEqual(result.msg, "success")
+
+    def test_handle_request_handle_return_error_when_invalid_type(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "apple"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+
+        result = market.handle_request(dummy_request)
+        self.assertEqual(result.request_id, "mango")
+        self.assertEqual(result.type, "apple")
+        self.assertEqual(result.price, -1)
+        self.assertEqual(result.amount, -1)
+        self.assertEqual(result.msg, "invalid type")
+
     def test_handle_request_handle_buy_return_no_money_when_balance_is_NOT_enough(self):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
@@ -213,6 +316,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.data[2]["low_price"] = 1900.00000000
         market.data[2]["trade_price"] = 2050.00000000
 
+        market.data[3]["opening_price"] = 2000.00000000
+        market.data[3]["high_price"] = 2100.00000000
+        market.data[3]["low_price"] = 1900.00000000
+        market.data[3]["trade_price"] = 2050.00000000
+
         class DummyRequest():
             pass
         dummy_request = DummyRequest()
@@ -242,6 +350,20 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.amount, 0.5)
         self.assertEqual(result.msg, "success")
         self.assertEqual(market.balance, 792)
+
+        dummy_request3 = DummyRequest()
+        dummy_request3.id = "banana"
+        dummy_request3.type = "sell"
+        dummy_request3.price = 2000
+        dummy_request3.amount = 0.2
+
+        result = market.handle_request(dummy_request3)
+        self.assertEqual(result.request_id, "banana")
+        self.assertEqual(result.type, "sell")
+        self.assertEqual(result.price, 2000)
+        self.assertEqual(result.amount, 0.2)
+        self.assertEqual(result.msg, "success")
+        self.assertEqual(market.balance, 1172)
 
     def test_handle_request_return_error_result_when_turn_is_overed(self):
         market = VirtualMarket()
@@ -354,6 +476,16 @@ class VirtualMarketTests(unittest.TestCase):
         market.data[2]["low_price"] = 1900.00000000
         market.data[2]["trade_price"] = 2050.00000000
 
+        market.data[3]["opening_price"] = 2000.00000000
+        market.data[3]["high_price"] = 2100.00000000
+        market.data[3]["low_price"] = 1900.00000000
+        market.data[3]["trade_price"] = 2050.00000000
+
+        market.data[4]["opening_price"] = 2000.00000000
+        market.data[4]["high_price"] = 2100.00000000
+        market.data[4]["low_price"] = 1900.00000000
+        market.data[4]["trade_price"] = 2050.00000000
+
         class DummyRequest():
             pass
         dummy_request = DummyRequest()
@@ -385,3 +517,30 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(info.asset[0][1], 1917)
         self.assertEqual(info.asset[0][2], 0.6)
         self.assertEqual(info.asset_value, 1150)
+
+        dummy_request3 = DummyRequest()
+        dummy_request3.id = "banana"
+        dummy_request3.type = "sell"
+        dummy_request3.price = 2000
+        dummy_request3.amount = 0.2
+        result = market.handle_request(dummy_request3)
+
+        info = market.get_balance()
+        self.assertEqual(info.balance, 1172)
+        self.assertEqual(len(info.asset), 1)
+        self.assertEqual(info.asset[0][0], "mango")
+        self.assertEqual(info.asset[0][1], 1900)
+        self.assertEqual(info.asset[0][2], 0.4)
+        self.assertEqual(info.asset_value, 760)
+
+        dummy_request4 = DummyRequest()
+        dummy_request4.id = "banana"
+        dummy_request4.type = "sell"
+        dummy_request4.price = 1950
+        dummy_request4.amount = 1
+        result = market.handle_request(dummy_request4)
+
+        info = market.get_balance()
+        self.assertEqual(info.balance, 1913)
+        self.assertEqual(len(info.asset), 0)
+        self.assertEqual(info.asset_value, 0)

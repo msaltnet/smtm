@@ -64,10 +64,11 @@ class VirtualMarket():
         avr_price = 0
         asset = []
         item_type = None
-        self.logger.info(f'length {len(self.asset)}')
+        self.logger.info(f'asset list length {len(self.asset)} =====================')
         for item in self.asset:
             total_value += item["price"] * item["amount"]
             total_amount += item["amount"]
+            self.logger.info(f'item price: {item["price"]}, amount: {item["amount"]} total_value: {total_value}')
             if item_type != None and item["type"] != item_type:
                 self.logger.warning(f"multiple item type is NOT supported {item_type} : {item['type']}")
             item_type = item["type"]
@@ -77,7 +78,9 @@ class VirtualMarket():
         except ZeroDivisionError:
             self.logger.info("total amount is zero")
 
+        total_value = round(total_value)
         self.logger.info(f"asset len: {len(self.asset)}, total amount: {total_amount}, avr price {avr_price}")
+
         if total_value > 0:
             asset.append((item_type, avr_price, total_amount))
             account_info.asset_value = total_value
@@ -143,17 +146,66 @@ class VirtualMarket():
         if request.price == 0 or request.amount == 0:
             return TradingResult(request.id, request.type, 0, 0, "turn over")
 
-        total_amount = request.price * request.amount
-        if total_amount > self.balance:
+        if request.type == 'buy':
+            result = self.__handle_buy_request(request, next)
+        elif request.type == 'sell':
+            result = self.__handle_sell_request(request, next)
+        else:
+            result = TradingResult(request.id, request.type, -1, -1, "invalid type")
+
+        self.turn_count = next
+        return result
+
+    def __handle_buy_request(self, request, next):
+        buy_asset_value = request.price * request.amount
+        if buy_asset_value > self.balance:
             return TradingResult(request.id, request.type, 0, 0, "no money")
 
-        if request.price >= self.data[next]["low_price"] and request.amount <= self.data[next]["candle_acc_trade_volume"]:
-            result = TradingResult(request.id, request.type, request.price, request.amount, "success")
+        if request.price >= self.data[next]["low_price"]:
             self.asset.append({"type": self.data[next]["market"], "price": request.price, "amount": request.amount})
-            self.balance -= total_amount * (1 + self.commission_ratio)
+            self.logger.warning(f"[balance] from {self.balance}")
+            self.logger.warning(f"[balance] - buy_asset_value {buy_asset_value}")
+            self.logger.warning(f"[balance] - commission {buy_asset_value * self.commission_ratio}")
+            self.balance -= buy_asset_value * (1 + self.commission_ratio)
+            self.logger.warning(f"[balance] to {self.balance}")
             self.balance = round(self.balance)
-        else:
-            result = TradingResult(request.id, request.type, 0, 0, "not matched")
-        self.turn_count = next
+            return TradingResult(request.id, request.type, request.price, request.amount, "success")
 
-        return result
+        return TradingResult(request.id, request.type, 0, 0, "not matched")
+
+    def __handle_sell_request(self, request, next):
+        asset_total_amount = 0
+        for item in self.asset:
+            asset_total_amount += item["amount"]
+
+        if request.price < self.data[next]["high_price"]:
+            sell_amount = request.amount
+            if request.amount > asset_total_amount:
+                sell_amount = asset_total_amount
+                self.logger.warning(f'sell request is bigger than asset amount! {request.amount} -> {sell_amount}')
+
+            rest_amount = sell_amount
+            new_asset = []
+            self.logger.info(f'asset list len: {len(self.asset)} ==========')
+            for item in self.asset:
+                self.logger.info(f'item amount: {item["amount"]} - rest amount: {rest_amount}')
+                if rest_amount == 0:
+                    new_asset.append(item)
+                elif item["amount"] > rest_amount:
+                    item["amount"] -= rest_amount
+                    rest_amount = 0
+                    new_asset.append(item)
+                else:
+                    rest_amount -= item["amount"]
+
+            self.asset = new_asset
+            sell_asset_value = sell_amount * request.price
+            self.logger.warning(f"[balance] from {self.balance}")
+            self.logger.warning(f"[balance] + sell_asset_value {sell_asset_value}")
+            self.logger.warning(f"[balance] - commission {sell_asset_value * self.commission_ratio}")
+            self.balance += sell_amount * request.price * (1 - self.commission_ratio)
+            self.logger.warning(f"[balance] to {self.balance}")
+            self.balance = round(self.balance)
+            return TradingResult(request.id, request.type, request.price, sell_amount, "success")
+
+        return TradingResult(request.id, request.type, 0, 0, "not matched")
