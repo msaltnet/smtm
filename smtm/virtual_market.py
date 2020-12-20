@@ -1,6 +1,7 @@
 from .log_manager import LogManager
 from .trading_result import TradingResult
 from .trading_request import TradingRequest
+from .account_info import AccountInfo
 import json
 
 class VirtualMarket():
@@ -14,6 +15,7 @@ class VirtualMarket():
     turn_count: 현재까지 진행된 턴수
     balance: 잔고
     commission_ratio: 수수료율
+    asset: 자산 목록
     '''
 
     url = "https://api.upbit.com/v1/candles/minutes/1"
@@ -29,6 +31,7 @@ class VirtualMarket():
         self.turn_count = 0
         self.balance = 0
         self.commission_ratio = 0.05
+        self.asset = []
 
     def initialize(self, http, end, count):
         '''
@@ -53,6 +56,33 @@ class VirtualMarket():
 
     def set_commission_ratio(self, ratio):
         self.commission_ratio = ratio
+
+    def get_balance(self):
+        account_info = AccountInfo(balance=self.balance)
+        total_value = 0
+        total_amount = 0
+        avr_price = 0
+        asset = []
+        item_type = None
+        self.logger.info(f'length {len(self.asset)}')
+        for item in self.asset:
+            total_value += item["price"] * item["amount"]
+            total_amount += item["amount"]
+            if item_type != None and item["type"] != item_type:
+                self.logger.warning(f"multiple item type is NOT supported {item_type} : {item['type']}")
+            item_type = item["type"]
+
+        try:
+            avr_price = round(total_value / total_amount)
+        except ZeroDivisionError:
+            self.logger.info("total amount is zero")
+
+        self.logger.info(f"asset len: {len(self.asset)}, total amount: {total_amount}, avr price {avr_price}")
+        if total_value > 0:
+            asset.append((item_type, avr_price, total_amount))
+            account_info.asset_value = total_value
+        account_info.asset = asset
+        return account_info
 
     def initialize_from_file(self, filepath, end, count):
         '''
@@ -116,10 +146,9 @@ class VirtualMarket():
 
         if request.price >= self.data[next]["low_price"] and request.amount <= self.data[next]["candle_acc_trade_volume"]:
             result = TradingResult(request.id, request.type, request.price, request.amount, "success")
+            self.asset.append({"type": self.data[next]["market"], "price": request.price, "amount": request.amount})
             self.balance -= total_amount * (1 + self.commission_ratio)
-            self.logger.info(f'update balance total:{total_amount} to {self.balance}')
             self.balance = round(self.balance)
-            self.logger.info(f'update balance total:{total_amount} to {self.balance}')
         else:
             result = TradingResult(request.id, request.type, 0, 0, "not matched")
         self.turn_count = next

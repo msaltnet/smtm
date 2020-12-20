@@ -13,7 +13,7 @@
         "unit":1
     },
     {
-        "market":"KRW-BTC",
+        "market":"mango",
         "candle_date_time_utc":"2020-02-25T06:41:00",
         "candle_date_time_kst":"2020-02-25T15:41:00",
         "opening_price":2050.00000000,
@@ -26,7 +26,7 @@
         "unit":1
     },
     {
-        "market":"KRW-BTC",
+        "market":"mango",
         "candle_date_time_utc":"2020-02-25T06:41:00",
         "candle_date_time_kst":"2020-02-25T15:41:00",
         "opening_price":2050.00000000,

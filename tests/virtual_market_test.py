@@ -279,3 +279,59 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(market.commission_ratio, 0.05)
         market.set_commission_ratio(0.01)
         self.assertEqual(market.commission_ratio, 0.01)
+
+    def test_get_balance_return_balance_and_property_list(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.deposit(2000)
+        info = market.get_balance()
+        self.assertEqual(info.balance, 2000)
+        self.assertEqual(len(info.asset), 0)
+        self.assertEqual(info.asset_value, 0)
+
+        market.data[0]["opening_price"] = 2000.00000000
+        market.data[0]["high_price"] = 2100.00000000
+        market.data[0]["low_price"] = 1900.00000000
+        market.data[0]["trade_price"] = 2050.00000000
+
+        market.data[1]["opening_price"] = 2000.00000000
+        market.data[1]["high_price"] = 2100.00000000
+        market.data[1]["low_price"] = 1900.00000000
+        market.data[1]["trade_price"] = 2050.00000000
+
+        market.data[2]["opening_price"] = 2000.00000000
+        market.data[2]["high_price"] = 2100.00000000
+        market.data[2]["low_price"] = 1900.00000000
+        market.data[2]["trade_price"] = 2050.00000000
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "buy"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+        result = market.handle_request(dummy_request)
+
+        info = market.get_balance()
+        self.assertEqual(info.balance, 1790)
+        self.assertEqual(len(info.asset), 1)
+        self.assertEqual(info.asset[0][0], "mango")
+        self.assertEqual(info.asset[0][1], 2000)
+        self.assertEqual(info.asset[0][2], 0.1)
+        self.assertEqual(info.asset_value, 200)
+
+        dummy_request2 = DummyRequest()
+        dummy_request2.id = "orange"
+        dummy_request2.type = "buy"
+        dummy_request2.price = 1900
+        dummy_request2.amount = 0.5
+        result = market.handle_request(dummy_request2)
+
+        info = market.get_balance()
+        self.assertEqual(info.balance, 792)
+        self.assertEqual(len(info.asset), 1)
+        self.assertEqual(info.asset[0][0], "mango")
+        self.assertEqual(info.asset[0][1], 1917)
+        self.assertEqual(info.asset[0][2], 0.6)
+        self.assertEqual(info.asset_value, 1150)
