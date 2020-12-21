@@ -136,6 +136,7 @@ class VirtualMarket():
         '''
 
         if self.is_initialized == False:
+            self.logger.warning("virtual market is NOT initialized")
             return TradingResult(None, None, None, None)
         next = self.turn_count + 1
         result = None

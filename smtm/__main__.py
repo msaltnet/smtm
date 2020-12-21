@@ -11,12 +11,12 @@ class SmtmSimulator:
         self.logger = LogManager.get_logger("SmtmSimulator")
         self.__stop = False
 
-        self.logger.info(mode)
+        self.logger.info(f'Mode: {mode}')
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
 
     def main(self):
-        operator = Operator()
+        operator = SimulationOperator()
         self.operator = operator
         dp = SimulatorDataProvider()
         strategy = StrategyBuyAndHold()

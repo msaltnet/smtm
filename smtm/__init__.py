@@ -10,7 +10,7 @@ from .data_provider import DataProvider
 from .operator import Operator
 from .live_data_provider import LiveDataProvider
 from .simulator_data_provider import SimulatorDataProvider
-from .simulator_operator import SimulatorOperator
+from .simulation_operator import SimulationOperator
 from .strategy_bnh import StrategyBuyAndHold
 from .virtual_market import VirtualMarket
 
@@ -23,5 +23,5 @@ __all__ = [
     'SimulatorDataProvider',
     'Operator',
     'StrategyBuyAndHold',
-    'SimulatorOperator']
+    'SimulationOperator']
 __version__ = '0.1.0'
