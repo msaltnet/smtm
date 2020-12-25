@@ -13,9 +13,18 @@ Install all packages using setup.py
 python setup.py install
 ```
 
+## How to run simulator
+After install, run module smtm
+
+```
+python -m smtm
+```
+
 ### How to test
 Test project with unittest. Run test also using setup.py
 
 ```
 python setup.py test
+# or run unittest directly
+python -m unittest discover ./tests *test.py -v
 ```
