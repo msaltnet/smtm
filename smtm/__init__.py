@@ -2,6 +2,7 @@
 Description for Package
 """
 from .log_manager import LogManager
+from .analyzer import Analyzer
 from .trading_request import TradingRequest
 from .trading_result import TradingResult
 from .trader import Trader
@@ -16,6 +17,7 @@ from .virtual_market import VirtualMarket
 
 __all__ = [
     'LogManager',
+    'Analyzer',
     'TradingRequest',
     'TradingResult',
     'SimulationTrader',

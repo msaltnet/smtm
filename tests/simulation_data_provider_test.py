@@ -22,6 +22,7 @@ class SimulationTraderTests(unittest.TestCase):
         trader.send_request(dummy_request, callback)
         trader.market.send_request.assert_called_once_with(dummy_request)
         callback.assert_called_once_with("banana")
+
     def test_initialize_initialize_virtual_market(self):
         trader = SimulationTrader()
         class DummyHttp():
