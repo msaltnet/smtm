@@ -20,7 +20,6 @@ class Operator():
         self.is_timer_running = False
         self.threading = None
 
-
     def initialize(self, http, threading, dataProvider, strategy, trader):
         """
         운영에 필요한 모듈과 정보를 설정 및 각 모듈 초기화 수행

@@ -7,9 +7,10 @@ class SimulationOperator(Operator):
     """
 
     def __init__(self):
+        super().__init__()
         self.logger = LogManager.get_logger(__name__)
 
-    def initialize(self, http, threading, dataProvider, algorithm, trader, end, count, budget):
+    def initialize(self, http, threading, dataProvider, strategy, trader, end=None, count=100, budget=500):
         """
         시뮬레이션에 사용될 각 모듈을 전달 받아 초기화를 진행한다
 
@@ -17,8 +18,9 @@ class SimulationOperator(Operator):
         count: 사용될 거래 정도 갯수
         budget: 사용될 예산
         """
-        super().initialize(http, threading, dataProvider, algorithm, trader)
+        super().initialize(http, threading, dataProvider, strategy, trader)
         self.trader.initialize(http, end, count, budget)
+        self.strategy.initialize(budget)
 
     def setup(self, interval):
         super().setup(interval)

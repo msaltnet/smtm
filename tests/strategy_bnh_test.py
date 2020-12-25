@@ -40,7 +40,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
             pass
         dummy_result = DummyResult()
         dummy_result.type = "orange"
-        dummy_result.request_id = "orange"
+        dummy_result.request_id = "banana"
+        dummy_result.price = "apple"
+        dummy_result.amount = "kiwi"
 
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.result.pop(), dummy_result)

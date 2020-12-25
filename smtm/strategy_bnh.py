@@ -42,7 +42,10 @@ class StrategyBuyAndHold(Strategy):
             if result.type == 'buy':
                 self.balance -= result.amount * result.price
                 self.logger.info(f'update balance to {self.balance}')
-            self.logger.info(f"update result id: {result.request_id}")
+            self.logger.info(f"update request id: {result.request_id} ========")
+            self.logger.info(f"type: {result.type}")
+            self.logger.info(f"price: {result.price}, amount: {result.amount}")
+            self.logger.info(f"================================================")
             self.result.append(result)
         except AttributeError as msg:
             self.logger.warning(msg)
@@ -67,14 +70,17 @@ class StrategyBuyAndHold(Strategy):
 
             target_amount = target_budget / last_data.closing_price
             trading_request = TradingRequest('buy', last_data.closing_price, target_amount)
-            self.logger.info(f"create request id: {trading_request.id}")
+            self.logger.info(f"create request id: {trading_request.id} ========")
+            self.logger.info(f"type: {trading_request.type}")
+            self.logger.info(f"price: {trading_request.price}, amount: {trading_request.amount}")
+            self.logger.info(f"================================================")
             return trading_request
         except IndexError:
             self.logger.warning('empty data')
         except AttributeError as msg:
             self.logger.warning(msg)
 
-    def initialize(self, budget, min_price):
+    def initialize(self, budget, min_price=100):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """

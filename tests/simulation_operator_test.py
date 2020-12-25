@@ -16,10 +16,25 @@ class SimulationOperatorTests(unittest.TestCase):
         sop = SimulationOperator()
         trader = Mock()
         trader.initialize = MagicMock()
+        strategy = Mock()
+        strategy.initialize = MagicMock()
         sop.trader = trader
-        sop.initialize("apple", "kiwi", "mango", "banana", "orange", "papaya", "pear", "grape")
-        OperatorInitialize.assert_called_once_with("apple", "kiwi", "mango", "banana", "orange")
+        sop.strategy = strategy
+        sop.initialize("apple", "kiwi", "mango", strategy, "orange", "papaya", "pear", "grape")
+        OperatorInitialize.assert_called_once_with("apple", "kiwi", "mango", strategy, "orange")
         trader.initialize.assert_called_once_with("apple", "papaya", "pear", "grape")
+
+    @patch("smtm.Operator.initialize")
+    def test_initialize_call_strategy_initialize_with_config(self, OperatorInitialize):
+        sop = SimulationOperator()
+        trader = Mock()
+        trader.initialize = MagicMock()
+        strategy = Mock()
+        strategy.initialize = MagicMock()
+        sop.trader = trader
+        sop.strategy = strategy
+        sop.initialize("apple", "kiwi", "mango", strategy, "orange", "papaya", "pear", "grape")
+        strategy.initialize.assert_called_once_with("grape")
 
     @patch("smtm.Operator.setup")
     def test_setup_call_super_setup(self, OperatorSetup):
