@@ -51,9 +51,13 @@ class OperatorTests(unittest.TestCase):
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.price = 500
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
-        strategy_mock.get_request = MagicMock(return_value="papaya")
+        strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
         operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock)
@@ -65,6 +69,51 @@ class OperatorTests(unittest.TestCase):
         self.assertEqual(operator.start(), False)
         dp_mock.get_info.assert_called_once()
 
+    def test_start_should_call_trader_send_request(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+        operator = Operator()
+        dp_mock = Mock()
+        dp_mock.initialize = MagicMock(return_value="")
+        dp_mock.get_info = MagicMock(return_value="mango")
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.price = 500
+        strategy_mock = Mock()
+        strategy_mock.update_trading_info = MagicMock(return_value="orange")
+        strategy_mock.get_request = MagicMock(return_value=dummy_request)
+        trader_mock = Mock()
+        trader_mock.send_request = MagicMock()
+        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock)
+        operator.setup(27)
+        operator.start()
+        trader_mock.send_request.assert_called_once_with(ANY, ANY)
+
+    def test_start_should_NOT_call_trader_send_request_when_request_is_invalid(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = Operator()
+        dp_mock = Mock()
+        dp_mock.initialize = MagicMock(return_value="")
+        dp_mock.get_info = MagicMock(return_value="mango")
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.price = 0
+        strategy_mock = Mock()
+        strategy_mock.update_trading_info = MagicMock(return_value="orange")
+        strategy_mock.get_request = MagicMock(return_value=dummy_request)
+        trader_mock = Mock()
+        trader_mock.send_request = MagicMock()
+        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock)
+        operator.setup(27)
+        operator.start()
+        trader_mock.send_request.assert_not_called()
+
     def test_stop_should_cancel_timer_and_set_false_isRunning(self):
         timer_mock = Mock()
         threading_mock = Mock()
@@ -74,12 +123,15 @@ class OperatorTests(unittest.TestCase):
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.price = 500
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
-        strategy_mock.get_request = MagicMock(return_value="papaya")
+        strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-
         self.assertFalse(operator.is_timer_running)
         operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock)
         operator.start()
@@ -87,15 +139,3 @@ class OperatorTests(unittest.TestCase):
         operator.stop()
         self.assertFalse(operator.is_timer_running)
         timer_mock.cancel.assert_called_once()
-
-    # def test_real(self):
-    #     operator = Operator()
-    #     dp_mock = Mock()
-    #     dp_mock.initialize = MagicMock(return_value="")
-    #     dp_mock.get_info = lambda x : print("test")
-
-    #     operator.initialize("apple", dp_mock, "banana", "orange")
-    #     operator.setup(27)
-    #     operator.start(threading)
-
-    #     self.assertEqual(operator.start(threading), True)

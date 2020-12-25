@@ -7,12 +7,14 @@ class TradingResult():
     price: 거래 가격
     amount: 거래 수량
     msg: 거래 결과 메세지
+    balance: 거래 후 계좌 현금 잔고
     """
 
-    def __init__(self, request_id, type, price, amount, msg=""):
+    def __init__(self, request_id, type, price, amount, msg="", balance=None):
         self.request_id = request_id
         self.type = type
         self.price = price
         self.amount = amount
         self.msg = msg
+        self.balance = balance
         pass

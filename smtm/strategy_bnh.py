@@ -39,12 +39,11 @@ class StrategyBuyAndHold(Strategy):
             return
 
         try:
-            if result.type == 'buy':
-                self.balance -= result.amount * result.price
-                self.logger.info(f'update balance to {self.balance}')
-            self.logger.info(f"update request id: {result.request_id} ========")
+            self.balance = result.balance
+            self.logger.info(f"[RESULT] id: {result.request_id} ================")
             self.logger.info(f"type: {result.type}, msg: {result.msg}")
             self.logger.info(f"price: {result.price}, amount: {result.amount}")
+            self.logger.info(f'balance: {self.balance}')
             self.logger.info(f"================================================")
             self.result.append(result)
         except AttributeError as msg:
@@ -61,16 +60,20 @@ class StrategyBuyAndHold(Strategy):
             return None
 
         try:
-            last_data = self.data.pop()
+            last_data = self.data[-1]
             target_budget = self.budget / 10
 
-            if self.min_price > target_budget or self.min_price > self.balance:
+            if self.min_price > target_budget:
+                self.logger.info('target_budget is too small')
+                return TradingRequest('buy', 0, 0)
+
+            if target_budget > self.balance or self.min_price > self.balance:
                 self.logger.info('blance is too small')
-                return None
+                return TradingRequest('buy', 0, 0)
 
             target_amount = target_budget / last_data.closing_price
             trading_request = TradingRequest('buy', last_data.closing_price, target_amount)
-            self.logger.info(f"create request id: {trading_request.id} ========")
+            self.logger.info(f"[REQ] id: {trading_request.id} =====================")
             self.logger.info(f"type: {trading_request.type}")
             self.logger.info(f"price: {trading_request.price}, amount: {trading_request.amount}")
             self.logger.info(f"================================================")

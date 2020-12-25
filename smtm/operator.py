@@ -76,17 +76,19 @@ class Operator():
         """자동 거래를 실행 후 타이머를 실행한다"""
         if self.dp is None:
             return False
-        self.logger.debug("process is started")
+        self.logger.debug("process is started #####################")
         self.is_timer_running = False
         try:
             self.strategy.update_trading_info(self.dp.get_info())
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")
                 self.strategy.update_result(result)
+            target_request = self.strategy.get_request()
 
-            self.trader.send_request(self.strategy.get_request(), send_request_callback)
+            if target_request.price != 0:
+                self.trader.send_request(target_request, send_request_callback)
         finally:
-            self.logger.debug("process is completed")
+            self.logger.debug("process is completed #####################")
 
         self.__start_timer()
         return True

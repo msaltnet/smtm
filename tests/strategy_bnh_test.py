@@ -44,6 +44,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_result.price = "apple"
         dummy_result.amount = "kiwi"
         dummy_result.msg = "melon"
+        dummy_result.balance = 500
 
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.result.pop(), dummy_result)
@@ -60,8 +61,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_result.price = 10
         dummy_result.amount = 5
         dummy_result.msg = "melon"
+        dummy_result.balance = 100
         bnh.update_result(dummy_result)
-        self.assertEqual(bnh.balance, 50)
+        self.assertEqual(bnh.balance, 100)
         self.assertEqual(bnh.result.pop(), dummy_result)
 
     def test_update_result_ignore_result_when_not_yet_initialized(self):
@@ -87,12 +89,26 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         request = bnh.get_request()
         self.assertEqual(request, None)
 
-    def test_get_request_return_None_when_target_budget_is_too_small(self):
+    def test_get_request_return_error_when_target_budget_is_too_small(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 100)
         bnh.update_trading_info("banana")
         request = bnh.get_request()
-        self.assertEqual(request, None)
+        self.assertEqual(request.price, 0)
+        self.assertEqual(request.amount, 0)
+
+    def test_get_request_return_error_when_balance_is_smaller_than_target_budget(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(1000, 10)
+        class DummyInfo():
+            pass
+        dummy_info = DummyInfo()
+        dummy_info.closing_price = 20000
+        bnh.update_trading_info(dummy_info)
+        bnh.balance = 10
+        request = bnh.get_request()
+        self.assertEqual(request.price, 0)
+        self.assertEqual(request.amount, 0)
 
     def test_get_request_return_correct_request(self):
         bnh = StrategyBuyAndHold()

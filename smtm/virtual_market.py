@@ -142,25 +142,26 @@ class VirtualMarket():
         result = None
 
         if next >= len(self.data):
-            return TradingResult(request.id, request.type, -1, -1, "game-over")
+            return TradingResult(request.id, request.type, -1, -1, "game-over", self.balance)
 
         if request.price == 0 or request.amount == 0:
-            return TradingResult(request.id, request.type, 0, 0, "turn over")
+            return TradingResult(request.id, request.type, 0, 0, "turn over", self.balance)
 
         if request.type == 'buy':
             result = self.__handle_buy_request(request, next)
         elif request.type == 'sell':
             result = self.__handle_sell_request(request, next)
         else:
-            result = TradingResult(request.id, request.type, -1, -1, "invalid type")
+            result = TradingResult(request.id, request.type, -1, -1, "invalid type", self.balance)
 
         self.turn_count = next
         return result
 
     def __handle_buy_request(self, request, next):
         buy_asset_value = request.price * request.amount
-        if buy_asset_value > self.balance:
-            return TradingResult(request.id, request.type, 0, 0, "no money")
+
+        if buy_asset_value * (1 + self.commission_ratio) > self.balance:
+            return TradingResult(request.id, request.type, 0, 0, "no money", self.balance)
 
         if request.price >= self.data[next]["low_price"]:
             self.asset.append({"type": self.data[next]["market"], "price": request.price, "amount": request.amount})
@@ -170,9 +171,9 @@ class VirtualMarket():
             self.balance -= buy_asset_value * (1 + self.commission_ratio)
             self.logger.warning(f"[balance] to {self.balance}")
             self.balance = round(self.balance)
-            return TradingResult(request.id, request.type, request.price, request.amount, "success")
+            return TradingResult(request.id, request.type, request.price, request.amount, "success", self.balance)
 
-        return TradingResult(request.id, request.type, 0, 0, "not matched")
+        return TradingResult(request.id, request.type, 0, 0, "not matched", self.balance)
 
     def __handle_sell_request(self, request, next):
         asset_total_amount = 0
@@ -207,6 +208,6 @@ class VirtualMarket():
             self.balance += sell_amount * request.price * (1 - self.commission_ratio)
             self.logger.warning(f"[balance] to {self.balance}")
             self.balance = round(self.balance)
-            return TradingResult(request.id, request.type, request.price, sell_amount, "success")
+            return TradingResult(request.id, request.type, request.price, sell_amount, "success", self.balance)
 
-        return TradingResult(request.id, request.type, 0, 0, "not matched")
+        return TradingResult(request.id, request.type, 0, 0, "not matched", self.balance)
