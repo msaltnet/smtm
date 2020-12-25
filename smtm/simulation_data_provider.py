@@ -4,12 +4,11 @@ from . import LogManager
 import json
 
 class SimulationDataProvider(DataProvider):
-    '''
+    """
     거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
-    '''
-
+    """
     url = "https://api.upbit.com/v1/candles/minutes/1"
-    querystring = {"market":"KRW-BTC"}
+    query_string = {"market":"KRW-BTC"}
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
@@ -21,8 +20,7 @@ class SimulationDataProvider(DataProvider):
         self.index = 0
 
     def get_info(self):
-        '''순차적으로 거래 정보 전달'''
-
+        """순차적으로 거래 정보 전달한다"""
         now = self.index
         self.index = now + 1
         if now >= len(self.data):
@@ -36,9 +34,11 @@ class SimulationDataProvider(DataProvider):
         self.count = count
 
     def initialize(self, http):
+        """데이터를 가져와서 초기화한다"""
         self.initialize_from_server(http)
 
     def initialize_with_file(self, filepath, end=None, count=100):
+        """파일로부터 데이터를 가져와서 초기화한다"""
         if self.is_initialized:
             return
 
@@ -46,6 +46,7 @@ class SimulationDataProvider(DataProvider):
         self.__get_data_from_file(filepath)
 
     def initialize_from_server(self, http, end=None, count=100):
+        """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
         if self.is_initialized:
             return
 
@@ -83,16 +84,16 @@ class SimulationDataProvider(DataProvider):
             return False
 
         if self.end is not None :
-            self.querystring["to"] = self.end
+            self.query_string["to"] = self.end
         else :
-            self.querystring["to"] = "2020-11-11 00:00:00"
+            self.query_string["to"] = "2020-11-11 00:00:00"
 
         if self.count is not None :
-            self.querystring["count"] = self.count
+            self.query_string["count"] = self.count
         else :
-            self.querystring["count"] = 100
+            self.query_string["count"] = 100
 
-        response = self.http.request("GET", self.url, params=self.querystring)
+        response = self.http.request("GET", self.url, params=self.query_string)
         self.data = json.loads(response.text)
 
 # response info format

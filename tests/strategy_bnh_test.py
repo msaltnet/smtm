@@ -11,12 +11,12 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_initialize_update_initial_balance(self):
         bnh = StrategyBuyAndHold()
-        self.assertEqual(bnh.isIntialized, False)
+        self.assertEqual(bnh.is_intialized, False)
         bnh.initialize(50000, 50)
         self.assertEqual(bnh.budget, 50000)
         self.assertEqual(bnh.balance, 50000)
         self.assertEqual(bnh.min_price, 50)
-        self.assertEqual(bnh.isIntialized, True)
+        self.assertEqual(bnh.is_intialized, True)
         bnh.initialize(100, 10)
         self.assertEqual(bnh.budget, 50000)
         self.assertEqual(bnh.balance, 50000)

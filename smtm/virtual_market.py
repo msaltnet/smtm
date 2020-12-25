@@ -5,7 +5,7 @@ from .account_info import AccountInfo
 import json
 
 class VirtualMarket():
-    '''
+    """
     거래 요청 정보를 받아서 처리하여 가상의 거래 결과 정보를 생성한다
 
     http: http client 모듈(requests)
@@ -16,10 +16,9 @@ class VirtualMarket():
     balance: 잔고
     commission_ratio: 수수료율
     asset: 자산 목록
-    '''
-
+    """
     url = "https://api.upbit.com/v1/candles/minutes/1"
-    querystring = {"market":"KRW-BTC", "count":"1"}
+    query_string = {"market":"KRW-BTC", "count":"1"}
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
@@ -34,13 +33,13 @@ class VirtualMarket():
         self.asset = []
 
     def initialize(self, http, end, count):
-        '''
-        실제 거래소에서 거래 데이터를 가져와서 초기화
+        """
+        실제 거래소에서 거래 데이터를 가져와서 초기화한다
 
-        http: http client
-        end: 거래기간의 끝
+        http: http client 인스턴스
+        end: 언제까지의 거래기간 정보를 사용할 것인지에 대한 날짜 시간 정보
         count: 거래기간까지 가져올 데이터의 갯수
-        '''
+        """
         if self.is_initialized == True:
             return
 
@@ -50,14 +49,16 @@ class VirtualMarket():
         self.__update_data()
 
     def deposit(self, balance):
-        '''자산 입출금'''
+        """자산 입출금을 할 수 있다"""
         self.balance += balance
         self.logger.info(f"Balance update {balance} to {self.balance}")
 
     def set_commission_ratio(self, ratio):
+        """수수료 비율 설정한다"""
         self.commission_ratio = ratio
 
     def get_balance(self):
+        """현금을 포함한 모든 자산 정보를 제공한다"""
         account_info = AccountInfo(balance=self.balance)
         total_value = 0
         total_amount = 0
@@ -88,13 +89,13 @@ class VirtualMarket():
         return account_info
 
     def initialize_from_file(self, filepath, end, count):
-        '''
-        파일로부터 거래 데이터를 가져와서 초기화
+        """
+        파일로부터 거래 데이터를 가져와서 초기화한다
 
         filepath: 거래 데이터 파일
         end: 거래기간의 끝
         count: 거래기간까지 가져올 데이터의 갯수
-        '''
+        """
         if self.is_initialized == True:
             return
 
@@ -110,17 +111,17 @@ class VirtualMarket():
 
     def __update_data(self):
         if self.end is not None:
-            self.querystring["to"] = self.end
+            self.query_string["to"] = self.end
         else:
-            self.querystring["to"] = "2020-11-11 00:00:00"
+            self.query_string["to"] = "2020-11-11 00:00:00"
 
         if self.count is not None:
-            self.querystring["count"] = self.count
+            self.query_string["count"] = self.count
         else:
-            self.querystring["count"] = 100
+            self.query_string["count"] = 100
 
         try:
-            response = self.http.request("GET", self.url, params=self.querystring)
+            response = self.http.request("GET", self.url, params=self.query_string)
             self.data = json.loads(response.text)
         except AttributeError as msg:
             self.logger.warning(msg)
@@ -128,13 +129,12 @@ class VirtualMarket():
 
         self.is_initialized = True
 
-    def handle_request(self, request):
-        '''
+    def send_request(self, request):
+        """
         거래 요청을 처리해서 결과를 반환
 
         request: 거래 요청 정보
-        '''
-
+        """
         if self.is_initialized == False:
             self.logger.warning("virtual market is NOT initialized")
             return TradingResult(None, None, None, None)

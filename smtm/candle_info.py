@@ -1,5 +1,5 @@
 class CandleInfo():
-    '''
+    """
     Candle로 표현되는 거래 정보를 담고 있는 클래스
 
     market: 거래 시장 종류 BTC
@@ -8,9 +8,9 @@ class CandleInfo():
     high_price: 최고 거래 가격
     low_price: 최저 거래 가격
     closing_price: 마지막 거래 가격
-    acc_price: 누적 거래 금액
-    acc_volume: 누적 거래 양
-    '''
+    acc_price: 단위 시간내 누적 거래 금액
+    acc_volume: 단위 시간내 누적 거래 양
+    """
     def __init__(self, market=None, date_time=None, 
                 opening_price=0, high_price=0, low_price=0, 
                 closing_price=0, acc_price=0, acc_volume=0):

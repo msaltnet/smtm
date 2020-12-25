@@ -10,7 +10,7 @@ class SimulationTraderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_handle_request_call_callback_with_result_of_market_handle_quest(self):
+    def test_send_request_call_callback_with_result_of_market_handle_quest(self):
         trader = SimulationTrader()
         class DummyRequest():
             pass
@@ -18,9 +18,9 @@ class SimulationTraderTests(unittest.TestCase):
         dummy_request.id = "mango"
         dummy_request.type = "orange"
         callback = MagicMock()
-        trader.market.handle_request = MagicMock(return_value="banana")
-        trader.handle_request(dummy_request, callback)
-        trader.market.handle_request.assert_called_once_with(dummy_request)
+        trader.market.send_request = MagicMock(return_value="banana")
+        trader.send_request(dummy_request, callback)
+        trader.market.send_request.assert_called_once_with(dummy_request)
         callback.assert_called_once_with("banana")
     def test_initialize_initialize_virtual_market(self):
         trader = SimulationTrader()

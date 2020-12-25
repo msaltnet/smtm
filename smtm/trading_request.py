@@ -1,14 +1,14 @@
 import time
 
 class TradingRequest():
-    '''
+    """
     거래 요청 정보를 담고 있는 클래스
 
     id: 요청 정보 id "1607862457.560075"
     type: 거래 유형 sell, buy
     price: 거래 가격
     amount: 거래 수량
-    '''
+    """
 
     def __init__(self, type=None, price=0, amount=0):
         self.__id = self.id = time.time()
@@ -25,6 +25,7 @@ class TradingRequest():
         pass
 
     def set_info(self, type=None, price=0, amount=0):
+        """거래 유형, 가격, 수량을 설정한다"""
         if self.__is_fixed:
             return
 
@@ -39,13 +40,16 @@ class TradingRequest():
             self.__is_fixed = True
 
     def is_stained(self):
+        """정보가 중간에서 변경되었는지 확인한다"""
         return (self.__type != self.type or
                 self.__price != self.price or
                 self.__amount != self.amount or
                 self.__id != self.id)
 
     def is_submitted(self):
+        """이미 요청된 정보인지 확인한다"""
         return self.__is_submitted
 
     def set_state_submitted(self):
+        """이미 요청된 정보라고 표기한다"""
         self.__is_submitted = True

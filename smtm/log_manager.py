@@ -2,6 +2,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 class LogManager():
+    """
+    파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공하는 클래스
+    """
+
     file_formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s - %(name)s:%(lineno)05d - %(message)s")
     file_handler = RotatingFileHandler(filename="smtm.log", maxBytes=1000000, backupCount=10)
     file_handler.setLevel(logging.INFO)
@@ -11,6 +15,9 @@ class LogManager():
 
     @classmethod
     def get_logger(cls, name):
+        """
+        파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공한다
+        """
         logger = logging.getLogger(name)
         if name in cls.logger_map:
             return logger
