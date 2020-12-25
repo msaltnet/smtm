@@ -43,7 +43,7 @@ class StrategyBuyAndHold(Strategy):
                 self.balance -= result.amount * result.price
                 self.logger.info(f'update balance to {self.balance}')
             self.logger.info(f"update request id: {result.request_id} ========")
-            self.logger.info(f"type: {result.type}")
+            self.logger.info(f"type: {result.type}, msg: {result.msg}")
             self.logger.info(f"price: {result.price}, amount: {result.amount}")
             self.logger.info(f"================================================")
             self.result.append(result)

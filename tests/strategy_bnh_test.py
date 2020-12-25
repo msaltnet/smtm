@@ -43,6 +43,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_result.request_id = "banana"
         dummy_result.price = "apple"
         dummy_result.amount = "kiwi"
+        dummy_result.msg = "melon"
 
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.result.pop(), dummy_result)
@@ -58,6 +59,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_result.request_id = "orange"
         dummy_result.price = 10
         dummy_result.amount = 5
+        dummy_result.msg = "melon"
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.balance, 50)
         self.assertEqual(bnh.result.pop(), dummy_result)
