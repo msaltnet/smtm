@@ -3,27 +3,25 @@ from .candle_info import CandleInfo
 from . import LogManager
 import json
 
-class SimulatorDataProvider(DataProvider):
+class SimulationDataProvider(DataProvider):
     '''
     거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
     '''
 
     url = "https://api.upbit.com/v1/candles/minutes/1"
     querystring = {"market":"KRW-BTC"}
-    end = None #"2020-01-19 20:34:42"
-    http = None
-    state = None
-    count = None
-    data = None
-    index = 0
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
+        self.is_initialized = False
+        self.end = None #"2020-01-19 20:34:42"
+        self.http = None
+        self.data = []
+        self.count = 0
+        self.index = 0
 
     def get_info(self):
         '''순차적으로 거래 정보 전달'''
-        if self.data is None or self.state is None:
-            return False
 
         now = self.index
         self.index = now + 1
@@ -31,16 +29,37 @@ class SimulatorDataProvider(DataProvider):
             return None
         return self.__create_candle_info(self.data[now])
 
-    def initialize(self, http):
-        self.initializeWithPeriod(http, None, 100)
-
-    def initializeWithPeriod(self, http, end, count):
+    def __initialize(self, end=None, count=100):
         self.index = 0
-        self.http = http
-        self.state = "initialized"
+        self.is_initialized = True
         self.end = end
         self.count = count
-        self.__get_data()
+
+    def initialize(self, http):
+        self.initialize_from_server(http)
+
+    def initialize_with_file(self, filepath, end=None, count=100):
+        if self.is_initialized:
+            return
+
+        self.__initialize(end, count)
+        self.__get_data_from_file(filepath)
+
+    def initialize_from_server(self, http, end=None, count=100):
+        if self.is_initialized:
+            return
+
+        self.__initialize(end, count)
+        self.http = http
+        self.__get_data_from_server()
+
+    def __get_data_from_file(self, filepath):
+        try :
+            with open(filepath, 'r') as data_file:
+                self.data = json.loads(data_file.read())
+                self.is_initialized = True
+        except FileNotFoundError as msg:
+            self.logger.warning(msg)
 
     def __create_candle_info(self, data):
         candle = CandleInfo()
@@ -58,8 +77,9 @@ class SimulatorDataProvider(DataProvider):
             return None
 
         return candle
-    def __get_data(self):
-        if self.http is None or self.state is None:
+
+    def __get_data_from_server(self):
+        if self.http is None or self.is_initialized != True:
             return False
 
         if self.end is not None :
@@ -74,7 +94,6 @@ class SimulatorDataProvider(DataProvider):
 
         response = self.http.request("GET", self.url, params=self.querystring)
         self.data = json.loads(response.text)
-        return self.data[0]
 
 # response info format
 # {

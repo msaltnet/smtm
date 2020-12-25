@@ -4,7 +4,7 @@ from .trading_request import TradingRequest
 from .trader import Trader
 from .virtual_market import VirtualMarket
 
-class SimulatorTrader(Trader):
+class SimulationTrader(Trader):
     '''
     거래 요청 정보를 받아서 거래소에 요청 후 결과를 돌려준다
 

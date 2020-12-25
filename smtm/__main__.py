@@ -18,9 +18,9 @@ class SmtmSimulator:
     def main(self):
         operator = SimulationOperator()
         self.operator = operator
-        dp = SimulatorDataProvider()
+        dp = SimulationDataProvider()
         strategy = StrategyBuyAndHold()
-        trader = SimulatorTrader()
+        trader = SimulationTrader()
         strategy.initialize(500000, 1000)
         operator.initialize(requests, threading, dp, strategy, trader)
         operator.setup(2)
