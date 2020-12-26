@@ -1,4 +1,6 @@
-class AccountInfo():
+import time
+
+class AssetInfo():
     """
     계좌 정보를 담고 있는 클래스
 
@@ -10,3 +12,4 @@ class AccountInfo():
         self.balance = balance
         self.asset_value = asset_value
         self.asset = asset
+        self.timestamp = time.time()

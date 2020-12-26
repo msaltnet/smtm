@@ -1,7 +1,7 @@
 from .log_manager import LogManager
 from .trading_result import TradingResult
 from .trading_request import TradingRequest
-from .account_info import AccountInfo
+from .asset_info import AssetInfo
 import json
 
 class VirtualMarket():
@@ -59,7 +59,7 @@ class VirtualMarket():
 
     def get_balance(self):
         """현금을 포함한 모든 자산 정보를 제공한다"""
-        account_info = AccountInfo(balance=self.balance)
+        asset_info = AssetInfo(balance=self.balance)
         total_value = 0
         total_amount = 0
         avr_price = 0
@@ -84,9 +84,9 @@ class VirtualMarket():
 
         if total_value > 0:
             asset.append((item_type, avr_price, total_amount))
-            account_info.asset_value = total_value
-        account_info.asset = asset
-        return account_info
+            asset_info.asset_value = total_value
+        asset_info.asset = asset
+        return asset_info
 
     def initialize_from_file(self, filepath, end, count):
         """

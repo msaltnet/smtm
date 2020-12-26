@@ -15,6 +15,7 @@ class TradingRequest():
         self.__type = self.type = type
         self.__price = self.price = price
         self.__amount = self.amount = amount
+        self.__timestamp = time.time()
 
         if type is not None and price > 0 and amount > 0:
             self.__is_fixed = True

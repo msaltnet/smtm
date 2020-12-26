@@ -1,3 +1,5 @@
+import time
+
 class TradingResult():
     """
     거래 요청의 결과 정보를 담고 있는 읽기 전용 클래스
@@ -17,4 +19,5 @@ class TradingResult():
         self.amount = amount
         self.msg = msg
         self.balance = balance
+        self.timestamp = time.time()
         pass
