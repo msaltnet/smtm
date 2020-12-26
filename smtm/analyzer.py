@@ -9,7 +9,7 @@ class Analyzer():
         self.request = []
         self.result = []
         self.asset_record_list = []
-        self.request_asset_update_func = None
+        self.update_info_func = None
         self.logger = LogManager.get_logger(__name__)
 
     def put_request(self, request):
@@ -18,15 +18,21 @@ class Analyzer():
 
     def put_result(self, result):
         """거래 결과 정보를 저장한다"""
-        if self.request_asset_update_func is None:
-            self.logger.warning("request_asset_update_func is NOT set")
+        if self.update_info_func is None:
+            self.logger.warning("update_info_func is NOT set")
             return
 
         self.result.append(result)
-        self.request_asset_update_func()
+        self.update_info_func("asset", self.put_asset_info)
 
-    def initialize(self, request_asset_update_func):
-        self.request_asset_update_func = request_asset_update_func
+    def initialize(self, update_info_func):
+        self.update_info_func = update_info_func
 
     def put_asset_info(self, asset_info):
         self.asset_record_list.append(asset_info)
+
+    def make_start_point(self):
+        self.request = []
+        self.result = []
+        self.asset_record_list = []
+        self.update_info_func("asset", self.put_asset_info)
