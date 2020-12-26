@@ -61,13 +61,16 @@ class VirtualMarket():
         """현금을 포함한 모든 자산 정보를 제공한다"""
         asset_info = AssetInfo(balance=self.balance)
         total_value = 0
+        total_estimate_value = 0
         total_amount = 0
         avr_price = 0
+        current_price = self.data[self.turn_count]["opening_price"]
         asset = []
         item_type = None
         self.logger.info(f'asset list length {len(self.asset)} =====================')
         for item in self.asset:
             total_value += item["price"] * item["amount"]
+            total_estimate_value += current_price * item["amount"]
             total_amount += item["amount"]
             self.logger.info(f'item price: {item["price"]}, amount: {item["amount"]} total_value: {total_value}')
             if item_type != None and item["type"] != item_type:
@@ -79,12 +82,12 @@ class VirtualMarket():
         except ZeroDivisionError:
             self.logger.info("total amount is zero")
 
-        total_value = round(total_value)
+        total_estimate_value = round(total_estimate_value)
         self.logger.info(f"asset len: {len(self.asset)}, total amount: {total_amount}, avr price {avr_price}")
 
-        if total_value > 0:
-            asset.append((item_type, avr_price, total_amount))
-            asset_info.asset_value = total_value
+        if total_estimate_value > 0:
+            asset.append((item_type, avr_price, current_price, total_amount))
+            asset_info.asset_value = total_estimate_value
         asset_info.asset = asset
         return asset_info
 
