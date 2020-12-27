@@ -35,16 +35,16 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_put_asset_info_append_asset_info(self):
         analyzer = Analyzer()
-        analyzer.make_yield_record = MagicMock()
+        analyzer.make_score_record = MagicMock()
         analyzer.put_asset_info("apple")
         self.assertEqual(analyzer.asset_record_list[-1], "apple")
 
-    def test_put_asset_info_should_call_make_yield_record(self):
+    def test_put_asset_info_should_call_make_score_record(self):
         analyzer = Analyzer()
-        analyzer.make_yield_record = MagicMock()
+        analyzer.make_score_record = MagicMock()
         analyzer.put_asset_info("apple")
         self.assertEqual(analyzer.asset_record_list[-1], "apple")
-        analyzer.make_yield_record.assert_called_once_with("apple")
+        analyzer.make_score_record.assert_called_once_with("apple")
 
     def test_make_start_point_call_update_info_func_with_asset_type_and_callback(self):
         analyzer = Analyzer()
@@ -63,7 +63,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.result), 0)
         self.assertEqual(len(analyzer.asset_record_list), 0)
 
-    def test_make_yield_record_create_correct_yield_record_when_asset_is_not_changed(self):
+    def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(self):
         analyzer = Analyzer()
         class DummyAssetInfo():
             pass
@@ -93,32 +93,32 @@ class AnalyzerTests(unittest.TestCase):
             "apple": 400}
         target_dummy_asset.timestamp = 500
 
-        analyzer.make_yield_record(target_dummy_asset)
-        self.assertEqual(len(analyzer.yield_record_list), 1)
+        analyzer.make_score_record(target_dummy_asset)
+        self.assertEqual(len(analyzer.score_record_list), 1)
 
-        yield_record = analyzer.yield_record_list[0]
-        self.assertEqual(yield_record.balance, 50000)
-        self.assertEqual(yield_record.cumulative_return, 6.149)
+        score_record = analyzer.score_record_list[0]
+        self.assertEqual(score_record.balance, 50000)
+        self.assertEqual(score_record.cumulative_return, 6.149)
 
-        self.assertEqual(yield_record.asset[0][0], "banana")
-        self.assertEqual(yield_record.asset[0][1], 1500)
-        self.assertEqual(yield_record.asset[0][2], 2000)
-        self.assertEqual(yield_record.asset[0][3], 10)
-        self.assertEqual(yield_record.asset[0][4], 33.333)
+        self.assertEqual(score_record.asset[0][0], "banana")
+        self.assertEqual(score_record.asset[0][1], 1500)
+        self.assertEqual(score_record.asset[0][2], 2000)
+        self.assertEqual(score_record.asset[0][3], 10)
+        self.assertEqual(score_record.asset[0][4], 33.333)
 
-        self.assertEqual(yield_record.asset[1][0], "mango")
-        self.assertEqual(yield_record.asset[1][1], 1000)
-        self.assertEqual(yield_record.asset[1][2], 1050)
-        self.assertEqual(yield_record.asset[1][3], 4.5)
-        self.assertEqual(yield_record.asset[1][4], 5)
+        self.assertEqual(score_record.asset[1][0], "mango")
+        self.assertEqual(score_record.asset[1][1], 1000)
+        self.assertEqual(score_record.asset[1][2], 1050)
+        self.assertEqual(score_record.asset[1][3], 4.5)
+        self.assertEqual(score_record.asset[1][4], 5)
 
-        self.assertEqual(yield_record.asset[2][0], "apple")
-        self.assertEqual(yield_record.asset[2][1], 250)
-        self.assertEqual(yield_record.asset[2][2], 400)
-        self.assertEqual(yield_record.asset[2][3], 2)
-        self.assertEqual(yield_record.asset[2][4], 60)
+        self.assertEqual(score_record.asset[2][0], "apple")
+        self.assertEqual(score_record.asset[2][1], 250)
+        self.assertEqual(score_record.asset[2][2], 400)
+        self.assertEqual(score_record.asset[2][3], 2)
+        self.assertEqual(score_record.asset[2][4], 60)
 
-    def test_make_yield_record_create_correct_yield_record_when_asset_is_changed(self):
+    def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
         class DummyAssetInfo():
             pass
@@ -146,26 +146,26 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset.timestamp = 500
 
-        analyzer.make_yield_record(target_dummy_asset)
-        self.assertEqual(len(analyzer.yield_record_list), 1)
+        analyzer.make_score_record(target_dummy_asset)
+        self.assertEqual(len(analyzer.score_record_list), 1)
 
-        yield_record = analyzer.yield_record_list[0]
-        self.assertEqual(yield_record.balance, 10000)
-        self.assertEqual(yield_record.cumulative_return, -67.191)
+        score_record = analyzer.score_record_list[0]
+        self.assertEqual(score_record.balance, 10000)
+        self.assertEqual(score_record.cumulative_return, -67.191)
 
-        self.assertEqual(yield_record.asset[0][0], "mango")
-        self.assertEqual(yield_record.asset[0][1], 1000)
-        self.assertEqual(yield_record.asset[0][2], 500)
-        self.assertEqual(yield_record.asset[0][3], 7.5)
-        self.assertEqual(yield_record.asset[0][4], -50)
+        self.assertEqual(score_record.asset[0][0], "mango")
+        self.assertEqual(score_record.asset[0][1], 1000)
+        self.assertEqual(score_record.asset[0][2], 500)
+        self.assertEqual(score_record.asset[0][3], 7.5)
+        self.assertEqual(score_record.asset[0][4], -50)
 
-        self.assertEqual(yield_record.asset[1][0], "apple")
-        self.assertEqual(yield_record.asset[1][1], 250)
-        self.assertEqual(yield_record.asset[1][2], 800)
-        self.assertEqual(yield_record.asset[1][3], 10.7)
-        self.assertEqual(yield_record.asset[1][4], 220)
+        self.assertEqual(score_record.asset[1][0], "apple")
+        self.assertEqual(score_record.asset[1][1], 250)
+        self.assertEqual(score_record.asset[1][2], 800)
+        self.assertEqual(score_record.asset[1][3], 10.7)
+        self.assertEqual(score_record.asset[1][4], 220)
 
-    def test_make_yield_record_create_correct_yield_record_when_start_asset_is_empty(self):
+    def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
         analyzer = Analyzer()
         class DummyAssetInfo():
             pass
@@ -191,21 +191,21 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset.timestamp = 500
 
-        analyzer.make_yield_record(target_dummy_asset)
-        self.assertEqual(len(analyzer.yield_record_list), 1)
+        analyzer.make_score_record(target_dummy_asset)
+        self.assertEqual(len(analyzer.score_record_list), 1)
 
-        yield_record = analyzer.yield_record_list[0]
-        self.assertEqual(yield_record.balance, 5000)
-        self.assertEqual(yield_record.cumulative_return, -65.248)
+        score_record = analyzer.score_record_list[0]
+        self.assertEqual(score_record.balance, 5000)
+        self.assertEqual(score_record.cumulative_return, -65.248)
 
-        self.assertEqual(yield_record.asset[0][0], "mango")
-        self.assertEqual(yield_record.asset[0][1], 500)
-        self.assertEqual(yield_record.asset[0][2], 300)
-        self.assertEqual(yield_record.asset[0][3], 5.23)
-        self.assertEqual(yield_record.asset[0][4], -40)
+        self.assertEqual(score_record.asset[0][0], "mango")
+        self.assertEqual(score_record.asset[0][1], 500)
+        self.assertEqual(score_record.asset[0][2], 300)
+        self.assertEqual(score_record.asset[0][3], 5.23)
+        self.assertEqual(score_record.asset[0][4], -40)
 
-        self.assertEqual(yield_record.asset[1][0], "apple")
-        self.assertEqual(yield_record.asset[1][1], 250)
-        self.assertEqual(yield_record.asset[1][2], 750)
-        self.assertEqual(yield_record.asset[1][3], 2.11)
-        self.assertEqual(yield_record.asset[1][4], 200)
+        self.assertEqual(score_record.asset[1][0], "apple")
+        self.assertEqual(score_record.asset[1][1], 250)
+        self.assertEqual(score_record.asset[1][2], 750)
+        self.assertEqual(score_record.asset[1][3], 2.11)
+        self.assertEqual(score_record.asset[1][4], 200)

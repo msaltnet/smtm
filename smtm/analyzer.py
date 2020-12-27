@@ -1,5 +1,5 @@
 from .log_manager import LogManager
-from .yield_record import YieldRecord
+from .score_record import ScoreRecord
 
 class Analyzer():
     """
@@ -8,7 +8,7 @@ class Analyzer():
     request: 거래 요청 정보 목록
     result: 거래 결과 정보 목록
     asset_record_list: 특정 시점에 기록된 자산 정보 목록, asset_info 클래스 사용
-    yield_record_list: 특정 시점에 기록된 수익률 정보 목록
+    score_record_list: 특정 시점에 기록된 수익률 정보 목록
     update_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
     """
 
@@ -16,7 +16,7 @@ class Analyzer():
         self.request = []
         self.result = []
         self.asset_record_list = []
-        self.yield_record_list = []
+        self.score_record_list = []
         self.update_info_func = None
         self.logger = LogManager.get_logger(__name__)
 
@@ -38,7 +38,7 @@ class Analyzer():
 
     def put_asset_info(self, asset_info):
         self.asset_record_list.append(asset_info)
-        self.make_yield_record(asset_info)
+        self.make_score_record(asset_info)
 
     def make_start_point(self):
         self.request = []
@@ -46,7 +46,7 @@ class Analyzer():
         self.asset_record_list = []
         self.update_info_func("asset", self.put_asset_info)
 
-    def make_yield_record(self, new_info):
+    def make_score_record(self, new_info):
         try:
             start_total = self.asset_record_list[0].balance
             start_quote = self.asset_record_list[0].quote
@@ -70,7 +70,7 @@ class Analyzer():
             cumulative_return = (current_total - start_total) / start_total * 100
             cumulative_return = round(cumulative_return, 3)
             self.logger.info(f'cumulative_return {start_total} -> {current_total}, {cumulative_return}%')
-            self.yield_record_list.append(YieldRecord(new_info.balance, 
+            self.score_record_list.append(ScoreRecord(new_info.balance, 
                 cumulative_return, new_asset_list))
         except IndexError as msg:
             self.logger.warning(msg)

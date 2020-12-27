@@ -1,6 +1,6 @@
 import time
 
-class YieldRecord():
+class ScoreRecord():
     """
     특정 시점의 수익률 정보를 담고 있는 클래스
 
