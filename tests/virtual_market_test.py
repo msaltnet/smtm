@@ -469,7 +469,6 @@ class VirtualMarketTests(unittest.TestCase):
         info = market.get_balance()
         self.assertEqual(info.balance, 2000)
         self.assertEqual(len(info.asset), 0)
-        self.assertEqual(info.asset_value, 0)
 
         market.data[0]["opening_price"] = 2000.00000000
         market.data[0]["high_price"] = 2100.00000000
@@ -512,7 +511,6 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(info.asset[0][1], 2000)
         self.assertEqual(info.asset[0][2], 2010)
         self.assertEqual(info.asset[0][3], 0.1)
-        self.assertEqual(info.asset_value, 201)
 
         dummy_request2 = DummyRequest()
         dummy_request2.id = "orange"
@@ -528,7 +526,6 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(info.asset[0][1], 1917)
         self.assertEqual(info.asset[0][2], 2020)
         self.assertEqual(info.asset[0][3], 0.6)
-        self.assertEqual(info.asset_value, 1212)
 
         dummy_request3 = DummyRequest()
         dummy_request3.id = "banana"
@@ -544,7 +541,6 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(info.asset[0][1], 1900)
         self.assertEqual(info.asset[0][2], 2030)
         self.assertEqual(info.asset[0][3], 0.4)
-        self.assertEqual(info.asset_value, 812)
 
         dummy_request4 = DummyRequest()
         dummy_request4.id = "banana"
@@ -556,4 +552,3 @@ class VirtualMarketTests(unittest.TestCase):
         info = market.get_balance()
         self.assertEqual(info.balance, 1913)
         self.assertEqual(len(info.asset), 0)
-        self.assertEqual(info.asset_value, 0)
