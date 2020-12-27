@@ -49,19 +49,22 @@ class Analyzer():
     def make_yield_record(self, new_info):
         try:
             start_total = self.asset_record_list[0].balance
+            start_quote = self.asset_record_list[0].quote
             current_total = new_info.balance
+            current_quote = new_info.quote
             cumulative_return = 0
             new_asset_list = []
 
             for asset in self.asset_record_list[0].asset:
-                start_total += asset[2] * asset[3]
+                start_total += asset[2] * start_quote[asset[0]]
 
             for asset in new_info.asset:
-                current_total += asset[2] * asset[3]
-                item_yield = (asset[2] - asset[1]) / asset[1] * 100
+                price = current_quote[asset[0]]
+                current_total += asset[2] * price
+                item_yield = (price - asset[1]) / asset[1] * 100
                 item_yield = round(item_yield, 3)
-                self.logger.info(f'yield record {asset[0]}, {asset[1]}, {asset[2]}, {asset[3]}, {item_yield}')
-                new_asset_list.append((asset[0], asset[1], asset[2], asset[3],
+                self.logger.info(f'yield record {asset[0]}, {asset[1]}, {price}, {asset[2]}, {item_yield}')
+                new_asset_list.append((asset[0], asset[1], price, asset[2],
                     item_yield))
 
             cumulative_return = (current_total - start_total) / start_total * 100

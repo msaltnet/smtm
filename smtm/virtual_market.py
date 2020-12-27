@@ -11,7 +11,7 @@ class VirtualMarket():
     http: http client 모듈(requests)
     end: 거래기간의 끝
     count: 거래기간까지 가져올 데이터의 갯수
-    data: 사용될 거래 정보
+    data: 사용될 거래 정보, CandleInfo 목록
     turn_count: 현재까지 진행된 턴수
     balance: 잔고
     commission_ratio: 수수료율
@@ -63,28 +63,27 @@ class VirtualMarket():
         total_value = 0
         total_amount = 0
         avr_price = 0
-        current_price = self.data[self.turn_count]["opening_price"]
+        # 현재는 단일 마켓만 지원
+        quote = {self.data[self.turn_count]["market"]: self.data[self.turn_count]["opening_price"]}
         asset = []
-        item_type = None
+        name = None
         self.logger.info(f'asset list length {len(self.asset)} =====================')
         for item in self.asset:
             total_value += item["price"] * item["amount"]
             total_amount += item["amount"]
             self.logger.info(f'item price: {item["price"]}, amount: {item["amount"]} total_value: {total_value}')
-            if item_type != None and item["type"] != item_type:
-                self.logger.warning(f"multiple item type is NOT supported {item_type} : {item['type']}")
-            item_type = item["type"]
-
-        try:
-            avr_price = round(total_value / total_amount)
-        except ZeroDivisionError:
-            self.logger.info("total amount is zero")
+            if name != None and item["name"] != name:
+                self.logger.warning(f"multiple item name is NOT supported now. {name} : {item['name']}")
+            name = item["name"]
+            if total_value > 0 and total_amount > 0:
+                avr_price = round(total_value / total_amount)
 
         self.logger.info(f"asset len: {len(self.asset)}, total amount: {total_amount}, avr price {avr_price}")
 
         if len(self.asset) > 0:
-            asset.append((item_type, avr_price, current_price, total_amount))
+            asset.append((name, avr_price, total_amount))
         asset_info.asset = asset
+        asset_info.quote = quote
         return asset_info
 
     def initialize_from_file(self, filepath, end, count):
@@ -163,7 +162,7 @@ class VirtualMarket():
             return TradingResult(request.id, request.type, 0, 0, "no money", self.balance)
 
         if request.price >= self.data[next]["low_price"]:
-            self.asset.append({"type": self.data[next]["market"], "price": request.price, "amount": request.amount})
+            self.asset.append({"name": self.data[next]["market"], "price": request.price, "amount": request.amount})
             self.logger.warning(f"[balance] from {self.balance}")
             self.logger.warning(f"[balance] - buy_asset_value {buy_asset_value}")
             self.logger.warning(f"[balance] - commission {buy_asset_value * self.commission_ratio}")
