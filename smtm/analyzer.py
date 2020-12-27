@@ -54,24 +54,38 @@ class Analyzer():
             current_quote = new_info.quote
             cumulative_return = 0
             new_asset_list = []
+            price_change_ratio = {}
 
             for asset in self.asset_record_list[0].asset:
                 start_total += asset[2] * start_quote[asset[0]]
 
             for asset in new_info.asset:
+                item_yield = 0
                 price = current_quote[asset[0]]
                 current_total += asset[2] * price
-                item_yield = (price - asset[1]) / asset[1] * 100
-                item_yield = round(item_yield, 3)
+                item_price_diff = price - asset[1]
+                if item_price_diff != 0:
+                    item_yield = (price - asset[1]) / asset[1] * 100
+                    item_yield = round(item_yield, 3)
                 self.logger.info(f'yield record {asset[0]}, {asset[1]}, {price}, {asset[2]}, {item_yield}')
-                new_asset_list.append((asset[0], asset[1], price, asset[2],
-                    item_yield))
+                new_asset_list.append((asset[0], asset[1], price, asset[2], item_yield))
 
-            cumulative_return = (current_total - start_total) / start_total * 100
-            cumulative_return = round(cumulative_return, 3)
+                start_price = start_quote[asset[0]]
+                price_change_ratio[asset[0]] = 0
+                price_diff = (price - start_price)
+                if price_diff != 0:
+                    price_change_ratio[asset[0]] = price_diff / start_price * 100
+                    price_change_ratio[asset[0]] = round(price_change_ratio[asset[0]], 3)
+                self.logger.info(f'price change ratio {start_price} -> {price}, {price_change_ratio[asset[0]]}%')
+
+            total_diff = current_total - start_total
+            if total_diff != 0:
+                cumulative_return = (current_total - start_total) / start_total * 100
+                cumulative_return = round(cumulative_return, 3)
             self.logger.info(f'cumulative_return {start_total} -> {current_total}, {cumulative_return}%')
+
             self.score_record_list.append(ScoreRecord(new_info.balance, 
-                cumulative_return, new_asset_list))
+                cumulative_return, new_asset_list, price_change_ratio))
         except IndexError as msg:
             self.logger.warning(msg)
         except AttributeError as msg:
