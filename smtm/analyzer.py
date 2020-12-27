@@ -38,6 +38,7 @@ class Analyzer():
 
     def put_asset_info(self, asset_info):
         self.asset_record_list.append(asset_info)
+        self.make_yield_record(asset_info)
 
     def make_start_point(self):
         self.request = []

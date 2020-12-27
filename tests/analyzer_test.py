@@ -35,8 +35,16 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_put_asset_info_append_asset_info(self):
         analyzer = Analyzer()
+        analyzer.make_yield_record = MagicMock()
         analyzer.put_asset_info("apple")
         self.assertEqual(analyzer.asset_record_list[-1], "apple")
+
+    def test_put_asset_info_should_call_make_yield_record(self):
+        analyzer = Analyzer()
+        analyzer.make_yield_record = MagicMock()
+        analyzer.put_asset_info("apple")
+        self.assertEqual(analyzer.asset_record_list[-1], "apple")
+        analyzer.make_yield_record.assert_called_once_with("apple")
 
     def test_make_start_point_call_update_info_func_with_asset_type_and_callback(self):
         analyzer = Analyzer()
