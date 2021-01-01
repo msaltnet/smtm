@@ -36,13 +36,7 @@ class OperatorTests(unittest.TestCase):
         operator = Operator()
         self.assertEqual(operator.start(), False)
 
-    def test_start_return_false_without_threading_dataProvider(self):
-        operator = Operator()
-        operator.initialize("apple", None, None, "banana", "orange")
-
-        self.assertEqual(operator.start(), False)
-
-    def test_start_should_call_get_info_and_set_timer_after_initialization(self):
+    def test_start_should_call_get_info_and_set_timer(self):
         timer_mock = Mock()
         threading_mock = Mock()
         threading_mock.Timer = MagicMock(return_value=timer_mock)
@@ -114,7 +108,26 @@ class OperatorTests(unittest.TestCase):
         operator.start()
         trader_mock.send_request.assert_not_called()
 
-    def test_stop_should_cancel_timer_and_set_false_isRunning(self):
+    def test_start_should_NOT_call_trader_send_request_when_request_is_None(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = Operator()
+        dp_mock = Mock()
+        dp_mock.initialize = MagicMock(return_value="")
+        dp_mock.get_info = MagicMock(return_value="mango")
+        strategy_mock = Mock()
+        strategy_mock.update_trading_info = MagicMock(return_value="orange")
+        strategy_mock.get_request = MagicMock(return_value=None)
+        trader_mock = Mock()
+        trader_mock.send_request = MagicMock()
+        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock)
+        operator.setup(27)
+        operator.start()
+        trader_mock.send_request.assert_not_called()
+
+    def test_stop_should_cancel_timer_and_set_false_is_running(self):
         timer_mock = Mock()
         threading_mock = Mock()
         threading_mock.Timer = MagicMock(return_value=timer_mock)

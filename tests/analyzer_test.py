@@ -253,6 +253,8 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_create_report_return_report_data_tuple(self):
         analyzer = Analyzer()
+        analyzer.initialize("mango")
+        analyzer.update_info_func = MagicMock()
         class DummyAssetInfo():
             pass
         dummy_asset = DummyAssetInfo()
@@ -295,3 +297,10 @@ class AnalyzerTests(unittest.TestCase):
         # 가격 변동률
         self.assertEqual(report[3]["mango"], -50)
         self.assertEqual(report[3]["apple"], 50)
+
+    def test_create_report_call_update_info_func_with_asset_type_and_callback(self):
+        analyzer = Analyzer()
+        analyzer.initialize("mango")
+        analyzer.update_info_func = MagicMock()
+        analyzer.create_report()
+        analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)

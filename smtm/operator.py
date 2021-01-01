@@ -19,6 +19,7 @@ class Operator():
         self.interval = 10 # default 10 second
         self.is_timer_running = False
         self.threading = None
+        self.is_initialized = False
 
     def initialize(self, http, threading, dataProvider, strategy, trader):
         """
@@ -34,6 +35,7 @@ class Operator():
         self.strategy = strategy
         self.trader = trader
         self.threading = threading
+        self.is_initialized = True
 
     def setup(self, interval):
         """
@@ -45,7 +47,7 @@ class Operator():
 
     def start(self):
         """자동 거래를 시작한다"""
-        if self.dp is None or self.threading is None:
+        if self.is_initialized != True:
             return False
 
         if self.is_timer_running:
@@ -56,10 +58,7 @@ class Operator():
 
     def __start_timer(self):
         """설정된 간격의 시간이 지난 후 자동 거래를 시작하도록 타이머 설정"""
-        if self.dp is None or self.threading is None:
-            return False
-
-        if self.is_timer_running:
+        if self.is_timer_running or self.is_initialized != True:
             return False
 
         self.timer = self.threading.Timer(self.interval, self.__process)
@@ -93,6 +92,6 @@ class Operator():
         """거래를 중단한다"""
         try:
             self.timer.cancel()
-        except AttributeError as identifier:
-            self.logger.warning(identifier)
+        except AttributeError:
+            self.logger.error('stop operation fail')
         self.is_timer_running = False

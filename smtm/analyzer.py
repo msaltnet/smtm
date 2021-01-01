@@ -83,17 +83,19 @@ class Analyzer():
 
             self.score_record_list.append(ScoreRecord(new_info.balance, 
                 cumulative_return, new_asset_list, price_change_ratio))
-        except IndexError as msg:
-            self.logger.warning(msg)
-        except AttributeError as msg:
-            self.logger.warning(msg)
+        except IndexError or AttributeError:
+            self.logger.error('making score record fail')
 
     def create_report(self):
-        start_value = self.__get_start_property_value()
-        last_value = self.__get_last_property_value()
-        return (start_value, last_value,
-            self.score_record_list[-1].cumulative_return,
-            self.score_record_list[-1].price_change_ratio)
+        self.update_info_func("asset", self.put_asset_info)
+        try:
+            start_value = self.__get_start_property_value()
+            last_value = self.__get_last_property_value()
+            return (start_value, last_value,
+                self.score_record_list[-1].cumulative_return,
+                self.score_record_list[-1].price_change_ratio)
+        except IndexError or AttributeError:
+            self.logger.error("create report FAIL")
 
     def __get_start_property_value(self):
         start_total = self.asset_record_list[0].balance
