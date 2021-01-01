@@ -19,9 +19,13 @@ class SimulationOperator(Operator):
         budget: 사용될 예산
         """
         super().initialize(http, threading, dataProvider, strategy, trader)
-        dataProvider.initialize_from_server(http, end=end, count=count)
-        trader.initialize(http, end=end, count=count, budget=budget)
-        strategy.initialize(budget)
+        try:
+            dataProvider.initialize_from_server(http, end=end, count=count)
+            trader.initialize(http, end=end, count=count, budget=budget)
+            strategy.initialize(budget)
+        except AttributeError:
+            self.is_initialized = False
+            self.logger.error("initialize fail")
 
     def setup(self, interval):
         super().setup(interval)

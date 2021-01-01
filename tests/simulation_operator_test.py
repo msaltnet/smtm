@@ -45,6 +45,16 @@ class SimulationOperatorTests(unittest.TestCase):
         OperatorInitialize.assert_called_once_with("apple", "kiwi", dp, strategy, trader)
         dp.initialize_from_server.assert_called_once_with("apple", end="papaya", count="pear")
 
+    @patch("smtm.Operator.initialize")
+    def test_initialize_set_is_initialized_False_when_AttributeError_occur(self, OperatorInitialize):
+        sop = SimulationOperator()
+        trader = Mock()
+        strategy = Mock()
+        dp = "make_exception"
+        sop.is_initialized = True
+        sop.initialize("apple", "kiwi", dp, strategy, trader, "papaya", "pear", "grape")
+        self.assertEqual(sop.is_initialized, False)
+
     @patch("smtm.Operator.setup")
     def test_setup_call_super_setup(self, OperatorSetup):
         sop = SimulationOperator()
