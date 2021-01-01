@@ -17,12 +17,24 @@ class SimulationTrader(Trader):
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
         self.market = VirtualMarket()
+        self.is_initialized = False
+
+    def initialize(self, http, end, count, budget):
+        try:
+            self.market.initialize(http, end, count)
+            self.market.deposit(budget)
+            self.is_initialized = True
+        except AttributeError:
+            self.logger.error('initialize fail')
 
     def send_request(self, request, callback):
         """거래 요청을 처리한다"""
-        result = self.market.send_request(request)
-        callback(result)
 
-    def initialize(self, http, end, count, budget):
-        self.market.initialize(http, end, count)
-        self.market.deposit(budget)
+        if self.is_initialized != True:
+            raise SystemError('Not initialzed')
+
+        try:
+            result = self.market.send_request(request)
+            callback(result)
+        except (TypeError, AttributeError):
+            raise SystemError('Not initialzed')
