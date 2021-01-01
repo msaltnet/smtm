@@ -20,6 +20,7 @@ class Operator():
         self.is_timer_running = False
         self.threading = None
         self.is_initialized = False
+        self.timer = None
 
     def initialize(self, http, threading, dataProvider, strategy, trader):
         """
