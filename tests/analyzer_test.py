@@ -250,3 +250,48 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(len(score_record.asset), 0)
         self.assertEqual(len(score_record.price_change_ratio.keys()), 0)
+
+    def test_create_report_return_report_data_tuple(self):
+        analyzer = Analyzer()
+        class DummyAssetInfo():
+            pass
+        dummy_asset = DummyAssetInfo()
+        dummy_asset.balance = 23456
+        dummy_asset.asset = []
+        dummy_asset.quote = {
+            "banana": 1700,
+            "mango": 600,
+            "apple": 500}
+        analyzer.asset_record_list.append(dummy_asset)
+
+        target_dummy_asset = DummyAssetInfo()
+        target_dummy_asset.balance = 5000
+        target_dummy_asset.asset = [
+            ("mango", 500, 5.23),
+            ("apple", 250, 2.11)]
+        target_dummy_asset.quote = {
+            "banana": 2000,
+            "mango": 300,
+            "apple": 750}
+        target_dummy_asset.timestamp = 500
+        analyzer.put_asset_info(target_dummy_asset)
+
+        report = analyzer.create_report()
+
+        # 입금 자산, 최종 자산, 누적 수익률, 가격 변동률을 포함한다
+        self.assertEqual(len(report), 4)
+
+        # 입금 자산
+        self.assertEqual(report[0], 23456)
+
+        # 최종 자산
+        # mango 300 * 5.23 = 1569, apple 750 * 2.11 = 1582.5, balance 5000
+        self.assertEqual(report[1], 8152)
+
+        # 누적 수익률
+        # (8151.5 - 23456) / 23456 * 100 = -65.248
+        self.assertEqual(report[2], -65.248)
+
+        # 가격 변동률
+        self.assertEqual(report[3]["mango"], -50)
+        self.assertEqual(report[3]["apple"], 50)

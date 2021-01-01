@@ -48,16 +48,13 @@ class Analyzer():
 
     def make_score_record(self, new_info):
         try:
-            start_total = self.asset_record_list[0].balance
+            start_total = self.__get_start_property_value()
             start_quote = self.asset_record_list[0].quote
             current_total = new_info.balance
             current_quote = new_info.quote
             cumulative_return = 0
             new_asset_list = []
             price_change_ratio = {}
-
-            for asset in self.asset_record_list[0].asset:
-                start_total += asset[2] * start_quote[asset[0]]
 
             for asset in new_info.asset:
                 item_yield = 0
@@ -90,3 +87,24 @@ class Analyzer():
             self.logger.warning(msg)
         except AttributeError as msg:
             self.logger.warning(msg)
+
+    def create_report(self):
+        start_value = self.__get_start_property_value()
+        last_value = self.__get_last_property_value()
+        return (start_value, last_value,
+            self.score_record_list[-1].cumulative_return,
+            self.score_record_list[-1].price_change_ratio)
+
+    def __get_start_property_value(self):
+        start_total = self.asset_record_list[0].balance
+        start_quote = self.asset_record_list[0].quote
+        for asset in self.asset_record_list[0].asset:
+            start_total += asset[2] * start_quote[asset[0]]
+        return start_total
+
+    def __get_last_property_value(self):
+        last_record = self.asset_record_list[-1]
+        last_total = last_record.balance
+        for asset in last_record.asset:
+            last_total += asset[2] * last_record.quote[asset[0]]
+        return round(last_total)
