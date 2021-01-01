@@ -14,13 +14,14 @@ class SimulationOperator(Operator):
         """
         시뮬레이션에 사용될 각 모듈을 전달 받아 초기화를 진행한다
 
-        end: 언제까지의 거래기간 정보를 사용할 것인지에 대한 날짜 시간 정보
+        end: 언제까지의 거래기간 정보를 사용할 것인지에 대한 날짜 시간 정보 yyyy-MM-dd HH:mm:ss
         count: 사용될 거래 정도 갯수
         budget: 사용될 예산
         """
         super().initialize(http, threading, dataProvider, strategy, trader)
-        self.trader.initialize(http, end, count, budget)
-        self.strategy.initialize(budget)
+        dataProvider.initialize_from_server(http, end=end, count=count)
+        trader.initialize(http, end=end, count=count, budget=budget)
+        strategy.initialize(budget)
 
     def setup(self, interval):
         super().setup(interval)

@@ -17,24 +17,33 @@ class SimulationOperatorTests(unittest.TestCase):
         trader = Mock()
         trader.initialize = MagicMock()
         strategy = Mock()
-        strategy.initialize = MagicMock()
-        sop.trader = trader
-        sop.strategy = strategy
-        sop.initialize("apple", "kiwi", "mango", strategy, "orange", "papaya", "pear", "grape")
-        OperatorInitialize.assert_called_once_with("apple", "kiwi", "mango", strategy, "orange")
-        trader.initialize.assert_called_once_with("apple", "papaya", "pear", "grape")
+        dp = Mock()
+        sop.initialize("apple", "kiwi", dp, strategy, trader, "papaya", "pear", "grape")
+        OperatorInitialize.assert_called_once_with("apple", "kiwi", dp, strategy, trader)
+        trader.initialize.assert_called_once_with("apple", end="papaya", count="pear", budget="grape")
 
     @patch("smtm.Operator.initialize")
     def test_initialize_call_strategy_initialize_with_config(self, OperatorInitialize):
         sop = SimulationOperator()
         trader = Mock()
-        trader.initialize = MagicMock()
         strategy = Mock()
         strategy.initialize = MagicMock()
-        sop.trader = trader
-        sop.strategy = strategy
-        sop.initialize("apple", "kiwi", "mango", strategy, "orange", "papaya", "pear", "grape")
+        dp = Mock()
+        dp.initialize_from_server = MagicMock()
+        sop.initialize("apple", "kiwi", dp, strategy, trader, "papaya", "pear", "grape")
+        OperatorInitialize.assert_called_once_with("apple", "kiwi", dp, strategy, trader)
         strategy.initialize.assert_called_once_with("grape")
+
+    @patch("smtm.Operator.initialize")
+    def test_initialize_call_simulator_dataProvider_initialize_from_server_correctly(self, OperatorInitialize):
+        sop = SimulationOperator()
+        trader = Mock()
+        strategy = Mock()
+        dp = Mock()
+        dp.initialize_from_server = MagicMock()
+        sop.initialize("apple", "kiwi", dp, strategy, trader, "papaya", "pear", "grape")
+        OperatorInitialize.assert_called_once_with("apple", "kiwi", dp, strategy, trader)
+        dp.initialize_from_server.assert_called_once_with("apple", end="papaya", count="pear")
 
     @patch("smtm.Operator.setup")
     def test_setup_call_super_setup(self, OperatorSetup):

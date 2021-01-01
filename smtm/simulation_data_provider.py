@@ -6,6 +6,9 @@ import json
 class SimulationDataProvider(DataProvider):
     """
     거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
+
+    업비트의 open api를 사용. 별도의 가입, 인증, token 없이 사용 가능
+    https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
     """
     url = "https://api.upbit.com/v1/candles/minutes/1"
     query_string = {"market":"KRW-BTC"}
@@ -25,6 +28,8 @@ class SimulationDataProvider(DataProvider):
         self.index = now + 1
         if now >= len(self.data):
             return None
+
+        self.logger.info(f'trading data at {self.data[now]["candle_date_time_utc"]}')
         return self.__create_candle_info(self.data[now])
 
     def __initialize(self, end=None, count=100):
@@ -44,6 +49,7 @@ class SimulationDataProvider(DataProvider):
 
         self.__initialize(end, count)
         self.__get_data_from_file(filepath)
+        self.logger.info(f'data is updated from file # file: {filepath}, end: {end}, count: {count}')
 
     def initialize_from_server(self, http, end=None, count=100):
         """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
@@ -53,6 +59,7 @@ class SimulationDataProvider(DataProvider):
         self.__initialize(end, count)
         self.http = http
         self.__get_data_from_server()
+        self.logger.info(f'data is updated from server # end: {end}, count: {count}')
 
     def __get_data_from_file(self, filepath):
         try :

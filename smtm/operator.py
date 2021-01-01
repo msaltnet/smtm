@@ -34,10 +34,6 @@ class Operator():
         self.strategy = strategy
         self.trader = trader
         self.threading = threading
-        self.trader = trader
-
-        if self.dp is not None:
-            self.dp.initialize(self.http)
 
     def setup(self, interval):
         """
@@ -85,7 +81,7 @@ class Operator():
                 self.strategy.update_result(result)
             target_request = self.strategy.get_request()
 
-            if target_request.price != 0:
+            if target_request is not None and target_request.price != 0:
                 self.trader.send_request(target_request, send_request_callback)
         finally:
             self.logger.debug("process is completed #####################")
