@@ -89,7 +89,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         request = bnh.get_request()
         self.assertEqual(request, None)
 
-    def test_get_request_return_error_when_target_budget_is_too_small(self):
+    def test_get_request_return_invalid_request_when_target_budget_is_too_small(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 100)
         bnh.update_trading_info("banana")
@@ -97,7 +97,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(request.price, 0)
         self.assertEqual(request.amount, 0)
 
-    def test_get_request_return_error_when_balance_is_smaller_than_target_budget(self):
+    def test_get_request_return_invalid_request_when_balance_is_smaller_than_target_budget(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(1000, 10)
         class DummyInfo():
@@ -106,6 +106,19 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_info.closing_price = 20000
         bnh.update_trading_info(dummy_info)
         bnh.balance = 10
+        request = bnh.get_request()
+        self.assertEqual(request.price, 0)
+        self.assertEqual(request.amount, 0)
+
+    def test_get_request_return_invalid_request_when_balance_is_smaller_than_min_price(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(900, 10)
+        class DummyInfo():
+            pass
+        dummy_info = DummyInfo()
+        dummy_info.closing_price = 20000
+        bnh.update_trading_info(dummy_info)
+        bnh.balance = 9.5
         request = bnh.get_request()
         self.assertEqual(request.price, 0)
         self.assertEqual(request.amount, 0)
@@ -122,17 +135,3 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(request.price, 20000000)
         self.assertEqual(request.amount, 100 / 20000000)
         self.assertEqual(request.type, 'buy')
-
-    def test_get_request_return_None_when_balance_is_too_small(self):
-        bnh = StrategyBuyAndHold()
-        bnh.initialize(1000, 100)
-        class DummyInfo():
-            pass
-        dummy_info = DummyInfo()
-        dummy_info.type = "buy"
-        dummy_info.price = 900.00000000001
-        dummy_info.amount = 1
-        bnh.update_result(dummy_info)
-        bnh.update_trading_info("banana")
-        request = bnh.get_request()
-        self.assertEqual(request, None)

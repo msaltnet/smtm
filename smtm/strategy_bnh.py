@@ -57,7 +57,7 @@ class StrategyBuyAndHold(Strategy):
         마지막 종가로 처음 예산의 1/10에 해당하는 양 만큼 매수시도
         """
         if self.is_intialized == False:
-            return None
+            return
 
         try:
             last_data = self.data[-1]
@@ -67,7 +67,7 @@ class StrategyBuyAndHold(Strategy):
                 self.logger.info('target_budget is too small')
                 return TradingRequest('buy', 0, 0)
 
-            if target_budget > self.balance or self.min_price > self.balance:
+            if target_budget > self.balance:
                 self.logger.info('blance is too small')
                 return TradingRequest('buy', 0, 0)
 
