@@ -83,6 +83,7 @@ class VirtualMarket():
         try:
             response = self.http.request("GET", self.url, params=self.query_string)
             self.data = json.loads(response.text)
+            self.data.reverse()
             self.is_initialized = True
         except AttributeError as msg:
             self.logger.error(msg)

@@ -29,8 +29,6 @@ class StrategyBuyAndHold(Strategy):
         """새로운 거래 정보를 업데이트"""
         if self.is_intialized == False:
             return
-
-        self.logger.info("update trading info")
         self.data.append(info)
 
     def update_result(self, result):

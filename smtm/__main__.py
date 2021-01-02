@@ -30,6 +30,7 @@ class SmtmSimulator:
             SimulationDataProvider(),
             StrategyBuyAndHold(),
             SimulationTrader(),
+            Analyzer(),
             end=self.end,
             count=self.count,
             budget=50000)

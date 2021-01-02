@@ -59,10 +59,13 @@ class VirtualMarketTests(unittest.TestCase):
         class DummyResponse():
             pass
         dummy_response = DummyResponse()
-        dummy_response.text = '[{"market": "mango"}]'
+        dummy_response.text = '[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]'
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
-        self.assertEqual(market.data[0]['market'], "mango")
+        # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
+        self.assertEqual(market.data[0]['market'], "apple")
+        self.assertEqual(market.data[1]['market'], "banana")
+        self.assertEqual(market.data[2]['market'], "mango")
 
     def test_intialize_NOT_initialize_with_invalid_response_data(self):
         market = VirtualMarket()

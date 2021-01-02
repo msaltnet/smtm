@@ -21,12 +21,13 @@ class Operator():
         self.threading = None
         self.is_initialized = False
         self.timer = None
+        self.analyzer = None
 
-    def initialize(self, http, threading, dataProvider, strategy, trader):
+    def initialize(self, http, threading, dataProvider, strategy, trader, analyzer):
         """
         운영에 필요한 모듈과 정보를 설정 및 각 모듈 초기화 수행
 
-        Http: http 클라이언트 requests 인스턴스
+        http: http 클라이언트 requests 인스턴스
         dataProvider: DataProvider 인스턴스
         strategy: Strategy 인스턴스
         trader: Trader 인스턴스
@@ -37,6 +38,7 @@ class Operator():
         self.trader = trader
         self.threading = threading
         self.is_initialized = True
+        self.analyzer = analyzer
 
     def setup(self, interval):
         """
@@ -54,39 +56,40 @@ class Operator():
         if self.is_timer_running:
             return False
 
-        self.__process()
+        self._excute_trading()
         return True
 
-    def __start_timer(self):
+    def _start_timer(self):
         """설정된 간격의 시간이 지난 후 자동 거래를 시작하도록 타이머 설정"""
         if self.is_timer_running or self.is_initialized != True:
             return False
 
-        self.timer = self.threading.Timer(self.interval, self.__process)
+        self.timer = self.threading.Timer(self.interval, self._excute_trading)
         self.timer.start()
 
         self.is_timer_running = True
         return True
 
-    def __process(self):
+    def _excute_trading(self):
         """자동 거래를 실행 후 타이머를 실행한다"""
-        if self.dp is None:
-            return False
-        self.logger.debug("process is started #####################")
+        self.logger.debug("trading is started #####################")
         self.is_timer_running = False
         try:
             self.strategy.update_trading_info(self.dp.get_info())
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")
                 self.strategy.update_result(result)
+                self.analyzer.put_result(result)
             target_request = self.strategy.get_request()
 
             if target_request is not None and target_request.price != 0:
                 self.trader.send_request(target_request, send_request_callback)
-        finally:
-            self.logger.debug("process is completed #####################")
+                self.analyzer.put_request(target_request)
+        except AttributeError:
+            self.logger.error('excuting fail')
 
-        self.__start_timer()
+        self.logger.debug("trading is completed #####################")
+        self._start_timer()
         return True
 
     def stop(self):

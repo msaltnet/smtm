@@ -151,8 +151,9 @@ class SimulationDataProviderTests(unittest.TestCase):
         dp.initialize_from_server(http_mock, "mango", 300)
         self.assertEqual(dp.is_initialized, True)
         self.assertEqual(len(dp.data), 2)
-        self.assertEqual(dp.data[0]['market'], "apple")
-        self.assertEqual(dp.data[1]['market'], "banana")
+        # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
+        self.assertEqual(dp.data[0]['market'], "banana")
+        self.assertEqual(dp.data[1]['market'], "apple")
 
     def test_initialize_from_server_call_request_with_correct_arguments(self):
         dp = SimulationDataProvider()

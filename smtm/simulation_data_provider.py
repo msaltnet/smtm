@@ -30,7 +30,7 @@ class SimulationDataProvider(DataProvider):
             return None
 
         self.index = now + 1
-        self.logger.info(f'trading data at {self.data[now]["candle_date_time_utc"]}')
+        self.logger.info(f'[DATA] @ {self.data[now]["candle_date_time_utc"]}')
         return self.__create_candle_info(self.data[now])
 
     def __initialize(self, end=None, count=100):
@@ -106,6 +106,7 @@ class SimulationDataProvider(DataProvider):
             response = self.http.request("GET", self.url, params=self.query_string)
             response.raise_for_status()
             self.data = json.loads(response.text)
+            self.data.reverse()
             self.is_initialized = True
         except ValueError:
             self.logger.error('Invalid data from server')
