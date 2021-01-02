@@ -55,7 +55,7 @@ class Analyzer():
             cumulative_return = 0
             new_asset_list = []
             price_change_ratio = {}
-
+            self.logger.info(f'quote {current_quote}')
             for asset in new_info.asset:
                 item_yield = 0
                 price = current_quote[asset[0]]
@@ -91,9 +91,14 @@ class Analyzer():
         try:
             start_value = self.__get_start_property_value()
             last_value = self.__get_last_property_value()
-            return (start_value, last_value,
-                self.score_record_list[-1].cumulative_return,
-                self.score_record_list[-1].price_change_ratio)
+            last_return = self.score_record_list[-1].cumulative_return
+            change_ratio = self.score_record_list[-1].price_change_ratio
+            self.logger.info("### Analyzer Report =======================")
+            self.logger.info(f"Property {start_value} -> {last_value}")
+            self.logger.info(f"gap {last_value - start_value}")
+            self.logger.info(f"cumulative return {last_return}%")
+            self.logger.info(f"price_change_ratio {change_ratio}")
+            return (start_value, last_value, last_return, change_ratio)
         except IndexError or AttributeError:
             self.logger.error("create report FAIL")
 

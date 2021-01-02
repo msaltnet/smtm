@@ -77,6 +77,21 @@ class SimulationOperatorTests(unittest.TestCase):
         sop.start()
         OperatorStart.assert_called_once()
 
+    @patch("smtm.Operator.start")
+    def test_start_should_call_analyzer_make_start_point(self, OperatorStart):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+        operator = SimulationOperator()
+        analyzer_mock = Mock()
+        analyzer_mock.make_start_point = MagicMock()
+        trader_mock = Mock()
+        dp_mock = Mock()
+        strategy_mock = Mock()
+        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.start()
+        analyzer_mock.make_start_point.assert_called_once()
+
     @patch("smtm.Operator.stop")
     def test_stop_call_super_stop(self, OperatorStop):
         sop = SimulationOperator()
@@ -183,7 +198,7 @@ class SimulationOperatorTests(unittest.TestCase):
         analyzer_mock.create_report.assert_called_once()
         operator.stop.assert_called_once()
 
-    def test_start_should_NOT_call_trader_send_request_when_request_is_None(self):
+    def test_excute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
         timer_mock = Mock()
         threading_mock = Mock()
         threading_mock.Timer = MagicMock(return_value=timer_mock)
@@ -200,5 +215,5 @@ class SimulationOperatorTests(unittest.TestCase):
         trader_mock.send_request = MagicMock()
         operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.setup(27)
-        operator.start()
+        operator._excute_trading()
         trader_mock.send_request.assert_not_called()

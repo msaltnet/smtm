@@ -62,6 +62,10 @@ class SimulationOperator(Operator):
         super().setup(interval)
 
     def start(self):
+        try:
+            self.analyzer.make_start_point()
+        except AttributeError:
+            self.logger.error('make start point fail')
         return super().start()
 
     def stop(self):
