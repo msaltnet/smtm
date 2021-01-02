@@ -11,6 +11,24 @@ class VirtualMarketTests(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def create_http_mock(self):
+        http_mock = Mock()
+        class HTTPError(Exception):
+            def __init__(self, value):
+                self.value = value
+            def __str__(self):
+                return self.value
+
+        class RequestException(Exception):
+            def __init__(self, value):
+                self.value = value
+            def __str__(self):
+                return self.value
+
+        http_mock.exceptions.HTTPError = HTTPError
+        http_mock.exceptions.RequestException = RequestException
+        return http_mock
+
     def test_intialize_should_download_from_real_market(self):
         market = VirtualMarket()
         http = Mock()
@@ -45,6 +63,67 @@ class VirtualMarketTests(unittest.TestCase):
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
         self.assertEqual(market.data[0]['market'], "mango")
+
+    def test_intialize_NOT_initialize_with_invalid_response_data(self):
+        market = VirtualMarket()
+        http = Mock()
+        class DummyResponse():
+            pass
+        dummy_response = DummyResponse()
+        dummy_response.text = 'mango'
+        http.request = MagicMock(return_value=dummy_response)
+        market.initialize(http, None, None)
+        self.assertEqual(market.is_initialized, False)
+
+    def test_intialize_NOT_initialize_when_receive_error(self):
+        market = VirtualMarket()
+        http_mock = self.create_http_mock()
+
+        def raise_exception():
+            raise http_mock.exceptions.HTTPError('HTTPError dummy exception')
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.text = 'mango'
+        dummy_response.raise_for_status = raise_exception
+        http_mock.request = MagicMock(return_value=dummy_response)
+        market.initialize(http_mock, None, None)
+        self.assertEqual(market.is_initialized, False)
+
+    def test_intialize_NOT_initialize_when_receive_error(self):
+        market = VirtualMarket()
+        http_mock = self.create_http_mock()
+
+        def raise_exception():
+            raise http_mock.exceptions.RequestException('RequestException dummy exception')
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.text = 'mango'
+        dummy_response.raise_for_status = raise_exception
+        http_mock.request = MagicMock(return_value=dummy_response)
+        market.initialize(http_mock, None, None)
+        self.assertEqual(market.is_initialized, False)
+
+    def test_initialize_set_default_params(self):
+        market = VirtualMarket()
+        http_mock = self.create_http_mock()
+
+        def raise_exception():
+            pass
+        class DummyResponse:
+            pass
+        dummy_response = DummyResponse()
+        dummy_response.text = '[{"market": "mango"}]'
+        dummy_response.raise_for_status = raise_exception
+        http_mock.request = MagicMock(return_value=dummy_response)
+        market.initialize(http_mock, None, None)
+        http_mock.request.assert_called_once_with("GET", market.url, params=market.query_string)
+        self.assertEqual(market.is_initialized, True)
+        self.assertEqual(market.query_string["to"], "2020-11-11 00:00:00")
+        self.assertEqual(market.query_string["count"], 100)
 
     def test_intialize_from_file_update_trading_data(self):
         market = VirtualMarket()
@@ -145,6 +224,37 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.amount, 0)
         self.assertEqual(result.msg, "not matched")
 
+    def test_send_request_handle_buy_return_error_request_when_data_invalid(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
+        market.deposit(2000)
+
+        market.data[0]["pening_price"] = 2000.00000000
+        market.data[0]["igh_price"] = 2100.00000000
+        market.data[0]["ow_price"] = 1900.00000000
+        market.data[0]["rade_price"] = 2050.00000000
+
+        market.data[1]["pening_price"] = 2000.00000000
+        market.data[1]["igh_price"] = 2100.00000000
+        market.data[1]["ow_price"] = 1900.00000000
+        market.data[1]["rade_price"] = 2050.00000000
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "buy"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+
+        result = market.send_request(dummy_request)
+        self.assertEqual(result.request_id, "mango")
+        self.assertEqual(result.type, "buy")
+        self.assertEqual(result.price, -1)
+        self.assertEqual(result.amount, -1)
+        self.assertEqual(result.msg, "internal error")
+        self.assertEqual(result.balance, 2000)
+
     def test_send_request_handle_sell_return_result_corresponding_next_data(self):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
@@ -234,6 +344,37 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.amount, 0.05)
         self.assertEqual(result.msg, "success")
         self.assertEqual(result.balance, 1980)
+
+    def test_send_request_handle_sell_return_error_request_when_data_invalid(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
+        market.deposit(2000)
+
+        market.data[0]["pening_price"] = 2000.00000000
+        market.data[0]["igh_price"] = 2100.00000000
+        market.data[0]["ow_price"] = 1900.00000000
+        market.data[0]["rade_price"] = 2050.00000000
+
+        market.data[1]["pening_price"] = 2000.00000000
+        market.data[1]["igh_price"] = 2100.00000000
+        market.data[1]["ow_price"] = 1900.00000000
+        market.data[1]["rade_price"] = 2050.00000000
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "sell"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+
+        result = market.send_request(dummy_request)
+        self.assertEqual(result.request_id, "mango")
+        self.assertEqual(result.type, "sell")
+        self.assertEqual(result.price, -1)
+        self.assertEqual(result.amount, -1)
+        self.assertEqual(result.msg, "internal error")
+        self.assertEqual(result.balance, 2000)
 
     def test_send_request_handle_return_error_when_invalid_type(self):
         market = VirtualMarket()
@@ -553,3 +694,10 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(info.balance, 1913)
         self.assertEqual(len(info.asset), 0)
         self.assertEqual(info.quote["mango"], 2040)
+
+    def test_get_balance_return_None_when_data_invalid(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
+        market.deposit(2000)
+        info = market.get_balance()
+        self.assertEqual(info, None)
