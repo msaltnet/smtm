@@ -18,6 +18,7 @@ class Operator():
         self.trader = None
         self.interval = 10 # default 10 second
         self.is_timer_running = False
+        self.is_terminating = False
         self.threading = None
         self.is_initialized = False
         self.timer = None
@@ -56,19 +57,21 @@ class Operator():
         if self.is_timer_running:
             return False
 
+        self.logger.info('===== Start operating =====')
         self._excute_trading()
         return True
 
     def _start_timer(self):
         """설정된 간격의 시간이 지난 후 자동 거래를 시작하도록 타이머 설정"""
-        if self.is_timer_running or self.is_initialized != True:
-            return False
+        if (self.is_timer_running or self.is_initialized != True
+            or self.is_terminating):
+            return
 
         self.timer = self.threading.Timer(self.interval, self._excute_trading)
         self.timer.start()
 
         self.is_timer_running = True
-        return True
+        return
 
     def _excute_trading(self):
         """자동 거래를 실행 후 타이머를 실행한다"""
@@ -94,8 +97,10 @@ class Operator():
 
     def stop(self):
         """거래를 중단한다"""
+        self.logger.info('===== Stop operating =====')
         try:
             self.timer.cancel()
         except AttributeError:
             self.logger.error('stop operation fail')
         self.is_timer_running = False
+        self.is_terminating = True

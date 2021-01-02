@@ -176,8 +176,47 @@ class OperatorTests(unittest.TestCase):
         self.assertFalse(operator.is_timer_running)
         timer_mock.cancel.assert_called_once()
 
-    def test_stop_should_set_false_is_timer_running_when_timer_is_None(self):
+    def test_stop_should_set_is_terminating_True_and_is_timer_running_False(self):
         operator = Operator()
         operator.is_timer_running = True
         operator.stop()
         self.assertFalse(operator.is_timer_running)
+        self.assertTrue(operator.is_terminating)
+
+    def test_start_timer_should_call_Timer_and_start(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = Operator()
+        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+
+        operator.setup(27)
+        operator._start_timer()
+
+        threading_mock.Timer.assert_called_once_with(27, ANY)
+        timer_mock.start.assert_called_once()
+
+    def test_start_timer_should_NOT_call_Timer_and_start_when_is_terminating_True(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = Operator()
+        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        operator.is_terminating = True
+        operator.setup(27)
+        operator._start_timer()
+
+        threading_mock.Timer.assert_not_called()
+        timer_mock.start.assert_not_called()
+
+    def test_start_timer_should_set_is_timer_running_true(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = Operator()
+        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        operator._start_timer()
+        self.assertEqual(operator.is_timer_running, True)

@@ -60,14 +60,16 @@ class StrategyBuyAndHold(Strategy):
         try:
             last_data = self.data[-1]
             target_budget = self.budget / 10
+            if last_data is None:
+                return TradingRequest('buy', 0, 0)
 
             if self.min_price > target_budget:
                 self.logger.info('target_budget is too small')
-                return TradingRequest('buy', 0, 0)
+                return
 
             if target_budget > self.balance:
                 self.logger.info('blance is too small')
-                return TradingRequest('buy', 0, 0)
+                return
 
             target_amount = target_budget / last_data.closing_price
             trading_request = TradingRequest('buy', last_data.closing_price, target_amount)
@@ -77,9 +79,9 @@ class StrategyBuyAndHold(Strategy):
             self.logger.info(f"================================================")
             return trading_request
         except IndexError:
-            self.logger.warning('empty data')
+            self.logger.error('empty data')
         except AttributeError as msg:
-            self.logger.warning(msg)
+            self.logger.error(msg)
 
     def initialize(self, budget, min_price=100):
         """

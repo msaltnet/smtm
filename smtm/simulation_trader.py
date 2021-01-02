@@ -36,5 +36,17 @@ class SimulationTrader(Trader):
         try:
             result = self.market.send_request(request)
             callback(result)
-        except (TypeError, AttributeError):
+        except (TypeError, AttributeError) as msg:
+            self.logger.error(f'invalid state{msg}')
+
+    def send_account_info_request(self, callback):
+        """계좌 요청 정보를 요청한다"""
+
+        if self.is_initialized != True:
             raise SystemError('Not initialzed')
+
+        try:
+            result = self.market.get_balance()
+            callback(result)
+        except (TypeError, AttributeError) as msg:
+            self.logger.error(f'invalid state{msg}')

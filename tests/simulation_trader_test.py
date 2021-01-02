@@ -69,3 +69,37 @@ class SimulationTraderTests(unittest.TestCase):
             trader.send_request(None, None)
         except SystemError as msg:
             self.assertEqual(msg, ANY)
+
+    def test_send_account_info_request_call_callback_with_virtual_market_get_balance_result(self):
+        trader = SimulationTrader()
+        trader.is_initialized = True
+        callback = MagicMock()
+        trader.market.get_balance = MagicMock(return_value="banana")
+        trader.send_account_info_request(callback)
+        trader.market.get_balance.assert_called_once()
+        callback.assert_called_once_with("banana")
+
+    def test_send_account_info_request_call_raise_exception_SystemError_when_is_initialized_False(self):
+        trader = SimulationTrader()
+        trader.is_initialized = False
+        try:
+            trader.send_account_info_request(None)
+        except SystemError as msg:
+            self.assertEqual(msg, ANY)
+
+    def test_send_account_info_request_call_raise_exception_SystemError_when_market_is_invalid(self):
+        trader = SimulationTrader()
+        trader.is_initialized = True
+        trader.market = "make exception"
+        try:
+            trader.send_account_info_request(None)
+        except SystemError as msg:
+            self.assertEqual(msg, ANY)
+
+    def test_send_account_info_request_call_raise_exception_SystemError_when_callback_make_TypeError(self):
+        trader = SimulationTrader()
+        trader.is_initialized = True
+        try:
+            trader.send_account_info_request(None)
+        except SystemError as msg:
+            self.assertEqual(msg, ANY)

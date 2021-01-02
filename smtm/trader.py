@@ -9,3 +9,8 @@ class Trader(metaclass=ABCMeta):
     def send_request(self, request, callback):
         """거래 요청 정보를 보낸다"""
         pass
+
+    @abstractmethod
+    def send_account_info_request(self, callback):
+        """계좌 요청 정보를 요청한다"""
+        pass

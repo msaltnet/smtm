@@ -23,6 +23,11 @@ class SimulationOperator(Operator):
             dataProvider.initialize_from_server(http, end=end, count=count)
             trader.initialize(http, end=end, count=count, budget=budget)
             strategy.initialize(budget)
+            def handle_info_request(name, callback):
+                if name == 'asset':
+                    trader.send_account_info_request(callback)
+
+            analyzer.initialize(handle_info_request)
         except AttributeError:
             self.is_initialized = False
             self.logger.error("initialize fail")
@@ -35,11 +40,15 @@ class SimulationOperator(Operator):
             self.strategy.update_trading_info(self.dp.get_info())
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")
+                if result.msg == 'game-over':
+                    self.analyzer.create_report()
+                    self.stop()
+                    return
                 self.strategy.update_result(result)
                 self.analyzer.put_result(result)
             target_request = self.strategy.get_request()
 
-            if target_request is not None and target_request.price != 0:
+            if target_request is not None:
                 self.trader.send_request(target_request, send_request_callback)
                 self.analyzer.put_request(target_request)
         except AttributeError:
