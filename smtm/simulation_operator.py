@@ -9,6 +9,10 @@ class SimulationOperator(Operator):
     def __init__(self):
         super().__init__()
         self.logger = LogManager.get_logger(__name__)
+        self.turn = 0
+        self.end = None
+        self.count = 0
+        self.budget = 0
 
     def initialize(self, http, threading, dataProvider, strategy, trader, analyzer, end=None, count=100, budget=500):
         """
@@ -19,6 +23,9 @@ class SimulationOperator(Operator):
         budget: 사용될 예산
         """
         super().initialize(http, threading, dataProvider, strategy, trader, analyzer)
+        self.end = end
+        self.count = count
+        self.budget = budget
         try:
             dataProvider.initialize_from_server(http, end=end, count=count)
             trader.initialize(http, end=end, count=count, budget=budget)
@@ -34,7 +41,7 @@ class SimulationOperator(Operator):
 
     def _excute_trading(self):
         """자동 거래를 실행 후 타이머를 실행한다"""
-        self.logger.debug("##################### trading is started")
+        self.logger.debug(f"##################### trading is started : {self.turn} / {self.count}")
         self.is_timer_running = False
         try:
             self.strategy.update_trading_info(self.dp.get_info())
@@ -54,6 +61,7 @@ class SimulationOperator(Operator):
         except AttributeError:
             self.logger.error('excuting fail')
 
+        self.turn += 1
         self.logger.debug("##################### trading is completed")
         self._start_timer()
         return True

@@ -65,11 +65,11 @@ class StrategyBuyAndHold(Strategy):
 
             if self.min_price > target_budget:
                 self.logger.info('target_budget is too small')
-                return
+                return TradingRequest('buy', 0, 0)
 
             if target_budget > self.balance:
                 self.logger.info('blance is too small')
-                return
+                return TradingRequest('buy', 0, 0)
 
             target_amount = target_budget / last_data.closing_price
             trading_request = TradingRequest('buy', last_data.closing_price, target_amount)

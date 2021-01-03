@@ -183,20 +183,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
 
-        market.data[0]["opening_price"] = 2000.00000000
-        market.data[0]["high_price"] = 2100.00000000
-        market.data[0]["low_price"] = 1900.00000000
-        market.data[0]["trade_price"] = 2050.00000000
-
-        market.data[1]["opening_price"] = 2000.00000000
-        market.data[1]["high_price"] = 2100.00000000
-        market.data[1]["low_price"] = 1900.00000000
-        market.data[1]["trade_price"] = 2050.00000000
-
-        market.data[2]["opening_price"] = 2000.00000000
-        market.data[2]["high_price"] = 2100.00000000
-        market.data[2]["low_price"] = 1900.00000000
-        market.data[2]["trade_price"] = 2050.00000000
+        for i in range(3):
+            market.data[i]["opening_price"] = 2000.00000000
+            market.data[i]["high_price"] = 2100.00000000
+            market.data[i]["low_price"] = 1900.00000000
+            market.data[i]["trade_price"] = 2050.00000000
 
         class DummyRequest():
             pass
@@ -232,15 +223,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
 
-        market.data[0]["pening_price"] = 2000.00000000
-        market.data[0]["igh_price"] = 2100.00000000
-        market.data[0]["ow_price"] = 1900.00000000
-        market.data[0]["rade_price"] = 2050.00000000
-
-        market.data[1]["pening_price"] = 2000.00000000
-        market.data[1]["igh_price"] = 2100.00000000
-        market.data[1]["ow_price"] = 1900.00000000
-        market.data[1]["rade_price"] = 2050.00000000
+        for i in range(3):
+            market.data[i]["pening_price"] = 2000.00000000
+            market.data[i]["igh_price"] = 2100.00000000
+            market.data[i]["ow_price"] = 1900.00000000
+            market.data[i]["rade_price"] = 2050.00000000
 
         class DummyRequest():
             pass
@@ -263,30 +250,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
 
-        market.data[0]["opening_price"] = 2000.00000000
-        market.data[0]["high_price"] = 2100.00000000
-        market.data[0]["low_price"] = 1900.00000000
-        market.data[0]["trade_price"] = 2050.00000000
-
-        market.data[1]["opening_price"] = 2000.00000000
-        market.data[1]["high_price"] = 2100.00000000
-        market.data[1]["low_price"] = 1900.00000000
-        market.data[1]["trade_price"] = 2050.00000000
-
-        market.data[2]["opening_price"] = 2000.00000000
-        market.data[2]["high_price"] = 2100.00000000
-        market.data[2]["low_price"] = 1900.00000000
-        market.data[2]["trade_price"] = 2050.00000000
-
-        market.data[3]["opening_price"] = 2000.00000000
-        market.data[3]["high_price"] = 2100.00000000
-        market.data[3]["low_price"] = 1900.00000000
-        market.data[3]["trade_price"] = 2050.00000000
-
-        market.data[4]["opening_price"] = 2000.00000000
-        market.data[4]["high_price"] = 2100.00000000
-        market.data[4]["low_price"] = 1900.00000000
-        market.data[4]["trade_price"] = 2050.00000000
+        for i in range(6):
+            market.data[i]["opening_price"] = 2000.00000000
+            market.data[i]["high_price"] = 2100.00000000
+            market.data[i]["low_price"] = 1900.00000000
+            market.data[i]["trade_price"] = 2050.00000000
 
         class DummyRequest():
             pass
@@ -353,15 +321,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
 
-        market.data[0]["pening_price"] = 2000.00000000
-        market.data[0]["igh_price"] = 2100.00000000
-        market.data[0]["ow_price"] = 1900.00000000
-        market.data[0]["rade_price"] = 2050.00000000
-
-        market.data[1]["pening_price"] = 2000.00000000
-        market.data[1]["igh_price"] = 2100.00000000
-        market.data[1]["ow_price"] = 1900.00000000
-        market.data[1]["rade_price"] = 2050.00000000
+        for i in range(3):
+            market.data[i]["pening_price"] = 2000.00000000
+            market.data[i]["igh_price"] = 2100.00000000
+            market.data[i]["ow_price"] = 1900.00000000
+            market.data[i]["rade_price"] = 2050.00000000
 
         class DummyRequest():
             pass
@@ -403,20 +367,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(200)
 
-        market.data[0]["opening_price"] = 2000.00000000
-        market.data[0]["high_price"] = 2100.00000000
-        market.data[0]["low_price"] = 1900.00000000
-        market.data[0]["trade_price"] = 2050.00000000
-
-        market.data[1]["opening_price"] = 2000.00000000
-        market.data[1]["high_price"] = 2100.00000000
-        market.data[1]["low_price"] = 1900.00000000
-        market.data[1]["trade_price"] = 2050.00000000
-
-        market.data[2]["opening_price"] = 2000.00000000
-        market.data[2]["high_price"] = 2100.00000000
-        market.data[2]["low_price"] = 1900.00000000
-        market.data[2]["trade_price"] = 2050.00000000
+        for i in range(3):
+            market.data[i]["opening_price"] = 2000.00000000
+            market.data[i]["high_price"] = 2100.00000000
+            market.data[i]["low_price"] = 1900.00000000
+            market.data[i]["trade_price"] = 2050.00000000
 
         class DummyRequest():
             pass
@@ -455,25 +410,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.deposit(2000)
         self.assertEqual(market.balance, 2000)
 
-        market.data[0]["opening_price"] = 2000.00000000
-        market.data[0]["high_price"] = 2100.00000000
-        market.data[0]["low_price"] = 1900.00000000
-        market.data[0]["trade_price"] = 2050.00000000
-
-        market.data[1]["opening_price"] = 2000.00000000
-        market.data[1]["high_price"] = 2100.00000000
-        market.data[1]["low_price"] = 1900.00000000
-        market.data[1]["trade_price"] = 2050.00000000
-
-        market.data[2]["opening_price"] = 2000.00000000
-        market.data[2]["high_price"] = 2100.00000000
-        market.data[2]["low_price"] = 1900.00000000
-        market.data[2]["trade_price"] = 2050.00000000
-
-        market.data[3]["opening_price"] = 2000.00000000
-        market.data[3]["high_price"] = 2100.00000000
-        market.data[3]["low_price"] = 1900.00000000
-        market.data[3]["trade_price"] = 2050.00000000
+        for i in range(4):
+            market.data[i]["opening_price"] = 2000.00000000
+            market.data[i]["high_price"] = 2100.00000000
+            market.data[i]["low_price"] = 1900.00000000
+            market.data[i]["trade_price"] = 2050.00000000
 
         class DummyRequest():
             pass
@@ -532,7 +473,7 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request.price = 2000
         dummy_request.amount = 0.1
 
-        for i in market.data:
+        for i in range(len(market.data)-2):
             result = market.send_request(dummy_request)
             self.assertEqual(result.request_id, "mango")
             self.assertEqual(result.type, "buy")
@@ -548,20 +489,11 @@ class VirtualMarketTests(unittest.TestCase):
         market.deposit(2000)
         self.assertEqual(market.balance, 2000)
 
-        market.data[0]["opening_price"] = 2000.00000000
-        market.data[0]["high_price"] = 2100.00000000
-        market.data[0]["low_price"] = 1900.00000000
-        market.data[0]["trade_price"] = 2050.00000000
-
-        market.data[1]["opening_price"] = 2000.00000000
-        market.data[1]["high_price"] = 2100.00000000
-        market.data[1]["low_price"] = 1900.00000000
-        market.data[1]["trade_price"] = 2050.00000000
-
-        market.data[2]["opening_price"] = 2000.00000000
-        market.data[2]["high_price"] = 2100.00000000
-        market.data[2]["low_price"] = 1900.00000000
-        market.data[2]["trade_price"] = 2050.00000000
+        for i in range(3):
+            market.data[i]["opening_price"] = 2000.00000000
+            market.data[i]["high_price"] = 2100.00000000
+            market.data[i]["low_price"] = 1900.00000000
+            market.data[i]["trade_price"] = 2050.00000000
 
         class DummyRequest():
             pass
@@ -702,5 +634,13 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
+        info = market.get_balance()
+        self.assertEqual(info, None)
+
+    def test_get_balance_return_None_when_data_index_invalid(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.deposit(2000)
+        market.turn_count = 5000
         info = market.get_balance()
         self.assertEqual(info, None)

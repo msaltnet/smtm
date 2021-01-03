@@ -125,7 +125,7 @@ class VirtualMarket():
                 name = item["name"]
                 if total_value > 0 and total_amount > 0:
                     avr_price = round(total_value / total_amount)
-        except KeyError as msg:
+        except (KeyError, IndexError) as msg:
             self.logger.error(f'invalid trading data {msg}')
             return
 
@@ -149,10 +149,13 @@ class VirtualMarket():
         next_index = self.turn_count + 1
         result = None
 
-        if next_index >= len(self.data):
+        print(f'next_index {next_index}, len(self.data) {len(self.data)}')
+        if next_index >= len(self.data)-1:
+            self.turn_count = next_index
             return TradingResult(request.id, request.type, -1, -1, "game-over", self.balance)
 
         if request.price == 0 or request.amount == 0:
+            self.turn_count = next_index
             return TradingResult(request.id, request.type, 0, 0, "turn over", self.balance)
 
         if request.type == 'buy':
