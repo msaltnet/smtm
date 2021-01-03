@@ -149,7 +149,6 @@ class VirtualMarket():
         next_index = self.turn_count + 1
         result = None
 
-        print(f'next_index {next_index}, len(self.data) {len(self.data)}')
         if next_index >= len(self.data)-1:
             self.turn_count = next_index
             return TradingResult(request.id, request.type, -1, -1, "game-over", self.balance)
@@ -227,10 +226,10 @@ class VirtualMarket():
             return TradingResult(request.id, request.type, -1, -1, "internal error", self.balance)
 
     def __print_info(self, type, old, new, total_asset_value):
-        self.logger.warning(f"[Trading] from {old}")
+        self.logger.debug(f"[Trading] from {old}")
         if type == "buy":
-            self.logger.warning(f"[Trading] - {type}_asset_value {total_asset_value}")
+            self.logger.debug(f"[Trading] - {type}_asset_value {total_asset_value}")
         elif type == "sell":
-            self.logger.warning(f"[Trading] + {type}_asset_value {total_asset_value}")
-        self.logger.warning(f"[Trading] - commission {total_asset_value * self.commission_ratio}")
-        self.logger.warning(f"[Trading] to {self.balance}")
+            self.logger.debug(f"[Trading] + {type}_asset_value {total_asset_value}")
+        self.logger.debug(f"[Trading] - commission {total_asset_value * self.commission_ratio}")
+        self.logger.debug(f"[Trading] to {self.balance}")
