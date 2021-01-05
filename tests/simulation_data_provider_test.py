@@ -15,6 +15,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         dp.initialize_from_server = MagicMock()
         dp.initialize("mango")
         dp.initialize_from_server.assert_called_once_with("mango")
+        print(dp._SimulationDataProvider__create_candle_info())
 
     def test_initialize_with_file_initialize_variable_and_update_data_correctly(self):
         dp = SimulationDataProvider()

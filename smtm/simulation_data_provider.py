@@ -72,21 +72,18 @@ class SimulationDataProvider(DataProvider):
             self.logger.error('Invalid JSON data')
 
     def __create_candle_info(self, data):
-        candle = CandleInfo()
         try:
-            candle.market = data["market"]
-            candle.date_time = data["candle_date_time_utc"]
-            candle.opening_price = data["opening_price"]
-            candle.high_price = data["high_price"]
-            candle.low_price = data["low_price"]
-            candle.closing_price = data["trade_price"]
-            candle.acc_price = data["candle_acc_trade_price"]
-            candle.acc_volume = data["candle_acc_trade_volume"]
+            return CandleInfo(market = data["market"],
+                date_time = data["candle_date_time_utc"],
+                opening_price = data["opening_price"],
+                high_price = data["high_price"],
+                low_price = data["low_price"],
+                closing_price = data["trade_price"],
+                acc_price = data["candle_acc_trade_price"],
+                acc_volume = data["candle_acc_trade_volume"])
         except KeyError:
             self.logger.warning("invalid data for candle info")
             return None
-
-        return candle
 
     def __get_data_from_server(self):
         if self.http is None:
