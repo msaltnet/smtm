@@ -107,7 +107,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(request.price, 0)
         self.assertEqual(request.amount, 0)
 
-    def test_get_request_return_None_when_target_budget_is_too_small(self):
+    def test_get_request_return_turn_over_when_target_budget_is_too_small(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 100)
         bnh.update_trading_info("banana")
@@ -115,7 +115,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(request.price, 0)
         self.assertEqual(request.amount, 0)
 
-    def test_get_request_return_None_when_balance_is_smaller_than_target_budget(self):
+    def test_get_request_return_turn_over_when_balance_is_smaller_than_target_budget(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(1000, 10)
         class DummyInfo():
@@ -128,7 +128,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(request.price, 0)
         self.assertEqual(request.amount, 0)
 
-    def test_get_request_return_None_when_balance_is_smaller_than_min_price(self):
+    def test_get_request_return_turn_over_when_balance_is_smaller_than_min_price(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(900, 10)
         class DummyInfo():
