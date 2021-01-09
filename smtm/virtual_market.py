@@ -103,14 +103,14 @@ class VirtualMarket():
         self.commission_ratio = ratio
 
     def get_balance(self):
-        """현금을 포함한 모든 자산 정보를 제공한다"""
+        """
+        현금을 포함한 모든 자산 정보를 제공한다
+
+        balance: 계좌 현금 잔고
+        asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
+        quote: 종목별 현재 가격 딕셔너리
+        """
         asset_info = {"balance": self.balance}
-        # balance: 계좌 현금 잔고
-        # asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
-        # quote: 종목별 현재 가격 딕셔너리
-        total_value = 0
-        total_amount = 0
-        avr_price = 0
         quote = None
         try:
             quote = {self.data[self.turn_count]["market"]: self.data[self.turn_count]["opening_price"]}
@@ -121,8 +121,6 @@ class VirtualMarket():
         except (KeyError, IndexError) as msg:
             self.logger.error(f'invalid trading data {msg}')
             return
-
-        self.logger.info(f"asset len: {len(self.asset)}, total amount: {total_amount}, avr price {avr_price}")
 
         asset_info['asset'] = self.asset
         asset_info['quote'] = quote
@@ -178,7 +176,7 @@ class VirtualMarket():
 
             self.balance -= buy_asset_value * (1 + self.commission_ratio)
             self.balance = round(self.balance)
-            self.__print_info("buy", old_balance, self.balance, buy_asset_value)
+            self.__print_balance_info("buy", old_balance, self.balance, buy_asset_value)
             return TradingResult(request.id, request.type, request.price, request.amount, "success", self.balance)
         except KeyError as msg:
             self.logger.error(f'invalid trading data {msg}')
@@ -206,13 +204,13 @@ class VirtualMarket():
             sell_asset_value = sell_amount * request.price
             self.balance += sell_amount * request.price * (1 - self.commission_ratio)
             self.balance = round(self.balance)
-            self.__print_info("sell", old_balance, self.balance, sell_asset_value)
+            self.__print_balance_info("sell", old_balance, self.balance, sell_asset_value)
             return TradingResult(request.id, request.type, request.price, sell_amount, "success", self.balance)
         except KeyError as msg:
             self.logger.error(f'invalid trading data {msg}')
             return TradingResult(request.id, request.type, -1, -1, "internal error", self.balance)
 
-    def __print_info(self, type, old, new, total_asset_value):
+    def __print_balance_info(self, type, old, new, total_asset_value):
         self.logger.debug(f"[Balance] from {old}")
         if type == "buy":
             self.logger.debug(f"[Balance] - {type}_asset_value {total_asset_value}")
