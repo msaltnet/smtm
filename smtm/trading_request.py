@@ -11,7 +11,7 @@ class TradingRequest():
     """
 
     def __init__(self, type=None, price=0, amount=0):
-        self.__id = self.id = time.time()
+        self.__id = self.id = str(round(time.time(),3))
         self.__type = self.type = type
         self.__price = self.price = price
         self.__amount = self.amount = amount
