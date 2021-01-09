@@ -553,8 +553,8 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
         info = market.get_balance()
-        self.assertEqual(info.balance, 2000)
-        self.assertEqual(len(info.asset), 0)
+        self.assertEqual(info['balance'], 2000)
+        self.assertEqual(len(info['asset']), 0)
 
         market.data[0]["opening_price"] = 2000.00000000
         market.data[0]["high_price"] = 2100.00000000
@@ -591,12 +591,12 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request)
 
         info = market.get_balance()
-        self.assertEqual(info.balance, 1790)
-        self.assertEqual(len(info.asset), 1)
-        self.assertEqual(info.asset[0][0], "mango")
-        self.assertEqual(info.asset[0][1], 2000)
-        self.assertEqual(info.asset[0][2], 0.1)
-        self.assertEqual(info.quote["mango"], 2010)
+        self.assertEqual(info['balance'], 1790)
+        self.assertEqual(len(info['asset']), 1)
+        self.assertEqual(info['asset'][0][0], "mango")
+        self.assertEqual(info['asset'][0][1], 2000)
+        self.assertEqual(info['asset'][0][2], 0.1)
+        self.assertEqual(info['quote']["mango"], 2010)
 
         dummy_request2 = DummyRequest()
         dummy_request2.id = "orange"
@@ -606,12 +606,12 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request2)
 
         info = market.get_balance()
-        self.assertEqual(info.balance, 792)
-        self.assertEqual(len(info.asset), 1)
-        self.assertEqual(info.asset[0][0], "mango")
-        self.assertEqual(info.asset[0][1], 1917)
-        self.assertEqual(info.asset[0][2], 0.6)
-        self.assertEqual(info.quote["mango"], 2020)
+        self.assertEqual(info['balance'], 792)
+        self.assertEqual(len(info['asset']), 1)
+        self.assertEqual(info['asset'][0][0], "mango")
+        self.assertEqual(info['asset'][0][1], 1917)
+        self.assertEqual(info['asset'][0][2], 0.6)
+        self.assertEqual(info['quote']["mango"], 2020)
 
         dummy_request3 = DummyRequest()
         dummy_request3.id = "banana"
@@ -621,12 +621,12 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request3)
 
         info = market.get_balance()
-        self.assertEqual(info.balance, 1172)
-        self.assertEqual(len(info.asset), 1)
-        self.assertEqual(info.asset[0][0], "mango")
-        self.assertEqual(info.asset[0][1], 1900)
-        self.assertEqual(info.asset[0][2], 0.4)
-        self.assertEqual(info.quote["mango"], 2030)
+        self.assertEqual(info['balance'], 1172)
+        self.assertEqual(len(info['asset']), 1)
+        self.assertEqual(info['asset'][0][0], "mango")
+        self.assertEqual(info['asset'][0][1], 1900)
+        self.assertEqual(info['asset'][0][2], 0.4)
+        self.assertEqual(info['quote']["mango"], 2030)
 
         dummy_request4 = DummyRequest()
         dummy_request4.id = "banana"
@@ -636,9 +636,9 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request4)
 
         info = market.get_balance()
-        self.assertEqual(info.balance, 1913)
-        self.assertEqual(len(info.asset), 0)
-        self.assertEqual(info.quote["mango"], 2040)
+        self.assertEqual(info['balance'], 1913)
+        self.assertEqual(len(info['asset']), 0)
+        self.assertEqual(info['quote']["mango"], 2040)
 
     def test_get_balance_return_None_when_data_invalid(self):
         market = VirtualMarket()

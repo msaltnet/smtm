@@ -1,7 +1,6 @@
 from .log_manager import LogManager
 from .trading_result import TradingResult
 from .trading_request import TradingRequest
-from .asset_info import AssetInfo
 import json
 
 class VirtualMarket():
@@ -105,7 +104,10 @@ class VirtualMarket():
 
     def get_balance(self):
         """현금을 포함한 모든 자산 정보를 제공한다"""
-        asset_info = AssetInfo(balance=self.balance)
+        asset_info = {"balance": self.balance}
+        # balance: 계좌 현금 잔고
+        # asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 수량)
+        # quote: 종목별 현재 가격 딕셔너리
         total_value = 0
         total_amount = 0
         avr_price = 0
@@ -133,8 +135,8 @@ class VirtualMarket():
 
         if len(self.asset) > 0:
             asset.append((name, avr_price, total_amount))
-        asset_info.asset = asset
-        asset_info.quote = quote
+        asset_info['asset'] = asset
+        asset_info['quote'] = quote
         return asset_info
 
     def send_request(self, request):

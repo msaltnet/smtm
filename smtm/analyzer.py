@@ -49,14 +49,14 @@ class Analyzer():
     def make_score_record(self, new_info):
         try:
             start_total = self.__get_start_property_value()
-            start_quote = self.asset_record_list[0].quote
-            current_total = new_info.balance
-            current_quote = new_info.quote
+            start_quote = self.asset_record_list[0]['quote']
+            current_total = new_info['balance']
+            current_quote = new_info['quote']
             cumulative_return = 0
             new_asset_list = []
             price_change_ratio = {}
             self.logger.info(f'quote {current_quote}')
-            for asset in new_info.asset:
+            for asset in new_info['asset']:
                 item_yield = 0
                 price = current_quote[asset[0]]
                 current_total += asset[2] * price
@@ -81,7 +81,7 @@ class Analyzer():
                 cumulative_return = round(cumulative_return, 3)
             self.logger.info(f'cumulative_return {start_total} -> {current_total}, {cumulative_return}%')
 
-            self.score_record_list.append(ScoreRecord(new_info.balance, 
+            self.score_record_list.append(ScoreRecord(new_info['balance'],
                 cumulative_return, new_asset_list, price_change_ratio))
         except IndexError or AttributeError:
             self.logger.error('making score record fail')
@@ -103,15 +103,15 @@ class Analyzer():
             self.logger.error("create report FAIL")
 
     def __get_start_property_value(self):
-        start_total = self.asset_record_list[0].balance
-        start_quote = self.asset_record_list[0].quote
-        for asset in self.asset_record_list[0].asset:
+        start_total = self.asset_record_list[0]['balance']
+        start_quote = self.asset_record_list[0]['quote']
+        for asset in self.asset_record_list[0]['asset']:
             start_total += asset[2] * start_quote[asset[0]]
         return start_total
 
     def __get_last_property_value(self):
         last_record = self.asset_record_list[-1]
-        last_total = last_record.balance
-        for asset in last_record.asset:
-            last_total += asset[2] * last_record.quote[asset[0]]
+        last_total = last_record['balance']
+        for asset in last_record['asset']:
+            last_total += asset[2] * last_record['quote'][asset[0]]
         return round(last_total)

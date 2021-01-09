@@ -65,34 +65,32 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(self):
         analyzer = Analyzer()
-        class DummyAssetInfo():
-            pass
-        dummy_asset = DummyAssetInfo()
-        dummy_asset.balance = 50000
-        dummy_asset.asset = [
-            ("banana", 1500, 10),
-            ("mango", 1000, 4.5),
-            ("apple", 250, 2)]
-        dummy_asset.quote = {
-            "banana": 1700,
-            "mango": 700,
-            "apple": 500}
+        dummy_asset_info = {
+            "balance": 50000,
+            "asset" : [
+                ("banana", 1500, 10),
+                ("mango", 1000, 4.5),
+                ("apple", 250, 2)],
+            "quote": {
+                "banana": 1700,
+                "mango": 700,
+                "apple": 500}
+        }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset)
+        analyzer.asset_record_list.append(dummy_asset_info)
 
-        target_dummy_asset = DummyAssetInfo()
-        target_dummy_asset.balance = 50000
-        target_dummy_asset.asset = [
-            ("banana", 1500, 10),
-            ("mango", 1000, 4.5),
-            ("apple", 250, 2)]
-        target_dummy_asset.quote = {
-            "banana": 2000,
-            "mango": 1050,
-            "apple": 400}
-        target_dummy_asset.timestamp = 500
-
+        target_dummy_asset = {
+            "balance": 50000,
+            "asset" : [
+                ("banana", 1500, 10),
+                ("mango", 1000, 4.5),
+                ("apple", 250, 2)],
+            "quote": {
+                "banana": 2000,
+                "mango": 1050,
+                "apple": 400}
+        }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
@@ -118,39 +116,35 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record.asset[2][3], 2)
         self.assertEqual(score_record.asset[2][4], 60)
 
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset.asset[0][0]], 17.647)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset.asset[1][0]], 50)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset.asset[2][0]], -20)
+        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][0][0]], 17.647)
+        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][1][0]], 50)
+        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][2][0]], -20)
 
     def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
-        class DummyAssetInfo():
-            pass
-        dummy_asset = DummyAssetInfo()
-        dummy_asset.balance = 50000
-        dummy_asset.asset = [
-            ("banana", 1500, 10),
-            ("apple", 250, 2)]
-        dummy_asset.quote = {
-            "banana": 1700,
-            "mango": 500,
-            "apple": 500}
+        dummy_asset_info = {
+            "balance": 50000,
+            "asset" : [
+                ("banana", 1500, 10),
+                ("apple", 250, 2)],
+            "quote": {
+                "banana": 1700,
+                "mango": 500,
+                "apple": 500}
+        }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset)
-
-        target_dummy_asset = DummyAssetInfo()
-        target_dummy_asset.balance = 10000
-        target_dummy_asset.asset = [
-            ("mango", 1000, 7.5),
-            ("apple", 250, 10.7)]
-        target_dummy_asset.quote = {
-            "banana": 2000,
-            "mango": 500,
-            "apple": 800}
-
-        target_dummy_asset.timestamp = 500
-
+        analyzer.asset_record_list.append(dummy_asset_info)
+        target_dummy_asset = {
+            "balance": 10000,
+            "asset" : [
+                ("mango", 1000, 7.5),
+                ("apple", 250, 10.7)],
+            "quote": {
+                "banana": 2000,
+                "mango": 500,
+                "apple": 800}
+        }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
@@ -170,36 +164,33 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record.asset[1][3], 10.7)
         self.assertEqual(score_record.asset[1][4], 220)
 
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset.asset[0][0]], 0)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset.asset[1][0]], 60)
+        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][0][0]], 0)
+        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][1][0]], 60)
 
     def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
         analyzer = Analyzer()
-        class DummyAssetInfo():
-            pass
-        dummy_asset = DummyAssetInfo()
-        dummy_asset.balance = 23456
-        dummy_asset.asset = []
-        dummy_asset.quote = {
-            "banana": 1700,
-            "mango": 300,
-            "apple": 500}
+        dummy_asset_info = {
+            "balance": 23456,
+            "asset" : [],
+            "quote": {
+                "banana": 1700,
+                "mango": 300,
+                "apple": 500}
+        }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset)
+        analyzer.asset_record_list.append(dummy_asset_info)
 
-        target_dummy_asset = DummyAssetInfo()
-        target_dummy_asset.balance = 5000
-        target_dummy_asset.asset = [
-            ("mango", 500, 5.23),
-            ("apple", 250, 2.11)]
-        target_dummy_asset.quote = {
-            "banana": 2000,
-            "mango": 300,
-            "apple": 750}
-
-        target_dummy_asset.timestamp = 500
-
+        target_dummy_asset = {
+            "balance": 5000,
+            "asset" : [
+                ("mango", 500, 5.23),
+                ("apple", 250, 2.11)],
+            "quote": {
+                "banana": 2000,
+                "mango": 300,
+                "apple": 750}
+        }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
@@ -219,28 +210,25 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record.asset[1][3], 2.11)
         self.assertEqual(score_record.asset[1][4], 200)
 
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset.asset[0][0]], 0)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset.asset[1][0]], 50)
+        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][0][0]], 0)
+        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][1][0]], 50)
 
     def test_make_score_record_create_correct_score_record_when_asset_and_balance_is_NOT_changed(self):
         analyzer = Analyzer()
-        class DummyAssetInfo():
-            pass
-        dummy_asset = DummyAssetInfo()
-        dummy_asset.balance = 1000
-        dummy_asset.asset = []
-        dummy_asset.quote = {"apple": 500}
+        dummy_asset_info = {
+            "balance": 1000,
+            "asset" : [],
+            "quote": {"apple": 500}
+        }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset)
+        analyzer.asset_record_list.append(dummy_asset_info)
 
-        target_dummy_asset = DummyAssetInfo()
-        target_dummy_asset.balance = 1000
-        target_dummy_asset.asset = []
-        target_dummy_asset.quote = {"apple": 750}
-
-        target_dummy_asset.timestamp = 500
-
+        target_dummy_asset = {
+            "balance": 1000,
+            "asset" : [],
+            "quote": {"apple": 750}
+        }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
@@ -255,27 +243,27 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         analyzer.initialize("mango")
         analyzer.update_info_func = MagicMock()
-        class DummyAssetInfo():
-            pass
-        dummy_asset = DummyAssetInfo()
-        dummy_asset.balance = 23456
-        dummy_asset.asset = []
-        dummy_asset.quote = {
-            "banana": 1700,
-            "mango": 600,
-            "apple": 500}
-        analyzer.asset_record_list.append(dummy_asset)
+        dummy_asset_info = {
+            "balance": 23456,
+            "asset" : [],
+            "quote": {
+                "banana": 1700,
+                "mango": 600,
+                "apple": 500}
+        }
 
-        target_dummy_asset = DummyAssetInfo()
-        target_dummy_asset.balance = 5000
-        target_dummy_asset.asset = [
-            ("mango", 500, 5.23),
-            ("apple", 250, 2.11)]
-        target_dummy_asset.quote = {
-            "banana": 2000,
-            "mango": 300,
-            "apple": 750}
-        target_dummy_asset.timestamp = 500
+        analyzer.asset_record_list.append(dummy_asset_info)
+
+        target_dummy_asset = {
+            "balance": 5000,
+            "asset" : [
+                ("mango", 500, 5.23),
+                ("apple", 250, 2.11)],
+            "quote": {
+                "banana": 2000,
+                "mango": 300,
+                "apple": 750}
+        }
         analyzer.put_asset_info(target_dummy_asset)
 
         report = analyzer.create_report()
