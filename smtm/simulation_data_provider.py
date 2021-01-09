@@ -1,5 +1,4 @@
 from . import DataProvider
-from .candle_info import CandleInfo
 from . import LogManager
 import json
 
@@ -73,14 +72,14 @@ class SimulationDataProvider(DataProvider):
 
     def __create_candle_info(self, data):
         try:
-            return CandleInfo(market = data["market"],
-                date_time = data["candle_date_time_utc"],
-                opening_price = data["opening_price"],
-                high_price = data["high_price"],
-                low_price = data["low_price"],
-                closing_price = data["trade_price"],
-                acc_price = data["candle_acc_trade_price"],
-                acc_volume = data["candle_acc_trade_volume"])
+            return {'market': data["market"],
+                'date_time': data["candle_date_time_utc"],
+                'opening_price': data["opening_price"],
+                'high_price': data["high_price"],
+                'low_price': data["low_price"],
+                'closing_price': data["trade_price"],
+                'acc_price': data["candle_acc_trade_price"],
+                'acc_volume': data["candle_acc_trade_volume"]}
         except KeyError:
             self.logger.warning("invalid data for candle info")
             return None

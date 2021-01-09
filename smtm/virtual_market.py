@@ -10,7 +10,7 @@ class VirtualMarket():
     http: http client 모듈(requests)
     end: 거래기간의 끝
     count: 거래기간까지 가져올 데이터의 갯수
-    data: 사용될 거래 정보, CandleInfo 목록
+    data: 사용될 거래 정보 목록
     turn_count: 현재까지 진행된 턴수
     balance: 잔고
     commission_ratio: 수수료율

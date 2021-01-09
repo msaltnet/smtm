@@ -71,13 +71,15 @@ class StrategyBuyAndHold(Strategy):
                 self.logger.info('blance is too small')
                 return TradingRequest('buy', 0, 0)
 
-            target_amount = target_budget / last_data.closing_price
-            trading_request = TradingRequest('buy', last_data.closing_price, target_amount)
+            target_amount = target_budget / last_data['closing_price']
+            trading_request = TradingRequest('buy', last_data['closing_price'], target_amount)
             self.logger.info(f"[REQ] id: {trading_request.id} =====================")
             self.logger.info(f"type: {trading_request.type}")
             self.logger.info(f"price: {trading_request.price}, amount: {trading_request.amount}")
             self.logger.info(f"================================================")
             return trading_request
+        except KeyError:
+            self.logger.error('invalid data')
         except IndexError:
             self.logger.error('empty data')
         except AttributeError as msg:
