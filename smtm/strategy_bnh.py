@@ -1,6 +1,7 @@
 from .strategy import Strategy
 from .trading_request import TradingRequest
 from .log_manager import LogManager
+import copy
 
 class StrategyBuyAndHold(Strategy):
     """
@@ -29,7 +30,7 @@ class StrategyBuyAndHold(Strategy):
         """새로운 거래 정보를 업데이트"""
         if self.is_intialized == False:
             return
-        self.data.append(info)
+        self.data.append(copy.deepcopy(info))
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트"""
@@ -43,7 +44,7 @@ class StrategyBuyAndHold(Strategy):
             self.logger.info(f"price: {result.price}, amount: {result.amount}")
             self.logger.info(f'balance: {self.balance}')
             self.logger.info(f"================================================")
-            self.result.append(result)
+            self.result.append(copy.deepcopy(result))
         except AttributeError as msg:
             self.logger.warning(msg)
 

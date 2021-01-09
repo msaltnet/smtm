@@ -11,8 +11,9 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_put_request_append_request(self):
         analyzer = Analyzer()
-        analyzer.put_request("mango")
-        self.assertEqual(analyzer.request[-1], "mango")
+        dummy_result = {"name": "mango", "type": "buy"}
+        analyzer.put_request(dummy_result)
+        self.assertEqual(analyzer.request[-1], dummy_result)
 
     def test_put_result_append_result(self):
         analyzer = Analyzer()
@@ -67,10 +68,10 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         dummy_asset_info = {
             "balance": 50000,
-            "asset" : [
-                ("banana", 1500, 10),
-                ("mango", 1000, 4.5),
-                ("apple", 250, 2)],
+            "asset" : {
+                "banana": (1500, 10),
+                "mango": (1000, 4.5),
+                "apple": (250, 2)},
             "quote": {
                 "banana": 1700,
                 "mango": 700,
@@ -82,10 +83,10 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset = {
             "balance": 50000,
-            "asset" : [
-                ("banana", 1500, 10),
-                ("mango", 1000, 4.5),
-                ("apple", 250, 2)],
+            "asset" : {
+                "banana": (1500, 10),
+                "mango": (1000, 4.5),
+                "apple": (250, 2)},
             "quote": {
                 "banana": 2000,
                 "mango": 1050,
@@ -116,17 +117,17 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record['asset'][2][3], 2)
         self.assertEqual(score_record['asset'][2][4], 60)
 
-        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][0][0]], 17.647)
-        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][1][0]], 50)
-        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][2][0]], -20)
+        self.assertEqual(score_record['price_change_ratio']['banana'], 17.647)
+        self.assertEqual(score_record['price_change_ratio']['mango'], 50)
+        self.assertEqual(score_record['price_change_ratio']['apple'], -20)
 
     def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
         dummy_asset_info = {
             "balance": 50000,
-            "asset" : [
-                ("banana", 1500, 10),
-                ("apple", 250, 2)],
+            "asset" : {
+                "banana": (1500, 10),
+                "apple": (250, 2)},
             "quote": {
                 "banana": 1700,
                 "mango": 500,
@@ -137,9 +138,9 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.asset_record_list.append(dummy_asset_info)
         target_dummy_asset = {
             "balance": 10000,
-            "asset" : [
-                ("mango", 1000, 7.5),
-                ("apple", 250, 10.7)],
+            "asset" : {
+                "mango": (1000, 7.5),
+                "apple": (250, 10.7)},
             "quote": {
                 "banana": 2000,
                 "mango": 500,
@@ -164,14 +165,14 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record['asset'][1][3], 10.7)
         self.assertEqual(score_record['asset'][1][4], 220)
 
-        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][0][0]], 0)
-        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][1][0]], 60)
+        self.assertEqual(score_record['price_change_ratio']['mango'], 0)
+        self.assertEqual(score_record['price_change_ratio']['apple'], 60)
 
     def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
         analyzer = Analyzer()
         dummy_asset_info = {
             "balance": 23456,
-            "asset" : [],
+            "asset" : {},
             "quote": {
                 "banana": 1700,
                 "mango": 300,
@@ -183,9 +184,9 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset = {
             "balance": 5000,
-            "asset" : [
-                ("mango", 500, 5.23),
-                ("apple", 250, 2.11)],
+            "asset" : {
+                "mango": (500, 5.23),
+                "apple": (250, 2.11)},
             "quote": {
                 "banana": 2000,
                 "mango": 300,
@@ -210,14 +211,14 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record['asset'][1][3], 2.11)
         self.assertEqual(score_record['asset'][1][4], 200)
 
-        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][0][0]], 0)
-        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][1][0]], 50)
+        self.assertEqual(score_record['price_change_ratio']["mango"], 0)
+        self.assertEqual(score_record['price_change_ratio']["apple"], 50)
 
     def test_make_score_record_create_correct_score_record_when_asset_and_balance_is_NOT_changed(self):
         analyzer = Analyzer()
         dummy_asset_info = {
             "balance": 1000,
-            "asset" : [],
+            "asset" : {},
             "quote": {"apple": 500}
         }
 
@@ -226,7 +227,7 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset = {
             "balance": 1000,
-            "asset" : [],
+            "asset" : {},
             "quote": {"apple": 750}
         }
         analyzer.make_score_record(target_dummy_asset)
@@ -245,7 +246,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_info_func = MagicMock()
         dummy_asset_info = {
             "balance": 23456,
-            "asset" : [],
+            "asset" : {},
             "quote": {
                 "banana": 1700,
                 "mango": 600,
@@ -256,9 +257,9 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset = {
             "balance": 5000,
-            "asset" : [
-                ("mango", 500, 5.23),
-                ("apple", 250, 2.11)],
+            "asset" : {
+                "mango": (500, 5.23),
+                "apple": (250, 2.11)},
             "quote": {
                 "banana": 2000,
                 "mango": 300,

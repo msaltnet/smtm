@@ -323,6 +323,7 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
+        market.asset['mango'] = (2000, 1)
 
         for i in range(3):
             market.data[i]["pening_price"] = 2000.00000000
@@ -364,6 +365,27 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result.price, -1)
         self.assertEqual(result.amount, -1)
         self.assertEqual(result.msg, "invalid type")
+
+    def test_send_request_handle_sell_return_error_request_when_target_asset_empty(self):
+        market = VirtualMarket()
+        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.deposit(999)
+
+        class DummyRequest():
+            pass
+        dummy_request = DummyRequest()
+        dummy_request.id = "mango"
+        dummy_request.type = "sell"
+        dummy_request.price = 2000
+        dummy_request.amount = 0.1
+
+        result = market.send_request(dummy_request)
+        self.assertEqual(result.request_id, "mango")
+        self.assertEqual(result.type, "sell")
+        self.assertEqual(result.price, 0)
+        self.assertEqual(result.amount, 0)
+        self.assertEqual(result.msg, "asset empty")
+        self.assertEqual(result.balance, 999)
 
     def test_send_request_handle_buy_return_no_money_when_balance_is_NOT_enough(self):
         market = VirtualMarket()
@@ -593,9 +615,8 @@ class VirtualMarketTests(unittest.TestCase):
         info = market.get_balance()
         self.assertEqual(info['balance'], 1790)
         self.assertEqual(len(info['asset']), 1)
-        self.assertEqual(info['asset'][0][0], "mango")
-        self.assertEqual(info['asset'][0][1], 2000)
-        self.assertEqual(info['asset'][0][2], 0.1)
+        self.assertEqual(info['asset']["mango"][0], 2000)
+        self.assertEqual(info['asset']["mango"][1], 0.1)
         self.assertEqual(info['quote']["mango"], 2010)
 
         dummy_request2 = DummyRequest()
@@ -608,9 +629,8 @@ class VirtualMarketTests(unittest.TestCase):
         info = market.get_balance()
         self.assertEqual(info['balance'], 792)
         self.assertEqual(len(info['asset']), 1)
-        self.assertEqual(info['asset'][0][0], "mango")
-        self.assertEqual(info['asset'][0][1], 1917)
-        self.assertEqual(info['asset'][0][2], 0.6)
+        self.assertEqual(info['asset']["mango"][0], 1917)
+        self.assertEqual(info['asset']["mango"][1], 0.6)
         self.assertEqual(info['quote']["mango"], 2020)
 
         dummy_request3 = DummyRequest()
@@ -623,9 +643,8 @@ class VirtualMarketTests(unittest.TestCase):
         info = market.get_balance()
         self.assertEqual(info['balance'], 1172)
         self.assertEqual(len(info['asset']), 1)
-        self.assertEqual(info['asset'][0][0], "mango")
-        self.assertEqual(info['asset'][0][1], 1900)
-        self.assertEqual(info['asset'][0][2], 0.4)
+        self.assertEqual(info['asset']["mango"][0], 1917)
+        self.assertEqual(round(info['asset']["mango"][1], 1), 0.4)
         self.assertEqual(info['quote']["mango"], 2030)
 
         dummy_request4 = DummyRequest()

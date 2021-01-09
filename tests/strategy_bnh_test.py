@@ -47,7 +47,13 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_result.balance = 500
 
         bnh.update_result(dummy_result)
-        self.assertEqual(bnh.result.pop(), dummy_result)
+        self.assertEqual(bnh.result[-1].type, "orange")
+        self.assertEqual(bnh.result[-1].request_id, "banana")
+        self.assertEqual(bnh.result[-1].price, "apple")
+        self.assertEqual(bnh.result[-1].amount, "kiwi")
+        self.assertEqual(bnh.result[-1].msg, "melon")
+        self.assertEqual(bnh.result[-1].balance, 500)
+        self.assertNotEqual(bnh.result[-1], dummy_result)
 
     def test_update_result_update_balance(self):
         bnh = StrategyBuyAndHold()
@@ -64,7 +70,13 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_result.balance = 100
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.balance, 100)
-        self.assertEqual(bnh.result.pop(), dummy_result)
+        self.assertEqual(bnh.result[-1].type, "buy")
+        self.assertEqual(bnh.result[-1].request_id, "orange")
+        self.assertEqual(bnh.result[-1].price, 10)
+        self.assertEqual(bnh.result[-1].amount, 5)
+        self.assertEqual(bnh.result[-1].msg, "melon")
+        self.assertEqual(bnh.result[-1].balance, 100)
+        self.assertNotEqual(bnh.result[-1], dummy_result)
 
     def test_update_result_ignore_result_when_not_yet_initialized(self):
         bnh = StrategyBuyAndHold()

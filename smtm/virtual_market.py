@@ -14,7 +14,7 @@ class VirtualMarket():
     turn_count: 현재까지 진행된 턴수
     balance: 잔고
     commission_ratio: 수수료율
-    asset: 자산 목록
+    asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
     """
     url = "https://api.upbit.com/v1/candles/minutes/1"
     query_string = {"market":"KRW-BTC", "count":"1"}
@@ -29,7 +29,7 @@ class VirtualMarket():
         self.turn_count = 0
         self.balance = 0
         self.commission_ratio = 0.05
-        self.asset = []
+        self.asset = {}
 
     def initialize(self, http, end, count):
         """
@@ -106,36 +106,25 @@ class VirtualMarket():
         """현금을 포함한 모든 자산 정보를 제공한다"""
         asset_info = {"balance": self.balance}
         # balance: 계좌 현금 잔고
-        # asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 수량)
+        # asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
         # quote: 종목별 현재 가격 딕셔너리
         total_value = 0
         total_amount = 0
         avr_price = 0
         quote = None
-        asset = []
         try:
-            # 현재는 단일 마켓만 지원
             quote = {self.data[self.turn_count]["market"]: self.data[self.turn_count]["opening_price"]}
             name = None
             self.logger.info(f'asset list length {len(self.asset)} =====================')
-            for item in self.asset:
-                total_value += item["price"] * item["amount"]
-                total_amount += item["amount"]
-                self.logger.info(f'item price: {item["price"]}, amount: {item["amount"]} total_value: {total_value}')
-                if name != None and item["name"] != name:
-                    self.logger.warning(f"multiple item name is NOT supported now. {name} : {item['name']}")
-                name = item["name"]
-                if total_value > 0 and total_amount > 0:
-                    avr_price = round(total_value / total_amount)
+            for name, item in self.asset.items():
+                self.logger.info(f'item: {name}, item price: {item[0]}, amount: {item[1]}')
         except (KeyError, IndexError) as msg:
             self.logger.error(f'invalid trading data {msg}')
             return
 
         self.logger.info(f"asset len: {len(self.asset)}, total amount: {total_amount}, avr price {avr_price}")
 
-        if len(self.asset) > 0:
-            asset.append((name, avr_price, total_amount))
-        asset_info['asset'] = asset
+        asset_info['asset'] = self.asset
         asset_info['quote'] = quote
         return asset_info
 
@@ -178,8 +167,15 @@ class VirtualMarket():
         try:
             if request.price < self.data[next_index]["low_price"]:
                 return TradingResult(request.id, request.type, 0, 0, "not matched", self.balance)
+            name = self.data[next_index]["market"]
+            if name in self.asset:
+                old = self.asset[name]
+                final_amount = old[1] + request.amount
+                total_value = (request.amount * request.price) + (old[0] * old[1])
+                self.asset[name] = (round(total_value/final_amount), final_amount)
+            else:
+                self.asset[name] = (request.price, request.amount)
 
-            self.asset.append({"name": self.data[next_index]["market"], "price": request.price, "amount": request.amount})
             self.balance -= buy_asset_value * (1 + self.commission_ratio)
             self.balance = round(self.balance)
             self.__print_info("buy", old_balance, self.balance, buy_asset_value)
@@ -192,32 +188,21 @@ class VirtualMarket():
         asset_total_amount = 0
         old_balance = self.balance
         try:
-            for item in self.asset:
-                asset_total_amount += item["amount"]
+            name = self.data[next_index]["market"]
+            if name not in self.asset:
+                return TradingResult(request.id, request.type, 0, 0, "asset empty", self.balance)
 
             if request.price >= self.data[next_index]["high_price"]:
                 return TradingResult(request.id, request.type, 0, 0, "not matched", self.balance)
 
             sell_amount = request.amount
-            if request.amount > asset_total_amount:
-                sell_amount = asset_total_amount
+            if request.amount > self.asset[name][1]:
+                sell_amount = self.asset[name][1]
                 self.logger.warning(f'sell request is bigger than asset amount! {request.amount} -> {sell_amount}')
+                del self.asset[name]
+            else:
+                self.asset[name] = (self.asset[name][0], self.asset[name][1] - sell_amount)
 
-            rest_amount = sell_amount
-            new_asset = []
-            self.logger.info(f'asset list len: {len(self.asset)} ==========')
-            for item in self.asset:
-                self.logger.info(f'item amount: {item["amount"]} - rest amount: {rest_amount}')
-                if rest_amount == 0:
-                    new_asset.append(item)
-                elif item["amount"] > rest_amount:
-                    item["amount"] -= rest_amount
-                    rest_amount = 0
-                    new_asset.append(item)
-                else:
-                    rest_amount -= item["amount"]
-
-            self.asset = new_asset
             sell_asset_value = sell_amount * request.price
             self.balance += sell_amount * request.price * (1 - self.commission_ratio)
             self.balance = round(self.balance)
@@ -228,10 +213,10 @@ class VirtualMarket():
             return TradingResult(request.id, request.type, -1, -1, "internal error", self.balance)
 
     def __print_info(self, type, old, new, total_asset_value):
-        self.logger.debug(f"[Trading] from {old}")
+        self.logger.debug(f"[Balance] from {old}")
         if type == "buy":
-            self.logger.debug(f"[Trading] - {type}_asset_value {total_asset_value}")
+            self.logger.debug(f"[Balance] - {type}_asset_value {total_asset_value}")
         elif type == "sell":
-            self.logger.debug(f"[Trading] + {type}_asset_value {total_asset_value}")
-        self.logger.debug(f"[Trading] - commission {total_asset_value * self.commission_ratio}")
-        self.logger.debug(f"[Trading] to {self.balance}")
+            self.logger.debug(f"[Balance] + {type}_asset_value {total_asset_value}")
+        self.logger.debug(f"[Balance] - commission {total_asset_value * self.commission_ratio}")
+        self.logger.debug(f"[Balance] to {self.balance}")
