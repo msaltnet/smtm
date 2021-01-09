@@ -95,30 +95,30 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record.balance, 50000)
-        self.assertEqual(score_record.cumulative_return, 6.149)
+        self.assertEqual(score_record['balance'], 50000)
+        self.assertEqual(score_record['cumulative_return'], 6.149)
 
-        self.assertEqual(score_record.asset[0][0], "banana")
-        self.assertEqual(score_record.asset[0][1], 1500)
-        self.assertEqual(score_record.asset[0][2], 2000)
-        self.assertEqual(score_record.asset[0][3], 10)
-        self.assertEqual(score_record.asset[0][4], 33.333)
+        self.assertEqual(score_record['asset'][0][0], "banana")
+        self.assertEqual(score_record['asset'][0][1], 1500)
+        self.assertEqual(score_record['asset'][0][2], 2000)
+        self.assertEqual(score_record['asset'][0][3], 10)
+        self.assertEqual(score_record['asset'][0][4], 33.333)
 
-        self.assertEqual(score_record.asset[1][0], "mango")
-        self.assertEqual(score_record.asset[1][1], 1000)
-        self.assertEqual(score_record.asset[1][2], 1050)
-        self.assertEqual(score_record.asset[1][3], 4.5)
-        self.assertEqual(score_record.asset[1][4], 5)
+        self.assertEqual(score_record['asset'][1][0], "mango")
+        self.assertEqual(score_record['asset'][1][1], 1000)
+        self.assertEqual(score_record['asset'][1][2], 1050)
+        self.assertEqual(score_record['asset'][1][3], 4.5)
+        self.assertEqual(score_record['asset'][1][4], 5)
 
-        self.assertEqual(score_record.asset[2][0], "apple")
-        self.assertEqual(score_record.asset[2][1], 250)
-        self.assertEqual(score_record.asset[2][2], 400)
-        self.assertEqual(score_record.asset[2][3], 2)
-        self.assertEqual(score_record.asset[2][4], 60)
+        self.assertEqual(score_record['asset'][2][0], "apple")
+        self.assertEqual(score_record['asset'][2][1], 250)
+        self.assertEqual(score_record['asset'][2][2], 400)
+        self.assertEqual(score_record['asset'][2][3], 2)
+        self.assertEqual(score_record['asset'][2][4], 60)
 
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][0][0]], 17.647)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][1][0]], 50)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][2][0]], -20)
+        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][0][0]], 17.647)
+        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][1][0]], 50)
+        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][2][0]], -20)
 
     def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
@@ -149,23 +149,23 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record.balance, 10000)
-        self.assertEqual(score_record.cumulative_return, -67.191)
+        self.assertEqual(score_record['balance'], 10000)
+        self.assertEqual(score_record['cumulative_return'], -67.191)
 
-        self.assertEqual(score_record.asset[0][0], "mango")
-        self.assertEqual(score_record.asset[0][1], 1000)
-        self.assertEqual(score_record.asset[0][2], 500)
-        self.assertEqual(score_record.asset[0][3], 7.5)
-        self.assertEqual(score_record.asset[0][4], -50)
+        self.assertEqual(score_record['asset'][0][0], "mango")
+        self.assertEqual(score_record['asset'][0][1], 1000)
+        self.assertEqual(score_record['asset'][0][2], 500)
+        self.assertEqual(score_record['asset'][0][3], 7.5)
+        self.assertEqual(score_record['asset'][0][4], -50)
 
-        self.assertEqual(score_record.asset[1][0], "apple")
-        self.assertEqual(score_record.asset[1][1], 250)
-        self.assertEqual(score_record.asset[1][2], 800)
-        self.assertEqual(score_record.asset[1][3], 10.7)
-        self.assertEqual(score_record.asset[1][4], 220)
+        self.assertEqual(score_record['asset'][1][0], "apple")
+        self.assertEqual(score_record['asset'][1][1], 250)
+        self.assertEqual(score_record['asset'][1][2], 800)
+        self.assertEqual(score_record['asset'][1][3], 10.7)
+        self.assertEqual(score_record['asset'][1][4], 220)
 
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][0][0]], 0)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][1][0]], 60)
+        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][0][0]], 0)
+        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][1][0]], 60)
 
     def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
         analyzer = Analyzer()
@@ -195,23 +195,23 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record.balance, 5000)
-        self.assertEqual(score_record.cumulative_return, -65.248)
+        self.assertEqual(score_record['balance'], 5000)
+        self.assertEqual(score_record['cumulative_return'], -65.248)
 
-        self.assertEqual(score_record.asset[0][0], "mango")
-        self.assertEqual(score_record.asset[0][1], 500)
-        self.assertEqual(score_record.asset[0][2], 300)
-        self.assertEqual(score_record.asset[0][3], 5.23)
-        self.assertEqual(score_record.asset[0][4], -40)
+        self.assertEqual(score_record['asset'][0][0], "mango")
+        self.assertEqual(score_record['asset'][0][1], 500)
+        self.assertEqual(score_record['asset'][0][2], 300)
+        self.assertEqual(score_record['asset'][0][3], 5.23)
+        self.assertEqual(score_record['asset'][0][4], -40)
 
-        self.assertEqual(score_record.asset[1][0], "apple")
-        self.assertEqual(score_record.asset[1][1], 250)
-        self.assertEqual(score_record.asset[1][2], 750)
-        self.assertEqual(score_record.asset[1][3], 2.11)
-        self.assertEqual(score_record.asset[1][4], 200)
+        self.assertEqual(score_record['asset'][1][0], "apple")
+        self.assertEqual(score_record['asset'][1][1], 250)
+        self.assertEqual(score_record['asset'][1][2], 750)
+        self.assertEqual(score_record['asset'][1][3], 2.11)
+        self.assertEqual(score_record['asset'][1][4], 200)
 
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][0][0]], 0)
-        self.assertEqual(score_record.price_change_ratio[target_dummy_asset['asset'][1][0]], 50)
+        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][0][0]], 0)
+        self.assertEqual(score_record['price_change_ratio'][target_dummy_asset['asset'][1][0]], 50)
 
     def test_make_score_record_create_correct_score_record_when_asset_and_balance_is_NOT_changed(self):
         analyzer = Analyzer()
@@ -233,11 +233,11 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record.balance, 1000)
-        self.assertEqual(score_record.cumulative_return, 0)
+        self.assertEqual(score_record['balance'], 1000)
+        self.assertEqual(score_record['cumulative_return'], 0)
 
-        self.assertEqual(len(score_record.asset), 0)
-        self.assertEqual(len(score_record.price_change_ratio.keys()), 0)
+        self.assertEqual(len(score_record['asset']), 0)
+        self.assertEqual(len(score_record['price_change_ratio'].keys()), 0)
 
     def test_create_report_return_report_data_tuple(self):
         analyzer = Analyzer()

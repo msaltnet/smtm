@@ -1,5 +1,5 @@
 from .log_manager import LogManager
-from .score_record import ScoreRecord
+import time
 
 class Analyzer():
     """
@@ -37,16 +37,27 @@ class Analyzer():
         self.update_info_func = update_info_func
 
     def put_asset_info(self, asset_info):
+        """자산 정보를 저장한다"""
         self.asset_record_list.append(asset_info)
         self.make_score_record(asset_info)
 
     def make_start_point(self):
+        """시작시점 거래정보를 기록한다"""
         self.request = []
         self.result = []
         self.asset_record_list = []
         self.update_info_func("asset", self.put_asset_info)
 
     def make_score_record(self, new_info):
+        """
+        수익률 기록을 생성한다
+
+        balance: 계좌 현금 잔고
+        cumulative_return: 기준 시점부터 누적 수익률
+        price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+        asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
+        timestamp: 기록이 생성된 시점
+        """
         try:
             start_total = self.__get_start_property_value()
             start_quote = self.asset_record_list[0]['quote']
@@ -81,18 +92,31 @@ class Analyzer():
                 cumulative_return = round(cumulative_return, 3)
             self.logger.info(f'cumulative_return {start_total} -> {current_total}, {cumulative_return}%')
 
-            self.score_record_list.append(ScoreRecord(new_info['balance'],
-                cumulative_return, new_asset_list, price_change_ratio))
+            self.score_record_list.append({
+                'balance': new_info['balance'],
+                'cumulative_return': cumulative_return,
+                'price_change_ratio': price_change_ratio,
+                'asset': new_asset_list,
+                'timestamp': time.time()})
         except IndexError or AttributeError:
             self.logger.error('making score record fail')
 
     def create_report(self):
+        """
+        수익률 보고서를 생성한다
+
+        balance: 계좌 현금 잔고
+        cumulative_return: 기준 시점부터 누적 수익률
+        price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+        asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
+        timestamp: 기록이 생성된 시점
+        """
         self.update_info_func("asset", self.put_asset_info)
         try:
             start_value = self.__get_start_property_value()
             last_value = self.__get_last_property_value()
-            last_return = self.score_record_list[-1].cumulative_return
-            change_ratio = self.score_record_list[-1].price_change_ratio
+            last_return = self.score_record_list[-1]['cumulative_return']
+            change_ratio = self.score_record_list[-1]['price_change_ratio']
             self.logger.info("### Analyzer Report =======================")
             self.logger.info(f"Property {start_value} -> {last_value}")
             self.logger.info(f"gap {last_value - start_value}")
