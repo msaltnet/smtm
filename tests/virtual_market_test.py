@@ -36,6 +36,7 @@ class VirtualMarketTests(unittest.TestCase):
             pass
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "test"}]'
+        dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
         http.request.assert_called_once_with("GET", market.url, params=market.query_string)
@@ -47,6 +48,7 @@ class VirtualMarketTests(unittest.TestCase):
             pass
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "test"}]'
+        dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(None, None, None)
         market.initialize(http, None, None)
@@ -60,6 +62,7 @@ class VirtualMarketTests(unittest.TestCase):
             pass
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]'
+        dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
         # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
@@ -114,15 +117,14 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         http_mock = self.create_http_mock()
 
-        def raise_exception():
-            pass
         class DummyResponse:
             pass
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "mango"}]'
-        dummy_response.raise_for_status = raise_exception
+        dummy_response.raise_for_status = MagicMock()
         http_mock.request = MagicMock(return_value=dummy_response)
         market.initialize(http_mock, None, None)
+        dummy_response.raise_for_status.assert_called_once()
         http_mock.request.assert_called_once_with("GET", market.url, params=market.query_string)
         self.assertEqual(market.is_initialized, True)
         self.assertEqual(market.query_string["to"], "2020-11-11 00:00:00")
@@ -142,6 +144,7 @@ class VirtualMarketTests(unittest.TestCase):
             pass
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "banana"}]'
+        dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
         self.assertEqual(market.data[0]['market'], "banana")
@@ -425,11 +428,13 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request.amount = 0.1
 
         result = market.send_request(dummy_request)
+        # 최저 가격이 1900 이므로 정상적으로 채결됨
         self.assertEqual(result.request_id, "mango")
         self.assertEqual(result.type, "buy")
         self.assertEqual(result.price, 2000)
         self.assertEqual(result.amount, 0.1)
         self.assertEqual(result.msg, "success")
+        # 2000 * 0.1 = 200, 수수료 200 * 0.05 = 210, 2000 - 210 = 1790
         self.assertEqual(market.balance, 1790)
 
         dummy_request2 = DummyRequest()
@@ -439,11 +444,14 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request2.amount = 0.5
 
         result = market.send_request(dummy_request2)
+        # 최저 가격이 1900 이므로 정상적으로 채결됨
         self.assertEqual(result.request_id, "orange")
         self.assertEqual(result.type, "buy")
         self.assertEqual(result.price, 1900)
         self.assertEqual(result.amount, 0.5)
         self.assertEqual(result.msg, "success")
+        # 1900 * 0.5 = 950, 수수료 950 * 0.05 = 47.5, 1790 - 950 - 47.5 = 792.5
+        # 792.5 반올림 792
         self.assertEqual(market.balance, 792)
 
         dummy_request3 = DummyRequest()
@@ -453,11 +461,13 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request3.amount = 0.2
 
         result = market.send_request(dummy_request3)
+        # 최고 가격이 2100 이므로 정상적으로 채결됨
         self.assertEqual(result.request_id, "banana")
         self.assertEqual(result.type, "sell")
         self.assertEqual(result.price, 2000)
         self.assertEqual(result.amount, 0.2)
         self.assertEqual(result.msg, "success")
+        # 2000 * 0.2 = 400, 수수료 400 * 0.05 = 20, 792 + 400 - 20 = 1172
         self.assertEqual(market.balance, 1172)
 
     def test_send_request_return_error_result_when_turn_is_overed(self):

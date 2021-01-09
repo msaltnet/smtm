@@ -102,7 +102,6 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(request.amount, 100 / 20000000)
         self.assertEqual(request.type, 'buy')
         bnh.update_trading_info(None)
-        print(bnh.data[-1])
         request = bnh.get_request()
         self.assertEqual(request.price, 0)
         self.assertEqual(request.amount, 0)

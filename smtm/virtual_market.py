@@ -64,7 +64,6 @@ class VirtualMarket():
         try :
             with open(filepath, 'r') as data_file:
                 self.data = json.loads(data_file.read())
-                print(data_file.read())
                 self.is_initialized = True
         except FileNotFoundError as msg:
             self.logger.error(msg)
@@ -82,6 +81,7 @@ class VirtualMarket():
 
         try:
             response = self.http.request("GET", self.url, params=self.query_string)
+            response.raise_for_status()
             self.data = json.loads(response.text)
             self.data.reverse()
             self.is_initialized = True
