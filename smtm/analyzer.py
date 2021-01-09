@@ -102,15 +102,7 @@ class Analyzer():
             self.logger.error('making score record fail')
 
     def create_report(self):
-        """
-        수익률 보고서를 생성한다
-
-        balance: 계좌 현금 잔고
-        cumulative_return: 기준 시점부터 누적 수익률
-        price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
-        asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
-        timestamp: 기록이 생성된 시점
-        """
+        """수익률 보고서를 생성한다"""
         self.update_info_func("asset", self.put_asset_info)
         try:
             start_value = self.__get_start_property_value()
