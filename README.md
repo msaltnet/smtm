@@ -13,6 +13,12 @@ Install all packages using setup.py
 python setup.py install
 ```
 
+for development, all development depedencies included.
+
+```
+pip install -e .[dev]
+```
+
 ## How to run simulator
 After install, run module smtm
 

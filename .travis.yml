@@ -10,10 +10,19 @@ branches:
 
 language: python
 python:
-  - "3.5"
+  - 3.5
+  - 3.6
+
+before_install:
+  - python --version
+  - pip install -U pip
+  - pip install codecov  
 
 # command to install dependencies
-install: "pip install -r requirements.txt"
+install: pip install -e .[dev]
 
 # command to run tests
-script: cd tests && python -m unittest
+script: coverage run --omit="*/test*" -m unittest discover ./tests/ *test.py
+
+after_success:
+  - codecov # submit coverage

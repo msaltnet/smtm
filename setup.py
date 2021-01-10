@@ -14,21 +14,26 @@ def smtm_test_suite():
     return test_suite
 
 setup(name='smtm',
-      version='0.1',
-      description='make money using algorithm with python',
-      long_description=long_description(),
-      url='https://github.com/msaltnet/smtm',
-      author='msalt',
-      author_email='salt.jeong@gmail.com',
-      license='MIT',
-      packages=find_packages(),
-      classifiers=[
-          'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.6',
-          ],
-      install_requires=[
-          'requests==2.25.0'
-          ],
-      test_suite='setup.smtm_test_suite',
-      zip_safe=False)
+    version='0.1',
+    description='make money using algorithm with python',
+    long_description=long_description(),
+    url='https://github.com/msaltnet/smtm',
+    author='msalt',
+    author_email='salt.jeong@gmail.com',
+    license='MIT',
+    packages=find_packages(),
+    classifiers=[
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.6',
+        ],
+    install_requires=[
+            'requests==2.25.0'
+        ],
+    extras_require={
+        'dev': [
+            'coverage'
+        ]
+    },
+    test_suite='setup.smtm_test_suite',
+    zip_safe=False)
