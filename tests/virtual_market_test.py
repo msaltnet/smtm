@@ -97,7 +97,7 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize(http_mock, None, None)
         self.assertEqual(market.is_initialized, False)
 
-    def test_intialize_NOT_initialize_when_receive_error(self):
+    def test_intialize_NOT_initialize_when_connection_fail(self):
         market = VirtualMarket()
         http_mock = self.create_http_mock()
 
