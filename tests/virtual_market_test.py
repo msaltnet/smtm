@@ -185,6 +185,7 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
+        market.set_commission_ratio(5)
 
         for i in range(3):
             market.data[i]["opening_price"] = 2000.00000000
@@ -225,6 +226,7 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
+        market.set_commission_ratio(5)
 
         for i in range(3):
             market.data[i]["pening_price"] = 2000.00000000
@@ -252,6 +254,7 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
+        market.set_commission_ratio(5)
 
         for i in range(6):
             market.data[i]["opening_price"] = 2000.00000000
@@ -391,6 +394,7 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(200)
+        market.set_commission_ratio(5)
 
         for i in range(3):
             market.data[i]["opening_price"] = 2000.00000000
@@ -433,6 +437,7 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
+        market.set_commission_ratio(5)
         self.assertEqual(market.balance, 2000)
 
         for i in range(4):
@@ -519,6 +524,7 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
+        market.set_commission_ratio(5)
         self.assertEqual(market.balance, 2000)
 
         for i in range(3):
@@ -566,14 +572,21 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_set_commission_ratio_update_commision_ratio_correctly(self):
         market = VirtualMarket()
-        self.assertEqual(market.commission_ratio, 0.05)
+        self.assertEqual(market.commission_ratio, 0.0005)
         market.set_commission_ratio(0.01)
-        self.assertEqual(market.commission_ratio, 0.01)
+        self.assertEqual(market.commission_ratio, 0.0001)
+        market.set_commission_ratio(5)
+        self.assertEqual(market.commission_ratio, 0.05)
+        market.set_commission_ratio(70)
+        self.assertEqual(market.commission_ratio, 0.7)
+        market.set_commission_ratio(0.00007)
+        self.assertEqual(market.commission_ratio, 0.0000007)
 
     def test_get_balance_return_balance_and_property_list(self):
         market = VirtualMarket()
         market.initialize_from_file("./tests/mango_data.json", None, None)
         market.deposit(2000)
+        market.set_commission_ratio(5)
         info = market.get_balance()
         self.assertEqual(info['balance'], 2000)
         self.assertEqual(len(info['asset']), 0)

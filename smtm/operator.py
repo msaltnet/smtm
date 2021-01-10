@@ -28,18 +28,20 @@ class Operator():
         """
         운영에 필요한 모듈과 정보를 설정 및 각 모듈 초기화 수행
 
-        http: http 클라이언트 requests 인스턴스
-        dataProvider: DataProvider 인스턴스
-        strategy: Strategy 인스턴스
-        trader: Trader 인스턴스
+        http: http 클라이언트 requests 객체
+        threading: 타이머 동작을 위한 threading 객체
+        dataProvider: 운영에 사용될 DataProvider 객체
+        strategy: 운영에 사용될 Strategy 객체
+        trader: 운영에 사용될 Trader 객체
+        analyzer: 운영에 사용될 Analyzer 객체
         """
         self.http = http
         self.dp = dataProvider
         self.strategy = strategy
         self.trader = trader
         self.threading = threading
-        self.is_initialized = True
         self.analyzer = analyzer
+        self.is_initialized = True
 
     def setup(self, interval):
         """

@@ -11,8 +11,17 @@ class SimulationOperatorTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch("smtm.Operator.initialize")
-    def test_initialize_call_simulator_trader_initialize_with_config(self, OperatorInitialize):
+    def test_initialize_keep_object_correctly(self):
+        operator = SimulationOperator()
+        operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
+        self.assertEqual(operator.http, "apple")
+        self.assertEqual(operator.threading, "kiwi")
+        self.assertEqual(operator.dp, "mango")
+        self.assertEqual(operator.strategy, "banana")
+        self.assertEqual(operator.trader, "orange")
+        self.assertEqual(operator.analyzer, "grape")
+
+    def test_initialize_call_simulator_trader_initialize_with_config(self):
         sop = SimulationOperator()
         trader = Mock()
         trader.initialize = MagicMock()
@@ -26,19 +35,18 @@ class SimulationOperatorTests(unittest.TestCase):
         self.assertEqual(sop.count, 0)
         self.assertEqual(sop.budget, 0)
         sop.initialize("apple", "kiwi", dp, strategy, trader, analyzer, "papaya", "pear", "grape")
-        OperatorInitialize.assert_called_once_with("apple", "kiwi", dp, strategy, trader, analyzer)
         trader.initialize.assert_called_once_with("apple", end="papaya", count="pear", budget="grape")
         analyzer.initialize.assert_called_once_with(ANY)
-        analyzer.initialize.call_args[0][0]("asset", "applemango")
+        update_info_func = analyzer.initialize.call_args[0][0]
+        update_info_func("asset", "applemango")
         trader.send_account_info_request.assert_called_once_with("applemango")
-        analyzer.initialize.call_args[0][0]("mango", "applemango")
+        update_info_func("mango", "applemango")
         trader.send_account_info_request.assert_called_once()
         self.assertEqual(sop.end, "papaya")
         self.assertEqual(sop.count, "pear")
         self.assertEqual(sop.budget, "grape")
 
-    @patch("smtm.Operator.initialize")
-    def test_initialize_call_strategy_initialize_with_config(self, OperatorInitialize):
+    def test_initialize_call_strategy_initialize_with_config(self):
         sop = SimulationOperator()
         trader = Mock()
         strategy = Mock()
@@ -47,11 +55,9 @@ class SimulationOperatorTests(unittest.TestCase):
         analyzer = Mock()
         dp.initialize_from_server = MagicMock()
         sop.initialize("apple", "kiwi", dp, strategy, trader, analyzer, "papaya", "pear", "grape")
-        OperatorInitialize.assert_called_once_with("apple", "kiwi", dp, strategy, trader, analyzer)
         strategy.initialize.assert_called_once_with("grape")
 
-    @patch("smtm.Operator.initialize")
-    def test_initialize_set_is_initialized_False_when_AttributeError_occur(self, OperatorInitialize):
+    def test_initialize_set_is_initialized_False_when_AttributeError_occur(self):
         sop = SimulationOperator()
         trader = Mock()
         strategy = Mock()
@@ -60,8 +66,7 @@ class SimulationOperatorTests(unittest.TestCase):
         sop.initialize("apple", "kiwi", dp, strategy, trader, "papaya", "pear", "grape")
         self.assertEqual(sop.is_initialized, False)
 
-    @patch("smtm.Operator.initialize")
-    def test_initialize_call_simulator_dataProvider_initialize_from_server_correctly(self, OperatorInitialize):
+    def test_initialize_call_simulator_dataProvider_initialize_from_server_correctly(self):
         sop = SimulationOperator()
         trader = Mock()
         strategy = Mock()
@@ -69,7 +74,6 @@ class SimulationOperatorTests(unittest.TestCase):
         analyzer = Mock()
         dp.initialize_from_server = MagicMock()
         sop.initialize("apple", "kiwi", dp, strategy, trader, analyzer, "papaya", "pear", "grape")
-        OperatorInitialize.assert_called_once_with("apple", "kiwi", dp, strategy, trader, analyzer)
         dp.initialize_from_server.assert_called_once_with("apple", end="papaya", count="pear")
 
     @patch("smtm.Operator.setup")
@@ -97,6 +101,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock = Mock()
         operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.start()
+        OperatorStart.assert_called_once()
         analyzer_mock.make_start_point.assert_called_once()
 
     @patch("smtm.Operator.stop")

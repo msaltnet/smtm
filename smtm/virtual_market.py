@@ -28,7 +28,7 @@ class VirtualMarket():
         self.data = None
         self.turn_count = 0
         self.balance = 0
-        self.commission_ratio = 0.05
+        self.commission_ratio = 0.0005
         self.asset = {}
 
     def initialize(self, http, end, count):
@@ -100,7 +100,7 @@ class VirtualMarket():
 
     def set_commission_ratio(self, ratio):
         """수수료 비율 설정한다"""
-        self.commission_ratio = ratio
+        self.commission_ratio = ratio / 100
 
     def get_balance(self):
         """

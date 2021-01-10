@@ -22,7 +22,14 @@ class SimulationOperator(Operator):
         count: 사용될 거래 정도 갯수
         budget: 사용될 예산
         """
-        super().initialize(http, threading, dataProvider, strategy, trader, analyzer)
+        self.http = http
+        self.dp = dataProvider
+        self.strategy = strategy
+        self.trader = trader
+        self.threading = threading
+        self.analyzer = analyzer
+        self.is_initialized = True
+
         self.end = end
         self.count = count
         self.budget = budget
@@ -38,6 +45,7 @@ class SimulationOperator(Operator):
         except AttributeError:
             self.is_initialized = False
             self.logger.error("initialize fail")
+            return
 
     def _excute_trading(self):
         """자동 거래를 실행 후 타이머를 실행한다"""
@@ -66,15 +74,9 @@ class SimulationOperator(Operator):
         self._start_timer()
         return True
 
-    def setup(self, interval):
-        super().setup(interval)
-
     def start(self):
         try:
             self.analyzer.make_start_point()
         except AttributeError:
             self.logger.error('make start point fail')
         return super().start()
-
-    def stop(self):
-        super().stop()
