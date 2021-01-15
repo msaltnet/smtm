@@ -11,4 +11,12 @@
     "python.testing.nosetestsEnabled": false,
     "python.testing.unittestEnabled": true,
     "python.pythonPath": "c:\\venv\\Scripts\\python.exe",
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length",
+        "100"
+    ],
+    "editor.formatOnSave": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }
