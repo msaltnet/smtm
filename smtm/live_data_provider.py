@@ -1,6 +1,6 @@
 """실제 데이터를 다루는 DataProvider"""
 import json
-from smtm import DataProvider
+from .data_provider import DataProvider
 
 
 class LiveDataProvider(DataProvider):

@@ -4,6 +4,7 @@ from smtm import VirtualMarket
 from unittest.mock import *
 import requests
 
+
 class VirtualMarketTests(unittest.TestCase):
     def setUp(self):
         pass
@@ -13,15 +14,18 @@ class VirtualMarketTests(unittest.TestCase):
 
     def create_http_mock(self):
         http_mock = Mock()
+
         class HTTPError(Exception):
             def __init__(self, value):
                 self.value = value
+
             def __str__(self):
                 return self.value
 
         class RequestException(Exception):
             def __init__(self, value):
                 self.value = value
+
             def __str__(self):
                 return self.value
 
@@ -32,8 +36,10 @@ class VirtualMarketTests(unittest.TestCase):
     def test_intialize_should_download_from_real_market(self):
         market = VirtualMarket()
         http = Mock()
-        class DummyResponse():
+
+        class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "test"}]'
         dummy_response.raise_for_status = MagicMock()
@@ -44,8 +50,10 @@ class VirtualMarketTests(unittest.TestCase):
     def test_intialize_should_not_download_again_after_initialized(self):
         market = VirtualMarket()
         http = Mock()
-        class DummyResponse():
+
+        class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "test"}]'
         dummy_response.raise_for_status = MagicMock()
@@ -58,25 +66,29 @@ class VirtualMarketTests(unittest.TestCase):
     def test_intialize_update_trading_data(self):
         market = VirtualMarket()
         http = Mock()
-        class DummyResponse():
+
+        class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]'
         dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
         # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
-        self.assertEqual(market.data[0]['market'], "apple")
-        self.assertEqual(market.data[1]['market'], "banana")
-        self.assertEqual(market.data[2]['market'], "mango")
+        self.assertEqual(market.data[0]["market"], "apple")
+        self.assertEqual(market.data[1]["market"], "banana")
+        self.assertEqual(market.data[2]["market"], "mango")
 
     def test_intialize_NOT_initialize_with_invalid_response_data(self):
         market = VirtualMarket()
         http = Mock()
-        class DummyResponse():
+
+        class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
-        dummy_response.text = 'mango'
+        dummy_response.text = "mango"
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
         self.assertEqual(market.is_initialized, False)
@@ -86,12 +98,13 @@ class VirtualMarketTests(unittest.TestCase):
         http_mock = self.create_http_mock()
 
         def raise_exception():
-            raise http_mock.exceptions.HTTPError('HTTPError dummy exception')
+            raise http_mock.exceptions.HTTPError("HTTPError dummy exception")
+
         class DummyResponse:
             pass
 
         dummy_response = DummyResponse()
-        dummy_response.text = 'mango'
+        dummy_response.text = "mango"
         dummy_response.raise_for_status = raise_exception
         http_mock.request = MagicMock(return_value=dummy_response)
         market.initialize(http_mock, None, None)
@@ -102,12 +115,13 @@ class VirtualMarketTests(unittest.TestCase):
         http_mock = self.create_http_mock()
 
         def raise_exception():
-            raise http_mock.exceptions.RequestException('RequestException dummy exception')
+            raise http_mock.exceptions.RequestException("RequestException dummy exception")
+
         class DummyResponse:
             pass
 
         dummy_response = DummyResponse()
-        dummy_response.text = 'mango'
+        dummy_response.text = "mango"
         dummy_response.raise_for_status = raise_exception
         http_mock.request = MagicMock(return_value=dummy_response)
         market.initialize(http_mock, None, None)
@@ -119,6 +133,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "mango"}]'
         dummy_response.raise_for_status = MagicMock()
@@ -134,28 +149,32 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
         market.initialize_from_file("banana_data", None, None)
         self.assertEqual(market.data, None)
-        market.initialize_from_file("./tests/mango_data.json", None, None)
-        self.assertEqual(market.data[0]['market'], "mango")
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
+        self.assertEqual(market.data[0]["market"], "mango")
 
     def test_intialize_from_file_ignore_after_initialized(self):
         market = VirtualMarket()
         http = Mock()
-        class DummyResponse():
+
+        class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "banana"}]'
         dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
-        self.assertEqual(market.data[0]['market'], "banana")
+        self.assertEqual(market.data[0]["market"], "banana")
 
-        market.initialize_from_file("./tests/mango_data.json", None, None)
-        self.assertEqual(market.data[0]['market'], "banana")
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
+        self.assertEqual(market.data[0]["market"], "banana")
 
     def test_send_request_return_emtpy_result_when_NOT_initialized(self):
         market = VirtualMarket()
-        class DummyRequest():
+
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "orange"
@@ -167,15 +186,17 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_return_trading_result_with_same_id_and_type(self):
         market = VirtualMarket()
-        class DummyRequest():
+
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "orange"
         dummy_request.price = 2000
         dummy_request.amount = 10
-        market.initialize_from_file("./tests/mango_data.json", None, None)
-        self.assertEqual(market.data[0]['market'], "mango")
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
+        self.assertEqual(market.data[0]["market"], "mango")
 
         result = market.send_request(dummy_request)
         self.assertEqual(result.request_id, "mango")
@@ -183,7 +204,7 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_buy_return_result_corresponding_next_data(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
         market.set_commission_ratio(5)
 
@@ -193,8 +214,9 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
@@ -224,7 +246,7 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_buy_return_error_request_when_data_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
         market.set_commission_ratio(5)
 
@@ -234,8 +256,9 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["ow_price"] = 1900.00000000
             market.data[i]["rade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
@@ -252,7 +275,7 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_sell_return_result_corresponding_next_data(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
         market.set_commission_ratio(5)
 
@@ -262,8 +285,9 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
@@ -324,9 +348,9 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_sell_return_error_request_when_data_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
-        market.asset['mango'] = (2000, 1)
+        market.asset["mango"] = (2000, 1)
 
         for i in range(3):
             market.data[i]["pening_price"] = 2000.00000000
@@ -334,8 +358,9 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["ow_price"] = 1900.00000000
             market.data[i]["rade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "sell"
@@ -352,10 +377,11 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_return_error_when_invalid_type(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "apple"
@@ -371,11 +397,12 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_sell_return_error_request_when_target_asset_empty(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(999)
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "sell"
@@ -392,7 +419,7 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_buy_return_no_money_when_balance_is_NOT_enough(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(200)
         market.set_commission_ratio(5)
 
@@ -402,8 +429,9 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
@@ -435,7 +463,7 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_update_balance_correctly(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
         market.set_commission_ratio(5)
         self.assertEqual(market.balance, 2000)
@@ -446,8 +474,9 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
@@ -499,18 +528,19 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_return_error_result_when_turn_is_overed(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
         dummy_request.price = 2000
         dummy_request.amount = 0.1
 
-        for i in range(len(market.data)-2):
+        for i in range(len(market.data) - 2):
             result = market.send_request(dummy_request)
             self.assertEqual(result.request_id, "mango")
             self.assertEqual(result.type, "buy")
@@ -522,7 +552,7 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_send_request_handle_turn_over_with_zero_price(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
         market.set_commission_ratio(5)
         self.assertEqual(market.balance, 2000)
@@ -533,8 +563,9 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
@@ -584,12 +615,12 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_get_balance_return_balance_and_property_list(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
         market.set_commission_ratio(5)
         info = market.get_balance()
-        self.assertEqual(info['balance'], 2000)
-        self.assertEqual(len(info['asset']), 0)
+        self.assertEqual(info["balance"], 2000)
+        self.assertEqual(len(info["asset"]), 0)
 
         market.data[0]["opening_price"] = 2000.00000000
         market.data[0]["high_price"] = 2100.00000000
@@ -616,8 +647,9 @@ class VirtualMarketTests(unittest.TestCase):
         market.data[4]["low_price"] = 1900.00000000
         market.data[4]["trade_price"] = 2050.00000000
 
-        class DummyRequest():
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.id = "mango"
         dummy_request.type = "buy"
@@ -626,11 +658,11 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request)
 
         info = market.get_balance()
-        self.assertEqual(info['balance'], 1790)
-        self.assertEqual(len(info['asset']), 1)
-        self.assertEqual(info['asset']["mango"][0], 2000)
-        self.assertEqual(info['asset']["mango"][1], 0.1)
-        self.assertEqual(info['quote']["mango"], 2010)
+        self.assertEqual(info["balance"], 1790)
+        self.assertEqual(len(info["asset"]), 1)
+        self.assertEqual(info["asset"]["mango"][0], 2000)
+        self.assertEqual(info["asset"]["mango"][1], 0.1)
+        self.assertEqual(info["quote"]["mango"], 2010)
 
         dummy_request2 = DummyRequest()
         dummy_request2.id = "orange"
@@ -640,11 +672,11 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request2)
 
         info = market.get_balance()
-        self.assertEqual(info['balance'], 792)
-        self.assertEqual(len(info['asset']), 1)
-        self.assertEqual(info['asset']["mango"][0], 1917)
-        self.assertEqual(info['asset']["mango"][1], 0.6)
-        self.assertEqual(info['quote']["mango"], 2020)
+        self.assertEqual(info["balance"], 792)
+        self.assertEqual(len(info["asset"]), 1)
+        self.assertEqual(info["asset"]["mango"][0], 1917)
+        self.assertEqual(info["asset"]["mango"][1], 0.6)
+        self.assertEqual(info["quote"]["mango"], 2020)
 
         dummy_request3 = DummyRequest()
         dummy_request3.id = "banana"
@@ -654,11 +686,11 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request3)
 
         info = market.get_balance()
-        self.assertEqual(info['balance'], 1172)
-        self.assertEqual(len(info['asset']), 1)
-        self.assertEqual(info['asset']["mango"][0], 1917)
-        self.assertEqual(round(info['asset']["mango"][1], 1), 0.4)
-        self.assertEqual(info['quote']["mango"], 2030)
+        self.assertEqual(info["balance"], 1172)
+        self.assertEqual(len(info["asset"]), 1)
+        self.assertEqual(info["asset"]["mango"][0], 1917)
+        self.assertEqual(round(info["asset"]["mango"][1], 1), 0.4)
+        self.assertEqual(info["quote"]["mango"], 2030)
 
         dummy_request4 = DummyRequest()
         dummy_request4.id = "banana"
@@ -668,20 +700,20 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.send_request(dummy_request4)
 
         info = market.get_balance()
-        self.assertEqual(info['balance'], 1913)
-        self.assertEqual(len(info['asset']), 0)
-        self.assertEqual(info['quote']["mango"], 2040)
+        self.assertEqual(info["balance"], 1913)
+        self.assertEqual(len(info["asset"]), 0)
+        self.assertEqual(info["quote"]["mango"], 2040)
 
     def test_get_balance_return_None_when_data_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data_invalid_key.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data_invalid_key.json", None, None)
         market.deposit(2000)
         info = market.get_balance()
         self.assertEqual(info, None)
 
     def test_get_balance_return_None_when_data_index_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/mango_data.json", None, None)
+        market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
         market.turn_count = 5000
         info = market.get_balance()

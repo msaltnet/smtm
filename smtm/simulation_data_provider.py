@@ -1,7 +1,8 @@
 """시뮬레이션을 위한 DataProvider 구현체"""
 
 import json
-from smtm import DataProvider, LogManager
+from .data_provider import DataProvider
+from .log_manager import LogManager
 
 
 class SimulationDataProvider(DataProvider):

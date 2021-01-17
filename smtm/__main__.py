@@ -4,7 +4,7 @@ import signal
 import argparse
 import threading
 import requests
-from smtm import (
+from . import (
     LogManager,
     Analyzer,
     SimulationTrader,

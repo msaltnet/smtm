@@ -3,7 +3,7 @@
 이 모듈은 각 모듈을 컨트롤하여 전체 시스템을 운영한다.
 """
 
-from smtm import LogManager
+from .log_manager import LogManager
 
 
 class Operator:

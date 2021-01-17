@@ -1,6 +1,7 @@
 """시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영"""
 
-from smtm import LogManager, Operator
+from .log_manager import LogManager
+from .operator import Operator
 
 
 class SimulationOperator(Operator):
@@ -16,7 +17,7 @@ class SimulationOperator(Operator):
         self.count = 0
         self.budget = 0
 
-    def initialize(
+    def initialize_simulation(
         self,
         http,
         threading,
@@ -35,13 +36,7 @@ class SimulationOperator(Operator):
         count: 사용될 거래 정도 갯수
         budget: 사용될 예산
         """
-        self.http = http
-        self.data_provider = data_provider
-        self.strategy = strategy
-        self.trader = trader
-        self.threading = threading
-        self.analyzer = analyzer
-        self.is_initialized = True
+        super().initialize(http, threading, data_provider, strategy, trader, analyzer)
 
         self.end = end
         self.count = count
