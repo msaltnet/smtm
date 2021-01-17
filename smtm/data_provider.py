@@ -1,4 +1,9 @@
-from abc import *
+"""거래에 관련된 데이터를 수집해서 정보를 제공
+
+이 모듈은 거래에 관련된 데이터를 수집해서 필요한 데이터 포맷에 맞게 정보를 제공하는 클래스인 DataProvider 추상클래스다.
+"""
+from abc import ABCMeta, abstractmethod
+
 
 class DataProvider(metaclass=ABCMeta):
     """
@@ -10,18 +15,20 @@ class DataProvider(metaclass=ABCMeta):
         """
         현재 거래 정보를 딕셔너리로 전달
 
-        market: 거래 시장 종류 BTC
-        date_time: 정보의 기준 시간
-        opening_price: 시작 거래 가격
-        high_price: 최고 거래 가격
-        low_price: 최저 거래 가격
-        closing_price: 마지막 거래 가격
-        acc_price: 단위 시간내 누적 거래 금액
-        acc_volume: 단위 시간내 누적 거래 양
+        Returns:
+            거래 정보 딕셔너리
+            {
+                "market": 거래 시장 종류 BTC
+                "date_time": 정보의 기준 시간
+                "opening_price": 시작 거래 가격
+                "high_price": 최고 거래 가격
+                "low_price": 최저 거래 가격
+                "closing_price": 마지막 거래 가격
+                "acc_price": 단위 시간내 누적 거래 금액
+                "acc_volume": 단위 시간내 누적 거래 양
+            }
         """
-        pass
 
     @abstractmethod
     def initialize(self, http):
         """거래 정보 초기화"""
-        pass

@@ -1,7 +1,10 @@
+"""분할 매수 후 홀딩 하는 간단한 전략"""
+
+import copy
 from .strategy import Strategy
 from .trading_request import TradingRequest
 from .log_manager import LogManager
-import copy
+
 
 class StrategyBuyAndHold(Strategy):
     """
@@ -28,13 +31,13 @@ class StrategyBuyAndHold(Strategy):
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트"""
-        if self.is_intialized == False:
+        if self.is_intialized is not True:
             return
         self.data.append(copy.deepcopy(info))
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트"""
-        if self.is_intialized == False:
+        if self.is_intialized is not True:
             return
 
         try:
@@ -42,8 +45,8 @@ class StrategyBuyAndHold(Strategy):
             self.logger.info(f"[RESULT] id: {result.request_id} ================")
             self.logger.info(f"type: {result.type}, msg: {result.msg}")
             self.logger.info(f"price: {result.price}, amount: {result.amount}")
-            self.logger.info(f'balance: {self.balance}')
-            self.logger.info(f"================================================")
+            self.logger.info(f"balance: {self.balance}")
+            self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
         except AttributeError as msg:
             self.logger.warning(msg)
@@ -55,34 +58,34 @@ class StrategyBuyAndHold(Strategy):
         10번에 걸쳐 분할 매수 후 홀딩하는 전략
         마지막 종가로 처음 예산의 1/10에 해당하는 양 만큼 매수시도
         """
-        if self.is_intialized == False:
-            return
+        if self.is_intialized is not True:
+            return None
 
         try:
             last_data = self.data[-1]
             target_budget = self.budget / 10
             if last_data is None:
-                return TradingRequest('buy', 0, 0)
+                return TradingRequest("buy", 0, 0)
 
             if self.min_price > target_budget:
-                self.logger.info('target_budget is too small')
-                return TradingRequest('buy', 0, 0)
+                self.logger.info("target_budget is too small")
+                return TradingRequest("buy", 0, 0)
 
             if target_budget > self.balance:
-                self.logger.info('blance is too small')
-                return TradingRequest('buy', 0, 0)
+                self.logger.info("blance is too small")
+                return TradingRequest("buy", 0, 0)
 
-            target_amount = target_budget / last_data['closing_price']
-            trading_request = TradingRequest('buy', last_data['closing_price'], target_amount)
+            target_amount = target_budget / last_data["closing_price"]
+            trading_request = TradingRequest("buy", last_data["closing_price"], target_amount)
             self.logger.info(f"[REQ] id: {trading_request.id} =====================")
             self.logger.info(f"type: {trading_request.type}")
             self.logger.info(f"price: {trading_request.price}, amount: {trading_request.amount}")
-            self.logger.info(f"================================================")
+            self.logger.info("================================================")
             return trading_request
         except KeyError:
-            self.logger.error('invalid data')
+            self.logger.error("invalid data")
         except IndexError:
-            self.logger.error('empty data')
+            self.logger.error("empty data")
         except AttributeError as msg:
             self.logger.error(msg)
 

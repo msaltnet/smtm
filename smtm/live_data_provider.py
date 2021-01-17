@@ -1,12 +1,15 @@
-from . import DataProvider
+"""실제 데이터를 다루는 DataProvider"""
 import json
+from smtm import DataProvider
+
 
 class LiveDataProvider(DataProvider):
     """
     거래소로부터 실시간 데이터를 수집해서 정보를 제공하는 클래스
     """
+
     url = "https://api.upbit.com/v1/candles/minutes/1"
-    querystring = {"market":"KRW-BTC", "count":"1"}
+    querystring = {"market": "KRW-BTC", "count": "1"}
     http = None
     state = None
 
@@ -23,6 +26,7 @@ class LiveDataProvider(DataProvider):
         """사용된 http client 설정한다"""
         self.http = http
         self.state = "initialized"
+
 
 # response info format
 # {

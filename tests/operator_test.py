@@ -4,6 +4,7 @@ from unittest.mock import *
 import requests
 import threading
 
+
 class OperatorTests(unittest.TestCase):
     def setUp(self):
         pass
@@ -16,7 +17,7 @@ class OperatorTests(unittest.TestCase):
         operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
         self.assertEqual(operator.http, "apple")
         self.assertEqual(operator.threading, "kiwi")
-        self.assertEqual(operator.dp, "mango")
+        self.assertEqual(operator.data_provider, "mango")
         self.assertEqual(operator.strategy, "banana")
         self.assertEqual(operator.trader, "orange")
         self.assertEqual(operator.analyzer, "grape")
@@ -50,8 +51,10 @@ class OperatorTests(unittest.TestCase):
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
-        class DummyRequest():
+
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.price = 500
         strategy_mock = Mock()
@@ -78,8 +81,10 @@ class OperatorTests(unittest.TestCase):
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
-        class DummyRequest():
+
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.price = 500
         strategy_mock = Mock()
@@ -88,7 +93,9 @@ class OperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.initialize(
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+        )
         operator.setup(27)
         operator._excute_trading()
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
@@ -109,8 +116,10 @@ class OperatorTests(unittest.TestCase):
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
-        class DummyRequest():
+
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.price = 0
         strategy_mock = Mock()
@@ -118,7 +127,9 @@ class OperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.initialize(
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+        )
         operator.setup(27)
         operator._excute_trading()
 
@@ -142,7 +153,9 @@ class OperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=None)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.initialize(
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+        )
         operator.setup(27)
         operator._excute_trading()
 
@@ -159,8 +172,10 @@ class OperatorTests(unittest.TestCase):
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
-        class DummyRequest():
+
+        class DummyRequest:
             pass
+
         dummy_request = DummyRequest()
         dummy_request.price = 500
         strategy_mock = Mock()

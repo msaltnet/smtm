@@ -1,6 +1,8 @@
-from . import DataProvider
-from . import LogManager
+"""시뮬레이션을 위한 DataProvider 구현체"""
+
 import json
+from smtm import DataProvider, LogManager
+
 
 class SimulationDataProvider(DataProvider):
     """
@@ -9,13 +11,14 @@ class SimulationDataProvider(DataProvider):
     업비트의 open api를 사용. 별도의 가입, 인증, token 없이 사용 가능
     https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
     """
+
     url = "https://api.upbit.com/v1/candles/minutes/1"
-    query_string = {"market":"KRW-BTC"}
+    query_string = {"market": "KRW-BTC"}
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
         self.is_initialized = False
-        self.end = None #"2020-01-19 20:34:42"
+        self.end = None  # "2020-01-19 20:34:42"
         self.http = None
         self.data = []
         self.count = 0
@@ -48,7 +51,9 @@ class SimulationDataProvider(DataProvider):
 
         self.__initialize(end, count)
         self.__get_data_from_file(filepath)
-        self.logger.info(f'data is updated from file # file: {filepath}, end: {end}, count: {count}')
+        self.logger.info(
+            f"data is updated from file # file: {filepath}, end: {end}, count: {count}"
+        )
 
     def initialize_from_server(self, http, end=None, count=100):
         """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
@@ -58,44 +63,46 @@ class SimulationDataProvider(DataProvider):
         self.__initialize(end, count)
         self.http = http
         self.__get_data_from_server()
-        self.logger.info(f'data is updated from server # end: {end}, count: {count}')
+        self.logger.info(f"data is updated from server # end: {end}, count: {count}")
 
     def __get_data_from_file(self, filepath):
-        try :
-            with open(filepath, 'r') as data_file:
+        try:
+            with open(filepath, "r") as data_file:
                 self.data = json.loads(data_file.read())
                 self.is_initialized = True
-        except FileNotFoundError as msg:
-            self.logger.error('Invalid filepath')
+        except FileNotFoundError:
+            self.logger.error("Invalid filepath")
         except ValueError:
-            self.logger.error('Invalid JSON data')
+            self.logger.error("Invalid JSON data")
 
     def __create_candle_info(self, data):
         try:
-            return {'market': data["market"],
-                'date_time': data["candle_date_time_utc"],
-                'opening_price': data["opening_price"],
-                'high_price': data["high_price"],
-                'low_price': data["low_price"],
-                'closing_price': data["trade_price"],
-                'acc_price': data["candle_acc_trade_price"],
-                'acc_volume': data["candle_acc_trade_volume"]}
+            return {
+                "market": data["market"],
+                "date_time": data["candle_date_time_utc"],
+                "opening_price": data["opening_price"],
+                "high_price": data["high_price"],
+                "low_price": data["low_price"],
+                "closing_price": data["trade_price"],
+                "acc_price": data["candle_acc_trade_price"],
+                "acc_volume": data["candle_acc_trade_volume"],
+            }
         except KeyError:
             self.logger.warning("invalid data for candle info")
             return None
 
     def __get_data_from_server(self):
         if self.http is None:
-            return False
+            return
 
-        if self.end is not None :
+        if self.end is not None:
             self.query_string["to"] = self.end
-        else :
+        else:
             self.query_string["to"] = "2020-11-11 00:00:00"
 
-        if self.count is not None :
+        if self.count is not None:
             self.query_string["count"] = self.count
-        else :
+        else:
             self.query_string["count"] = 100
 
         try:
@@ -105,7 +112,7 @@ class SimulationDataProvider(DataProvider):
             self.data.reverse()
             self.is_initialized = True
         except ValueError:
-            self.logger.error('Invalid data from server')
+            self.logger.error("Invalid data from server")
         except self.http.exceptions.HTTPError as err:
             self.logger.error(err)
         except self.http.exceptions.RequestException as err:

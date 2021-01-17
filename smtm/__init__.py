@@ -16,14 +16,15 @@ from .strategy_bnh import StrategyBuyAndHold
 from .virtual_market import VirtualMarket
 
 __all__ = [
-    'LogManager',
-    'Analyzer',
-    'TradingRequest',
-    'TradingResult',
-    'SimulationTrader',
-    'VirtualMarket',
-    'SimulationDataProvider',
-    'Operator',
-    'StrategyBuyAndHold',
-    'SimulationOperator']
-__version__ = '0.1.0'
+    "LogManager",
+    "Analyzer",
+    "TradingRequest",
+    "TradingResult",
+    "SimulationTrader",
+    "VirtualMarket",
+    "SimulationDataProvider",
+    "Operator",
+    "StrategyBuyAndHold",
+    "SimulationOperator",
+]
+__version__ = "0.1.0"
