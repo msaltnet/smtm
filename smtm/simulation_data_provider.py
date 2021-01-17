@@ -19,10 +19,10 @@ class SimulationDataProvider(DataProvider):
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
         self.is_initialized = False
-        self.end = None  # "2020-01-19 20:34:42"
+        self.end = "2020-01-19 20:00:00"
         self.http = None
         self.data = []
-        self.count = 0
+        self.count = 50
         self.index = 0
 
     def get_info(self):
@@ -38,8 +38,10 @@ class SimulationDataProvider(DataProvider):
 
     def __initialize(self, end=None, count=100):
         self.index = 0
-        self.end = end
-        self.count = count
+        if end is not None:
+            self.end = end
+        if count is not None:
+            self.count = count
 
     def initialize(self, http):
         """데이터를 가져와서 초기화한다"""
@@ -96,16 +98,8 @@ class SimulationDataProvider(DataProvider):
         if self.http is None:
             return
 
-        if self.end is not None:
-            self.query_string["to"] = self.end
-        else:
-            self.query_string["to"] = "2020-11-11 00:00:00"
-
-        if self.count is not None:
-            self.query_string["count"] = self.count
-        else:
-            self.query_string["count"] = 100
-
+        self.query_string["to"] = self.end
+        self.query_string["count"] = self.count
         try:
             response = self.http.request("GET", self.url, params=self.query_string)
             response.raise_for_status()
@@ -114,7 +108,7 @@ class SimulationDataProvider(DataProvider):
             self.is_initialized = True
         except ValueError:
             self.logger.error("Invalid data from server")
-        except self.http.exceptions.HTTPError as err:
-            self.logger.error(err)
-        except self.http.exceptions.RequestException as err:
-            self.logger.error(err)
+        except self.http.exceptions.HTTPError as msg:
+            self.logger.error(msg)
+        except self.http.exceptions.RequestException as msg:
+            self.logger.error(msg)

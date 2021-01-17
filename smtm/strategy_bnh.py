@@ -1,8 +1,8 @@
 """분할 매수 후 홀딩 하는 간단한 전략"""
 
 import copy
+import time
 from .strategy import Strategy
-from .trading_request import TradingRequest
 from .log_manager import LogManager
 
 
@@ -41,10 +41,10 @@ class StrategyBuyAndHold(Strategy):
             return
 
         try:
-            self.balance = result.balance
-            self.logger.info(f"[RESULT] id: {result.request_id} ================")
-            self.logger.info(f"type: {result.type}, msg: {result.msg}")
-            self.logger.info(f"price: {result.price}, amount: {result.amount}")
+            self.balance = result["balance"]
+            self.logger.info(f"[RESULT] id: {result['request_id']} ================")
+            self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
+            self.logger.info(f"price: {result['price']}, amount: {result['amount']}")
             self.logger.info(f"balance: {self.balance}")
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
@@ -57,6 +57,13 @@ class StrategyBuyAndHold(Strategy):
 
         10번에 걸쳐 분할 매수 후 홀딩하는 전략
         마지막 종가로 처음 예산의 1/10에 해당하는 양 만큼 매수시도
+        Returns:
+            {
+                "id": 요청 정보 id "1607862457.560075"
+                "type": 거래 유형 sell, buy
+                "price": 거래 가격
+                "amount": 거래 수량
+            }
         """
         if self.is_intialized is not True:
             return None
@@ -65,21 +72,43 @@ class StrategyBuyAndHold(Strategy):
             last_data = self.data[-1]
             target_budget = self.budget / 10
             if last_data is None:
-                return TradingRequest("buy", 0, 0)
+                return {
+                    "id": str(round(time.time(), 3)),
+                    "type": "buy",
+                    "price": 0,
+                    "amount": 0,
+                }
 
             if self.min_price > target_budget:
                 self.logger.info("target_budget is too small")
-                return TradingRequest("buy", 0, 0)
+                return {
+                    "id": str(round(time.time(), 3)),
+                    "type": "buy",
+                    "price": 0,
+                    "amount": 0,
+                }
 
             if target_budget > self.balance:
                 self.logger.info("blance is too small")
-                return TradingRequest("buy", 0, 0)
+                return {
+                    "id": str(round(time.time(), 3)),
+                    "type": "buy",
+                    "price": 0,
+                    "amount": 0,
+                }
 
             target_amount = target_budget / last_data["closing_price"]
-            trading_request = TradingRequest("buy", last_data["closing_price"], target_amount)
-            self.logger.info(f"[REQ] id: {trading_request.id} =====================")
-            self.logger.info(f"type: {trading_request.type}")
-            self.logger.info(f"price: {trading_request.price}, amount: {trading_request.amount}")
+            trading_request = {
+                "id": str(round(time.time(), 3)),
+                "type": "buy",
+                "price": last_data["closing_price"],
+                "amount": target_amount,
+            }
+            self.logger.info(f"[REQ] id: {trading_request['id']} =====================")
+            self.logger.info(f"type: {trading_request['type']}")
+            self.logger.info(
+                f"price: {trading_request['price']}, amount: {trading_request['amount']}"
+            )
             self.logger.info("================================================")
             return trading_request
         except KeyError:

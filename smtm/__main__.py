@@ -17,24 +17,30 @@ from . import (
 class SmtmSimulator:
     """smtm 시뮬레이터"""
 
-    def __init__(self, end=None, count=None, term=None):
+    def __init__(self, end=None, count=100, term=None):
         self.logger = LogManager.get_logger("SmtmSimulator")
         self.__stop = False
-        self.end = end
-        self.count = count
+        self.end = "2020-12-20T16:23:00"
+        self.count = 100
         self.term = term
         self.operator = None
 
+        if end is not None:
+            self.end = end
+
         if self.end is not None:
             self.end = self.end.replace("T", " ")
+
+        if count is not None:
+            self.count = count
 
         if self.term is None:
             self.term = 2
 
         self.term = float(self.term)
-        self.logger.info(f"end: {end}")
-        self.logger.info(f"count: {count}")
-        self.logger.info(f"term: {term}")
+        self.logger.info(f"end: {self.end}")
+        self.logger.info(f"count: {self.count}")
+        self.logger.info(f"term: {self.term}")
         self.logger.info("simulation is started ===================")
 
         signal.signal(signal.SIGINT, self.stop)
@@ -44,7 +50,7 @@ class SmtmSimulator:
         """main 함수"""
         operator = SimulationOperator()
         self.operator = operator
-        operator.initialize(
+        operator.initialize_simulation(
             requests,
             threading,
             SimulationDataProvider(),
@@ -69,7 +75,7 @@ class SmtmSimulator:
         self.__stop = True
         if self.operator is not None:
             self.operator.stop()
-        self.logger.info(f"Receive Signal {signum}")
+        self.logger.info(f"Receive Signal {signum} {frame}")
         self.logger.info("Stop Singing")
 
 

@@ -1,7 +1,6 @@
 """가상 거래소"""
 import json
 from .log_manager import LogManager
-from .trading_result import TradingResult
 
 
 class VirtualMarket:
@@ -25,8 +24,8 @@ class VirtualMarket:
         self.logger = LogManager.get_logger(__name__)
         self.is_initialized = False
         self.http = None
-        self.end = None
-        self.count = None
+        self.end = "2020-04-30 00:00:00"
+        self.count = 100
         self.data = None
         self.turn_count = 0
         self.balance = 0
@@ -45,8 +44,10 @@ class VirtualMarket:
             return
 
         self.http = http
-        self.end = end
-        self.count = count
+        if end is not None:
+            self.end = end
+        if count is not None:
+            self.count = count
         self.__update_data_from_server()
 
     def initialize_from_file(self, filepath, end, count):
@@ -70,15 +71,8 @@ class VirtualMarket:
             self.logger.error(msg)
 
     def __update_data_from_server(self):
-        if self.end is not None:
-            self.query_string["to"] = self.end
-        else:
-            self.query_string["to"] = "2020-11-11 00:00:00"
-
-        if self.count is not None:
-            self.query_string["count"] = self.count
-        else:
-            self.query_string["count"] = 100
+        self.query_string["to"] = self.end
+        self.query_string["count"] = self.count
 
         try:
             response = self.http.request("GET", self.url, params=self.query_string)
@@ -141,95 +135,145 @@ class VirtualMarket:
         거래 요청을 처리해서 결과를 반환
 
         request: 거래 요청 정보
+        Returns:
+            {
+                "request_id": 요청 정보 id
+                "type": 거래 유형 sell, buy
+                "price": 거래 가격
+                "amount": 거래 수량
+                "msg": 거래 결과 메세지
+                "balance": 거래 후 계좌 현금 잔고
+            }
         """
         if self.is_initialized is not True:
             self.logger.warning("virtual market is NOT initialized")
-            return TradingResult(None, None, None, None)
+            return None
         next_index = self.turn_count + 1
         result = None
 
         if next_index >= len(self.data) - 1:
             self.turn_count = next_index
-            return TradingResult(
-                request.id, request.type, -1, -1, "game-over", self.balance
-            )
 
-        if request.price == 0 or request.amount == 0:
+            return {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": -1,
+                "amount": -1,
+                "msg": "game-over",
+                "balance": self.balance,
+            }
+
+        if request["price"] == 0 or request["amount"] == 0:
             self.turn_count = next_index
-            return TradingResult(
-                request.id, request.type, 0, 0, "turn over", self.balance
-            )
+            return {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": 0,
+                "amount": 0,
+                "msg": "turn over",
+                "balance": self.balance,
+            }
 
-        if request.type == "buy":
+        if request["type"] == "buy":
             result = self.__handle_buy_request(request, next_index)
-        elif request.type == "sell":
+        elif request["type"] == "sell":
             result = self.__handle_sell_request(request, next_index)
         else:
-            result = TradingResult(
-                request.id, request.type, -1, -1, "invalid type", self.balance
-            )
+            result = {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": -1,
+                "amount": -1,
+                "msg": "invalid type",
+                "balance": self.balance,
+            }
 
         self.turn_count = next_index
         return result
 
     def __handle_buy_request(self, request, next_index):
-        buy_asset_value = request.price * request.amount
+        buy_asset_value = request["price"] * request["amount"]
         old_balance = self.balance
         if buy_asset_value * (1 + self.commission_ratio) > self.balance:
-            return TradingResult(
-                request.id, request.type, 0, 0, "no money", self.balance
-            )
+            return {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": 0,
+                "amount": 0,
+                "msg": "no money",
+                "balance": self.balance,
+            }
 
         try:
-            if request.price < self.data[next_index]["low_price"]:
-                return TradingResult(
-                    request.id, request.type, 0, 0, "not matched", self.balance
-                )
+            if request["price"] < self.data[next_index]["low_price"]:
+                return {
+                    "request_id": request["id"],
+                    "type": request["type"],
+                    "price": 0,
+                    "amount": 0,
+                    "msg": "not matched",
+                    "balance": self.balance,
+                }
             name = self.data[next_index]["market"]
             if name in self.asset:
                 old = self.asset[name]
-                final_amount = old[1] + request.amount
-                total_value = (request.amount * request.price) + (old[0] * old[1])
+                final_amount = old[1] + request["amount"]
+                total_value = (request["amount"] * request["price"]) + (old[0] * old[1])
                 self.asset[name] = (round(total_value / final_amount), final_amount)
             else:
-                self.asset[name] = (request.price, request.amount)
+                self.asset[name] = (request["price"], request["amount"])
 
             self.balance -= buy_asset_value * (1 + self.commission_ratio)
             self.balance = round(self.balance)
             self.__print_balance_info("buy", old_balance, self.balance, buy_asset_value)
-            return TradingResult(
-                request.id,
-                request.type,
-                request.price,
-                request.amount,
-                "success",
-                self.balance,
-            )
+            return {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": request["price"],
+                "amount": request["amount"],
+                "msg": "success",
+                "balance": self.balance,
+            }
         except KeyError as msg:
             self.logger.error(f"invalid trading data {msg}")
-            return TradingResult(
-                request.id, request.type, -1, -1, "internal error", self.balance
-            )
+            return {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": -1,
+                "amount": -1,
+                "msg": "internal error",
+                "balance": self.balance,
+            }
 
     def __handle_sell_request(self, request, next_index):
         old_balance = self.balance
         try:
             name = self.data[next_index]["market"]
             if name not in self.asset:
-                return TradingResult(
-                    request.id, request.type, 0, 0, "asset empty", self.balance
-                )
+                return {
+                    "request_id": request["id"],
+                    "type": request["type"],
+                    "price": 0,
+                    "amount": 0,
+                    "msg": "asset empty",
+                    "balance": self.balance,
+                }
 
-            if request.price >= self.data[next_index]["high_price"]:
-                return TradingResult(
-                    request.id, request.type, 0, 0, "not matched", self.balance
-                )
+            if request["price"] >= self.data[next_index]["high_price"]:
+                return {
+                    "request_id": request["id"],
+                    "type": request["type"],
+                    "price": 0,
+                    "amount": 0,
+                    "msg": "not matched",
+                    "balance": self.balance,
+                }
 
-            sell_amount = request.amount
-            if request.amount > self.asset[name][1]:
+            sell_amount = request["amount"]
+            if request["amount"] > self.asset[name][1]:
                 sell_amount = self.asset[name][1]
                 self.logger.warning(
-                    f"sell request is bigger than asset amount! {request.amount} -> {sell_amount}"
+                    f"sell request is bigger than asset {request['amount']} > {sell_amount}"
                 )
                 del self.asset[name]
             else:
@@ -238,25 +282,30 @@ class VirtualMarket:
                     self.asset[name][1] - sell_amount,
                 )
 
-            sell_asset_value = sell_amount * request.price
-            self.balance += sell_amount * request.price * (1 - self.commission_ratio)
+            sell_asset_value = sell_amount * request["price"]
+            self.balance += sell_amount * request["price"] * (1 - self.commission_ratio)
             self.balance = round(self.balance)
             self.__print_balance_info(
                 "sell", old_balance, self.balance, sell_asset_value
             )
-            return TradingResult(
-                request.id,
-                request.type,
-                request.price,
-                sell_amount,
-                "success",
-                self.balance,
-            )
+            return {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": request["price"],
+                "amount": sell_amount,
+                "msg": "success",
+                "balance": self.balance,
+            }
         except KeyError as msg:
             self.logger.error(f"invalid trading data {msg}")
-            return TradingResult(
-                request.id, request.type, -1, -1, "internal error", self.balance
-            )
+            return {
+                "request_id": request["id"],
+                "type": request["type"],
+                "price": -1,
+                "amount": -1,
+                "msg": "internal error",
+                "balance": self.balance,
+            }
 
     def __print_balance_info(self, trading_type, old, new, total_asset_value):
         self.logger.debug(f"[Balance] from {old}")

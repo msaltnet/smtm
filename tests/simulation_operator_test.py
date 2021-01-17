@@ -137,11 +137,7 @@ class SimulationOperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
 
-        class DummyRequest:
-            pass
-
-        dummy_request = DummyRequest()
-        dummy_request.price = 500
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
@@ -169,11 +165,7 @@ class SimulationOperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
 
-        class DummyRequest:
-            pass
-
-        dummy_request = DummyRequest()
-        dummy_request.price = 500
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.update_result = MagicMock()
@@ -186,11 +178,7 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.setup(27)
         operator._excute_trading()
 
-        class DummyResult:
-            pass
-
-        dummy_result = DummyResult()
-        dummy_result.msg = "success"
+        dummy_result = {"name": "mango", "type": "buy", "msg": "success"}
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
         strategy_mock.update_trading_info.assert_called_once_with(ANY)
         trader_mock.send_request.assert_called_once_with(ANY, ANY)
@@ -212,11 +200,7 @@ class SimulationOperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
 
-        class DummyRequest:
-            pass
-
-        dummy_request = DummyRequest()
-        dummy_request.price = 500
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.update_result = MagicMock()
@@ -232,11 +216,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.update_trading_info.assert_called_once_with(ANY)
         trader_mock.send_request.assert_called_once_with(ANY, ANY)
 
-        class DummyResult:
-            pass
-
-        dummy_result = DummyResult()
-        dummy_result.msg = "game-over"
+        dummy_result = {"msg": "game-over"}
         trader_mock.send_request.call_args[0][1](dummy_result)
         strategy_mock.update_result.assert_not_called()
         analyzer_mock.put_result.assert_not_called()

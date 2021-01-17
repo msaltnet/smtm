@@ -74,7 +74,11 @@ class Operator:
 
     def _start_timer(self):
         """설정된 간격의 시간이 지난 후 자동 거래를 시작하도록 타이머 설정"""
-        if self.is_timer_running or self.is_initialized is not True or self.is_terminating:
+        if (
+            self.is_timer_running
+            or self.is_initialized is not True
+            or self.is_terminating
+        ):
             return
 
         self.timer = self.threading.Timer(self.interval, self._excute_trading)
@@ -97,7 +101,7 @@ class Operator:
 
             target_request = self.strategy.get_request()
 
-            if target_request is not None and target_request.price != 0:
+            if target_request is not None and target_request["price"] != 0:
                 self.trader.send_request(target_request, send_request_callback)
                 self.analyzer.put_request(target_request)
         except AttributeError:

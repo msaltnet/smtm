@@ -67,7 +67,7 @@ class SimulationOperator(Operator):
 
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")
-                if result.msg == "game-over":
+                if result["msg"] == "game-over":
                     self.analyzer.create_report()
                     self.stop()
                     return

@@ -3,6 +3,7 @@ from smtm import SimulationDataProvider
 from unittest.mock import *
 import requests
 
+
 class SimulationDataProviderTests(unittest.TestCase):
     def setUp(self):
         pass
@@ -71,10 +72,12 @@ class SimulationDataProviderTests(unittest.TestCase):
     def test_initialize_from_server_NOT_initialized_with_invalid_response_data(self):
         dp = SimulationDataProvider()
         http_mock = Mock()
+
         class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
-        dummy_response.text = 'orange'
+        dummy_response.text = "orange"
         dummy_response.raise_for_status = MagicMock()
         http_mock.request = MagicMock(return_value=dummy_response)
         dp.initialize_from_server(http_mock, "mango", 300)
@@ -84,15 +87,18 @@ class SimulationDataProviderTests(unittest.TestCase):
 
     def create_http_mock(self):
         http_mock = Mock()
+
         class HTTPError(Exception):
             def __init__(self, value):
                 self.value = value
+
             def __str__(self):
                 return self.value
 
         class RequestException(Exception):
             def __init__(self, value):
                 self.value = value
+
             def __str__(self):
                 return self.value
 
@@ -105,11 +111,13 @@ class SimulationDataProviderTests(unittest.TestCase):
         http_mock = self.create_http_mock()
 
         def raise_exception():
-            raise http_mock.exceptions.HTTPError('HTTPError dummy exception')
+            raise http_mock.exceptions.HTTPError("HTTPError dummy exception")
+
         class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
-        dummy_response.text = 'orange'
+        dummy_response.text = "orange"
         dummy_response.raise_for_status = raise_exception
         http_mock.request = MagicMock(return_value=dummy_response)
 
@@ -123,9 +131,11 @@ class SimulationDataProviderTests(unittest.TestCase):
         http_mock = self.create_http_mock()
 
         def raise_exception():
-            raise http_mock.exceptions.RequestException('RequestException dummy exception')
+            raise http_mock.exceptions.RequestException("RequestException dummy exception")
+
         class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = raise_exception
         http_mock.request = MagicMock(return_value=dummy_response)
@@ -141,8 +151,10 @@ class SimulationDataProviderTests(unittest.TestCase):
 
         def raise_exception():
             pass
+
         class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "apple"}, {"market": "banana"}]'
         dummy_response.raise_for_status = raise_exception
@@ -152,8 +164,8 @@ class SimulationDataProviderTests(unittest.TestCase):
         self.assertEqual(dp.is_initialized, True)
         self.assertEqual(len(dp.data), 2)
         # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
-        self.assertEqual(dp.data[0]['market'], "banana")
-        self.assertEqual(dp.data[1]['market'], "apple")
+        self.assertEqual(dp.data[0]["market"], "banana")
+        self.assertEqual(dp.data[1]["market"], "apple")
 
     def test_initialize_from_server_call_request_with_correct_arguments(self):
         dp = SimulationDataProvider()
@@ -161,8 +173,10 @@ class SimulationDataProviderTests(unittest.TestCase):
 
         def raise_exception():
             pass
+
         class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "apple"}, {"market": "banana"}]'
         dummy_response.raise_for_status = raise_exception
@@ -170,7 +184,7 @@ class SimulationDataProviderTests(unittest.TestCase):
 
         dp.initialize_from_server(http_mock)
         http_mock.request.assert_called_once_with("GET", dp.url, params=ANY)
-        self.assertEqual(dp.query_string["to"], "2020-11-11 00:00:00")
+        self.assertEqual(dp.query_string["to"], "2020-01-19 20:00:00")
         self.assertEqual(dp.query_string["count"], 100)
 
     def test_initialize_from_server_set_default_params(self):
@@ -179,8 +193,10 @@ class SimulationDataProviderTests(unittest.TestCase):
 
         def raise_exception():
             pass
+
         class DummyResponse:
             pass
+
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "apple"}, {"market": "banana"}]'
         dummy_response.raise_for_status = raise_exception
@@ -188,7 +204,7 @@ class SimulationDataProviderTests(unittest.TestCase):
 
         dp.initialize_from_server(http_mock)
         http_mock.request.assert_called_once_with("GET", dp.url, params=ANY)
-        self.assertEqual(dp.query_string["to"], "2020-11-11 00:00:00")
+        self.assertEqual(dp.query_string["to"], "2020-01-19 20:00:00")
         self.assertEqual(dp.query_string["count"], 100)
 
     def test_get_info_return_None_without_initialize(self):
@@ -199,11 +215,11 @@ class SimulationDataProviderTests(unittest.TestCase):
         dp = SimulationDataProvider()
         dp.initialize_with_file("test_record.json", "banana", 50000)
         data1 = dp.get_info()
-        self.assertEqual(data1['date_time'], "2020-03-10T13:52:00")
-        self.assertEqual(data1['opening_price'], 9777000.00000000)
-        self.assertEqual(data1['low_price'], 9763000.00000000)
+        self.assertEqual(data1["date_time"], "2020-03-10T13:52:00")
+        self.assertEqual(data1["opening_price"], 9777000.00000000)
+        self.assertEqual(data1["low_price"], 9763000.00000000)
 
         data2 = dp.get_info()
-        self.assertEqual(data2['date_time'], "2020-03-10T13:51:00")
-        self.assertEqual(data2['opening_price'], 9717000.00000000)
-        self.assertEqual(data2['low_price'], 9717000.00000000)
+        self.assertEqual(data2["date_time"], "2020-03-10T13:51:00")
+        self.assertEqual(data2["opening_price"], 9717000.00000000)
+        self.assertEqual(data2["low_price"], 9717000.00000000)

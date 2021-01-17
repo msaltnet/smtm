@@ -52,11 +52,7 @@ class OperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
 
-        class DummyRequest:
-            pass
-
-        dummy_request = DummyRequest()
-        dummy_request.price = 500
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
@@ -82,11 +78,7 @@ class OperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
 
-        class DummyRequest:
-            pass
-
-        dummy_request = DummyRequest()
-        dummy_request.price = 500
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.update_result = MagicMock()
@@ -117,11 +109,7 @@ class OperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
 
-        class DummyRequest:
-            pass
-
-        dummy_request = DummyRequest()
-        dummy_request.price = 0
+        dummy_request = {"id": "mango", "type": "orange", "price": 0, "amount": 10}
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
@@ -173,11 +161,7 @@ class OperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
 
-        class DummyRequest:
-            pass
-
-        dummy_request = DummyRequest()
-        dummy_request.price = 500
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
