@@ -24,7 +24,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         dp.end = -1
         dp.count = -500
 
-        dp.initialize_with_file("test_record.json", "banana", 50000)
+        dp.initialize_with_file("./tests/data/test_record.json", "banana", 50000)
         self.assertEqual(dp.index, 0)
         self.assertEqual(dp.is_initialized, True)
         self.assertEqual(dp.end, "banana")
@@ -43,7 +43,7 @@ class SimulationDataProviderTests(unittest.TestCase):
     def test_initialize_with_file_NOT_initialized_with_empty_file(self):
         dp = SimulationDataProvider()
 
-        dp.initialize_with_file("test_empty.json", "banana", 50000)
+        dp.initialize_with_file("./tests/data/test_empty.json", "banana", 50000)
         self.assertEqual(dp.is_initialized, False)
         self.assertEqual(dp.end, "banana")
         self.assertEqual(dp.count, 50000)
@@ -51,7 +51,7 @@ class SimulationDataProviderTests(unittest.TestCase):
     def test_initialize_with_file_NOT_initialized_with_invalid_JSON_file(self):
         dp = SimulationDataProvider()
 
-        dp.initialize_with_file("test_string.json", "banana", 50000)
+        dp.initialize_with_file("./tests/data/test_string.json", "banana", 50000)
         self.assertEqual(dp.is_initialized, False)
         self.assertEqual(dp.end, "banana")
         self.assertEqual(dp.count, 50000)
@@ -213,7 +213,7 @@ class SimulationDataProviderTests(unittest.TestCase):
 
     def test_get_info_return_correct_info_after_initialized_with_dummy_data_file(self):
         dp = SimulationDataProvider()
-        dp.initialize_with_file("test_record.json", "banana", 50000)
+        dp.initialize_with_file("./tests/data/test_record.json", "banana", 50000)
         data1 = dp.get_info()
         self.assertEqual(data1["date_time"], "2020-03-10T13:52:00")
         self.assertEqual(data1["opening_price"], 9777000.00000000)
