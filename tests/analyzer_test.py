@@ -1,6 +1,8 @@
+import os
 import unittest
 from smtm import Analyzer
 from unittest.mock import *
+
 
 class AnalyzerTests(unittest.TestCase):
     def setUp(self):
@@ -14,6 +16,12 @@ class AnalyzerTests(unittest.TestCase):
         dummy_result = {"name": "mango", "type": "buy"}
         analyzer.put_request(dummy_result)
         self.assertEqual(analyzer.request[-1], dummy_result)
+
+    def test_put_trading_info_append_trading_info(self):
+        analyzer = Analyzer()
+        dummy_info = {"name": "orange"}
+        analyzer.put_trading_info(dummy_info)
+        self.assertEqual(analyzer.infos[-1], dummy_info)
 
     def test_put_result_append_result(self):
         analyzer = Analyzer()
@@ -68,14 +76,8 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         dummy_asset_info = {
             "balance": 50000,
-            "asset" : {
-                "banana": (1500, 10),
-                "mango": (1000, 4.5),
-                "apple": (250, 2)},
-            "quote": {
-                "banana": 1700,
-                "mango": 700,
-                "apple": 500}
+            "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
+            "quote": {"banana": 1700, "mango": 700, "apple": 500},
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
@@ -83,100 +85,81 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset = {
             "balance": 50000,
-            "asset" : {
-                "banana": (1500, 10),
-                "mango": (1000, 4.5),
-                "apple": (250, 2)},
-            "quote": {
-                "banana": 2000,
-                "mango": 1050,
-                "apple": 400}
+            "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
+            "quote": {"banana": 2000, "mango": 1050, "apple": 400},
         }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record['balance'], 50000)
-        self.assertEqual(score_record['cumulative_return'], 6.149)
+        self.assertEqual(score_record["balance"], 50000)
+        self.assertEqual(score_record["cumulative_return"], 6.149)
 
-        self.assertEqual(score_record['asset'][0][0], "banana")
-        self.assertEqual(score_record['asset'][0][1], 1500)
-        self.assertEqual(score_record['asset'][0][2], 2000)
-        self.assertEqual(score_record['asset'][0][3], 10)
-        self.assertEqual(score_record['asset'][0][4], 33.333)
+        self.assertEqual(score_record["asset"][0][0], "banana")
+        self.assertEqual(score_record["asset"][0][1], 1500)
+        self.assertEqual(score_record["asset"][0][2], 2000)
+        self.assertEqual(score_record["asset"][0][3], 10)
+        self.assertEqual(score_record["asset"][0][4], 33.333)
 
-        self.assertEqual(score_record['asset'][1][0], "mango")
-        self.assertEqual(score_record['asset'][1][1], 1000)
-        self.assertEqual(score_record['asset'][1][2], 1050)
-        self.assertEqual(score_record['asset'][1][3], 4.5)
-        self.assertEqual(score_record['asset'][1][4], 5)
+        self.assertEqual(score_record["asset"][1][0], "mango")
+        self.assertEqual(score_record["asset"][1][1], 1000)
+        self.assertEqual(score_record["asset"][1][2], 1050)
+        self.assertEqual(score_record["asset"][1][3], 4.5)
+        self.assertEqual(score_record["asset"][1][4], 5)
 
-        self.assertEqual(score_record['asset'][2][0], "apple")
-        self.assertEqual(score_record['asset'][2][1], 250)
-        self.assertEqual(score_record['asset'][2][2], 400)
-        self.assertEqual(score_record['asset'][2][3], 2)
-        self.assertEqual(score_record['asset'][2][4], 60)
+        self.assertEqual(score_record["asset"][2][0], "apple")
+        self.assertEqual(score_record["asset"][2][1], 250)
+        self.assertEqual(score_record["asset"][2][2], 400)
+        self.assertEqual(score_record["asset"][2][3], 2)
+        self.assertEqual(score_record["asset"][2][4], 60)
 
-        self.assertEqual(score_record['price_change_ratio']['banana'], 17.647)
-        self.assertEqual(score_record['price_change_ratio']['mango'], 50)
-        self.assertEqual(score_record['price_change_ratio']['apple'], -20)
+        self.assertEqual(score_record["price_change_ratio"]["banana"], 17.647)
+        self.assertEqual(score_record["price_change_ratio"]["mango"], 50)
+        self.assertEqual(score_record["price_change_ratio"]["apple"], -20)
 
     def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
         dummy_asset_info = {
             "balance": 50000,
-            "asset" : {
-                "banana": (1500, 10),
-                "apple": (250, 2)},
-            "quote": {
-                "banana": 1700,
-                "mango": 500,
-                "apple": 500}
+            "asset": {"banana": (1500, 10), "apple": (250, 2)},
+            "quote": {"banana": 1700, "mango": 500, "apple": 500},
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
         analyzer.asset_record_list.append(dummy_asset_info)
         target_dummy_asset = {
             "balance": 10000,
-            "asset" : {
-                "mango": (1000, 7.5),
-                "apple": (250, 10.7)},
-            "quote": {
-                "banana": 2000,
-                "mango": 500,
-                "apple": 800}
+            "asset": {"mango": (1000, 7.5), "apple": (250, 10.7)},
+            "quote": {"banana": 2000, "mango": 500, "apple": 800},
         }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record['balance'], 10000)
-        self.assertEqual(score_record['cumulative_return'], -67.191)
+        self.assertEqual(score_record["balance"], 10000)
+        self.assertEqual(score_record["cumulative_return"], -67.191)
 
-        self.assertEqual(score_record['asset'][0][0], "mango")
-        self.assertEqual(score_record['asset'][0][1], 1000)
-        self.assertEqual(score_record['asset'][0][2], 500)
-        self.assertEqual(score_record['asset'][0][3], 7.5)
-        self.assertEqual(score_record['asset'][0][4], -50)
+        self.assertEqual(score_record["asset"][0][0], "mango")
+        self.assertEqual(score_record["asset"][0][1], 1000)
+        self.assertEqual(score_record["asset"][0][2], 500)
+        self.assertEqual(score_record["asset"][0][3], 7.5)
+        self.assertEqual(score_record["asset"][0][4], -50)
 
-        self.assertEqual(score_record['asset'][1][0], "apple")
-        self.assertEqual(score_record['asset'][1][1], 250)
-        self.assertEqual(score_record['asset'][1][2], 800)
-        self.assertEqual(score_record['asset'][1][3], 10.7)
-        self.assertEqual(score_record['asset'][1][4], 220)
+        self.assertEqual(score_record["asset"][1][0], "apple")
+        self.assertEqual(score_record["asset"][1][1], 250)
+        self.assertEqual(score_record["asset"][1][2], 800)
+        self.assertEqual(score_record["asset"][1][3], 10.7)
+        self.assertEqual(score_record["asset"][1][4], 220)
 
-        self.assertEqual(score_record['price_change_ratio']['mango'], 0)
-        self.assertEqual(score_record['price_change_ratio']['apple'], 60)
+        self.assertEqual(score_record["price_change_ratio"]["mango"], 0)
+        self.assertEqual(score_record["price_change_ratio"]["apple"], 60)
 
     def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
         analyzer = Analyzer()
         dummy_asset_info = {
             "balance": 23456,
-            "asset" : {},
-            "quote": {
-                "banana": 1700,
-                "mango": 300,
-                "apple": 500}
+            "asset": {},
+            "quote": {"banana": 1700, "mango": 300, "apple": 500},
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
@@ -184,61 +167,50 @@ class AnalyzerTests(unittest.TestCase):
 
         target_dummy_asset = {
             "balance": 5000,
-            "asset" : {
-                "mango": (500, 5.23),
-                "apple": (250, 2.11)},
-            "quote": {
-                "banana": 2000,
-                "mango": 300,
-                "apple": 750}
+            "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
+            "quote": {"banana": 2000, "mango": 300, "apple": 750},
         }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record['balance'], 5000)
-        self.assertEqual(score_record['cumulative_return'], -65.248)
+        self.assertEqual(score_record["balance"], 5000)
+        self.assertEqual(score_record["cumulative_return"], -65.248)
 
-        self.assertEqual(score_record['asset'][0][0], "mango")
-        self.assertEqual(score_record['asset'][0][1], 500)
-        self.assertEqual(score_record['asset'][0][2], 300)
-        self.assertEqual(score_record['asset'][0][3], 5.23)
-        self.assertEqual(score_record['asset'][0][4], -40)
+        self.assertEqual(score_record["asset"][0][0], "mango")
+        self.assertEqual(score_record["asset"][0][1], 500)
+        self.assertEqual(score_record["asset"][0][2], 300)
+        self.assertEqual(score_record["asset"][0][3], 5.23)
+        self.assertEqual(score_record["asset"][0][4], -40)
 
-        self.assertEqual(score_record['asset'][1][0], "apple")
-        self.assertEqual(score_record['asset'][1][1], 250)
-        self.assertEqual(score_record['asset'][1][2], 750)
-        self.assertEqual(score_record['asset'][1][3], 2.11)
-        self.assertEqual(score_record['asset'][1][4], 200)
+        self.assertEqual(score_record["asset"][1][0], "apple")
+        self.assertEqual(score_record["asset"][1][1], 250)
+        self.assertEqual(score_record["asset"][1][2], 750)
+        self.assertEqual(score_record["asset"][1][3], 2.11)
+        self.assertEqual(score_record["asset"][1][4], 200)
 
-        self.assertEqual(score_record['price_change_ratio']["mango"], 0)
-        self.assertEqual(score_record['price_change_ratio']["apple"], 50)
+        self.assertEqual(score_record["price_change_ratio"]["mango"], 0)
+        self.assertEqual(score_record["price_change_ratio"]["apple"], 50)
 
-    def test_make_score_record_create_correct_score_record_when_asset_and_balance_is_NOT_changed(self):
+    def test_make_score_record_create_correct_score_record_when_asset_and_balance_is_NOT_changed(
+        self,
+    ):
         analyzer = Analyzer()
-        dummy_asset_info = {
-            "balance": 1000,
-            "asset" : {},
-            "quote": {"apple": 500}
-        }
+        dummy_asset_info = {"balance": 1000, "asset": {}, "quote": {"apple": 500}}
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
         analyzer.asset_record_list.append(dummy_asset_info)
 
-        target_dummy_asset = {
-            "balance": 1000,
-            "asset" : {},
-            "quote": {"apple": 750}
-        }
+        target_dummy_asset = {"balance": 1000, "asset": {}, "quote": {"apple": 750}}
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
         score_record = analyzer.score_record_list[0]
-        self.assertEqual(score_record['balance'], 1000)
-        self.assertEqual(score_record['cumulative_return'], 0)
+        self.assertEqual(score_record["balance"], 1000)
+        self.assertEqual(score_record["cumulative_return"], 0)
 
-        self.assertEqual(len(score_record['asset']), 0)
-        self.assertEqual(len(score_record['price_change_ratio'].keys()), 0)
+        self.assertEqual(len(score_record["asset"]), 0)
+        self.assertEqual(len(score_record["price_change_ratio"].keys()), 0)
 
     def test_create_report_return_report_data_tuple(self):
         analyzer = Analyzer()
@@ -246,24 +218,16 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_info_func = MagicMock()
         dummy_asset_info = {
             "balance": 23456,
-            "asset" : {},
-            "quote": {
-                "banana": 1700,
-                "mango": 600,
-                "apple": 500}
+            "asset": {},
+            "quote": {"banana": 1700, "mango": 600, "apple": 500},
         }
 
         analyzer.asset_record_list.append(dummy_asset_info)
 
         target_dummy_asset = {
             "balance": 5000,
-            "asset" : {
-                "mango": (500, 5.23),
-                "apple": (250, 2.11)},
-            "quote": {
-                "banana": 2000,
-                "mango": 300,
-                "apple": 750}
+            "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
+            "quote": {"banana": 2000, "mango": 300, "apple": 750},
         }
         analyzer.put_asset_info(target_dummy_asset)
 
@@ -293,3 +257,46 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_info_func = MagicMock()
         analyzer.create_report()
         analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test_create_report_create_correct_report_file(self, mock_file):
+        filename = "mango"
+        analyzer = Analyzer()
+        analyzer.initialize("mango")
+        analyzer.update_info_func = MagicMock()
+        dummy_asset_info = {
+            "balance": 23456,
+            "asset": {},
+            "quote": {"banana": 1700, "mango": 600, "apple": 500},
+        }
+
+        analyzer.asset_record_list.append(dummy_asset_info)
+        target_dummy_asset = {
+            "balance": 5000,
+            "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
+            "quote": {"banana": 2000, "mango": 300, "apple": 750},
+        }
+        analyzer.put_asset_info(target_dummy_asset)
+        analyzer.create_report(filename)
+        mock_file.assert_called_once_with(filename, "w")
+        handle = mock_file()
+        self.assertEqual(
+            handle.write.call_args_list[0][0][0],
+            "### Analyzer Report ===============================\n",
+        )
+        self.assertEqual(
+            handle.write.call_args_list[1][0][0],
+            "Property                      23456 ->       8152\n",
+        )
+        self.assertEqual(
+            handle.write.call_args_list[2][0][0],
+            "Gap                                        -15304\n",
+        )
+        self.assertEqual(
+            handle.write.call_args_list[3][0][0],
+            "Cumulative return                       -65.248 %\n",
+        )
+        self.assertEqual(
+            handle.write.call_args_list[4][0][0],
+            "Price_change_ratio {'mango': -50.0, 'apple': 50.0}\n",
+        )

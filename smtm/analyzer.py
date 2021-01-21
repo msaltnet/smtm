@@ -22,10 +22,14 @@ class Analyzer:
     def __init__(self):
         self.request = []
         self.result = []
+        self.infos = []
         self.asset_record_list = []
         self.score_record_list = []
         self.update_info_func = None
         self.logger = LogManager.get_logger(__name__)
+
+    def put_trading_info(self, info):
+        self.infos.append(info)
 
     def put_request(self, request):
         """거래 요청 정보를 저장한다"""
@@ -125,7 +129,7 @@ class Analyzer:
         except (IndexError, AttributeError):
             self.logger.error("making score record fail")
 
-    def create_report(self):
+    def create_report(self, filename="report.txt"):
         """수익률 보고서를 생성한다"""
         self.update_info_func("asset", self.put_asset_info)
         try:
@@ -133,14 +137,24 @@ class Analyzer:
             last_value = self.__get_last_property_value()
             last_return = self.score_record_list[-1]["cumulative_return"]
             change_ratio = self.score_record_list[-1]["price_change_ratio"]
+            report = (start_value, last_value, last_return, change_ratio)
             self.logger.info("### Analyzer Report =======================")
             self.logger.info(f"Property {start_value} -> {last_value}")
             self.logger.info(f"gap {last_value - start_value}")
             self.logger.info(f"cumulative return {last_return}%")
             self.logger.info(f"price_change_ratio {change_ratio}")
-            return (start_value, last_value, last_return, change_ratio)
+            self.__create_report_file(filename, report)
+            return report
         except (IndexError, AttributeError):
             self.logger.error("create report FAIL")
+
+    def __create_report_file(self, filepath, report):
+        with open(filepath, "w") as f:
+            f.write("### Analyzer Report ===============================\n")
+            f.write(f"Property                 {report[0]:10} -> {report[1]:10}\n")
+            f.write(f"Gap                                    {report[1] - report[0]:10}\n")
+            f.write(f"Cumulative return                    {report[2]:10} %\n")
+            f.write(f"Price_change_ratio {report[3]}\n")
 
     def __get_start_property_value(self):
         return round(self.__get_property_total_value(0))

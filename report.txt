@@ -1,0 +1,5 @@
+### Analyzer Report ===============================
+Property                      23456 ->       8152
+Gap                                        -15304
+Cumulative return                       -65.248 %
+Price_change_ratio {'mango': -50.0, 'apple': 50.0}
