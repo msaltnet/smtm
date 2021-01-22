@@ -1,5 +1,6 @@
 """가상 거래소"""
 import json
+from datetime import datetime, timedelta
 from .log_manager import LogManager
 
 
@@ -17,8 +18,9 @@ class VirtualMarket:
     asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
     """
 
-    url = "https://api.upbit.com/v1/candles/minutes/1"
-    query_string = {"market": "KRW-BTC", "count": "1"}
+    URL = "https://api.upbit.com/v1/candles/minutes/1"
+    QUERY_STRING = {"market": "KRW-BTC", "count": "1"}
+    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
@@ -71,11 +73,11 @@ class VirtualMarket:
             self.logger.error(msg)
 
     def __update_data_from_server(self):
-        self.query_string["to"] = self.end
-        self.query_string["count"] = self.count
+        self.QUERY_STRING["to"] = self.end
+        self.QUERY_STRING["count"] = self.count
 
         try:
-            response = self.http.request("GET", self.url, params=self.query_string)
+            response = self.http.request("GET", self.URL, params=self.QUERY_STRING)
             response.raise_for_status()
             self.data = json.loads(response.text)
             self.data.reverse()
@@ -110,18 +112,12 @@ class VirtualMarket:
         quote = None
         try:
             quote = {
-                self.data[self.turn_count]["market"]: self.data[self.turn_count][
-                    "opening_price"
-                ]
+                self.data[self.turn_count]["market"]: self.data[self.turn_count]["opening_price"]
             }
             name = None
-            self.logger.info(
-                f"asset list length {len(self.asset)} ====================="
-            )
+            self.logger.info(f"asset list length {len(self.asset)} =====================")
             for name, item in self.asset.items():
-                self.logger.info(
-                    f"item: {name}, item price: {item[0]}, amount: {item[1]}"
-                )
+                self.logger.info(f"item: {name}, item price: {item[0]}, amount: {item[1]}")
         except (KeyError, IndexError) as msg:
             self.logger.error(f"invalid trading data {msg}")
             return None
@@ -143,6 +139,7 @@ class VirtualMarket:
                 "amount": 거래 수량
                 "msg": 거래 결과 메세지
                 "balance": 거래 후 계좌 현금 잔고
+                "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
             }
         """
         if self.is_initialized is not True:
@@ -150,6 +147,10 @@ class VirtualMarket:
             return None
         next_index = self.turn_count + 1
         result = None
+
+        current_dt = datetime.strptime(self.data[self.turn_count]["date_time"], self.ISO_DATEFORMAT)
+        now = current_dt + timedelta(seconds=2)
+        now = now.isoformat()
 
         if next_index >= len(self.data) - 1:
             self.turn_count = next_index
@@ -161,6 +162,7 @@ class VirtualMarket:
                 "amount": -1,
                 "msg": "game-over",
                 "balance": self.balance,
+                "date_time": now,
             }
 
         if request["price"] == 0 or request["amount"] == 0:
@@ -172,12 +174,15 @@ class VirtualMarket:
                 "amount": 0,
                 "msg": "turn over",
                 "balance": self.balance,
+                "date_time": now,
             }
 
         if request["type"] == "buy":
             result = self.__handle_buy_request(request, next_index)
+            result["date_time"] = now
         elif request["type"] == "sell":
             result = self.__handle_sell_request(request, next_index)
+            result["date_time"] = now
         else:
             result = {
                 "request_id": request["id"],
@@ -186,6 +191,7 @@ class VirtualMarket:
                 "amount": -1,
                 "msg": "invalid type",
                 "balance": self.balance,
+                "date_time": now,
             }
 
         self.turn_count = next_index
@@ -285,9 +291,7 @@ class VirtualMarket:
             sell_asset_value = sell_amount * request["price"]
             self.balance += sell_amount * request["price"] * (1 - self.commission_ratio)
             self.balance = round(self.balance)
-            self.__print_balance_info(
-                "sell", old_balance, self.balance, sell_asset_value
-            )
+            self.__print_balance_info("sell", old_balance, self.balance, sell_asset_value)
             return {
                 "request_id": request["id"],
                 "type": request["type"],
@@ -310,14 +314,8 @@ class VirtualMarket:
     def __print_balance_info(self, trading_type, old, new, total_asset_value):
         self.logger.debug(f"[Balance] from {old}")
         if trading_type == "buy":
-            self.logger.debug(
-                f"[Balance] - {trading_type}_asset_value {total_asset_value}"
-            )
+            self.logger.debug(f"[Balance] - {trading_type}_asset_value {total_asset_value}")
         elif trading_type == "sell":
-            self.logger.debug(
-                f"[Balance] + {trading_type}_asset_value {total_asset_value}"
-            )
-        self.logger.debug(
-            f"[Balance] - commission {total_asset_value * self.commission_ratio}"
-        )
+            self.logger.debug(f"[Balance] + {trading_type}_asset_value {total_asset_value}")
+        self.logger.debug(f"[Balance] - commission {total_asset_value * self.commission_ratio}")
         self.logger.debug(f"[Balance] to {new}")

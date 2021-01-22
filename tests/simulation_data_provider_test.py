@@ -183,9 +183,9 @@ class SimulationDataProviderTests(unittest.TestCase):
         http_mock.request = MagicMock(return_value=dummy_response)
 
         dp.initialize_from_server(http_mock)
-        http_mock.request.assert_called_once_with("GET", dp.url, params=ANY)
-        self.assertEqual(dp.query_string["to"], "2020-01-19 20:00:00")
-        self.assertEqual(dp.query_string["count"], 100)
+        http_mock.request.assert_called_once_with("GET", dp.URL, params=ANY)
+        self.assertEqual(dp.QUERY_STRING["to"], "2020-01-19 20:00:00")
+        self.assertEqual(dp.QUERY_STRING["count"], 100)
 
     def test_initialize_from_server_set_default_params(self):
         dp = SimulationDataProvider()
@@ -203,9 +203,9 @@ class SimulationDataProviderTests(unittest.TestCase):
         http_mock.request = MagicMock(return_value=dummy_response)
 
         dp.initialize_from_server(http_mock)
-        http_mock.request.assert_called_once_with("GET", dp.url, params=ANY)
-        self.assertEqual(dp.query_string["to"], "2020-01-19 20:00:00")
-        self.assertEqual(dp.query_string["count"], 100)
+        http_mock.request.assert_called_once_with("GET", dp.URL, params=ANY)
+        self.assertEqual(dp.QUERY_STRING["to"], "2020-01-19 20:00:00")
+        self.assertEqual(dp.QUERY_STRING["count"], 100)
 
     def test_get_info_return_None_without_initialize(self):
         dp = SimulationDataProvider()

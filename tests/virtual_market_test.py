@@ -44,7 +44,7 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
         market.initialize(http, None, None)
-        http.request.assert_called_once_with("GET", market.url, params=market.query_string)
+        http.request.assert_called_once_with("GET", market.URL, params=market.QUERY_STRING)
 
     def test_intialize_should_not_download_again_after_initialized(self):
         market = VirtualMarket()
@@ -60,7 +60,7 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize(None, None, None)
         market.initialize(http, None, None)
         market.initialize(http, None, None)
-        http.request.assert_called_once_with("GET", market.url, params=market.query_string)
+        http.request.assert_called_once_with("GET", market.URL, params=market.QUERY_STRING)
 
     def test_intialize_update_trading_data(self):
         market = VirtualMarket()
@@ -139,10 +139,10 @@ class VirtualMarketTests(unittest.TestCase):
         http_mock.request = MagicMock(return_value=dummy_response)
         market.initialize(http_mock, None, None)
         dummy_response.raise_for_status.assert_called_once()
-        http_mock.request.assert_called_once_with("GET", market.url, params=market.query_string)
+        http_mock.request.assert_called_once_with("GET", market.URL, params=market.QUERY_STRING)
         self.assertEqual(market.is_initialized, True)
-        self.assertEqual(market.query_string["to"], "2020-04-30 00:00:00")
-        self.assertEqual(market.query_string["count"], 100)
+        self.assertEqual(market.QUERY_STRING["to"], "2020-04-30 00:00:00")
+        self.assertEqual(market.QUERY_STRING["count"], 100)
 
     def test_intialize_from_file_update_trading_data(self):
         market = VirtualMarket()
@@ -197,6 +197,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
@@ -226,6 +227,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["igh_price"] = 2100.00000000
             market.data[i]["ow_price"] = 1900.00000000
             market.data[i]["rade_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
@@ -241,12 +243,21 @@ class VirtualMarketTests(unittest.TestCase):
         market.initialize_from_file("./tests/data/mango_data.json", None, None)
         market.deposit(2000)
         market.set_commission_ratio(5)
+        dummy_datetime = [
+            "2020-02-25T23:59:00",
+            "2020-02-25T23:59:10",
+            "2020-02-25T23:59:20",
+            "2020-02-25T23:59:59",
+            "2020-02-26T23:59:59",
+            "2020-02-27T00:00:59",
+        ]
 
         for i in range(6):
             market.data[i]["opening_price"] = 2000.00000000
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
+            market.data[i]["date_time"] = dummy_datetime[i]
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
@@ -256,6 +267,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0.1)
         self.assertEqual(result["msg"], "success")
         self.assertEqual(result["balance"], 1790)
+        self.assertEqual(result["date_time"], "2020-02-25T23:59:02")
 
         dummy_request2 = {"id": "orange", "type": "sell", "price": 2000, "amount": 0.05}
         result = market.send_request(dummy_request2)
@@ -265,6 +277,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0.05)
         self.assertEqual(result["msg"], "success")
         self.assertEqual(result["balance"], 1885)
+        self.assertEqual(result["date_time"], "2020-02-25T23:59:12")
 
         # 매도 요청 가격이 높은 경우
         dummy_request3 = {"id": "apple", "type": "sell", "price": 2500, "amount": 0.05}
@@ -275,6 +288,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0)
         self.assertEqual(result["msg"], "not matched")
         self.assertEqual(result["balance"], 1885)
+        self.assertEqual(result["date_time"], "2020-02-25T23:59:22")
 
         # 매도 요청 양이 보유양 보다 많은 경우
         dummy_request4 = {"id": "banana", "type": "sell", "price": 2000, "amount": 0.1}
@@ -285,6 +299,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0.05)
         self.assertEqual(result["msg"], "success")
         self.assertEqual(result["balance"], 1980)
+        self.assertEqual(result["date_time"], "2020-02-26T00:00:01")
 
     def test_send_request_handle_sell_return_error_request_when_data_invalid(self):
         market = VirtualMarket()
@@ -297,6 +312,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["igh_price"] = 2100.00000000
             market.data[i]["ow_price"] = 1900.00000000
             market.data[i]["rade_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "sell", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
@@ -344,6 +360,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.048}
         result = market.send_request(dummy_request)
@@ -376,6 +393,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
@@ -439,6 +457,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
             market.data[i]["trade_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 0, "amount": 0}
         result = market.send_request(dummy_request)
@@ -491,26 +510,31 @@ class VirtualMarketTests(unittest.TestCase):
         market.data[0]["high_price"] = 2100.00000000
         market.data[0]["low_price"] = 1900.00000000
         market.data[0]["trade_price"] = 2050.00000000
+        market.data[0]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[1]["opening_price"] = 2010.00000000
         market.data[1]["high_price"] = 2100.00000000
         market.data[1]["low_price"] = 1900.00000000
         market.data[1]["trade_price"] = 2050.00000000
+        market.data[1]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[2]["opening_price"] = 2020.00000000
         market.data[2]["high_price"] = 2100.00000000
         market.data[2]["low_price"] = 1900.00000000
         market.data[2]["trade_price"] = 2050.00000000
+        market.data[2]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[3]["opening_price"] = 2030.00000000
         market.data[3]["high_price"] = 2100.00000000
         market.data[3]["low_price"] = 1900.00000000
         market.data[3]["trade_price"] = 2050.00000000
+        market.data[3]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[4]["opening_price"] = 2040.00000000
         market.data[4]["high_price"] = 2100.00000000
         market.data[4]["low_price"] = 1900.00000000
         market.data[4]["trade_price"] = 2050.00000000
+        market.data[4]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)

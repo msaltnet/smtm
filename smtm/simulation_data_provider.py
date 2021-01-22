@@ -13,8 +13,8 @@ class SimulationDataProvider(DataProvider):
     https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
     """
 
-    url = "https://api.upbit.com/v1/candles/minutes/1"
-    query_string = {"market": "KRW-BTC"}
+    URL = "https://api.upbit.com/v1/candles/minutes/1"
+    QUERY_STRING = {"market": "KRW-BTC"}
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
@@ -98,10 +98,10 @@ class SimulationDataProvider(DataProvider):
         if self.http is None:
             return
 
-        self.query_string["to"] = self.end
-        self.query_string["count"] = self.count
+        self.QUERY_STRING["to"] = self.end
+        self.QUERY_STRING["count"] = self.count
         try:
-            response = self.http.request("GET", self.url, params=self.query_string)
+            response = self.http.request("GET", self.URL, params=self.QUERY_STRING)
             response.raise_for_status()
             self.data = json.loads(response.text)
             self.data.reverse()
