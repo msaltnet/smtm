@@ -4,6 +4,7 @@
 """
 import time
 import copy
+from datetime import datetime, timedelta
 from .log_manager import LogManager
 
 
@@ -19,6 +20,8 @@ class Analyzer:
 
     """
 
+    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+
     def __init__(self):
         self.request = []
         self.result = []
@@ -27,6 +30,7 @@ class Analyzer:
         self.score_record_list = []
         self.update_info_func = None
         self.logger = LogManager.get_logger(__name__)
+        self.is_simulation = False
 
     def put_trading_info(self, info):
         self.infos.append(info)
@@ -44,7 +48,7 @@ class Analyzer:
         self.result.append(copy.deepcopy(result))
         self.update_info_func("asset", self.put_asset_info)
 
-    def initialize(self, update_info_func):
+    def initialize(self, update_info_func, is_simulation=False):
         """콜백 함수를 입력받아 초기화한다
 
         Args:
@@ -52,6 +56,7 @@ class Analyzer:
 
         """
         self.update_info_func = update_info_func
+        self.is_simulation = is_simulation
 
     def put_asset_info(self, asset_info):
         """자산 정보를 저장한다"""
@@ -73,10 +78,17 @@ class Analyzer:
             cumulative_return: 기준 시점부터 누적 수익률
             price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
             asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
-            timestamp: 기록이 생성된 시점
-
+            date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
         """
+
         try:
+            now = datetime.now().strftime(self.ISO_DATEFORMAT)
+
+            if self.is_simulation:
+                last_dt = datetime.strptime(self.infos[-1]["date_time"], self.ISO_DATEFORMAT)
+                now = last_dt + timedelta(seconds=3)
+                now = now.isoformat()
+
             start_total = self.__get_start_property_value()
             start_quote = self.asset_record_list[0]["quote"]
             current_total = new_info["balance"]
@@ -123,7 +135,7 @@ class Analyzer:
                     "cumulative_return": cumulative_return,
                     "price_change_ratio": price_change_ratio,
                     "asset": new_asset_list,
-                    "timestamp": time.time(),
+                    "date_time": now,
                 }
             )
         except (IndexError, AttributeError):
@@ -140,7 +152,9 @@ class Analyzer:
             report = (start_value, last_value, last_return, change_ratio)
             self.logger.info("### Analyzer Report ===============================\n")
             self.logger.info(f"Property                 {start_value:10} -> {last_value:10}\n")
-            self.logger.info(f"Gap                                    {last_value - start_value:10}\n")
+            self.logger.info(
+                f"Gap                                    {last_value - start_value:10}\n"
+            )
             self.logger.info(f"Cumulative return                    {last_return:10} %\n")
             self.logger.info(f"Price_change_ratio {change_ratio}\n")
             self.__create_report_file(filename, report)

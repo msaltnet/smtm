@@ -39,8 +39,9 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_initialize_keep_update_info_func(self):
         analyzer = Analyzer()
-        analyzer.initialize("mango")
+        analyzer.initialize("mango", True)
         self.assertEqual(analyzer.update_info_func, "mango")
+        self.assertEqual(analyzer.is_simulation, True)
 
     def test_put_asset_info_append_asset_info(self):
         analyzer = Analyzer()
@@ -82,7 +83,8 @@ class AnalyzerTests(unittest.TestCase):
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
         analyzer.asset_record_list.append(dummy_asset_info)
-
+        analyzer.initialize(MagicMock(), True)
+        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         target_dummy_asset = {
             "balance": 50000,
             "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
@@ -116,6 +118,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record["price_change_ratio"]["banana"], 17.647)
         self.assertEqual(score_record["price_change_ratio"]["mango"], 50)
         self.assertEqual(score_record["price_change_ratio"]["apple"], -20)
+        self.assertEqual(score_record["date_time"], "2020-02-28T00:00:02")
 
     def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
