@@ -138,11 +138,11 @@ class Analyzer:
             last_return = self.score_record_list[-1]["cumulative_return"]
             change_ratio = self.score_record_list[-1]["price_change_ratio"]
             report = (start_value, last_value, last_return, change_ratio)
-            self.logger.info("### Analyzer Report =======================")
-            self.logger.info(f"Property {start_value} -> {last_value}")
-            self.logger.info(f"gap {last_value - start_value}")
-            self.logger.info(f"cumulative return {last_return}%")
-            self.logger.info(f"price_change_ratio {change_ratio}")
+            self.logger.info("### Analyzer Report ===============================\n")
+            self.logger.info(f"Property                 {start_value:10} -> {last_value:10}\n")
+            self.logger.info(f"Gap                                    {last_value - start_value:10}\n")
+            self.logger.info(f"Cumulative return                    {last_return:10} %\n")
+            self.logger.info(f"Price_change_ratio {change_ratio}\n")
             self.__create_report_file(filename, report)
             return report
         except (IndexError, AttributeError):

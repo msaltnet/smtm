@@ -2,6 +2,7 @@
 
 import copy
 import time
+from datetime import datetime, timedelta
 from .strategy import Strategy
 from .log_manager import LogManager
 
@@ -19,8 +20,11 @@ class StrategyBuyAndHold(Strategy):
     min_price: 최소 주문 금액
     """
 
+    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+
     def __init__(self):
         self.is_intialized = False
+        self.is_simulation = False
         self.data = []
         self.budget = 0
         self.balance = 0
@@ -63,6 +67,7 @@ class StrategyBuyAndHold(Strategy):
                 "type": 거래 유형 sell, buy
                 "price": 거래 가격
                 "amount": 거래 수량
+                "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +1초
             }
         """
         if self.is_intialized is not True:
@@ -70,6 +75,13 @@ class StrategyBuyAndHold(Strategy):
 
         try:
             last_data = self.data[-1]
+            now = datetime.now().strftime(self.ISO_DATEFORMAT)
+
+            if self.is_simulation:
+                last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
+                now = last_dt + timedelta(seconds=1)
+                now = now.isoformat()
+
             target_budget = self.budget / 10
             if last_data is None:
                 return {
@@ -77,6 +89,7 @@ class StrategyBuyAndHold(Strategy):
                     "type": "buy",
                     "price": 0,
                     "amount": 0,
+                    "date_time": now,
                 }
 
             if self.min_price > target_budget:
@@ -86,6 +99,7 @@ class StrategyBuyAndHold(Strategy):
                     "type": "buy",
                     "price": 0,
                     "amount": 0,
+                    "date_time": now,
                 }
 
             if target_budget > self.balance:
@@ -95,6 +109,7 @@ class StrategyBuyAndHold(Strategy):
                     "type": "buy",
                     "price": 0,
                     "amount": 0,
+                    "date_time": now,
                 }
 
             target_amount = target_budget / last_data["closing_price"]
@@ -103,6 +118,7 @@ class StrategyBuyAndHold(Strategy):
                 "type": "buy",
                 "price": last_data["closing_price"],
                 "amount": target_amount,
+                "date_time": now,
             }
             self.logger.info(f"[REQ] id: {trading_request['id']} =====================")
             self.logger.info(f"type: {trading_request['type']}")
@@ -111,14 +127,14 @@ class StrategyBuyAndHold(Strategy):
             )
             self.logger.info("================================================")
             return trading_request
-        except KeyError:
+        except (ValueError, KeyError):
             self.logger.error("invalid data")
         except IndexError:
             self.logger.error("empty data")
         except AttributeError as msg:
             self.logger.error(msg)
 
-    def initialize(self, budget, min_price=100):
+    def initialize(self, budget, min_price=100, is_simulation=True):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
@@ -126,6 +142,7 @@ class StrategyBuyAndHold(Strategy):
             return
 
         self.is_intialized = True
+        self.is_simulation = is_simulation
         self.budget = budget
         self.balance = budget
         self.min_price = min_price
