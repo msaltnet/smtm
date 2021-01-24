@@ -41,7 +41,7 @@ class SimulationOperatorTests(unittest.TestCase):
         trader.initialize.assert_called_once_with(
             "apple", end="papaya", count="pear", budget="grape"
         )
-        analyzer.initialize.assert_called_once_with(ANY)
+        analyzer.initialize.assert_called_once_with(ANY, True)
         update_info_func = analyzer.initialize.call_args[0][0]
         update_info_func("asset", "applemango")
         trader.send_account_info_request.assert_called_once_with("applemango")
@@ -133,6 +133,7 @@ class SimulationOperatorTests(unittest.TestCase):
         operator = SimulationOperator()
         self.assertEqual(operator.turn, 0)
         analyzer_mock = Mock()
+        analyzer_mock.put_trading_info = MagicMock()
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
@@ -152,6 +153,7 @@ class SimulationOperatorTests(unittest.TestCase):
         timer_mock.start.assert_called_once()
         dp_mock.get_info.assert_called_once()
         self.assertEqual(operator.turn, 1)
+        analyzer_mock.put_trading_info.assert_called_once_with("mango")
 
     def test_excute_trading_should_call_trader_send_request_and_strategy_update_result(self):
         timer_mock = Mock()

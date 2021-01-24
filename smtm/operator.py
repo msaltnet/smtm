@@ -74,11 +74,7 @@ class Operator:
 
     def _start_timer(self):
         """설정된 간격의 시간이 지난 후 자동 거래를 시작하도록 타이머 설정"""
-        if (
-            self.is_timer_running
-            or self.is_initialized is not True
-            or self.is_terminating
-        ):
+        if self.is_timer_running or self.is_initialized is not True or self.is_terminating:
             return
 
         self.timer = self.threading.Timer(self.interval, self._excute_trading)
@@ -92,7 +88,9 @@ class Operator:
         self.logger.debug("trading is started #####################")
         self.is_timer_running = False
         try:
-            self.strategy.update_trading_info(self.data_provider.get_info())
+            trading_info = self.data_provider.get_info()
+            self.strategy.update_trading_info(trading_info)
+            self.analyzer.put_trading_info(trading_info)
 
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")

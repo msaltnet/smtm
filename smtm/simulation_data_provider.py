@@ -82,7 +82,7 @@ class SimulationDataProvider(DataProvider):
         try:
             return {
                 "market": data["market"],
-                "date_time": data["candle_date_time_utc"],
+                "date_time": data["candle_date_time_kst"],
                 "opening_price": data["opening_price"],
                 "high_price": data["high_price"],
                 "low_price": data["low_price"],

@@ -51,6 +51,7 @@ class VirtualMarket:
         if count is not None:
             self.count = count
         self.__update_data_from_server()
+        self.logger.debug(f"Virtual Market is initialized {end}, {count}")
 
     def initialize_from_file(self, filepath, end, count):
         """
@@ -148,7 +149,9 @@ class VirtualMarket:
         next_index = self.turn_count + 1
         result = None
 
-        current_dt = datetime.strptime(self.data[self.turn_count]["date_time"], self.ISO_DATEFORMAT)
+        current_dt = datetime.strptime(
+            self.data[self.turn_count]["candle_date_time_kst"], self.ISO_DATEFORMAT
+        )
         now = current_dt + timedelta(seconds=2)
         now = now.isoformat()
 

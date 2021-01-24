@@ -215,11 +215,11 @@ class SimulationDataProviderTests(unittest.TestCase):
         dp = SimulationDataProvider()
         dp.initialize_with_file("./tests/data/test_record.json", "banana", 50000)
         data1 = dp.get_info()
-        self.assertEqual(data1["date_time"], "2020-03-10T13:52:00")
+        self.assertEqual(data1["date_time"], "2020-03-10T22:52:00")
         self.assertEqual(data1["opening_price"], 9777000.00000000)
         self.assertEqual(data1["low_price"], 9763000.00000000)
 
         data2 = dp.get_info()
-        self.assertEqual(data2["date_time"], "2020-03-10T13:51:00")
+        self.assertEqual(data2["date_time"], "2020-03-10T22:51:00")
         self.assertEqual(data2["opening_price"], 9717000.00000000)
         self.assertEqual(data2["low_price"], 9717000.00000000)

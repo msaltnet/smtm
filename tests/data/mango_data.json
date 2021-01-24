@@ -2,7 +2,7 @@
     {
         "market": "mango",
         "candle_date_time_utc": "2020-02-25T06:41:00",
-        "date_time": "2020-02-25T15:41:00",
+        "candle_date_time_kst": "2020-02-25T15:41:00",
         "opening_price": 2000.00000000,
         "high_price": 2100.00000000,
         "low_price": 1900.00000000,
@@ -15,7 +15,7 @@
     {
         "market": "mango",
         "candle_date_time_utc": "2020-02-25T06:41:00",
-        "date_time": "2020-02-25T15:41:00",
+        "candle_date_time_kst": "2020-02-25T15:41:00",
         "opening_price": 2050.00000000,
         "high_price": 2200.00000000,
         "low_price": 2000.00000000,
@@ -28,7 +28,7 @@
     {
         "market": "mango",
         "candle_date_time_utc": "2020-02-25T06:41:00",
-        "date_time": "2020-02-25T15:41:00",
+        "candle_date_time_kst": "2020-02-25T15:41:00",
         "opening_price": 2050.00000000,
         "high_price": 2200.00000000,
         "low_price": 2000.00000000,
@@ -41,7 +41,7 @@
     {
         "market": "mango",
         "candle_date_time_utc": "2020-02-25T06:41:00",
-        "date_time": "2020-02-25T15:41:00",
+        "candle_date_time_kst": "2020-02-25T15:41:00",
         "opening_price": 2050.00000000,
         "high_price": 2200.00000000,
         "low_price": 2000.00000000,
@@ -54,7 +54,7 @@
     {
         "market": "mango",
         "candle_date_time_utc": "2020-02-25T06:41:00",
-        "date_time": "2020-02-25T15:41:00",
+        "candle_date_time_kst": "2020-02-25T15:41:00",
         "opening_price": 2050.00000000,
         "high_price": 2200.00000000,
         "low_price": 2000.00000000,
@@ -67,7 +67,7 @@
     {
         "market": "mango",
         "candle_date_time_utc": "2020-02-25T06:41:00",
-        "date_time": "2020-02-25T15:41:00",
+        "candle_date_time_kst": "2020-02-25T15:41:00",
         "opening_price": 2050.00000000,
         "high_price": 2200.00000000,
         "low_price": 2000.00000000,

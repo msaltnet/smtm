@@ -56,15 +56,20 @@ class OperatorTests(unittest.TestCase):
         strategy_mock = Mock()
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
+        analyzer_mock = Mock()
+        analyzer_mock.put_trading_info = MagicMock()
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize("apple", threading_mock, dp_mock, strategy_mock, trader_mock, "mango")
+        operator.initialize(
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+        )
         operator.setup(27)
         operator._excute_trading()
 
         threading_mock.Timer.assert_called_once_with(27, ANY)
         timer_mock.start.assert_called_once()
         dp_mock.get_info.assert_called_once()
+        analyzer_mock.put_trading_info.assert_called_once_with("mango")
 
     def test_excute_trading_should_call_trader_send_request_and_strategy_update_result(self):
         timer_mock = Mock()

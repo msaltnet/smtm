@@ -50,7 +50,7 @@ class SimulationOperator(Operator):
                 if name == "asset":
                     trader.send_account_info_request(callback)
 
-            analyzer.initialize(handle_info_request)
+            analyzer.initialize(handle_info_request, True)
         except AttributeError:
             self.is_initialized = False
             self.logger.error("initialize fail")
@@ -63,7 +63,9 @@ class SimulationOperator(Operator):
         )
         self.is_timer_running = False
         try:
-            self.strategy.update_trading_info(self.data_provider.get_info())
+            trading_info = self.data_provider.get_info()
+            self.strategy.update_trading_info(trading_info)
+            self.analyzer.put_trading_info(trading_info)
 
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")
