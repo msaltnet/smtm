@@ -28,7 +28,10 @@ setup(name='smtm',
             'Programming Language :: Python :: 3.6',
         ],
     install_requires=[
-            'requests==2.25.0'
+            'requests',
+            'matplotlib',
+            'pandas',
+            'mplfinance'
         ],
     extras_require={
         'dev': [
