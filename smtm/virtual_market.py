@@ -152,8 +152,7 @@ class VirtualMarket:
         current_dt = datetime.strptime(
             self.data[self.turn_count]["candle_date_time_kst"], self.ISO_DATEFORMAT
         )
-        now = current_dt + timedelta(seconds=2)
-        now = now.isoformat()
+        now = current_dt.isoformat()
 
         if next_index >= len(self.data) - 1:
             self.turn_count = next_index

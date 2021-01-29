@@ -79,8 +79,7 @@ class StrategyBuyAndHold(Strategy):
 
             if self.is_simulation:
                 last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
-                now = last_dt + timedelta(seconds=1)
-                now = now.isoformat()
+                now = last_dt.isoformat()
 
             target_budget = self.budget / 10
             if last_data is None:

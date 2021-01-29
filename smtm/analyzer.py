@@ -4,6 +4,9 @@
 """
 import time
 import copy
+import mplfinance as mpf
+import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 from .log_manager import LogManager
 
@@ -33,10 +36,27 @@ class Analyzer:
         self.is_simulation = False
 
     def put_trading_info(self, info):
-        self.infos.append(info)
+        """거래 정보를 저장한다
+
+        kind: 보고서를 위한 데이터 종류
+            0: 거래 데이터
+            1: 매매 요청
+            2: 매매 결과
+            3: 수익률 정보
+        """
+        new = copy.deepcopy(info)
+        new["kind"] = 0
+        self.infos.append(new)
 
     def put_request(self, request):
-        """거래 요청 정보를 저장한다"""
+        """거래 요청 정보를 저장한다
+
+        kind: 보고서를 위한 데이터 종류
+            0: 거래 데이터
+            1: 매매 요청
+            2: 매매 결과
+            3: 수익률 정보
+        """
         try:
             if request["price"] <= 0 or request["amount"] <= 0:
                 return
@@ -44,10 +64,20 @@ class Analyzer:
             self.logger.warning("Invalid request")
             return
 
-        self.request.append(copy.deepcopy(request))
+        new = copy.deepcopy(request)
+        new["kind"] = 1
+        self.request.append(new)
 
     def put_result(self, result):
-        """거래 결과 정보를 저장한다"""
+        """거래 결과 정보를 저장한다
+
+        kind: 보고서를 위한 데이터 종류
+            0: 거래 데이터
+            1: 매매 요청
+            2: 매매 결과
+            3: 수익률 정보
+        """
+
         if self.update_info_func is None:
             self.logger.warning("update_info_func is NOT set")
             return
@@ -58,7 +88,9 @@ class Analyzer:
             self.logger.warning("Invalid result")
             return
 
-        self.result.append(copy.deepcopy(result))
+        new = copy.deepcopy(result)
+        new["kind"] = 2
+        self.result.append(new)
         self.update_info_func("asset", self.put_asset_info)
 
     def initialize(self, update_info_func, is_simulation=False):
@@ -99,7 +131,7 @@ class Analyzer:
 
             if self.is_simulation:
                 last_dt = datetime.strptime(self.infos[-1]["date_time"], self.ISO_DATEFORMAT)
-                now = last_dt + timedelta(seconds=3)
+                now = last_dt  # + timedelta(seconds=3)
                 now = now.isoformat()
 
             start_total = self.__get_start_property_value()
@@ -120,7 +152,7 @@ class Analyzer:
                     item_yield = (price - item[0]) / item[0] * 100
                     item_yield = round(item_yield, 3)
 
-                self.logger.info(
+                self.logger.debug(
                     f"yield record {name}, {item[0]}, {price}, {item[1]}, {item_yield}"
                 )
                 new_asset_list.append((name, item[0], price, item[1], item_yield))
@@ -130,7 +162,7 @@ class Analyzer:
                 if price_diff != 0:
                     price_change_ratio[name] = price_diff / start_price * 100
                     price_change_ratio[name] = round(price_change_ratio[name], 3)
-                self.logger.info(
+                self.logger.debug(
                     f"price change ratio {start_price} -> {price}, {price_change_ratio[name]}%"
                 )
 
@@ -149,6 +181,7 @@ class Analyzer:
                     "price_change_ratio": price_change_ratio,
                     "asset": new_asset_list,
                     "date_time": now,
+                    "kind": 3,
                 }
             )
         except (IndexError, AttributeError):
@@ -157,6 +190,7 @@ class Analyzer:
     def create_report(self, filename="report.txt"):
         """수익률 보고서를 생성한다
 
+        수익률 보고서를 생성하고, 그래프를 화면에 출력한다.
         Args:
             filename: 생성할 리포트 파일명
         Returns:
@@ -179,7 +213,11 @@ class Analyzer:
         try:
             list_sum = self.request + self.infos + self.score_record_list + self.result
             trading_table = sorted(
-                list_sum, key=lambda data: datetime.strptime(data["date_time"], self.ISO_DATEFORMAT)
+                list_sum,
+                key=lambda x: (
+                    datetime.strptime(x["date_time"], self.ISO_DATEFORMAT),
+                    x["kind"],
+                ),
             )
             start_value = self.__get_start_property_value()
             last_value = self.__get_last_property_value()
@@ -194,6 +232,7 @@ class Analyzer:
             self.logger.info(f"Cumulative return                    {last_return:10} %")
             self.logger.info(f"Price_change_ratio {change_ratio}")
             self.__create_report_file(filename, summary, trading_table)
+            self.__drawGraph()
             return {"summary": summary, "trading_table": trading_table}
         except (IndexError, AttributeError):
             self.logger.error("create report FAIL")
@@ -219,25 +258,24 @@ class Analyzer:
         Cumulative return                    1234567890 %
         Price_change_ratio {'mango': -50.0, 'apple': 50.0}
         """
-
         with open(filepath, "w") as f:
             if len(trading_table) > 0:
                 f.write("### TRADING TABLE =================================\n")
 
             for item in trading_table:
-                if "opening_price" in item:
+                if item["kind"] == 0:
                     f.write(
                         f"{item['date_time']}, {item['opening_price']}, {item['high_price']}, {item['low_price']}, {item['closing_price']}, {item['acc_price']}, {item['acc_volume']}\n"
                     )
-                if "id" in item:
+                elif item["kind"] == 1:
                     f.write(
                         f"{item['date_time']}, [->] {item['id']}, {item['type']}, {item['price']}, {item['amount']}\n"
                     )
-                if "request_id" in item:
+                elif item["kind"] == 2:
                     f.write(
                         f"{item['date_time']}, [<-] {item['request_id']}, {item['type']}, {item['price']}, {item['amount']}, {item['msg']}, {item['balance']}\n"
                     )
-                if "cumulative_return" in item:
+                elif item["kind"] == 3:
                     f.write(
                         f"{item['date_time']}, [#] {item['balance']}, {item['cumulative_return']}, {item['price_change_ratio']}, {item['asset']}\n"
                     )
@@ -247,6 +285,81 @@ class Analyzer:
             f.write(f"Gap                                    {summary[1] - summary[0]:10}\n")
             f.write(f"Cumulative return                    {summary[2]:10} %\n")
             f.write(f"Price_change_ratio {summary[3]}\n")
+
+    def __createPlotData(self):
+        result_pos = 0
+        score_pos = 0
+        last_avr_price = None
+        last_acc_return = 0
+        plotData = []
+
+        for info in self.infos:
+            new = info.copy()
+            infoTime = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
+
+            if result_pos < len(self.result):
+                result = self.result[result_pos]
+                resultTime = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
+                if infoTime == resultTime:
+                    if result["type"] == "buy":
+                        new["buy"] = result["price"]
+                    elif result["type"] == "sell":
+                        new["sell"] = result["price"]
+                    result_pos += 1
+                elif infoTime > resultTime:
+                    result_pos += 1
+
+            if score_pos < len(self.score_record_list):
+                score = self.score_record_list[score_pos]
+                scoreTime = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
+                if infoTime == scoreTime:
+                    new["return"] = last_acc_return = score["cumulative_return"]
+                    if len(score["asset"]) > 0:
+                        new["avr_price"] = last_avr_price = score["asset"][0][1]
+                    else:
+                        last_avr_price = None
+                    score_pos += 1
+                elif infoTime > scoreTime:
+                    new["return"] = last_acc_return
+                    score_pos += 1
+                else:
+                    new["return"] = last_acc_return
+                    if last_avr_price is not None:
+                        new["avr_price"] = last_avr_price
+
+            plotData.append(new)
+        return plotData
+
+    def __drawGraph(self):
+        total = pd.DataFrame(self.__createPlotData())
+        total = total.rename(
+            columns={
+                "date_time": "Date",
+                "opening_price": "Open",
+                "high_price": "High",
+                "low_price": "Low",
+                "closing_price": "Close",
+                "acc_volume": "Volume",
+            }
+        )
+        total = total.set_index("Date")
+        total.index = pd.to_datetime(total.index)
+        apds = []
+        if "buy" in total.columns:
+            apds.append(mpf.make_addplot(total["buy"], type="scatter", markersize=100, marker="^"))
+        if "sell" in total.columns:
+            apds.append(mpf.make_addplot(total["sell"], type="scatter", markersize=100, marker="v"))
+        if "avr_price" in total.columns:
+            apds.append(mpf.make_addplot(total["avr_price"]))
+        if "return" in total.columns:
+            apds.append(mpf.make_addplot((total["return"]), panel=1, color="g", secondary_y=True))
+        mpf.plot(
+            total,
+            type="candle",
+            volume=True,
+            addplot=apds,
+            style="starsandstripes",
+        )
 
     def __get_start_property_value(self):
         return round(self.__get_property_total_value(0))
