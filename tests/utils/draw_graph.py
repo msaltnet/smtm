@@ -74,6 +74,7 @@ def draw_graph(filepath, mav=(5, 10)):
 
     with open(filepath, "r") as data_file:
         json_data = json.loads(data_file.read())
+    json_data.reverse()
 
     sma_map = {}
     sma_points = get_sma_changes(json_data, new_mav)

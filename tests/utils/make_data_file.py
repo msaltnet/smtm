@@ -10,7 +10,7 @@ QUERY_STRING = {"market": "KRW-BTC"}
 def get_data_from_server(end=None, count=100, filepath="data.json"):
     QUERY_STRING["to"] = end
     QUERY_STRING["count"] = count
-
+    print(QUERY_STRING)
     response = requests.request("GET", URL, params=QUERY_STRING)
     response.raise_for_status()
     data = json.loads(response.text)
