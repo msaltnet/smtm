@@ -1,4 +1,7 @@
-"""Data 가져와서 파일로 저장"""
+"""Data 가져와서 그래프 그리기
+
+Example) python .\draw_graph.py --path=data50.json --mav="5,10,20"
+"""
 import argparse
 import json
 import mplfinance as mpf

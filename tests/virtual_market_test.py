@@ -267,7 +267,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0.1)
         self.assertEqual(result["msg"], "success")
         self.assertEqual(result["balance"], 1790)
-        self.assertEqual(result["date_time"], "2020-02-25T23:59:00")
+        self.assertEqual(result["date_time"], "2020-02-25T23:59:10")
 
         dummy_request2 = {"id": "orange", "type": "sell", "price": 2000, "amount": 0.05}
         result = market.send_request(dummy_request2)
@@ -277,7 +277,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0.05)
         self.assertEqual(result["msg"], "success")
         self.assertEqual(result["balance"], 1885)
-        self.assertEqual(result["date_time"], "2020-02-25T23:59:10")
+        self.assertEqual(result["date_time"], "2020-02-25T23:59:20")
 
         # 매도 요청 가격이 높은 경우
         dummy_request3 = {"id": "apple", "type": "sell", "price": 2500, "amount": 0.05}
@@ -288,7 +288,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0)
         self.assertEqual(result["msg"], "not matched")
         self.assertEqual(result["balance"], 1885)
-        self.assertEqual(result["date_time"], "2020-02-25T23:59:20")
+        self.assertEqual(result["date_time"], "2020-02-25T23:59:59")
 
         # 매도 요청 양이 보유양 보다 많은 경우
         dummy_request4 = {"id": "banana", "type": "sell", "price": 2000, "amount": 0.1}
@@ -299,7 +299,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(result["amount"], 0.05)
         self.assertEqual(result["msg"], "success")
         self.assertEqual(result["balance"], 1980)
-        self.assertEqual(result["date_time"], "2020-02-25T23:59:59")
+        self.assertEqual(result["date_time"], "2020-02-26T23:59:59")
 
     def test_send_request_handle_sell_return_error_request_when_data_invalid(self):
         market = VirtualMarket()

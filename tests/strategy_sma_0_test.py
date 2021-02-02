@@ -261,7 +261,8 @@ class StrategySma0Tests(unittest.TestCase):
         dummy_info = {}
         sma.update_trading_info(dummy_info)
         request = sma.get_request()
-        self.assertEqual(request, None)
+        self.assertEqual(request["price"], 0)
+        self.assertEqual(request["amount"], 0)
 
     def test_get_request_return_correct_request_at_buy_process(self):
         sma = StrategySma0()

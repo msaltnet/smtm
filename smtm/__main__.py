@@ -1,4 +1,7 @@
-"""시뮬레이터"""
+"""시뮬레이터
+
+Example) python -m smtm --count 200 --end 2020-12-20T17:50:30 --term 0.01 --strategy=1
+"""
 import time
 import signal
 import argparse
@@ -10,6 +13,7 @@ from . import (
     SimulationTrader,
     SimulationDataProvider,
     StrategyBuyAndHold,
+    StrategySma0,
     SimulationOperator,
 )
 
@@ -17,16 +21,21 @@ from . import (
 class SmtmSimulator:
     """smtm 시뮬레이터"""
 
-    def __init__(self, end=None, count=100, term=None):
+    def __init__(self, end=None, count=100, term=None, strategy=0):
         self.logger = LogManager.get_logger("SmtmSimulator")
         self.__stop = False
         self.end = "2020-12-20T16:23:00"
         self.count = 100
         self.term = term
         self.operator = None
+        self.strategy = int(strategy)
 
         if end is not None:
             self.end = end
+
+        if self.strategy != 0 and self.strategy != 1:
+            self.strategy = 0
+            self.logger.info(f"invalid strategy: {self.strategy}, replaced with 0")
 
         if self.end is not None:
             self.end = self.end.replace("T", " ")
@@ -50,11 +59,16 @@ class SmtmSimulator:
         """main 함수"""
         operator = SimulationOperator()
         self.operator = operator
+        if self.strategy == 0:
+            strategy = StrategyBuyAndHold()
+        else:
+            strategy = StrategySma0()
+
         operator.initialize_simulation(
             requests,
             threading,
             SimulationDataProvider(),
-            StrategyBuyAndHold(),
+            strategy,
             SimulationTrader(),
             Analyzer(),
             end=self.end,
@@ -88,7 +102,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("--count", help="simulation tick count", default=None)
     parser.add_argument("--term", help="simulation tick interval (seconds)", default=None)
+    parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0", default=0)
     args = parser.parse_args()
 
-    simulator = SmtmSimulator(args.end, args.count, args.term)
+    simulator = SmtmSimulator(args.end, args.count, args.term, args.strategy)
     simulator.main()

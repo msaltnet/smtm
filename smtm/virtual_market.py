@@ -147,6 +147,7 @@ class VirtualMarket:
             self.logger.warning("virtual market is NOT initialized")
             return None
         next_index = self.turn_count + 1
+        self.turn_count = next_index
         result = None
 
         current_dt = datetime.strptime(
@@ -155,8 +156,6 @@ class VirtualMarket:
         now = current_dt.isoformat()
 
         if next_index >= len(self.data) - 1:
-            self.turn_count = next_index
-
             return {
                 "request_id": request["id"],
                 "type": request["type"],
@@ -168,7 +167,6 @@ class VirtualMarket:
             }
 
         if request["price"] == 0 or request["amount"] == 0:
-            self.turn_count = next_index
             return {
                 "request_id": request["id"],
                 "type": request["type"],
@@ -195,8 +193,6 @@ class VirtualMarket:
                 "balance": self.balance,
                 "date_time": now,
             }
-
-        self.turn_count = next_index
         return result
 
     def __handle_buy_request(self, request, next_index):

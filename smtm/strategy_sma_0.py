@@ -59,9 +59,11 @@ class StrategySma0(Strategy):
             if sma_short > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
+                self.logger.info(f"process_unit updated {self.process_unit}")
             elif sma_short < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
-                self.process_unit = (0, round(self.asset_amount / self.STEP))
+                self.process_unit = (0, self.asset_amount / self.STEP)
+                self.logger.info(f"process_unit updated {self.process_unit}")
         except (KeyError, TypeError):
             self.logger.warning("invalid info")
 
@@ -81,7 +83,7 @@ class StrategySma0(Strategy):
             self.logger.info(f"[RESULT] id: {result['request_id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {result['price']}, amount: {result['amount']}")
-            self.logger.info(f"balance: {self.balance}")
+            self.logger.info(f"balance: {self.balance}, asset_amount: {self.asset_amount}")
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
         except AttributeError as msg:
@@ -127,7 +129,13 @@ class StrategySma0(Strategy):
             elif self.current_process == "sell":
                 request = self.__create_sell()
             else:
-                return None
+                return {
+                    "id": str(round(time.time(), 3)),
+                    "type": "buy",
+                    "price": 0,
+                    "amount": 0,
+                    "date_time": now,
+                }
 
             request["date_time"] = now
             self.logger.info(f"[REQ] id: {request['id']} =====================")
@@ -148,7 +156,7 @@ class StrategySma0(Strategy):
             budget = self.balance
 
         if self.min_price > budget or self.process_unit[0] <= 0:
-            self.logger.info("target_budget is too small or invalid unit")
+            self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
             return {
                 "id": str(round(time.time(), 3)),
                 "type": "buy",
@@ -171,7 +179,7 @@ class StrategySma0(Strategy):
             amount = self.asset_amount
 
         if self.asset_amount == 0 or self.process_unit[1] <= 0:
-            self.logger.info("asset is empty or invalid unit")
+            self.logger.info(f"asset is empty or invalid unit {self.process_unit}")
             return {
                 "id": str(round(time.time(), 3)),
                 "type": "sell",

@@ -1,4 +1,7 @@
-"""Data 가져와서 파일로 저장"""
+"""Data 가져와서 파일로 저장
+
+Example) python .\make_data_file.py --end="2021-01-30 11:00:00" --count=50 --path=data50.json
+"""
 import argparse
 import requests
 import json
