@@ -2,12 +2,10 @@
 
 이 모듈은 거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스인 Analayzer를 포함하고 있다.
 """
-import time
 import copy
 import mplfinance as mpf
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from .log_manager import LogManager
 
 
@@ -15,10 +13,11 @@ class Analyzer:
     """거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스
 
     Attributes:
-        request: 거래 요청 정보 목록
-        result: 거래 결과 정보 목록
-        asset_record_list: 특정 시점에 기록된 자산 정보 목록
-        score_record_list: 특정 시점에 기록된 수익률 정보 목록
+        request: 거래 요청 데이터 목록
+        result: 거래 결과 데이터 목록
+        infos: 거래 데이터 목록
+        asset_record_list: 특정 시점에 기록된 자산 데이터 목록
+        score_record_list: 특정 시점에 기록된 수익률 데이터 목록
         update_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
 
     """
@@ -131,7 +130,7 @@ class Analyzer:
 
             if self.is_simulation:
                 last_dt = datetime.strptime(self.infos[-1]["date_time"], self.ISO_DATEFORMAT)
-                now = last_dt  # + timedelta(seconds=3)
+                now = last_dt
                 now = now.isoformat()
 
             start_total = self.__get_start_property_value()
