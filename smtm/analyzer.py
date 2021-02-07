@@ -238,6 +238,8 @@ class Analyzer:
 
     def __create_report_file(self, filepath, summary, trading_table):
         """
+        보고서를 정해진 형식에 맞게 파일로 출력한다
+
         ### TRADING TABLE =================================
         {date_time}, {opening_price}, {high_price}, {low_price}, {closing_price}, {acc_price}, {acc_volume}
         2020-02-23T00:00:00, 5000, 15000, 4500, 5500, 1500000000, 1500
@@ -290,35 +292,35 @@ class Analyzer:
         score_pos = 0
         last_avr_price = None
         last_acc_return = 0
-        plotData = []
+        plot_data = []
 
         for info in self.infos:
             new = info.copy()
-            infoTime = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
+            info_time = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
 
             if result_pos < len(self.result):
                 result = self.result[result_pos]
-                resultTime = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
-                if infoTime == resultTime:
+                result_time = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
+                if info_time == result_time:
                     if result["type"] == "buy":
                         new["buy"] = result["price"]
                     elif result["type"] == "sell":
                         new["sell"] = result["price"]
                     result_pos += 1
-                elif infoTime > resultTime:
+                elif info_time > result_time:
                     result_pos += 1
 
             if score_pos < len(self.score_record_list):
                 score = self.score_record_list[score_pos]
-                scoreTime = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
-                if infoTime == scoreTime:
+                score_time = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
+                if info_time == score_time:
                     new["return"] = last_acc_return = score["cumulative_return"]
                     if len(score["asset"]) > 0:
                         new["avr_price"] = last_avr_price = score["asset"][0][1]
                     else:
                         last_avr_price = None
                     score_pos += 1
-                elif infoTime > scoreTime:
+                elif info_time > score_time:
                     new["return"] = last_acc_return
                     score_pos += 1
                 else:
@@ -326,8 +328,8 @@ class Analyzer:
                     if last_avr_price is not None:
                         new["avr_price"] = last_avr_price
 
-            plotData.append(new)
-        return plotData
+            plot_data.append(new)
+        return plot_data
 
     def __drawGraph(self):
         total = pd.DataFrame(self.__createPlotData())
