@@ -4,7 +4,7 @@ import copy
 import time
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from .strategy import Strategy
 from .log_manager import LogManager
 
@@ -20,11 +20,13 @@ class StrategySma0(Strategy):
     budget: 시작 잔고
     balance: 현재 잔고
     min_price: 최소 주문 금액
+    current_process: 현재 진행해야 할 매매 타입, buy, sell
+    process_unit: 분할 매매를 진행할 단위
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-    SHORT = 3
-    LONG = 6
+    SHORT = 5
+    LONG = 10
     STEP = 3
 
     def __init__(self):

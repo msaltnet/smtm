@@ -56,9 +56,11 @@ class StrategySma0Tests(unittest.TestCase):
         sma = StrategySma0()
 
         class DummySeries:
-            """ interval을 최종 결과로 리턴하는 DummySeries"""
+            """rolling의 window인자를 최종 결과로 리턴
+            장기 이동평균 값이 단기 이동평균 값보다 큰 상황을 만들기 위함
+            """
 
-            def rolling(self, interval):
+            def rolling(self, window):
                 class DummyRolling:
                     def __init__(self, value):
                         self.return_value = value
@@ -71,7 +73,7 @@ class StrategySma0Tests(unittest.TestCase):
                         meanlist.values = [self.return_value]
                         return meanlist
 
-                return DummyRolling(interval)
+                return DummyRolling(window)
 
         mock_series.return_value = DummySeries()
         mock_np.return_value = False
@@ -117,9 +119,11 @@ class StrategySma0Tests(unittest.TestCase):
         sma = StrategySma0()
 
         class DummySeriesInverse:
-            """ interval에 -1을 곱한 값을 최종 결과로 리턴하는 DummySeries"""
+            """rolling의 window인자에 -1을 곱한 값을 최종 결과로 리턴
+            장기 이동평균 값이 단기 이동평균 값보다 작은 상황을 만들기 위함
+            """
 
-            def rolling(self, interval):
+            def rolling(self, window인자에):
                 class DummyRolling:
                     def __init__(self, value):
                         self.return_value = value * -1
@@ -132,7 +136,7 @@ class StrategySma0Tests(unittest.TestCase):
                         meanlist.values = [self.return_value]
                         return meanlist
 
-                return DummyRolling(interval)
+                return DummyRolling(window인자에)
 
         mock_series.return_value = DummySeriesInverse()
         mock_np.return_value = False
