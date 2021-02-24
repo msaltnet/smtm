@@ -11,6 +11,7 @@ from .strategy_bnh import StrategyBuyAndHold
 from .strategy_sma_0 import StrategySma0
 from .virtual_market import VirtualMarket
 from .live_data_provider import LiveDataProvider
+from .worker import Worker
 
 __all__ = [
     "LogManager",
