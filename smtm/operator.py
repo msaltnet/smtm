@@ -4,6 +4,7 @@
 """
 
 from .log_manager import LogManager
+from .worker import Worker
 
 
 class Operator:
@@ -32,6 +33,7 @@ class Operator:
         self.is_initialized = False
         self.timer = None
         self.analyzer = None
+        self.worker = Worker("Operator-Worker")
 
     def initialize(self, http, threading, data_provider, strategy, trader, analyzer):
         """
@@ -61,7 +63,10 @@ class Operator:
         self.interval = interval
 
     def start(self):
-        """자동 거래를 시작한다"""
+        """자동 거래를 시작한다
+
+        자동 거래는 설정된 시간 간격에 맞춰서 Worker를 사용해서 별도의 스레드에서 처리된다.
+        """
         if self.is_initialized is not True:
             return False
 
@@ -69,21 +74,28 @@ class Operator:
             return False
 
         self.logger.info("===== Start operating =====")
-        self._excute_trading()
+        self.worker.start()
+        self.worker.post_task({"runnable": self._excute_trading})
         return True
 
     def _start_timer(self):
-        """설정된 간격의 시간이 지난 후 자동 거래를 시작하도록 타이머 설정"""
+        """설정된 간격의 시간이 지난 후 Worker가 자동 거래를 수행하도록 타이머 설정"""
+        self.logger.debug(
+            f"{self.is_timer_running} : {self.is_initialized} : {self.is_terminating}, {self.threading.get_ident()}"
+        )
         if self.is_timer_running or self.is_initialized is not True or self.is_terminating:
             return
 
-        self.timer = self.threading.Timer(self.interval, self._excute_trading)
+        def on_timer_expired():
+            self.worker.post_task({"runnable": self._excute_trading})
+
+        self.timer = self.threading.Timer(self.interval, on_timer_expired)
         self.timer.start()
 
         self.is_timer_running = True
         return
 
-    def _excute_trading(self):
+    def _excute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다"""
         self.logger.debug("trading is started #####################")
         self.is_timer_running = False
@@ -102,8 +114,8 @@ class Operator:
             if target_request is not None and target_request["price"] != 0:
                 self.trader.send_request(target_request, send_request_callback)
                 self.analyzer.put_request(target_request)
-        except AttributeError:
-            self.logger.error("excuting fail")
+        except AttributeError as msg:
+            self.logger.error(f"excuting fail {msg}")
 
         self.logger.debug("trading is completed #####################")
         self._start_timer()
@@ -118,3 +130,4 @@ class Operator:
             self.logger.error("stop operation fail")
         self.is_timer_running = False
         self.is_terminating = True
+        self.worker.stop()

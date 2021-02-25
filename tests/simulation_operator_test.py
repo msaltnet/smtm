@@ -148,7 +148,7 @@ class SimulationOperatorTests(unittest.TestCase):
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
         operator.setup(27)
-        operator._excute_trading()
+        operator._excute_trading(None)
         threading_mock.Timer.assert_called_once_with(27, ANY)
         timer_mock.start.assert_called_once()
         dp_mock.get_info.assert_called_once()
@@ -178,7 +178,7 @@ class SimulationOperatorTests(unittest.TestCase):
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
         operator.setup(27)
-        operator._excute_trading()
+        operator._excute_trading(None)
 
         dummy_result = {"name": "mango", "type": "buy", "msg": "success"}
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
@@ -213,7 +213,7 @@ class SimulationOperatorTests(unittest.TestCase):
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
         operator.setup(27)
-        operator._excute_trading()
+        operator._excute_trading(None)
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
         strategy_mock.update_trading_info.assert_called_once_with(ANY)
         trader_mock.send_request.assert_called_once_with(ANY, ANY)
@@ -244,5 +244,5 @@ class SimulationOperatorTests(unittest.TestCase):
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
         operator.setup(27)
-        operator._excute_trading()
+        operator._excute_trading(None)
         trader_mock.send_request.assert_not_called()

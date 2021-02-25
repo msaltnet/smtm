@@ -56,7 +56,7 @@ class SimulationOperator(Operator):
             self.logger.error("initialize fail")
             return
 
-    def _excute_trading(self):
+    def _excute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다"""
         self.logger.debug(
             f"##################### trading is started : {self.turn + 1} / {self.count}"

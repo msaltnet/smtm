@@ -1,5 +1,7 @@
+"""입력받은 task를 별도의 thread에서 차례대로 수행하는 일꾼"""
 import queue
 import threading
+from .log_manager import LogManager
 
 
 class Worker:
@@ -14,6 +16,7 @@ class Worker:
         self.task_queue = queue.Queue()
         self.thread = None
         self.name = name
+        self.logger = LogManager.get_logger(name)
 
     def post_task(self, task):
         """task를 추가한다
@@ -33,12 +36,12 @@ class Worker:
 
         def looper():
             while True:
-                print(f"WAIT {threading.get_ident()}")
+                self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] WAIT ==========")
                 task = self.task_queue.get()
                 if task is None:
-                    print(f"Break loop {threading.get_ident()}")
+                    self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] Termanited ..........")
                     break
-                print(f"GO {threading.get_ident()}")
+                self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] GO ----------")
                 runnable = task["runnable"]
                 runnable(task)
                 self.task_queue.task_done()
