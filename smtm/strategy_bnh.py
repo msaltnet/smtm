@@ -67,7 +67,7 @@ class StrategyBuyAndHold(Strategy):
                 "type": 거래 유형 sell, buy
                 "price": 거래 가격
                 "amount": 거래 수량
-                "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +1초
+                "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
             }
         """
         if self.is_intialized is not True:

@@ -358,6 +358,33 @@ class AnalyzerTests(unittest.TestCase):
             target_dummy_asset2,
         )
 
+    def test_get_return_report_return_correct_report(self):
+        """
+        {
+            cumulative_return: 기준 시점부터 누적 수익률
+            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+            asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
+            date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+        }
+        """
+        analyzer = Analyzer()
+        analyzer.initialize("mango", True)
+        analyzer.update_info_func = MagicMock()
+
+        self.fill_test_data_for_report(analyzer)
+        report = analyzer.get_return_report()
+
+        self.assertEqual(len(report), 4)
+        # 입금 자산
+        self.assertEqual(report[0], 23456)
+        # 최종 자산
+        self.assertEqual(report[1], 5848)
+        # 누적 수익률
+        self.assertEqual(report[2], -75.067)
+        # 가격 변동률
+        self.assertEqual(report[3]["mango"], -66.667)
+        self.assertEqual(report[3]["apple"], -99.85)
+
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
     @patch("mplfinance.plot")
@@ -371,7 +398,7 @@ class AnalyzerTests(unittest.TestCase):
                 cumulative_return: 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
                 asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
-                date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+                date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
             ),
             "trading_table" : [
                 {
@@ -418,11 +445,9 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][0], 23456)
 
         # 최종 자산
-        # mango 300 * 5.23 = 1569, apple 750 * 2.11 = 1582.5, balance 5000
         self.assertEqual(report["summary"][1], 5848)
 
         # 누적 수익률
-        # (8151.5 - 23456) / 23456 * 100 = -65.248
         self.assertEqual(report["summary"][2], -75.067)
 
         # 가격 변동률
