@@ -81,6 +81,10 @@ class SmtmSimulator:
             self.logger.warning("Fail start")
             return
 
+        def print_score():
+            operator.get_score(lambda x: self.logger.info(x))
+
+        threading.Timer(5, print_score).start()
         while not self.__stop:
             time.sleep(1)
 

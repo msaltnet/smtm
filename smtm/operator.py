@@ -131,3 +131,14 @@ class Operator:
         self.is_timer_running = False
         self.is_terminating = True
         self.worker.stop()
+
+    def get_score(self, callback):
+        """현재 수익률을 인자로 전달받은 콜백함수를 호출한다"""
+
+        def get_and_return_score(task):
+            try:
+                task["callback"](self.analyzer.get_return_report())
+            except TypeError:
+                self.logger.error("invalid callback")
+
+        self.worker.post_task({"runnable": get_and_return_score, "callback": callback})

@@ -225,3 +225,22 @@ class OperatorTests(unittest.TestCase):
         operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
         operator._start_timer()
         self.assertEqual(operator.is_timer_running, True)
+
+    def test_get_score_should_call_work_post_task_with_correct_task(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = Operator()
+        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        operator.worker = MagicMock()
+        operator.get_score("dummy")
+        operator.worker.post_task.assert_called_once_with(ANY)
+
+        operator.analyzer = MagicMock()
+        operator.analyzer.get_return_report.return_value = "grape"
+        task = {"runnable": MagicMock(), "callback": MagicMock()}
+        runnable = operator.worker.post_task.call_args[0][0]["runnable"]
+        runnable(task)
+        operator.analyzer.get_return_report.assert_called_once()
+        task["callback"].assert_called_once_with("grape")
