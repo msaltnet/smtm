@@ -58,9 +58,8 @@ class Operator:
         self.analyzer = analyzer
         self.is_initialized = True
 
-    def setup(self, interval):
-        """
-        운영에 필요한 기본 정보를 설정한다
+    def set_interval(self, interval):
+        """자동 거래 시간 간격을 설정한다.
 
         interval : 매매 프로세스가 수행되는 간격
         """

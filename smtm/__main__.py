@@ -75,7 +75,7 @@ class SmtmSimulator:
             count=self.count,
             budget=50000,
         )
-        operator.setup(self.term)
+        operator.set_interval(self.term)
 
         if operator.start() is not True:
             self.logger.warning("Fail start")

@@ -24,11 +24,11 @@ class OperatorTests(unittest.TestCase):
 
     def test_setup_set_interval_correctly(self):
         operator = Operator()
-        operator.setup(10)
+        operator.set_interval(10)
 
         self.assertEqual(operator.interval, 10)
 
-        operator.setup(39)
+        operator.set_interval(39)
         self.assertEqual(operator.interval, 39)
 
     def test_start_return_false_without_initialization(self):
@@ -66,7 +66,7 @@ class OperatorTests(unittest.TestCase):
         operator.initialize(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
 
         threading_mock.Timer.assert_called_once_with(27, ANY)
@@ -96,7 +96,7 @@ class OperatorTests(unittest.TestCase):
         operator.initialize(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
         strategy_mock.update_trading_info.assert_called_once_with(ANY)
@@ -126,7 +126,7 @@ class OperatorTests(unittest.TestCase):
         operator.initialize(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
 
         analyzer_mock.put_request.assert_not_called()
@@ -152,7 +152,7 @@ class OperatorTests(unittest.TestCase):
         operator.initialize(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
 
         analyzer_mock.put_request.assert_not_called()
@@ -189,7 +189,7 @@ class OperatorTests(unittest.TestCase):
         operator = Operator()
         operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
 
-        operator.setup(27)
+        operator.set_interval(27)
         operator._start_timer()
 
         threading_mock.Timer.assert_called_once_with(27, ANY)
@@ -210,7 +210,7 @@ class OperatorTests(unittest.TestCase):
         operator = Operator()
         operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
         operator.is_terminating = True
-        operator.setup(27)
+        operator.set_interval(27)
         operator._start_timer()
 
         threading_mock.Timer.assert_not_called()

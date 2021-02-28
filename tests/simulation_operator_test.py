@@ -89,10 +89,10 @@ class SimulationOperatorTests(unittest.TestCase):
             "apple", end="papaya", count="pear"
         )
 
-    @patch("smtm.Operator.setup")
+    @patch("smtm.Operator.set_interval")
     def test_setup_call_super_setup(self, OperatorSetup):
         sop = SimulationOperator()
-        sop.setup(10)
+        sop.set_interval(10)
         OperatorSetup.assert_called_once_with(10)
 
     @patch("smtm.Operator.start")
@@ -147,7 +147,7 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.initialize_simulation(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
         threading_mock.Timer.assert_called_once_with(27, ANY)
         timer_mock.start.assert_called_once()
@@ -177,7 +177,7 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.initialize_simulation(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
 
         dummy_result = {"name": "mango", "type": "buy", "msg": "success"}
@@ -212,7 +212,7 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.initialize_simulation(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
         strategy_mock.update_trading_info.assert_called_once_with(ANY)
@@ -243,6 +243,6 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.initialize_simulation(
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
-        operator.setup(27)
+        operator.set_interval(27)
         operator._excute_trading(None)
         trader_mock.send_request.assert_not_called()
