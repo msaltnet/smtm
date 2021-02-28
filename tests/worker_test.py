@@ -31,12 +31,14 @@ class WorkerTests(unittest.TestCase):
         worker = Worker("robot")
         mock_runnable = MagicMock()
         mock_task = {"runnable": mock_runnable}
+        worker.on_terminated = MagicMock()
         worker.task_queue.put(mock_task)
         worker.task_queue.put(None)
         worker.start()
         looper = mock_thread.call_args_list[0][1]["target"]
         looper()
         mock_runnable.assert_called_once_with(mock_task)
+        worker.on_terminated.assert_called_once()
 
     @patch("threading.Thread")
     def test_stop_put_None(self, mock_thread):
@@ -49,3 +51,8 @@ class WorkerTests(unittest.TestCase):
         worker.stop()
         self.assertEqual(worker.thread, None)
         worker.task_queue.put.assert_called_once_with(None)
+
+    def test_register_on_terminated_keep_callback_correctly(self):
+        worker = Worker("robot")
+        worker.register_on_terminated("mango")
+        self.assertEqual(worker.on_terminated, "mango")

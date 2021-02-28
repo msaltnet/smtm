@@ -17,6 +17,10 @@ class Worker:
         self.thread = None
         self.name = name
         self.logger = LogManager.get_logger(name)
+        self.on_terminated = None
+
+    def register_on_terminated(self, callback):
+        self.on_terminated = callback
 
     def post_task(self, task):
         """task를 추가한다
@@ -39,7 +43,11 @@ class Worker:
                 self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] WAIT ==========")
                 task = self.task_queue.get()
                 if task is None:
-                    self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] Termanited ..........")
+                    self.logger.debug(
+                        f"Worker[{self.name}:{threading.get_ident()}] Termanited .........."
+                    )
+                    if self.on_terminated is not None:
+                        self.on_terminated()
                     break
                 self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] GO ----------")
                 runnable = task["runnable"]
