@@ -64,16 +64,15 @@ class SimulationOperatorTests(unittest.TestCase):
         )
         strategy.initialize.assert_called_once_with("grape")
 
-    def test_initialize_simulation_set_is_initialized_False_when_AttributeError_occur(self):
+    def test_initialize_simulation_set_state_None_when_AttributeError_occur(self):
         sop = SimulationOperator()
         trader = Mock()
         strategy = Mock()
         data_provider = "make_exception"
-        sop.is_initialized = True
         sop.initialize_simulation(
             "apple", "kiwi", data_provider, strategy, trader, "papaya", "pear", "grape"
         )
-        self.assertEqual(sop.is_initialized, False)
+        self.assertEqual(sop.state, None)
 
     def test_initialize_call_simulator_dataProvider_initialize_from_server_correctly(self):
         sop = SimulationOperator()
@@ -148,6 +147,7 @@ class SimulationOperatorTests(unittest.TestCase):
             "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
         )
         operator.set_interval(27)
+        operator.state = "running"
         operator._excute_trading(None)
         threading_mock.Timer.assert_called_once_with(27, ANY)
         timer_mock.start.assert_called_once()

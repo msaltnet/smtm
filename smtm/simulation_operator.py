@@ -52,7 +52,7 @@ class SimulationOperator(Operator):
 
             analyzer.initialize(handle_info_request, True)
         except AttributeError:
-            self.is_initialized = False
+            self.state = None
             self.logger.error("initialize fail")
             return
 
