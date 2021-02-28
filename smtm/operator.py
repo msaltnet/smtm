@@ -3,6 +3,8 @@
 이 모듈은 각 모듈을 컨트롤하여 전체 시스템을 운영한다.
 """
 
+import time
+from datetime import datetime
 from .log_manager import LogManager
 from .worker import Worker
 
@@ -19,6 +21,8 @@ class Operator:
         analyzer: 거래 분석용 Analyzer 인스턴스
         interval: 매매 프로세스가 수행되는 간격 # default 10 second
     """
+
+    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(self):
         self.http = None
@@ -142,3 +146,36 @@ class Operator:
                 self.logger.error("invalid callback")
 
         self.worker.post_task({"runnable": get_and_return_score, "callback": callback})
+
+    def send_manual_trading_request(self, trading_type, price=0, amount=0, callback=None):
+        if price == 0 or amount == 0 or callback is None:
+            return
+
+        now = datetime.now().strftime(self.ISO_DATEFORMAT)
+        request = {
+            "id": "M-" + str(round(time.time(), 3)),
+            "type": trading_type,
+            "price": price,
+            "amount": amount,
+            "date_time": now,
+        }
+
+        def send_trading_and_return_result(task):
+            def send_manual_request_callback(result):
+                self.logger.info("send_manual_request_callback is called")
+                self.strategy.update_result(result)
+                self.analyzer.put_result(result)
+                try:
+                    task["callback"](result)
+                except TypeError:
+                    self.logger.error("invalid callback")
+
+            try:
+                self.trader.send_request(task["request"], send_manual_request_callback)
+                self.analyzer.put_request(task["request"])
+            except KeyError:
+                self.logger.error("invalid task")
+
+        self.worker.post_task(
+            {"runnable": send_trading_and_return_result, "callback": callback, "request": request}
+        )
