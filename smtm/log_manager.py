@@ -38,3 +38,10 @@ class LogManager:
         logger.setLevel(logging.DEBUG)
         cls.logger_map[name] = True
         return logger
+
+    @classmethod
+    def set_stream_level(cls, level):
+        """
+        스트림 핸들러의 레벨을 설정한다
+        """
+        cls.stream_handler.setLevel(level)

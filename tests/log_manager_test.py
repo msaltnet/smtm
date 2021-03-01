@@ -26,3 +26,8 @@ class LogManagerTests(unittest.TestCase):
         dummyLogger.setLevel.assert_called_once_with(10)
         self.assertEqual("mango" in LogManager.logger_map, True)
         self.assertEqual(logger, dummyLogger)
+
+    def test_set_stream_level_call_stream_handler_setLevel(self):
+        LogManager.stream_handler = MagicMock()
+        LogManager.set_stream_level(50)
+        LogManager.stream_handler.setLevel.assert_called_once_with(50)
