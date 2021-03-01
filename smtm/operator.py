@@ -37,6 +37,7 @@ class Operator:
         self.analyzer = None
         self.worker = Worker("Operator-Worker")
         self.state = None
+        self.is_trading_activated = False
 
     def initialize(self, http, threading, data_provider, strategy, trader, analyzer):
         """
@@ -66,6 +67,10 @@ class Operator:
         interval : 매매 프로세스가 수행되는 간격
         """
         self.interval = interval
+
+    def is_running(self):
+        """running 상태인지 True / False 값으로 반환한다."""
+        return self.state == "running"
 
     def start(self):
         """자동 거래를 시작한다

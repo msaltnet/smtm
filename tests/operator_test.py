@@ -342,3 +342,11 @@ class OperatorTests(unittest.TestCase):
         operator.state = "pear"
         operator.send_manual_trading_request("buy", amount=10, price=500, callback="dummy_cb")
         operator.worker.post_task.assert_not_called()
+
+    def test_is_running_return_boolean_value(self):
+        operator = Operator()
+        operator.state = "mango"
+        self.assertEqual(operator.is_running(), False)
+
+        operator.state = "running"
+        self.assertEqual(operator.is_running(), True)
