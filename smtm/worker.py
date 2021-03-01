@@ -48,6 +48,7 @@ class Worker:
                     )
                     if self.on_terminated is not None:
                         self.on_terminated()
+                    self.task_queue.task_done()
                     break
                 self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] GO ----------")
                 runnable = task["runnable"]
@@ -64,3 +65,4 @@ class Worker:
 
         self.task_queue.put(None)
         self.thread = None
+        self.task_queue.join()
