@@ -132,6 +132,9 @@ class Operator:
 
     def stop(self):
         """거래를 중단한다"""
+        if self.state != "running":
+            return
+
         self.logger.info("===== Stop operating =====")
         try:
             self.timer.cancel()

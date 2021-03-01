@@ -173,23 +173,27 @@ class OperatorTests(unittest.TestCase):
         trader_mock.send_request.assert_not_called()
         analyzer_mock.put_result.assert_not_called()
 
-    def test_stop_should_cancel_timer_and_set_false_is_timer_running(self):
+    def test_stop_should_cancel_timer_and_set_variable_correctly(self):
         operator = Operator()
+        operator.state = "running"
         operator.timer = MagicMock()
         operator.is_timer_running = True
         operator.stop()
         self.assertFalse(operator.is_timer_running)
+        self.assertEqual(operator.state, "terminating")
         operator.timer.cancel.assert_called_once()
 
-    def test_stop_should_set_state_terminating_and_is_timer_running_False(self):
+    def test_stop_do_nothing_when_state_is_not_running(self):
         operator = Operator()
+        operator.state = "ready"
         operator.is_timer_running = True
         operator.stop()
-        self.assertEqual(operator.state, "terminating")
-        self.assertFalse(operator.is_timer_running)
+        self.assertEqual(operator.state, "ready")
+        self.assertTrue(operator.is_timer_running)
 
     def test_stop_should_call_worker_stop_and_register_on_terminated(self):
         operator = Operator()
+        operator.state = "running"
         operator.timer = MagicMock()
         operator.worker = MagicMock()
         operator.stop()
