@@ -30,7 +30,6 @@ python -m smtm
 Test project with unittest. Run test also using setup.py
 
 ```
-python setup.py test
-# or run unittest directly
+# run unittest directly
 python -m unittest discover ./tests *test.py -v
 ```
