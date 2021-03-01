@@ -28,6 +28,8 @@ class LogManagerTests(unittest.TestCase):
         self.assertEqual(logger, dummyLogger)
 
     def test_set_stream_level_call_stream_handler_setLevel(self):
+        original = LogManager.stream_handler
         LogManager.stream_handler = MagicMock()
         LogManager.set_stream_level(50)
         LogManager.stream_handler.setLevel.assert_called_once_with(50)
+        LogManager.stream_handler = original
