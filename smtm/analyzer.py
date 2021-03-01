@@ -124,6 +124,8 @@ class Analyzer:
             asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
             date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
         """
+        if len(self.infos) <= 0:
+            return
 
         try:
             now = datetime.now().strftime(self.ISO_DATEFORMAT)
@@ -183,8 +185,8 @@ class Analyzer:
                     "kind": 3,
                 }
             )
-        except (IndexError, AttributeError):
-            self.logger.error("making score record fail")
+        except (IndexError, AttributeError) as msg:
+            self.logger.error(f"making score record fail {msg}")
 
     def get_return_report(self):
         """현시점 기준 간단한 수익률 보고서를 제공한다

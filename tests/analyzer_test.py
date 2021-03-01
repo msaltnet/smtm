@@ -182,6 +182,7 @@ class AnalyzerTests(unittest.TestCase):
             "asset": {"mango": (1000, 7.5), "apple": (250, 10.7)},
             "quote": {"banana": 2000, "mango": 500, "apple": 800},
         }
+        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
@@ -220,6 +221,7 @@ class AnalyzerTests(unittest.TestCase):
             "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
             "quote": {"banana": 2000, "mango": 300, "apple": 750},
         }
+        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
@@ -252,6 +254,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.asset_record_list.append(dummy_asset_info)
 
         target_dummy_asset = {"balance": 1000, "asset": {}, "quote": {"apple": 750}}
+        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
 
