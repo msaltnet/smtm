@@ -128,10 +128,13 @@ class SimulatorTests(unittest.TestCase):
         simulator = Simulator()
         simulator.operator.state = "mango"
         simulator.operator.get_score = MagicMock()
+        simulator.operator.get_trading_results = MagicMock()
         simulator.execute_command("q", "state")
         mock_print.assert_called_once_with("mango")
         simulator.execute_command("q", "score")
         simulator.operator.get_score.assert_called_once_with(ANY)
+        simulator.execute_command("q", "result")
+        simulator.operator.get_trading_results.assert_called_once()
 
     def test_execute_command_call_set_end(self):
         simulator = Simulator()

@@ -626,3 +626,8 @@ class AnalyzerTests(unittest.TestCase):
             addplot=ANY,
             style="starsandstripes",
         )
+
+    def test_get_trading_results_return_result(self):
+        analyzer = Analyzer()
+        analyzer.result = "mango"
+        self.assertEqual(analyzer.get_trading_results(), "mango")

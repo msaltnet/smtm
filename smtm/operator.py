@@ -164,6 +164,10 @@ class Operator:
 
         self.worker.post_task({"runnable": get_and_return_score, "callback": callback})
 
+    def get_trading_results(self):
+        """현재까지 거래 결과를 반환한다"""
+        return self.analyzer.get_trading_results()
+
     def send_manual_trading_request(self, trading_type, price=0, amount=0, callback=None):
         if price == 0 or amount == 0 or callback is None:
             return

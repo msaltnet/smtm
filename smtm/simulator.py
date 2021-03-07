@@ -82,7 +82,7 @@ class Simulator:
                 "cmd": "query",
                 "short": "q",
                 "need_value": True,
-                "value_guide": "input query target (ex. state, score) :",
+                "value_guide": "input query target (ex. state, score, result) :",
                 "action": self._on_query_command,
             },
             {
@@ -192,6 +192,8 @@ class Simulator:
             print(self.operator.state)
         elif value == "score":
             self._get_score()
+        elif value == "result":
+            print(self.operator.get_trading_results())
 
     def _set_end(self, value):
         self.end = value.replace("T", " ")

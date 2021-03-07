@@ -354,3 +354,10 @@ class OperatorTests(unittest.TestCase):
 
         operator.state = "running"
         self.assertEqual(operator.is_running(), True)
+
+    def test_get_trading_results_return_result_of_analyzer_get_trading_results(self):
+        operator = Operator()
+        operator.analyzer = MagicMock()
+        operator.analyzer.get_trading_results.return_value = "orange"
+        self.assertEqual(operator.get_trading_results(), "orange")
+        operator.analyzer.get_trading_results.assert_called_once()
