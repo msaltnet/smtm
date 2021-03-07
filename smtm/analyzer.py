@@ -3,6 +3,9 @@
 이 모듈은 거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스인 Analayzer를 포함하고 있다.
 """
 import copy
+import matplotlib
+
+matplotlib.use("Agg")
 import mplfinance as mpf
 import pandas as pd
 from datetime import datetime
@@ -381,12 +384,14 @@ class Analyzer:
             apds.append(mpf.make_addplot(total["avr_price"]))
         if "return" in total.columns:
             apds.append(mpf.make_addplot((total["return"]), panel=1, color="g", secondary_y=True))
+
         mpf.plot(
             total,
             type="candle",
             volume=True,
             addplot=apds,
             style="starsandstripes",
+            savefig=dict(fname="analyzer_graph.jpg", dpi=100, pad_inches=0.25),
         )
 
     def __get_start_property_value(self):

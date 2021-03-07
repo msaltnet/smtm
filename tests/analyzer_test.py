@@ -625,6 +625,7 @@ class AnalyzerTests(unittest.TestCase):
             volume=True,
             addplot=ANY,
             style="starsandstripes",
+            savefig=dict(fname="analyzer_graph.jpg", dpi=100, pad_inches=0.25),
         )
 
     def test_get_trading_results_return_result(self):
