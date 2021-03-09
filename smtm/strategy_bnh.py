@@ -2,7 +2,7 @@
 
 import copy
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from .strategy import Strategy
 from .log_manager import LogManager
 

@@ -32,7 +32,7 @@ class SimulationOperatorTests(unittest.TestCase):
         analyzer = Mock()
         analyzer.intialize = MagicMock()
         self.assertEqual(sop.turn, 0)
-        self.assertEqual(sop.end, None)
+        self.assertEqual(sop.end, "2020-12-20T16:23:00")
         self.assertEqual(sop.count, 0)
         self.assertEqual(sop.budget, 0)
         sop.initialize_simulation(
@@ -87,6 +87,15 @@ class SimulationOperatorTests(unittest.TestCase):
         data_provider.initialize_from_server.assert_called_once_with(
             "apple", end="papaya", count="pear"
         )
+
+    def test_initialize_simulation_update_tag_correctly(self):
+        operator = SimulationOperator()
+        end = "2020-10-01 13:12:00"
+        expected_tag = "2020-10-01T131200-35-BTC-"
+        operator.initialize_simulation(
+            "apple", "kiwi", "mango", "banana", "orange", "grape", end=end, count=35
+        )
+        self.assertEqual(operator.tag[: len(expected_tag)], expected_tag)
 
     @patch("smtm.Operator.set_interval")
     def test_setup_call_super_setup(self, OperatorSetup):

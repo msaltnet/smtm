@@ -225,7 +225,7 @@ class Analyzer:
         """거래 결과 목록을 반환한다"""
         return self.result
 
-    def create_report(self, filename="report.txt"):
+    def create_report(self, filename=None, tag=None):
         """수익률 보고서를 생성한다
 
         수익률 보고서를 생성하고, 그래프를 화면에 출력한다.
@@ -247,6 +247,13 @@ class Analyzer:
                 ]
             }
         """
+        final_filename = "simulation-report"
+        if tag is not None:
+            final_filename = tag
+
+        if filename is not None:
+            final_filename = filename
+
         try:
             summary = self.get_return_report()
             if summary is None:
@@ -261,8 +268,8 @@ class Analyzer:
                     x["kind"],
                 ),
             )
-            self.__create_report_file(filename, summary, trading_table)
-            self.__draw_graph()
+            self.__create_report_file(final_filename, summary, trading_table)
+            self.__draw_graph(final_filename)
             return {"summary": summary, "trading_table": trading_table}
         except (IndexError, AttributeError):
             self.logger.error("create report FAIL")
@@ -290,7 +297,7 @@ class Analyzer:
         Cumulative return                    1234567890 %
         Price_change_ratio {'mango': -50.0, 'apple': 50.0}
         """
-        final_path = self.OUTPUT_FOLDER + filepath
+        final_path = self.OUTPUT_FOLDER + filepath + ".txt"
         with open(final_path, "w") as f:
             if len(trading_table) > 0:
                 f.write("### TRADING TABLE =================================\n")
@@ -363,7 +370,7 @@ class Analyzer:
             plot_data.append(new)
         return plot_data
 
-    def __draw_graph(self):
+    def __draw_graph(self, filename):
         total = pd.DataFrame(self.__create_plot_data())
         total = total.rename(
             columns={
@@ -393,7 +400,7 @@ class Analyzer:
             volume=True,
             addplot=apds,
             style="starsandstripes",
-            savefig=dict(fname=self.OUTPUT_FOLDER + "analyzer_graph.jpg", dpi=100, pad_inches=0.25),
+            savefig=dict(fname=self.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25),
         )
 
     def __get_start_property_value(self):

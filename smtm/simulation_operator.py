@@ -1,5 +1,6 @@
 """시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영"""
 
+import time
 from .log_manager import LogManager
 from .operator import Operator
 
@@ -13,9 +14,10 @@ class SimulationOperator(Operator):
         super().__init__()
         self.logger = LogManager.get_logger(__name__)
         self.turn = 0
-        self.end = None
+        self.end = "2020-12-20T16:23:00"
         self.count = 0
         self.budget = 0
+        self.tag = "simulation-tag"
 
     def initialize_simulation(
         self,
@@ -38,9 +40,14 @@ class SimulationOperator(Operator):
         """
         super().initialize(http, threading, data_provider, strategy, trader, analyzer)
 
-        self.end = end
+        if end is not None:
+            self.end = end
         self.count = count
         self.budget = budget
+        end_str = self.end.replace(" ", "T")
+        end_str = end_str.replace(":", "")
+        self.tag = end_str + "-" + str(self.count) + "-BTC-" + str(round(time.time()))
+
         try:
             data_provider.initialize_from_server(http, end=end, count=count)
             trader.initialize(http, end=end, count=count, budget=budget)
@@ -70,7 +77,7 @@ class SimulationOperator(Operator):
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")
                 if result["msg"] == "game-over":
-                    self.analyzer.create_report()
+                    self.analyzer.create_report(tag=self.tag)
                     self.state = "terminated"
                     return
                 self.strategy.update_result(result)

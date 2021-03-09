@@ -417,7 +417,7 @@ class AnalyzerTests(unittest.TestCase):
 
         dummy_data = self.fill_test_data_for_report(analyzer)
 
-        report = analyzer.create_report()
+        report = analyzer.create_report("apple")
         expected_info = copy.deepcopy(dummy_data[0])
         expected_info["kind"] = 0
         expected_request = copy.deepcopy(dummy_data[1])
@@ -478,9 +478,10 @@ class AnalyzerTests(unittest.TestCase):
 
         self.fill_test_data_for_report(analyzer)
 
+        tag = "orange"
         filename = "mango"
-        report = analyzer.create_report(filename)
-        mock_file.assert_called_once_with(analyzer.OUTPUT_FOLDER + filename, "w")
+        report = analyzer.create_report()
+        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + "simulation-report.txt", "w")
         handle = mock_file()
         expected = [
             "### TRADING TABLE =================================\n",
@@ -504,6 +505,12 @@ class AnalyzerTests(unittest.TestCase):
                 handle.write.call_args_list[idx][0][0],
                 val,
             )
+
+        report = analyzer.create_report(tag=tag)
+        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + tag + ".txt", "w")
+
+        report = analyzer.create_report(tag=tag, filename=filename)
+        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + filename + ".txt", "w")
 
     @patch("mplfinance.make_addplot")
     @patch("pandas.to_datetime")
@@ -533,9 +540,10 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         analyzer.initialize("mango", True)
         analyzer.update_info_func = MagicMock()
+        filename = "apple"
 
         dummy_data = self.fill_test_data_for_report(analyzer)
-        analyzer.create_report()
+        analyzer.create_report(filename)
 
         mock_DataFrame.assert_called_once_with(
             [
@@ -626,7 +634,7 @@ class AnalyzerTests(unittest.TestCase):
             addplot=ANY,
             style="starsandstripes",
             savefig=dict(
-                fname=analyzer.OUTPUT_FOLDER + "analyzer_graph.jpg", dpi=100, pad_inches=0.25
+                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25
             ),
         )
 
