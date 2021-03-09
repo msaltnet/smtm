@@ -8,4 +8,4 @@ smtm.log*
 /htmlcov/
 .coverage
 report.txt
-mango
+/output/

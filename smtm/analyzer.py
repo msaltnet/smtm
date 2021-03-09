@@ -26,6 +26,7 @@ class Analyzer:
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+    OUTPUT_FOLDER = "output/"
 
     def __init__(self):
         self.request = []
@@ -289,7 +290,8 @@ class Analyzer:
         Cumulative return                    1234567890 %
         Price_change_ratio {'mango': -50.0, 'apple': 50.0}
         """
-        with open(filepath, "w") as f:
+        final_path = self.OUTPUT_FOLDER + filepath
+        with open(final_path, "w") as f:
             if len(trading_table) > 0:
                 f.write("### TRADING TABLE =================================\n")
 
@@ -391,7 +393,7 @@ class Analyzer:
             volume=True,
             addplot=apds,
             style="starsandstripes",
-            savefig=dict(fname="analyzer_graph.jpg", dpi=100, pad_inches=0.25),
+            savefig=dict(fname=self.OUTPUT_FOLDER + "analyzer_graph.jpg", dpi=100, pad_inches=0.25),
         )
 
     def __get_start_property_value(self):

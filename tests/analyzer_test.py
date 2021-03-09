@@ -480,7 +480,7 @@ class AnalyzerTests(unittest.TestCase):
 
         filename = "mango"
         report = analyzer.create_report(filename)
-        mock_file.assert_called_once_with(filename, "w")
+        mock_file.assert_called_once_with(analyzer.OUTPUT_FOLDER + filename, "w")
         handle = mock_file()
         expected = [
             "### TRADING TABLE =================================\n",
@@ -625,7 +625,9 @@ class AnalyzerTests(unittest.TestCase):
             volume=True,
             addplot=ANY,
             style="starsandstripes",
-            savefig=dict(fname="analyzer_graph.jpg", dpi=100, pad_inches=0.25),
+            savefig=dict(
+                fname=analyzer.OUTPUT_FOLDER + "analyzer_graph.jpg", dpi=100, pad_inches=0.25
+            ),
         )
 
     def test_get_trading_results_return_result(self):
