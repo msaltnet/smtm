@@ -27,7 +27,7 @@ class Simulator:
         self.end = "2020-12-20T16:23:00"
         self.count = 100
         self.interval = interval
-        self.operator = SimulationOperator()
+        self.operator = None
         self.strategy = int(strategy)
         self.budget = 50000
         self.is_initialized = False
@@ -199,13 +199,19 @@ class Simulator:
         self.end = value.replace("T", " ")
 
     def _set_count(self, value):
-        self.count = int(value)
+        next_value = int(value)
+        if next_value > 0:
+            self.count = next_value
 
     def _set_interval(self, value):
-        self.interval = float(value)
+        next_value = float(value)
+        if next_value > 0:
+            self.interval = next_value
 
     def _set_budget(self, value):
-        self.budget = int(value)
+        next_value = int(value)
+        if next_value > 0:
+            self.budget = next_value
 
     def _set_strategy(self, value):
         if value == "0":
@@ -231,6 +237,7 @@ class Simulator:
             strategy = StrategyBuyAndHold()
         else:
             strategy = StrategySma0()
+        self.operator = SimulationOperator()
 
         print("##### simulation is intialized #####")
         print(f"end: {self.end}")

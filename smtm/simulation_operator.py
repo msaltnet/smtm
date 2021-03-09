@@ -71,7 +71,7 @@ class SimulationOperator(Operator):
                 self.logger.info("send_request_callback is called")
                 if result["msg"] == "game-over":
                     self.analyzer.create_report()
-                    self.stop()
+                    self.state = "terminated"
                     return
                 self.strategy.update_result(result)
                 self.analyzer.put_result(result)
@@ -90,6 +90,8 @@ class SimulationOperator(Operator):
         return True
 
     def start(self):
+        if self.state != "ready":
+            return False
         try:
             self.analyzer.make_start_point()
         except AttributeError:

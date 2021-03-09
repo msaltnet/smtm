@@ -126,9 +126,8 @@ class SimulatorTests(unittest.TestCase):
     @patch("builtins.print")
     def test_execute_command_call_on_query_command(self, mock_print):
         simulator = Simulator()
+        simulator.operator = MagicMock()
         simulator.operator.state = "mango"
-        simulator.operator.get_score = MagicMock()
-        simulator.operator.get_trading_results = MagicMock()
         simulator.execute_command("q", "state")
         mock_print.assert_called_once_with("mango")
         simulator.execute_command("q", "score")
@@ -147,17 +146,23 @@ class SimulatorTests(unittest.TestCase):
         simulator.count = 999
         simulator.execute_command("c", "777")
         self.assertEqual(simulator.count, 777)
+        simulator.execute_command("c", "0")
+        self.assertEqual(simulator.count, 777)
 
     def test_execute_command_call_set_interval(self):
         simulator = Simulator()
         simulator.interval = 0.0001
         simulator.execute_command("int", "0.05")
         self.assertEqual(simulator.interval, 0.05)
+        simulator.execute_command("int", "-5")
+        self.assertEqual(simulator.interval, 0.05)
 
     def test_execute_command_call_set_budget(self):
         simulator = Simulator()
         simulator.budget = 500
         simulator.execute_command("b", "90000")
+        self.assertEqual(simulator.budget, 90000)
+        simulator.execute_command("b", "-100")
         self.assertEqual(simulator.budget, 90000)
 
     def test_execute_command_call_set_strategy(self):
@@ -166,14 +171,17 @@ class SimulatorTests(unittest.TestCase):
         simulator.execute_command("st", "0")
         self.assertEqual(simulator.strategy, 0)
 
-    def test_initialize_call_initialize_simulation(self):
+    @patch("smtm.SimulationOperator.set_interval")
+    @patch("smtm.SimulationOperator.initialize_simulation")
+    def test_initialize_call_initialize_simulation(
+        self, mock_initialize_simulation, mock_set_interval
+    ):
         simulator = Simulator()
-        simulator.operator = MagicMock()
         simulator.interval = 0.1
         simulator.initialize()
         self.assertEqual(simulator.is_initialized, True)
-        simulator.operator.initialize_simulation.assert_called_once()
-        simulator.operator.set_interval.assert_called_once_with(0.1)
+        mock_initialize_simulation.assert_called_once()
+        mock_set_interval.assert_called_once_with(0.1)
 
     def test_start_call_operator_start(self):
         simulator = Simulator()
