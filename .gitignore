@@ -9,3 +9,4 @@ smtm.log*
 .coverage
 report.txt
 /output/
+.env
