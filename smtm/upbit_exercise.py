@@ -17,7 +17,31 @@ class UpbitApi:
         self.SECRET_KEY = os.environ["UPBIT_OPEN_API_SECRET_KEY"]
         self.SERVER_URL = os.environ["UPBIT_OPEN_API_SERVER_URL"]
 
+    def query_latest_trade(self, market):
+        """최근 거래 내역 조회
+        response:
+            trade_date_utc: 체결 일자(UTC 기준), String
+            trade_time_utc: 체결 시각(UTC 기준), String
+            timestamp: 체결 타임스탬프, Long
+            trade_price: 체결 가격, Double
+            trade_volume: 체결량, Double
+            prev_closing_price: 전일 종가, Double
+            change_price: 변화량, Double
+            ask_bid: 매도/매수, String
+            sequential_id: 체결 번호(Unique), Long
+        """
+        querystring = {
+            "market": market,
+            "count":"1"
+        }
+
+        response = requests.request("GET", self.SERVER_URL + "/v1/trades/ticks", params=querystring)
+
+        print(response.json())
+        return response.json()
+
     def create_token(self, query=None):
+        """API에 사용될 토큰을 생성"""
         if query is None:
             print("Start create token without query")
             payload = {
@@ -53,7 +77,7 @@ class UpbitApi:
         return authorization_token
 
     def query_account(self):
-        """
+        """계좌 정보 조회
         response:
             currency: 화폐를 의미하는 영문 대문자 코드, String
             balance: 주문가능 금액/수량, NumberString
@@ -76,7 +100,7 @@ class UpbitApi:
         return res.json()
 
     def query_order(self, order_uuid=None, order_identifier=None):
-        """
+        """주문 조회
         response:
             uuid:, 주문의 고유 아이디, String
             side:, 주문 종류, String
@@ -133,7 +157,7 @@ class UpbitApi:
         return res.json()
 
     def query_order_list(self, states=None):
-        """
+        """ 주문 목록 조회
         response:
             uuid: 주문의 고유 아이디, String
             side: 주문 종류, String
@@ -183,7 +207,7 @@ class UpbitApi:
         return res.json()
 
     def cancel_order(self, order_uuid=None):
-        """
+        """주문 취소
         response:
             uuid: 주문의 고유 아이디, String
             side: 주문 종류, String
@@ -230,7 +254,7 @@ class UpbitApi:
         return res.json()
 
     def send_order(self, market, is_buy, price=None, volume=None):
-        """
+        """주문 전송
         request:
             market *: 마켓 ID (필수)
             side *: 주문 종류 (필수)
@@ -329,29 +353,6 @@ class UpbitApi:
         query_string = urlencode(query).encode()
         return query_string
 
-    def query_latest_trade(self, market):
-        """
-        response:
-            trade_date_utc: 체결 일자(UTC 기준), String
-            trade_time_utc: 체결 시각(UTC 기준), String
-            timestamp: 체결 타임스탬프, Long
-            trade_price: 체결 가격, Double
-            trade_volume: 체결량, Double
-            prev_closing_price: 전일 종가, Double
-            change_price: 변화량, Double
-            ask_bid: 매도/매수, String
-            sequential_id: 체결 번호(Unique), Long
-        """
-        querystring = {
-            "market": market,
-            "count":"1"
-        }
-
-        response = requests.request("GET", self.SERVER_URL + "/v1/trades/ticks", params=querystring)
-
-        print(response.json())
-        return response.json()
-
     def send_lower_order_10000(self):
         market = "KRW-BTC"
         tick = self.query_latest_trade(market)
@@ -370,7 +371,6 @@ class UpbitApi:
         target_volume = "{0:.8f}".format(round(10000 / target_price, 8))
         return self.send_order(market, False, str(target_price), str(target_volume))
 
-#"b290b6ca-faed-4e0b-853d-24065d3cad2e"
 if __name__ == "__main__":
     api = UpbitApi()
     # print("")
