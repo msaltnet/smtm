@@ -4,7 +4,7 @@ from smtm import UpbitTrader
 from unittest.mock import *
 
 
-class SimulationTraderTests(unittest.TestCase):
+class UpditTraderTests(unittest.TestCase):
     def setUp(self):
         pass
 
