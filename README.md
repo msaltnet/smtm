@@ -27,9 +27,17 @@ python -m smtm
 ```
 
 ### How to test
-Test project with unittest. Run test also using setup.py
+Test project with unittest.
 
 ```
 # run unittest directly
 python -m unittest discover ./tests *test.py -v
+```
+
+### Integration test
+Test with real trading market.
+
+```
+# run unittest directly
+python -m unittest tests\integration_tester\bithumb_trader_integration_test.py
 ```

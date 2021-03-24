@@ -46,7 +46,7 @@ class UpbitTrader(Trader):
             "type": 거래 유형 sell, buy
             "price": 거래 가격
             "amount": 거래 수량
-            "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
+            "date_time": 요청 데이터 생성 시간
         """
         self.worker.post_task(
             {"runnable": self._excute_order, "request": request, "callback": callback}
@@ -219,13 +219,13 @@ class UpbitTrader(Trader):
             result = response.json()
         except ValueError:
             self.logger.error("Invalid data from server")
-            return None
+            return
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
-            return None
+            return
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
-            return None
+            return
 
         return result
 
@@ -306,13 +306,13 @@ class UpbitTrader(Trader):
             result = response.json()
         except ValueError:
             self.logger.error("Invalid data from server")
-            return None
+            return
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
-            return None
+            return
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
-            return None
+            return
 
         return result
 
@@ -341,12 +341,12 @@ class UpbitTrader(Trader):
             result = response.json()
         except ValueError:
             self.logger.error("Invalid data from server")
-            return None
+            return
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
-            return None
+            return
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
-            return None
+            return
 
         return result
