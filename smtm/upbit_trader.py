@@ -82,14 +82,18 @@ class UpbitTrader(Trader):
         response = self._query_account()
         callback = task["callback"]
         result = {"asset": {}}
-        for item in response:
-            if item["currency"] == "KRW":
-                result["balance"] = item["balance"]
-            else:
-                name = item["currency"]
-                price = item["avg_buy_price"]
-                amount = item["balance"]
-                result["asset"][name] = (price, amount)
+        try:
+            for item in response:
+                if item["currency"] == "KRW":
+                    result["balance"] = item["balance"]
+                else:
+                    name = item["currency"]
+                    price = item["avg_buy_price"]
+                    amount = item["balance"]
+                    result["asset"][name] = (price, amount)
+        except TypeError:
+            self.logger.error("invalid response")
+            result = "error!"
         self.logger.info(f"account info {response}")
         callback(result)
 
