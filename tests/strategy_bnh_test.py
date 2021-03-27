@@ -49,7 +49,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
         dummy_result = {
             "type": "orange",
-            "request_id": "banana",
+            "request": {"id": "banana"},
             "price": "apple",
             "amount": "kiwi",
             "msg": "melon",
@@ -57,7 +57,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         }
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.result[-1]["type"], "orange")
-        self.assertEqual(bnh.result[-1]["request_id"], "banana")
+        self.assertEqual(bnh.result[-1]["request"]["id"], "banana")
         self.assertEqual(bnh.result[-1]["price"], "apple")
         self.assertEqual(bnh.result[-1]["amount"], "kiwi")
         self.assertEqual(bnh.result[-1]["msg"], "melon")
@@ -70,7 +70,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
         dummy_result = {
             "type": "buy",
-            "request_id": "orange",
+            "request": {"id": "orange"},
             "price": 10,
             "amount": 5,
             "msg": "melon",
@@ -79,7 +79,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.balance, 100)
         self.assertEqual(bnh.result[-1]["type"], "buy")
-        self.assertEqual(bnh.result[-1]["request_id"], "orange")
+        self.assertEqual(bnh.result[-1]["request"]["id"], "orange")
         self.assertEqual(bnh.result[-1]["price"], 10)
         self.assertEqual(bnh.result[-1]["amount"], 5)
         self.assertEqual(bnh.result[-1]["msg"], "melon")

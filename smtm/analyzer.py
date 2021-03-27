@@ -285,7 +285,7 @@ class Analyzer:
         {date_time}, [->] {id}, {type}, {price}, {amount}
         2020-02-23T00:00:01, 1607862457.560075, sell, 1234567890, 1234567890
 
-        {date_time}, [<-] {request_id}, {type}, {price}, {amount}, {msg}, {balance}
+        {date_time}, [<-] {request id}, {type}, {price}, {amount}, {msg}, {balance}
         2020-02-23T00:00:01, 1607862457.560075, sell, 1234567890, 1234567890, success, 1234567890
 
         {date_time}, [#] {balance}, {cumulative_return}, {price_change_ratio}, {asset}
@@ -313,7 +313,7 @@ class Analyzer:
                     )
                 elif item["kind"] == 2:
                     f.write(
-                        f"{item['date_time']}, [<-] {item['request_id']}, {item['type']}, {item['price']}, {item['amount']}, {item['msg']}, {item['balance']}\n"
+                        f"{item['date_time']}, [<-] {item['request']['id']}, {item['type']}, {item['price']}, {item['amount']}, {item['msg']}, {item['balance']}\n"
                     )
                 elif item["kind"] == 3:
                     f.write(

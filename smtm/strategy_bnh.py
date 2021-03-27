@@ -46,7 +46,7 @@ class StrategyBuyAndHold(Strategy):
 
         try:
             self.balance = result["balance"]
-            self.logger.info(f"[RESULT] id: {result['request_id']} ================")
+            self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {result['price']}, amount: {result['amount']}")
             self.logger.info(f"balance: {self.balance}")

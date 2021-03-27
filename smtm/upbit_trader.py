@@ -99,7 +99,7 @@ class UpbitTrader(Trader):
 
     def _create_success_result(self, request):
         return {
-            "request_id": request["id"],
+            "request": request,
             "type": request["type"],
             "price": request["price"],
             "amount": request["amount"],

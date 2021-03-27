@@ -105,7 +105,7 @@ class UpditTraderTests(unittest.TestCase):
         dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}
         trader = UpbitTrader()
         success_result = trader._create_success_result(dummy_request)
-        self.assertEqual(success_result["request_id"], dummy_request["id"])
+        self.assertEqual(success_result["request"]["id"], dummy_request["id"])
         self.assertEqual(success_result["type"], dummy_request["type"])
         self.assertEqual(success_result["price"], dummy_request["price"])
         self.assertEqual(success_result["amount"], dummy_request["amount"])
@@ -137,19 +137,19 @@ class UpditTraderTests(unittest.TestCase):
         ]
         dummy_request_mango = {
             "uuid": "mango",
-            "request_id": "mango_id",
+            "request": {"id": "mango_id"},
             "callback": MagicMock(),
             "result": {"id": "mango_result"},
         }
         dummy_request_banana = {
             "uuid": "banana",
-            "request_id": "banana_id",
+            "request": {"id": "banana_id"},
             "callback": MagicMock(),
             "result": {"id": "banana_result"},
         }
         dummy_request_apple = {
             "uuid": "apple",
-            "request_id": "apple_id",
+            "request": {"id": "apple_id"},
             "callback": MagicMock(),
             "result": {"id": "apple_result"},
         }
@@ -172,6 +172,6 @@ class UpditTraderTests(unittest.TestCase):
         dummy_request_mango["callback"].assert_called_once()
 
         self.assertEqual(len(trader.request_map), 1)
-        self.assertEqual(trader.request_map["banana"]["request_id"], "banana_id")
+        self.assertEqual(trader.request_map["banana"]["request"]["id"], "banana_id")
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_called_once()

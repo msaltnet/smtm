@@ -48,29 +48,34 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.initialize("mango")
         analyzer.update_info_func = MagicMock()
 
-        dummy_result = {"request_id": "orange", "price": 5000, "amount": 1}
+        dummy_result = {"request": {"id": "orange"}, "price": 5000, "amount": 1}
         analyzer.put_result(dummy_result)
         self.assertEqual(
-            analyzer.result[-1], {"request_id": "orange", "price": 5000, "amount": 1, "kind": 2}
+            analyzer.result[-1],
+            {"request": {"id": "orange"}, "price": 5000, "amount": 1, "kind": 2},
         )
 
-        dummy_result = {"request_id": "banana", "price": 0, "amount": 1}
+        dummy_result = {"request": {"id": "banana"}, "price": 0, "amount": 1}
         analyzer.put_result(dummy_result)
         self.assertNotEqual(
-            analyzer.result[-1], {"request_id": "banana", "price": 0, "amount": 1, "kind": 2}
+            analyzer.result[-1], {"request": {"id": "banana"}, "price": 0, "amount": 1, "kind": 2}
         )
-        self.assertEqual(analyzer.result[-1]["request_id"], "orange")
+        self.assertEqual(analyzer.result[-1]["request"]["id"], "orange")
 
-        dummy_result = {"request_id": "apple", "price": 500, "amount": 0}
+        dummy_result = {"request": {"id": "apple"}, "price": 500, "amount": 0}
         analyzer.put_result(dummy_result)
-        self.assertNotEqual(analyzer.result[-1]["request_id"], "apple")
+        self.assertNotEqual(analyzer.result[-1]["request"]["id"], "apple")
         self.assertNotEqual(analyzer.result[-1]["price"], 500)
-        self.assertEqual(analyzer.result[-1]["request_id"], "orange")
+        self.assertEqual(analyzer.result[-1]["request"]["id"], "orange")
         self.assertEqual(analyzer.result[-1]["kind"], 2)
 
-        dummy_result = {"request_id": "kiwi", "price": 500, "amount": 0.0000000000000000000000001}
+        dummy_result = {
+            "request": {"id": "kiwi"},
+            "price": 500,
+            "amount": 0.0000000000000000000000001,
+        }
         analyzer.put_result(dummy_result)
-        self.assertEqual(analyzer.result[-1]["request_id"], "kiwi")
+        self.assertEqual(analyzer.result[-1]["request"]["id"], "kiwi")
         self.assertEqual(analyzer.result[-1]["price"], 500)
         self.assertEqual(analyzer.result[-1]["amount"], 0.0000000000000000000000001)
         self.assertEqual(analyzer.result[-1]["kind"], 2)
@@ -79,7 +84,11 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         analyzer.initialize("mango")
         analyzer.update_info_func = MagicMock()
-        dummy_result = {"request_id": "banana", "price": 500, "amount": 0.0000000000000000000000001}
+        dummy_result = {
+            "request": {"id": "banana"},
+            "price": 500,
+            "amount": 0.0000000000000000000000001,
+        }
         analyzer.put_result(dummy_result)
         analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
 
@@ -288,7 +297,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.put_request(dummy_request)
 
         dummy_result = {
-            "request_id": "1607862457.560075",
+            "request": {"id": "1607862457.560075"},
             "type": "buy",
             "price": 5000,
             "amount": 1,
@@ -334,7 +343,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.put_request(dummy_request2)
 
         dummy_result2 = {
-            "request_id": "1607862457.560075",
+            "request": {"id": "1607862457.560075"},
             "type": "sell",
             "price": 6000,
             "amount": 0.5,

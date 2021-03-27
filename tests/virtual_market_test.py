@@ -183,7 +183,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(market.data[0]["market"], "mango")
 
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "orange")
 
     def test_send_request_handle_buy_return_result_corresponding_next_data(self):
@@ -201,7 +201,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.1)
@@ -210,7 +210,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request2 = {"id": "orange", "type": "buy", "price": 1800, "amount": 0.1}
         result = market.send_request(dummy_request2)
-        self.assertEqual(result["request_id"], "orange")
+        self.assertEqual(result["request"]["id"], "orange")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 0)
         self.assertEqual(result["amount"], 0)
@@ -231,7 +231,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], -1)
         self.assertEqual(result["amount"], -1)
@@ -261,7 +261,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.1)
@@ -271,7 +271,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request2 = {"id": "orange", "type": "sell", "price": 2000, "amount": 0.05}
         result = market.send_request(dummy_request2)
-        self.assertEqual(result["request_id"], "orange")
+        self.assertEqual(result["request"]["id"], "orange")
         self.assertEqual(result["type"], "sell")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.05)
@@ -282,7 +282,7 @@ class VirtualMarketTests(unittest.TestCase):
         # 매도 요청 가격이 높은 경우
         dummy_request3 = {"id": "apple", "type": "sell", "price": 2500, "amount": 0.05}
         result = market.send_request(dummy_request3)
-        self.assertEqual(result["request_id"], "apple")
+        self.assertEqual(result["request"]["id"], "apple")
         self.assertEqual(result["type"], "sell")
         self.assertEqual(result["price"], 0)
         self.assertEqual(result["amount"], 0)
@@ -293,7 +293,7 @@ class VirtualMarketTests(unittest.TestCase):
         # 매도 요청 양이 보유양 보다 많은 경우
         dummy_request4 = {"id": "banana", "type": "sell", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request4)
-        self.assertEqual(result["request_id"], "banana")
+        self.assertEqual(result["request"]["id"], "banana")
         self.assertEqual(result["type"], "sell")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.05)
@@ -316,7 +316,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "sell", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "sell")
         self.assertEqual(result["price"], -1)
         self.assertEqual(result["amount"], -1)
@@ -329,7 +329,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "apple", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "apple")
         self.assertEqual(result["price"], -1)
         self.assertEqual(result["amount"], -1)
@@ -342,7 +342,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "sell", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "sell")
         self.assertEqual(result["price"], 0)
         self.assertEqual(result["amount"], 0)
@@ -364,7 +364,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.048}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.048)
@@ -374,7 +374,7 @@ class VirtualMarketTests(unittest.TestCase):
         # 2000 * 0.048 = 96은 잔고로 가능하지만 수수료를 포함하면 부족한 금액
         dummy_request2 = {"id": "orange", "type": "buy", "price": 2000, "amount": 0.048}
         result = market.send_request(dummy_request2)
-        self.assertEqual(result["request_id"], "orange")
+        self.assertEqual(result["request"]["id"], "orange")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 0)
         self.assertEqual(result["amount"], 0)
@@ -398,7 +398,7 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request)
         # 최저 가격이 1900 이므로 정상적으로 채결됨
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.1)
@@ -409,7 +409,7 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request2 = {"id": "orange", "type": "buy", "price": 1900, "amount": 0.5}
         result = market.send_request(dummy_request2)
         # 최저 가격이 1900 이므로 정상적으로 채결됨
-        self.assertEqual(result["request_id"], "orange")
+        self.assertEqual(result["request"]["id"], "orange")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 1900)
         self.assertEqual(result["amount"], 0.5)
@@ -421,7 +421,7 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request3 = {"id": "banana", "type": "sell", "price": 2000, "amount": 0.2}
         result = market.send_request(dummy_request3)
         # 최고 가격이 2100 이므로 정상적으로 채결됨
-        self.assertEqual(result["request_id"], "banana")
+        self.assertEqual(result["request"]["id"], "banana")
         self.assertEqual(result["type"], "sell")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.2)
@@ -437,7 +437,7 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         for i in range(len(market.data) - 2):
             result = market.send_request(dummy_request)
-            self.assertEqual(result["request_id"], "mango")
+            self.assertEqual(result["request"]["id"], "mango")
             self.assertEqual(result["type"], "buy")
 
         result = market.send_request(dummy_request)
@@ -461,7 +461,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "buy", "price": 0, "amount": 0}
         result = market.send_request(dummy_request)
-        self.assertEqual(result["request_id"], "mango")
+        self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 0)
         self.assertEqual(result["amount"], 0)
@@ -470,7 +470,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request2 = {"id": "orange", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.send_request(dummy_request2)
-        self.assertEqual(result["request_id"], "orange")
+        self.assertEqual(result["request"]["id"], "orange")
         self.assertEqual(result["type"], "buy")
         self.assertEqual(result["price"], 2000)
         self.assertEqual(result["amount"], 0.1)

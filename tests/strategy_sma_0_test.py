@@ -187,7 +187,7 @@ class StrategySma0Tests(unittest.TestCase):
 
         dummy_result = {
             "type": "orange",
-            "request_id": "banana",
+            "request": { "id": "banana"},
             "price": "apple",
             "amount": "kiwi",
             "msg": "melon",
@@ -195,7 +195,7 @@ class StrategySma0Tests(unittest.TestCase):
         }
         sma.update_result(dummy_result)
         self.assertEqual(sma.result[-1]["type"], "orange")
-        self.assertEqual(sma.result[-1]["request_id"], "banana")
+        self.assertEqual(sma.result[-1]["request"]["id"], "banana")
         self.assertEqual(sma.result[-1]["price"], "apple")
         self.assertEqual(sma.result[-1]["amount"], "kiwi")
         self.assertEqual(sma.result[-1]["msg"], "melon")
@@ -209,7 +209,7 @@ class StrategySma0Tests(unittest.TestCase):
 
         dummy_result = {
             "type": "buy",
-            "request_id": "orange",
+            "request": { "id": "orange"},
             "price": 10,
             "amount": 5,
             "msg": "success",
@@ -219,7 +219,7 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.balance, 100)
         self.assertEqual(sma.asset_amount, 55)
         self.assertEqual(sma.result[-1]["type"], "buy")
-        self.assertEqual(sma.result[-1]["request_id"], "orange")
+        self.assertEqual(sma.result[-1]["request"]["id"], "orange")
         self.assertEqual(sma.result[-1]["price"], 10)
         self.assertEqual(sma.result[-1]["amount"], 5)
         self.assertEqual(sma.result[-1]["msg"], "success")
@@ -227,7 +227,7 @@ class StrategySma0Tests(unittest.TestCase):
 
         dummy_result = {
             "type": "sell",
-            "request_id": "apple",
+            "request": { "id": "apple"},
             "price": 100,
             "amount": 53,
             "msg": "success",
@@ -237,7 +237,7 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.balance, 1000)
         self.assertEqual(sma.asset_amount, 2)
         self.assertEqual(sma.result[-1]["type"], "sell")
-        self.assertEqual(sma.result[-1]["request_id"], "apple")
+        self.assertEqual(sma.result[-1]["request"]["id"], "apple")
         self.assertEqual(sma.result[-1]["price"], 100)
         self.assertEqual(sma.result[-1]["amount"], 53)
         self.assertEqual(sma.result[-1]["msg"], "success")

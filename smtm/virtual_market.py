@@ -133,8 +133,9 @@ class VirtualMarket:
 
         request: 거래 요청 정보
         Returns:
+            result:
             {
-                "request_id": 요청 정보 id
+                "request": 요청 정보
                 "type": 거래 유형 sell, buy
                 "price": 거래 가격
                 "amount": 거래 수량
@@ -157,7 +158,7 @@ class VirtualMarket:
 
         if next_index >= len(self.data) - 1:
             return {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": -1,
                 "amount": -1,
@@ -168,7 +169,7 @@ class VirtualMarket:
 
         if request["price"] == 0 or request["amount"] == 0:
             return {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": 0,
                 "amount": 0,
@@ -185,7 +186,7 @@ class VirtualMarket:
             result["date_time"] = now
         else:
             result = {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": -1,
                 "amount": -1,
@@ -200,7 +201,7 @@ class VirtualMarket:
         old_balance = self.balance
         if buy_asset_value * (1 + self.commission_ratio) > self.balance:
             return {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": 0,
                 "amount": 0,
@@ -211,7 +212,7 @@ class VirtualMarket:
         try:
             if request["price"] < self.data[next_index]["low_price"]:
                 return {
-                    "request_id": request["id"],
+                    "request": request,
                     "type": request["type"],
                     "price": 0,
                     "amount": 0,
@@ -231,7 +232,7 @@ class VirtualMarket:
             self.balance = round(self.balance)
             self.__print_balance_info("buy", old_balance, self.balance, buy_asset_value)
             return {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": request["price"],
                 "amount": request["amount"],
@@ -241,7 +242,7 @@ class VirtualMarket:
         except KeyError as msg:
             self.logger.error(f"invalid trading data {msg}")
             return {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": -1,
                 "amount": -1,
@@ -255,7 +256,7 @@ class VirtualMarket:
             name = self.data[next_index]["market"]
             if name not in self.asset:
                 return {
-                    "request_id": request["id"],
+                    "request": request,
                     "type": request["type"],
                     "price": 0,
                     "amount": 0,
@@ -265,7 +266,7 @@ class VirtualMarket:
 
             if request["price"] >= self.data[next_index]["high_price"]:
                 return {
-                    "request_id": request["id"],
+                    "request": request,
                     "type": request["type"],
                     "price": 0,
                     "amount": 0,
@@ -291,7 +292,7 @@ class VirtualMarket:
             self.balance = round(self.balance)
             self.__print_balance_info("sell", old_balance, self.balance, sell_asset_value)
             return {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": request["price"],
                 "amount": sell_amount,
@@ -301,7 +302,7 @@ class VirtualMarket:
         except KeyError as msg:
             self.logger.error(f"invalid trading data {msg}")
             return {
-                "request_id": request["id"],
+                "request": request,
                 "type": request["type"],
                 "price": -1,
                 "amount": -1,
