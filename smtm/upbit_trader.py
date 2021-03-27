@@ -131,17 +131,12 @@ class UpbitTrader(Trader):
             for order in results:
                 if order["uuid"] == request_info["uuid"]:
                     self.logger.info(f"find order! {request_info} {order}")
-                    if order["state"] == "done":
+                    if order["state"] == "done" or order["state"] == "cancel":
                         result = request_info["result"]
                         result["date_time"] = order["created_at"]
                         request_info["callback"](result)
                     elif order["state"] == "wait":
                         waiting_request[request_id] = request_info
-                    elif order["state"] == "cancel":
-                        # 시장가 매수시 cancel로 처리됨 - 가격은 변동 폭이 있으므로 확인 필요
-                        result = request_info["result"]
-                        result["date_time"] = order["created_at"]
-                        request_info["callback"](result)
         self.request_map = waiting_request
         self.logger.info(f"After update, waiting order count {len(self.request_map)}")
         self._stop_timer()

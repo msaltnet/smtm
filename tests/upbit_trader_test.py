@@ -120,3 +120,58 @@ class UpditTraderTests(unittest.TestCase):
         callback = mock_timer.call_args[0][1]
         callback()
         trader.worker.post_task.assert_called_once_with({"runnable": trader._query_order_result})
+
+    def test_stop_timer_should_call_cancel(self):
+        trader = UpbitTrader()
+        timer_mock = MagicMock()
+        trader.timer = timer_mock
+        trader._stop_timer()
+        timer_mock.cancel.assert_called_once()
+        self.assertEqual(trader.timer, None)
+
+    def test__query_order_result(self):
+        dummy_result = [
+            {"uuid": "mango", "state": "done", "created_at": "today"},
+            {"uuid": "banana", "state": "wait", "created_at": "tomorrow"},
+            {"uuid": "apple", "state": "cancel", "created_at": "yesterday"},
+        ]
+        dummy_request_mango = {
+            "uuid": "mango",
+            "request_id": "mango_id",
+            "callback": MagicMock(),
+            "result": {"id": "mango_result"},
+        }
+        dummy_request_banana = {
+            "uuid": "banana",
+            "request_id": "banana_id",
+            "callback": MagicMock(),
+            "result": {"id": "banana_result"},
+        }
+        dummy_request_apple = {
+            "uuid": "apple",
+            "request_id": "apple_id",
+            "callback": MagicMock(),
+            "result": {"id": "apple_result"},
+        }
+        trader = UpbitTrader()
+        trader._query_order_list = MagicMock(return_value=dummy_result)
+        trader._stop_timer = MagicMock()
+        trader._start_timer = MagicMock()
+        trader.request_map["mango"] = dummy_request_mango
+        trader.request_map["banana"] = dummy_request_banana
+        trader.request_map["apple"] = dummy_request_apple
+        trader._query_order_result(None)
+        mango_result = dummy_request_mango["callback"].call_args[0][0]
+        self.assertEqual(mango_result["date_time"], "today")
+        self.assertEqual(mango_result["id"], "mango_result")
+        dummy_request_mango["callback"].assert_called_once()
+
+        apple_result = dummy_request_apple["callback"].call_args[0][0]
+        self.assertEqual(apple_result["date_time"], "yesterday")
+        self.assertEqual(apple_result["id"], "apple_result")
+        dummy_request_mango["callback"].assert_called_once()
+
+        self.assertEqual(len(trader.request_map), 1)
+        self.assertEqual(trader.request_map["banana"]["request_id"], "banana_id")
+        trader._stop_timer.assert_called_once()
+        trader._start_timer.assert_called_once()
