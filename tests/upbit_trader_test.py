@@ -438,3 +438,36 @@ class UpditTraderTests(unittest.TestCase):
         trader._create_jwt_token("ak", "sk")
 
         mock_jwt.assert_called_once_with({"access_key": "ak", "nonce": "uuid_mango"}, "sk")
+
+    @patch("requests.get")
+    def test__request_get_should_send_http_request_correctly(self, mock_get):
+        trader = UpbitTrader()
+        expected_url = "get/apple"
+        mock_response = MagicMock()
+        mock_response.json = MagicMock(return_value="apple_result")
+        mock_get.return_value = mock_response
+        dummy_headers = "apple_headers"
+
+        self.assertEqual(trader._request_get("get/apple", headers=dummy_headers), "apple_result")
+        mock_response.raise_for_status.assert_called_once()
+        mock_get.assert_called_once_with(expected_url, headers=dummy_headers)
+
+    @patch("requests.get")
+    def test__request_get_return_None_when_invalid_data_received_from_server(self, mock_get):
+        def raise_exception():
+            raise ValueError("RequestException dummy exception")
+
+        class DummyResponse:
+            pass
+
+        mock_response = DummyResponse()
+        mock_response.raise_for_status = raise_exception
+        mock_response.json = MagicMock(return_value="apple_result")
+        mock_get.return_value = mock_response
+        dummy_headers = "apple_headers"
+
+        trader = UpbitTrader()
+        expected_url = "get/apple"
+
+        self.assertEqual(trader._request_get("get/apple", headers=dummy_headers), None)
+        mock_get.assert_called_once_with(expected_url, headers=dummy_headers)

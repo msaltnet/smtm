@@ -212,20 +212,7 @@ class BithumbTrader(Trader):
             "price": str(price),
         }
 
-        try:
-            response = self.bithumb_api_call("/trade/place", query)
-            response.raise_for_status()
-            result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
-            return
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return
-        return result
+        return self.bithumb_api_call("/trade/place", query)
 
     def _send_market_price_order(self, market, is_buy, volume=0.0001):
         """시작 가격 매매 주문 전송
@@ -248,21 +235,7 @@ class BithumbTrader(Trader):
             "units": str(final_volume),
         }
         api = "/trade/market_buy" if is_buy is True else "/trade/market_sell"
-        try:
-            response = self.bithumb_api_call(api, query)
-            response.raise_for_status()
-            result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
-            return
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return
-
-        return result
+        return self.bithumb_api_call(api, query)
 
     def _query_order(self, market, order_id=None):
         """주문 조회
@@ -290,21 +263,7 @@ class BithumbTrader(Trader):
         if order_id is None:
             return
 
-        try:
-            response = self.bithumb_api_call("/info/order_detail", query)
-            response.raise_for_status()
-            result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
-            return
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return
-
-        return result
+        return self.bithumb_api_call("/info/order_detail", query)
 
     def _query_balance(self, market):
         """
@@ -319,22 +278,7 @@ class BithumbTrader(Trader):
             xcoin_last_{currency}: 마지막 체결된 거래 금액 ALL 호출 시 필드 명 – xcoin_last_{currency}, Number (String)
         """
         query = {"order_currency": market, "payment_currency": "KRW"}
-
-        try:
-            response = self.bithumb_api_call("/info/balance", query)
-            response.raise_for_status()
-            result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
-            return
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return
-
-        return result
+        return self.bithumb_api_call("/info/balance", query)
 
     def query_latest_trade(self, market):
         """최근 거래 내역 조회
@@ -409,5 +353,18 @@ class BithumbTrader(Trader):
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        res = requests.post(url, headers=headers, data=str_data)
-        return res
+        try:
+            response = requests.post(url, headers=headers, data=str_data)
+            response.raise_for_status()
+            result = response.json()
+        except ValueError:
+            self.logger.error("Invalid data from server")
+            return
+        except requests.exceptions.HTTPError as msg:
+            self.logger.error(msg)
+            return
+        except requests.exceptions.RequestException as msg:
+            self.logger.error(msg)
+            return
+
+        return result

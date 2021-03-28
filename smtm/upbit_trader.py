@@ -277,23 +277,9 @@ class UpbitTrader(Trader):
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
-        try:
-            response = requests.get(
-                self.SERVER_URL + "/v1/orders", params=query_string, headers=headers
-            )
-            response.raise_for_status()
-            result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
-            return
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return
-
-        return result
+        return self._request_get(
+            self.SERVER_URL + "/v1/orders", params=query_string, headers=headers
+        )
 
     def _query_account(self):
         """
@@ -309,8 +295,14 @@ class UpbitTrader(Trader):
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
+        return self._request_get(self.SERVER_URL + "/v1/accounts", headers=headers)
+
+    def _request_get(self, url, headers, params=None):
         try:
-            response = requests.get(self.SERVER_URL + "/v1/accounts", headers=headers)
+            if params is not None:
+                response = requests.get(url, params=params, headers=headers)
+            else:
+                response = requests.get(url, headers=headers)
             response.raise_for_status()
             result = response.json()
         except ValueError:

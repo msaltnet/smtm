@@ -11,6 +11,27 @@ class BithumbTraderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def create_http_mock(self):
+        http_mock = Mock()
+
+        class HTTPError(Exception):
+            def __init__(self, value):
+                self.value = value
+
+            def __str__(self):
+                return self.value
+
+        class RequestException(Exception):
+            def __init__(self, value):
+                self.value = value
+
+            def __str__(self):
+                return self.value
+
+        http_mock.exceptions.HTTPError = HTTPError
+        http_mock.exceptions.RequestException = RequestException
+        return http_mock
+
     def test_send_request_should_call_worker_post_task_correctly(self):
         trader = BithumbTrader()
         trader.worker = MagicMock()
@@ -363,10 +384,38 @@ class BithumbTraderTests(unittest.TestCase):
         trader = BithumbTrader()
         expected_url = trader.SERVER_URL + "get/apple"
         expected_data = "endpoint=get%2Fapple&order_currency=apple&payment_currency=KRW"
-        trader.bithumb_api_call("get/apple", dummy_query)
+        mock_response = MagicMock()
+        mock_response.json = MagicMock(return_value="apple_result")
+        mock_post.return_value = mock_response
+
+        self.assertEqual(trader.bithumb_api_call("get/apple", dummy_query), "apple_result")
+        mock_response.raise_for_status.assert_called_once()
         mock_post.assert_called_once_with(expected_url, headers=ANY, data=expected_data)
         called_headers = mock_post.call_args[1]["headers"]
         self.assertEqual(called_headers["Api-Key"], trader.ACCESS_KEY)
         self.assertIsNotNone(called_headers["Api-Sign"])
         self.assertIsNotNone(called_headers["Api-Nonce"])
         self.assertEqual(called_headers["Content-Type"], "application/x-www-form-urlencoded")
+
+    @patch("requests.post")
+    def test_bithumb_api_call_return_None_when_invalid_data_received_from_server(self, mock_post):
+        def raise_exception():
+            raise ValueError("RequestException dummy exception")
+
+        class DummyResponse:
+            pass
+
+        mock_response = DummyResponse()
+        mock_response.raise_for_status = raise_exception
+        mock_response.json = MagicMock(return_value="apple_result")
+        mock_post.return_value = mock_response
+
+        dummy_query = {
+            "order_currency": "apple",
+            "payment_currency": "KRW",
+        }
+        trader = BithumbTrader()
+        expected_url = trader.SERVER_URL + "get/apple"
+        expected_data = "endpoint=get%2Fapple&order_currency=apple&payment_currency=KRW"
+
+        self.assertEqual(trader.bithumb_api_call("get/apple", dummy_query), None)
