@@ -12,15 +12,6 @@ class UpditTraderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_ACCESS_KEY": "akey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SECRET_KEY": "skey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SERVER_URL": "upbit"})
-    def test_init_update_os_environ_value(self):
-        trader = UpbitTrader()
-        self.assertEqual(trader.ACCESS_KEY, "akey")
-        self.assertEqual(trader.SECRET_KEY, "skey")
-        self.assertEqual(trader.SERVER_URL, "upbit")
-
     def test_send_request_should_call_worker_post_task_correctly(self):
         trader = UpbitTrader()
         trader.worker = MagicMock()
@@ -224,9 +215,6 @@ class UpditTraderTests(unittest.TestCase):
         trader._start_timer.assert_not_called()
 
     @patch("requests.post")
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_ACCESS_KEY": "akey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SECRET_KEY": "skey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SERVER_URL": "upbit"})
     def test__send_order_should_send_correct_limit_order(self, mock_requests):
         trader = UpbitTrader()
 
@@ -246,15 +234,16 @@ class UpditTraderTests(unittest.TestCase):
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
         trader._create_limit_order_query.assert_called_once_with("mango", True, 500, 0.555)
-        trader._create_jwt_token.assert_called_once_with("akey", "skey", "mango_query")
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
+        )
         mock_requests.assert_called_once_with(
-            "upbit/v1/orders", params="mango_query", headers={"Authorization": "Bearer mango_token"}
+            trader.SERVER_URL + "/v1/orders",
+            params="mango_query",
+            headers={"Authorization": "Bearer mango_token"},
         )
 
     @patch("requests.post")
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_ACCESS_KEY": "akey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SECRET_KEY": "skey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SERVER_URL": "upbit"})
     def test__send_order_should_send_correct_market_price_buy_order(self, mock_requests):
         trader = UpbitTrader()
 
@@ -274,9 +263,6 @@ class UpditTraderTests(unittest.TestCase):
         trader._create_market_price_order_query.assert_called_once_with("mango", price=500)
 
     @patch("requests.post")
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_ACCESS_KEY": "akey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SECRET_KEY": "skey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SERVER_URL": "upbit"})
     def test__send_order_should_send_correct_market_sell_order(self, mock_requests):
         trader = UpbitTrader()
 
@@ -296,9 +282,6 @@ class UpditTraderTests(unittest.TestCase):
         trader._create_market_price_order_query.assert_called_once_with("mango", volume=0.55)
 
     @patch("requests.post")
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_ACCESS_KEY": "akey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SECRET_KEY": "skey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SERVER_URL": "upbit"})
     def test__send_order_should_NOT_send_invaild_order(self, mock_requests):
         trader = UpbitTrader()
 
@@ -368,9 +351,6 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(query, None)
 
     @patch("requests.get")
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_ACCESS_KEY": "akey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SECRET_KEY": "skey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SERVER_URL": "upbit"})
     def test__query_order_list_should_send_correct_request(self, mock_requests):
         query_states = ["done", "wait", "cancel"]
         states_query_string = "&".join(["states[]={}".format(state) for state in query_states])
@@ -391,17 +371,16 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        trader._create_jwt_token.assert_called_once_with("akey", "skey", expected_query_string)
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY, expected_query_string
+        )
         mock_requests.assert_called_once_with(
-            "upbit/v1/orders",
+            trader.SERVER_URL + "/v1/orders",
             params=expected_query_string,
             headers={"Authorization": "Bearer mango_token"},
         )
 
     @patch("requests.get")
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_ACCESS_KEY": "akey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SECRET_KEY": "skey"})
-    @patch.dict(os.environ, {"UPBIT_OPEN_API_SERVER_URL": "upbit"})
     def test__query_account_should_send_correct_request(self, mock_requests):
         class DummyResponse:
             pass
@@ -418,9 +397,9 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        trader._create_jwt_token.assert_called_once_with("akey", "skey")
+        trader._create_jwt_token.assert_called_once_with(trader.ACCESS_KEY, trader.SECRET_KEY)
         mock_requests.assert_called_once_with(
-            "upbit/v1/accounts",
+            trader.SERVER_URL + "/v1/accounts",
             headers={"Authorization": "Bearer mango_token"},
         )
 

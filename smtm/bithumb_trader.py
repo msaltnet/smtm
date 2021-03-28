@@ -74,16 +74,16 @@ class BithumbTrader(Trader):
         request = task["request"]
         is_buy = True if request["type"] == "buy" else False
 
-        if request["price"] is None and is_buy is False:
+        if request["price"] is None and request["amount"] is not None and is_buy is False:
             # 시장가 매도
-            response = self._send_market_price_sell_order(self.MARKET, is_buy, request["amount"])
-        elif request["amount"] is None and is_buy is True:
+            response = self._send_market_price_order(self.MARKET, False, request["amount"])
+        elif request["price"] is not None and request["amount"] is None and is_buy is True:
             # 시장가 매수
             snapshot = self.query_latest_trade(self.MARKET)
-            if snapshot is not None:
+            if snapshot is not None and snapshot["status"] == "0000":
                 price = int(snapshot["data"][0]["price"])
                 amount = request["price"] / price
-                response = self._send_market_price_buy_order(self.MARKET, is_buy, amount)
+                response = self._send_market_price_order(self.MARKET, True, amount)
             else:
                 response = None
         elif request["price"] is not None and request["amount"] is not None:
@@ -94,13 +94,13 @@ class BithumbTrader(Trader):
         else:
             # 잘못된 주문
             self.logger.error("Invalid order")
+            response = None
 
-        if response["status"] != "0000":
+        if response is None or response["status"] != "0000":
             self.logger.error(f"Order error {response}")
             task["callback"]("error!")
             return
 
-        print(response)
         result = self._create_success_result(request)
         self.request_map[request["id"]] = {
             "order_id": response["order_id"],
@@ -110,7 +110,7 @@ class BithumbTrader(Trader):
         self._start_timer()
 
     def _excute_query(self, task):
-        response = self._query_balance()
+        response = self._query_balance(self.MARKET)
         assets = response["data"]
         callback = task["callback"]
         result = {"asset": {}}
@@ -118,8 +118,9 @@ class BithumbTrader(Trader):
             if key == "total_krw":
                 result["balance"] = value
             elif key == self.MARKET_KEY:
+                price = None
                 snapshot = self.query_latest_trade(self.MARKET)
-                if snapshot is not None:
+                if snapshot is not None and snapshot["status"] == "0000":
                     price = snapshot["data"][0]["price"]
                 name = self.MARKET
                 amount = value
@@ -156,33 +157,37 @@ class BithumbTrader(Trader):
     def _convert_timestamp(self, timestamp):
         return datetime.fromtimestamp(int(int(timestamp) / 1000000)).strftime(self.ISO_DATEFORMAT)
 
-    def _query_order_result(self, task):
-        waiting_request = {}
-        self.logger.info(f"waiting order count {len(self.request_map)}")
-        for request_id, request_info in self.request_map.items():
-            order = self._query_order(request_info["order_id"])
-            if order["data"]["order_status"] == "Completed":
-                result = request_info["result"]
-                result["amount"] = float(order["data"]["order_qty"])
-                result["date_time"] = self._convert_timestamp(int(order["data"]["order_date"]))
-                if result["price"] is None:
-                    result["price"] = self._get_total_trading_price(order["data"]["contract"])
-                request_info["callback"](result)
-            else:
-                waiting_request[request_id] = request_info
-        self.request_map = waiting_request
-        self.logger.info(f"After update, waiting order count {len(self.request_map)}")
-        self._stop_timer()
-        if len(self.request_map) > 0:
-            self._start_timer()
-
     def _get_total_trading_price(self, trading_list):
         total = 0
         for trading in trading_list:
             total = trading["total"]
         return total
 
-    def _send_limit_order(self, market, is_buy, price=None, volume=None):
+    def _query_order_result(self, task):
+        waiting_request = {}
+        self.logger.info(f"waiting order count {len(self.request_map)}")
+        for request_id, request_info in self.request_map.items():
+            try:
+                order = self._query_order(self.MARKET, request_info["order_id"])
+                if order["data"]["order_status"] == "Completed":
+                    result = request_info["result"]
+                    result["amount"] = float(order["data"]["order_qty"])
+                    result["date_time"] = self._convert_timestamp(int(order["data"]["order_date"]))
+                    if result["price"] is None:
+                        result["price"] = self._get_total_trading_price(order["data"]["contract"])
+                    request_info["callback"](result)
+                else:
+                    waiting_request[request_id] = request_info
+            except KeyError:
+                self.logger.error(f"query_order fail! request_id {request_id}")
+
+        self.request_map = waiting_request
+        self.logger.info(f"After update, waiting order count {len(self.request_map)}")
+        self._stop_timer()
+        if len(self.request_map) > 0:
+            self._start_timer()
+
+    def _send_limit_order(self, market, is_buy, price=None, volume=0.0001):
         """지정 가격 주문 전송
         Params:
             order_currency: 주문 통화 (코인), String/필수
@@ -195,8 +200,8 @@ class BithumbTrader(Trader):
             order_id, 주문 번호, String
         """
         final_volume = "{0:.4f}".format(round(volume, 4))
-        print("ORDER #####")
-        print(
+        self.logger.info("ORDER #####")
+        self.logger.info(
             f"[LT] market: {market} is_buy: {is_buy}, price: {price}, volume: {volume} -> {final_volume}"
         )
         query = {
@@ -208,7 +213,7 @@ class BithumbTrader(Trader):
         }
 
         try:
-            response = self.bithumbApiCall("/trade/place", query)
+            response = self.bithumb_api_call("/trade/place", query)
             response.raise_for_status()
             result = response.json()
         except ValueError:
@@ -220,11 +225,10 @@ class BithumbTrader(Trader):
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
             return
-
         return result
 
-    def _send_market_price_sell_order(self, market, is_buy, volume=None):
-        """시작 가격 매도 주문 전송
+    def _send_market_price_order(self, market, is_buy, volume=0.0001):
+        """시작 가격 매매 주문 전송
         Params:
             order_currency: 주문 통화 (코인), String/필수
             payment_currency: 결제 통화 (마켓) KRW 혹은 BTC, String/필수
@@ -234,16 +238,18 @@ class BithumbTrader(Trader):
             order_id, 주문 번호, String
         """
         final_volume = "{0:.4f}".format(round(volume, 4))
-        print("ORDER #####")
-        print(f"[MP] market: {market} is_buy: {is_buy}, volume: {volume} -> {final_volume}")
+        self.logger.info("ORDER #####")
+        self.logger.info(
+            f"[MP] market: {market}, is_buy: {is_buy} volume: {volume} -> {final_volume}"
+        )
         query = {
             "order_currency": market,
             "payment_currency": "KRW",
             "units": str(final_volume),
         }
-
+        api = "/trade/market_buy" if is_buy is True else "/trade/market_sell"
         try:
-            response = self.bithumbApiCall("/trade/market_sell", query)
+            response = self.bithumb_api_call(api, query)
             response.raise_for_status()
             result = response.json()
         except ValueError:
@@ -258,42 +264,7 @@ class BithumbTrader(Trader):
 
         return result
 
-    def _send_market_price_buy_order(self, market, is_buy, volume=None):
-        """시작 가격 매도 주문 전송
-        Params:
-            order_currency: 주문 통화 (코인), String/필수
-            payment_currency: 결제 통화 (마켓) KRW 혹은 BTC, String/필수
-            units: 주문 수량 [최대 주문 금액]50억원, Float/필수
-        Return:
-            status, 결과 상태 코드 (정상: 0000, 그 외 에러 코드 참조), String
-            order_id, 주문 번호, String
-        """
-        final_volume = "{0:.4f}".format(round(volume, 4))
-        print("ORDER #####")
-        print(f"[MP] market: {market} is_buy: {is_buy}, volume: {volume} -> {final_volume}")
-        query = {
-            "order_currency": market,
-            "payment_currency": "KRW",
-            "units": str(final_volume),
-        }
-
-        try:
-            response = self.bithumbApiCall("/trade/market_buy", query)
-            response.raise_for_status()
-            result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
-            return
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return
-
-        return result
-
-    def _query_order(self, order_id=None):
+    def _query_order(self, market, order_id=None):
         """주문 조회
         request:
             order_id: 매수/매도 주문 등록된 주문번호(입력 시 해당 데이터만 추출), String
@@ -315,12 +286,12 @@ class BithumbTrader(Trader):
             units_remaining: 주문 체결 잔액, Number (String)
             price: 1Currency당 주문 가격, Number (String)
         """
-        query = {"order_currency": "BTC", "payment_currency": "KRW"}
-        if order_id is not None:
-            query["order_id"] = order_id
+        query = {"order_currency": market, "payment_currency": "KRW", "order_id": order_id}
+        if order_id is None:
+            return
 
         try:
-            response = self.bithumbApiCall("/info/order_detail", query)
+            response = self.bithumb_api_call("/info/order_detail", query)
             response.raise_for_status()
             result = response.json()
         except ValueError:
@@ -335,7 +306,7 @@ class BithumbTrader(Trader):
 
         return result
 
-    def _query_balance(self):
+    def _query_balance(self, market):
         """
         Returns:
             status: 결과 상태 코드 (정상: 0000, 그 외 에러 코드 참조), String
@@ -347,10 +318,10 @@ class BithumbTrader(Trader):
             available_krw: 주문 가능 원화(KRW) 금액, Number (String)
             xcoin_last_{currency}: 마지막 체결된 거래 금액 ALL 호출 시 필드 명 – xcoin_last_{currency}, Number (String)
         """
-        query = {"order_currency": "BTC", "payment_currency": "KRW"}
+        query = {"order_currency": market, "payment_currency": "KRW"}
 
         try:
-            response = self.bithumbApiCall("/info/balance", query)
+            response = self.bithumb_api_call("/info/balance", query)
             response.raise_for_status()
             result = response.json()
         except ValueError:
@@ -378,8 +349,8 @@ class BithumbTrader(Trader):
         querystring = {"count": "1"}
 
         try:
-            response = requests.request(
-                "GET", self.SERVER_URL + f"/public/transaction_history/{market}", params=querystring
+            response = requests.get(
+                self.SERVER_URL + f"/public/transaction_history/{market}", params=querystring
             )
             response.raise_for_status()
             result = response.json()
@@ -395,30 +366,28 @@ class BithumbTrader(Trader):
 
         return result
 
-    def microtime(self, get_as_float=False):
+    def _microtime(self, get_as_float=False):
         if get_as_float:
             return time.time()
         else:
             return "%f %d" % math.modf(time.time())
 
-    def usecTime(self):
-        mt = self.microtime(False)
+    def _usecTime(self):
+        mt = self._microtime(False)
         mt_array = mt.split(" ")[:2]
         return mt_array[1] + mt_array[0][2:5]
 
-    def bithumbApiCall(self, endpoint, rgParams):
-        """Api-Sign and Api-Nonce information generation.
-
-        # - nonce: it is an arbitrary number that may only be used once.
-        # - api_sign: API signature information created in various combinations values.
+    def bithumb_api_call(self, endpoint, rgParams):
+        """빗썸 api wrapper
+        nonce: it is an arbitrary number that may only be used once.
+        api_sign: API signature information created in various combinations values.
         """
         endpoint_item_array = {"endpoint": endpoint}
 
         uri_array = dict(endpoint_item_array, **rgParams)  # Concatenate the two arrays.
-        print(f"uri_array {uri_array}")
 
         str_data = urlencode(uri_array)
-        nonce = self.usecTime()
+        nonce = self._usecTime()
 
         data = endpoint + chr(0) + str_data + chr(0) + nonce
         utf8_data = data.encode("utf-8")
