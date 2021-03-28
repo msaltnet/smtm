@@ -31,13 +31,13 @@ class UpbitTrader(Trader):
 
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
-        self.ACCESS_KEY = os.environ["UPBIT_OPEN_API_ACCESS_KEY"]
-        self.SECRET_KEY = os.environ["UPBIT_OPEN_API_SECRET_KEY"]
-        self.SERVER_URL = os.environ["UPBIT_OPEN_API_SERVER_URL"]
         self.worker = Worker("UpbitTrader-Worker")
         self.worker.start()
         self.timer = None
         self.request_map = {}
+        self.ACCESS_KEY = os.environ.get("UPBIT_OPEN_API_ACCESS_KEY", "upbit_access_key")
+        self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key")
+        self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "upbit_server_url")
 
     def send_request(self, request, callback):
         """거래 요청을 처리한다
