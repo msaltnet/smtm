@@ -181,32 +181,23 @@ class UpbitTrader(Trader):
         """
         self.logger.info("ORDER #####")
         self.logger.info(f"market: {market} is_buy: {is_buy}, price: {price}, volume: {volume} ")
-        if price is None and is_buy is False:
-            # 시장가 매도
-            query_string = self._create_market_price_order_query(market, volume=volume)
-        elif volume is None and is_buy is True:
-            # 시장가 매수
-            query_string = self._create_market_price_order_query(market, price=price)
-        elif price is not None and volume is not None:
+        if price is not None and volume is not None:
             # 지정가 주문
             query_string = self._create_limit_order_query(market, is_buy, price, volume)
+        elif volume is not None and is_buy is False:
+            # 시장가 매도
+            query_string = self._create_market_price_order_query(market, volume=volume)
+        elif price is not None and is_buy is True:
+            # 시장가 매수
+            query_string = self._create_market_price_order_query(market, price=price)
         else:
             # 잘못된 주문
             self.logger.error("Invalid order")
+            return
 
         self.logger.info(f"query_string {query_string}")
-        m = hashlib.sha512()
-        m.update(query_string)
-        query_hash = m.hexdigest()
 
-        payload = {
-            "access_key": self.ACCESS_KEY,
-            "nonce": str(uuid.uuid4()),
-            "query_hash": query_hash,
-            "query_hash_alg": "SHA512",
-        }
-
-        jwt_token = jwt.encode(payload, self.SECRET_KEY)
+        jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
@@ -258,7 +249,7 @@ class UpbitTrader(Trader):
         query_string = urlencode(query).encode()
         return query_string
 
-    def _query_order_list(self, states=None):
+    def _query_order_list(self):
         """
         response:
             uuid: 주문의 고유 아이디, String
@@ -282,18 +273,7 @@ class UpbitTrader(Trader):
         states_query_string = "&".join(["states[]={}".format(state) for state in query_states])
         query_string = states_query_string.encode()
 
-        m = hashlib.sha512()
-        m.update(query_string)
-        query_hash = m.hexdigest()
-
-        payload = {
-            "access_key": self.ACCESS_KEY,
-            "nonce": str(uuid.uuid4()),
-            "query_hash": query_hash,
-            "query_hash_alg": "SHA512",
-        }
-
-        jwt_token = jwt.encode(payload, self.SECRET_KEY)
+        jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
@@ -325,12 +305,7 @@ class UpbitTrader(Trader):
             avg_buy_price_modified: 매수평균가 수정 여부, Boolean
             unit_currency: 평단가 기준 화폐, String
         """
-        payload = {
-            "access_key": self.ACCESS_KEY,
-            "nonce": str(uuid.uuid4()),
-        }
-
-        jwt_token = jwt.encode(payload, self.SECRET_KEY)
+        jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY)
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
@@ -349,3 +324,17 @@ class UpbitTrader(Trader):
             return
 
         return result
+
+    def _create_jwt_token(self, a_key, s_key, query_string=None):
+        payload = {
+            "access_key": a_key,
+            "nonce": str(uuid.uuid4()),
+        }
+        if query_string is not None:
+            m = hashlib.sha512()
+            m.update(query_string)
+            query_hash = m.hexdigest()
+            payload["query_hash"] = query_hash
+            payload["query_hash_alg"] = "SHA512"
+
+        return jwt.encode(payload, s_key)
