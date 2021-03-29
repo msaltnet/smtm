@@ -28,7 +28,3 @@ class DataProvider(metaclass=ABCMeta):
                 "acc_volume": 단위 시간내 누적 거래 양
             }
         """
-
-    @abstractmethod
-    def initialize(self, http):
-        """거래 정보 초기화"""

@@ -14,8 +14,8 @@ class SimulationDataProviderTests(unittest.TestCase):
     def test_initialize_call_initialize_from_server(self):
         dp = SimulationDataProvider()
         dp.initialize_from_server = MagicMock()
-        dp.initialize("mango")
-        dp.initialize_from_server.assert_called_once_with("mango")
+        dp.initialize()
+        dp.initialize_from_server.assert_called_once()
 
     def test_initialize_with_file_initialize_variable_and_update_data_correctly(self):
         dp = SimulationDataProvider()
@@ -56,22 +56,13 @@ class SimulationDataProviderTests(unittest.TestCase):
         self.assertEqual(dp.end, "banana")
         self.assertEqual(dp.count, 50000)
 
-    def test_initialize_from_server_initialize_configuration_variables(self):
+    @patch("requests.get")
+    def test_initialize_from_server_initialize_configuration_variables(self, mock_get):
         dp = SimulationDataProvider()
         dp.index = 50
         dp.is_initialized = False
         dp.end = -1
         dp.count = -500
-
-        dp.initialize_from_server(None, "mango", 300)
-        self.assertEqual(dp.index, 0)
-        self.assertEqual(dp.is_initialized, False)
-        self.assertEqual(dp.end, "mango")
-        self.assertEqual(dp.count, 300)
-
-    def test_initialize_from_server_NOT_initialized_with_invalid_response_data(self):
-        dp = SimulationDataProvider()
-        http_mock = Mock()
 
         class DummyResponse:
             pass
@@ -79,8 +70,27 @@ class SimulationDataProviderTests(unittest.TestCase):
         dummy_response = DummyResponse()
         dummy_response.text = "orange"
         dummy_response.raise_for_status = MagicMock()
-        http_mock.request = MagicMock(return_value=dummy_response)
-        dp.initialize_from_server(http_mock, "mango", 300)
+        mock_get.return_value = dummy_response
+
+        dp.initialize_from_server("mango", 300)
+        self.assertEqual(dp.index, 0)
+        self.assertEqual(dp.is_initialized, False)
+        self.assertEqual(dp.end, "mango")
+        self.assertEqual(dp.count, 300)
+
+    @patch("requests.get")
+    def test_initialize_from_server_NOT_initialized_with_invalid_response_data(self, mock_get):
+        dp = SimulationDataProvider()
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.text = "orange"
+        dummy_response.raise_for_status = MagicMock()
+        mock_get.return_value = dummy_response
+
+        dp.initialize_from_server("mango", 300)
         self.assertEqual(dp.is_initialized, False)
         self.assertEqual(dp.end, "mango")
         self.assertEqual(dp.count, 300)
@@ -106,104 +116,77 @@ class SimulationDataProviderTests(unittest.TestCase):
         http_mock.exceptions.RequestException = RequestException
         return http_mock
 
-    def test_initialize_from_server_NOT_initialized_with_invalid_response_error(self):
-        dp = SimulationDataProvider()
-        http_mock = self.create_http_mock()
-
+    @patch("requests.get")
+    def test_initialize_from_server_NOT_initialized_with_invalid_response_error(self, mock_get):
         def raise_exception():
-            raise http_mock.exceptions.HTTPError("HTTPError dummy exception")
+            raise requests.exceptions.HTTPError()
 
         class DummyResponse:
             pass
 
+        dp = SimulationDataProvider()
         dummy_response = DummyResponse()
         dummy_response.text = "orange"
         dummy_response.raise_for_status = raise_exception
-        http_mock.request = MagicMock(return_value=dummy_response)
+        mock_get.return_value = dummy_response
 
-        dp.initialize_from_server(http_mock, "mango", 300)
+        dp.initialize_from_server("mango", 300)
         self.assertEqual(dp.is_initialized, False)
         self.assertEqual(dp.end, "mango")
         self.assertEqual(dp.count, 300)
 
-    def test_initialize_from_server_NOT_initialized_when_connection_fail(self):
-        dp = SimulationDataProvider()
-        http_mock = self.create_http_mock()
-
+    @patch("requests.get")
+    def test_initialize_from_server_NOT_initialized_when_connection_fail(self, mock_get):
         def raise_exception():
-            raise http_mock.exceptions.RequestException("RequestException dummy exception")
+            raise requests.exceptions.RequestException("RequestException dummy exception")
 
         class DummyResponse:
             pass
 
+        dp = SimulationDataProvider()
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = raise_exception
-        http_mock.request = MagicMock(return_value=dummy_response)
+        mock_get.return_value = dummy_response
 
-        dp.initialize_from_server(http_mock, "mango", 300)
+        dp.initialize_from_server("mango", 300)
         self.assertEqual(dp.is_initialized, False)
         self.assertEqual(dp.end, "mango")
         self.assertEqual(dp.count, 300)
 
-    def test_initialize_from_server_update_data_correctly(self):
-        dp = SimulationDataProvider()
-        http_mock = self.create_http_mock()
-
-        def raise_exception():
-            pass
-
+    @patch("requests.get")
+    def test_initialize_from_server_update_data_correctly(self, mock_get):
         class DummyResponse:
             pass
 
+        dp = SimulationDataProvider()
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "apple"}, {"market": "banana"}]'
-        dummy_response.raise_for_status = raise_exception
-        http_mock.request = MagicMock(return_value=dummy_response)
+        dummy_response.raise_for_status = MagicMock()
+        mock_get.return_value = dummy_response
 
-        dp.initialize_from_server(http_mock, "mango", 300)
+        dp.initialize_from_server("mango", 300)
         self.assertEqual(dp.is_initialized, True)
         self.assertEqual(len(dp.data), 2)
         # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
         self.assertEqual(dp.data[0]["market"], "banana")
         self.assertEqual(dp.data[1]["market"], "apple")
 
-    def test_initialize_from_server_call_request_with_correct_arguments(self):
-        dp = SimulationDataProvider()
-        http_mock = self.create_http_mock()
-
+    @patch("requests.get")
+    def test_initialize_from_server_call_request_with_correct_arguments(self, mock_get):
         def raise_exception():
             pass
 
         class DummyResponse:
             pass
 
-        dummy_response = DummyResponse()
-        dummy_response.text = '[{"market": "apple"}, {"market": "banana"}]'
-        dummy_response.raise_for_status = raise_exception
-        http_mock.request = MagicMock(return_value=dummy_response)
-
-        dp.initialize_from_server(http_mock)
-        http_mock.request.assert_called_once_with("GET", dp.URL, params=ANY)
-        self.assertEqual(dp.QUERY_STRING["to"], "2020-01-19 20:00:00")
-        self.assertEqual(dp.QUERY_STRING["count"], 100)
-
-    def test_initialize_from_server_set_default_params(self):
         dp = SimulationDataProvider()
-        http_mock = self.create_http_mock()
-
-        def raise_exception():
-            pass
-
-        class DummyResponse:
-            pass
-
         dummy_response = DummyResponse()
         dummy_response.text = '[{"market": "apple"}, {"market": "banana"}]'
         dummy_response.raise_for_status = raise_exception
-        http_mock.request = MagicMock(return_value=dummy_response)
+        mock_get.return_value = dummy_response
 
-        dp.initialize_from_server(http_mock)
-        http_mock.request.assert_called_once_with("GET", dp.URL, params=ANY)
+        dp.initialize_from_server()
+        mock_get.assert_called_once_with(dp.URL, params=ANY)
         self.assertEqual(dp.QUERY_STRING["to"], "2020-01-19 20:00:00")
         self.assertEqual(dp.QUERY_STRING["count"], 100)
 

@@ -1,6 +1,7 @@
 """시뮬레이션을 위한 DataProvider 구현체"""
 
 import json
+import requests
 from .data_provider import DataProvider
 from .log_manager import LogManager
 
@@ -20,7 +21,6 @@ class SimulationDataProvider(DataProvider):
         self.logger = LogManager.get_logger(__name__)
         self.is_initialized = False
         self.end = "2020-01-19 20:00:00"
-        self.http = None
         self.data = []
         self.count = 50
         self.index = 0
@@ -43,9 +43,9 @@ class SimulationDataProvider(DataProvider):
         if count is not None:
             self.count = count
 
-    def initialize(self, http):
+    def initialize(self):
         """데이터를 가져와서 초기화한다"""
-        self.initialize_from_server(http)
+        self.initialize_from_server()
 
     def initialize_with_file(self, filepath, end=None, count=100):
         """파일로부터 데이터를 가져와서 초기화한다"""
@@ -58,13 +58,12 @@ class SimulationDataProvider(DataProvider):
             f"data is updated from file # file: {filepath}, end: {end}, count: {count}"
         )
 
-    def initialize_from_server(self, http, end=None, count=100):
+    def initialize_from_server(self, end=None, count=100):
         """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
         if self.is_initialized:
             return
 
         self.__initialize(end, count)
-        self.http = http
         self.__get_data_from_server()
         self.logger.info(f"data is updated from server # end: {end}, count: {count}")
 
@@ -95,20 +94,17 @@ class SimulationDataProvider(DataProvider):
             return None
 
     def __get_data_from_server(self):
-        if self.http is None:
-            return
-
         self.QUERY_STRING["to"] = self.end
         self.QUERY_STRING["count"] = self.count
         try:
-            response = self.http.request("GET", self.URL, params=self.QUERY_STRING)
+            response = requests.get(self.URL, params=self.QUERY_STRING)
             response.raise_for_status()
             self.data = json.loads(response.text)
             self.data.reverse()
             self.is_initialized = True
         except ValueError:
             self.logger.error("Invalid data from server")
-        except self.http.exceptions.HTTPError as msg:
+        except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
-        except self.http.exceptions.RequestException as msg:
+        except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
