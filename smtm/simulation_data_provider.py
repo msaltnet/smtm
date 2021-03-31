@@ -2,6 +2,7 @@
 
 import json
 import requests
+import copy
 from .data_provider import DataProvider
 from .log_manager import LogManager
 
@@ -20,9 +21,7 @@ class SimulationDataProvider(DataProvider):
     def __init__(self):
         self.logger = LogManager.get_logger(__name__)
         self.is_initialized = False
-        self.end = "2020-01-19 20:00:00"
         self.data = []
-        self.count = 50
         self.index = 0
 
     def get_info(self):
@@ -36,36 +35,22 @@ class SimulationDataProvider(DataProvider):
         self.logger.info(f'[DATA] @ {self.data[now]["candle_date_time_utc"]}')
         return self.__create_candle_info(self.data[now])
 
-    def __initialize(self, end=None, count=100):
-        self.index = 0
-        if end is not None:
-            self.end = end
-        if count is not None:
-            self.count = count
-
-    def initialize(self):
-        """데이터를 가져와서 초기화한다"""
-        self.initialize_from_server()
-
-    def initialize_with_file(self, filepath, end=None, count=100):
+    def initialize_with_file(self, filepath):
         """파일로부터 데이터를 가져와서 초기화한다"""
         if self.is_initialized:
             return
 
-        self.__initialize(end, count)
+        self.index = 0
         self.__get_data_from_file(filepath)
-        self.logger.info(
-            f"data is updated from file # file: {filepath}, end: {end}, count: {count}"
-        )
+        self.logger.info(f"data is updated from file # file: {filepath}")
 
     def initialize_from_server(self, end=None, count=100):
         """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
         if self.is_initialized:
             return
 
-        self.__initialize(end, count)
-        self.__get_data_from_server()
-        self.logger.info(f"data is updated from server # end: {end}, count: {count}")
+        self.index = 0
+        self.__get_data_from_server(end, count)
 
     def __get_data_from_file(self, filepath):
         try:
@@ -93,15 +78,20 @@ class SimulationDataProvider(DataProvider):
             self.logger.warning("invalid data for candle info")
             return None
 
-    def __get_data_from_server(self):
-        self.QUERY_STRING["to"] = self.end
-        self.QUERY_STRING["count"] = self.count
+    def __get_data_from_server(self, end, count):
+        query_string = copy.deepcopy(self.QUERY_STRING)
+
+        if end is not None:
+            query_string["to"] = end
+
+        query_string["count"] = count
         try:
-            response = requests.get(self.URL, params=self.QUERY_STRING)
+            response = requests.get(self.URL, params=query_string)
             response.raise_for_status()
-            self.data = json.loads(response.text)
+            self.data = response.json()
             self.data.reverse()
             self.is_initialized = True
+            self.logger.info(f"data is updated from server # end: {end}, count: {count}")
         except ValueError:
             self.logger.error("Invalid data from server")
         except requests.exceptions.HTTPError as msg:
