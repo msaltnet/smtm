@@ -74,6 +74,19 @@ class SimulationOperatorTests(unittest.TestCase):
         )
         self.assertEqual(sop.state, None)
 
+    def test_initialize_simulation_set_state_None_when_UserWarning_occur(self):
+        sop = SimulationOperator()
+        trader = MagicMock()
+        strategy = MagicMock()
+        data_provider = MagicMock()
+        data_provider.initialize_from_server = MagicMock(side_effect=UserWarning("TEST Exception"))
+        analyzer = MagicMock()
+        sop.initialize_simulation(
+            "apple", "kiwi", data_provider, strategy, trader, analyzer, "papaya", "pear", "grape"
+        )
+        data_provider.initialize_from_server.assert_called_once()
+        self.assertEqual(sop.state, None)
+
     def test_initialize_call_simulator_dataProvider_initialize_from_server_correctly(self):
         sop = SimulationOperator()
         trader = Mock()

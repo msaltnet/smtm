@@ -25,4 +25,4 @@ if __name__ == "__main__":
         simulator = Simulator(args.end, args.count, args.term, args.strategy)
         simulator.main()
     else:
-        print("Sorry. Simulator available only at this time")
+        print("Sorry. Simulator available only at this time. Run simulation mode use '--mode=0'")

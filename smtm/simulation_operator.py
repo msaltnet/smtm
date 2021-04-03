@@ -58,9 +58,9 @@ class SimulationOperator(Operator):
                     trader.send_account_info_request(callback)
 
             analyzer.initialize(handle_info_request, True)
-        except AttributeError:
+        except (AttributeError, UserWarning) as msg:
             self.state = None
-            self.logger.error("initialize fail")
+            self.logger.error(f"initialize fail: {msg}")
             return
 
     def _excute_trading(self, task):

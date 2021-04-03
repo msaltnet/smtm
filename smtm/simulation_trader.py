@@ -22,35 +22,32 @@ class SimulationTrader(Trader):
 
     def initialize(self, http, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""
-        try:
-            self.market.initialize(http, end, count)
-            self.market.deposit(budget)
-            self.is_initialized = True
-        except AttributeError:
-            self.logger.error("initialize fail")
+        self.market.initialize(http, end, count)
+        self.market.deposit(budget)
+        self.is_initialized = True
 
     def send_request(self, request, callback):
         """거래 요청을 처리한다"""
 
         if self.is_initialized is not True:
-            raise SystemError("Not initialzed")
+            raise UserWarning("Not initialzed")
 
         try:
             result = self.market.send_request(request)
             callback(result)
         except (TypeError, AttributeError) as msg:
             self.logger.error(f"invalid state {msg}")
-            raise SystemError("invalid state") from msg
+            raise UserWarning("invalid state") from msg
 
     def send_account_info_request(self, callback):
         """계좌 요청 정보를 요청한다"""
 
         if self.is_initialized is not True:
-            raise SystemError("Not initialzed")
+            raise UserWarning("Not initialzed")
 
         try:
             result = self.market.get_balance()
             callback(result)
         except (TypeError, AttributeError) as msg:
             self.logger.error(f"invalid state {msg}")
-            raise SystemError("invalid state") from msg
+            raise UserWarning("invalid state") from msg

@@ -57,7 +57,9 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_response.text = '[{"market": "test"}]'
         dummy_response.raise_for_status = MagicMock()
         http.request = MagicMock(return_value=dummy_response)
-        market.initialize(None, None, None)
+        with self.assertRaises(UserWarning):
+            market.initialize(None, None, None)
+
         market.initialize(http, None, None)
         market.initialize(http, None, None)
         http.request.assert_called_once_with("GET", market.URL, params=market.QUERY_STRING)
@@ -89,7 +91,8 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_response = DummyResponse()
         dummy_response.text = "mango"
         http.request = MagicMock(return_value=dummy_response)
-        market.initialize(http, None, None)
+        with self.assertRaises(UserWarning):
+            market.initialize(http, None, None)
         self.assertEqual(market.is_initialized, False)
 
     def test_intialize_NOT_initialize_when_receive_error(self):
@@ -106,7 +109,8 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_response.text = "mango"
         dummy_response.raise_for_status = raise_exception
         http_mock.request = MagicMock(return_value=dummy_response)
-        market.initialize(http_mock, None, None)
+        with self.assertRaises(UserWarning):
+            market.initialize(http_mock, None, None)
         self.assertEqual(market.is_initialized, False)
 
     def test_intialize_NOT_initialize_when_connection_fail(self):
@@ -123,7 +127,8 @@ class VirtualMarketTests(unittest.TestCase):
         dummy_response.text = "mango"
         dummy_response.raise_for_status = raise_exception
         http_mock.request = MagicMock(return_value=dummy_response)
-        market.initialize(http_mock, None, None)
+        with self.assertRaises(UserWarning):
+            market.initialize(http_mock, None, None)
         self.assertEqual(market.is_initialized, False)
 
     def test_initialize_set_default_params(self):

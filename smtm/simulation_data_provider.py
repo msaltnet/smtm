@@ -94,7 +94,10 @@ class SimulationDataProvider(DataProvider):
             self.logger.info(f"data is updated from server # end: {end}, count: {count}")
         except ValueError:
             self.logger.error("Invalid data from server")
+            raise UserWarning("Fail get data from sever")
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
+            raise UserWarning("Fail get data from sever")
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
+            raise UserWarning("Fail get data from sever")

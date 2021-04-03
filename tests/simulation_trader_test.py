@@ -33,7 +33,9 @@ class SimulationTraderTests(unittest.TestCase):
 
         http = DummyHttp()
         trader.market = "make exception"
-        trader.initialize(http, "mango", 500, 5000)
+        with self.assertRaises(AttributeError):
+            trader.initialize(http, "mango", 500, 5000)
+
         self.assertEqual(trader.is_initialized, False)
 
     def test_send_request_call_callback_with_result_of_market_handle_quest(self):
@@ -47,26 +49,26 @@ class SimulationTraderTests(unittest.TestCase):
         trader.market.send_request.assert_called_once_with(dummy_request)
         callback.assert_called_once_with("banana")
 
-    def test_send_request_call_raise_exception_SystemError_when_is_initialized_False(self):
+    def test_send_request_call_raise_exception_UserWarning_when_is_initialized_False(self):
         trader = SimulationTrader()
         trader.is_initialized = False
 
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UserWarning):
             trader.send_request(None, None)
 
-    def test_send_request_call_raise_exception_SystemError_when_market_is_invalid(self):
+    def test_send_request_call_raise_exception_UserWarning_when_market_is_invalid(self):
         trader = SimulationTrader()
         trader.is_initialized = True
         trader.market = "make exception"
 
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UserWarning):
             trader.send_request(None, None)
 
-    def test_send_request_call_raise_exception_SystemError_when_callback_make_TypeError(self):
+    def test_send_request_call_raise_exception_UserWarning_when_callback_make_TypeError(self):
         trader = SimulationTrader()
         trader.is_initialized = True
 
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UserWarning):
             trader.send_request(None, None)
 
     def test_send_account_info_request_call_callback_with_virtual_market_get_balance_result(self):
@@ -78,30 +80,30 @@ class SimulationTraderTests(unittest.TestCase):
         trader.market.get_balance.assert_called_once()
         callback.assert_called_once_with("banana")
 
-    def test_send_account_info_request_call_raise_exception_SystemError_when_is_initialized_False(
+    def test_send_account_info_request_call_raise_exception_UserWarning_when_is_initialized_False(
         self,
     ):
         trader = SimulationTrader()
         trader.is_initialized = False
 
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UserWarning):
             trader.send_account_info_request(None)
 
-    def test_send_account_info_request_call_raise_exception_SystemError_when_market_is_invalid(
+    def test_send_account_info_request_call_raise_exception_UserWarning_when_market_is_invalid(
         self,
     ):
         trader = SimulationTrader()
         trader.is_initialized = True
         trader.market = "make exception"
 
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UserWarning):
             trader.send_account_info_request(None)
 
-    def test_send_account_info_request_call_raise_exception_SystemError_when_callback_make_TypeError(
+    def test_send_account_info_request_call_raise_exception_UserWarning_when_callback_make_TypeError(
         self,
     ):
         trader = SimulationTrader()
         trader.is_initialized = True
 
-        with self.assertRaises(SystemError):
+        with self.assertRaises(UserWarning):
             trader.send_account_info_request(None)

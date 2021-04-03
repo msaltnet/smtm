@@ -85,12 +85,16 @@ class VirtualMarket:
             self.is_initialized = True
         except AttributeError as msg:
             self.logger.error(msg)
+            raise UserWarning("fail to get data from server")
         except ValueError:
             self.logger.error("Invalid data from server")
+            raise UserWarning("fail to get data from server")
         except self.http.exceptions.HTTPError as err:
             self.logger.error(err)
+            raise UserWarning("fail to get data from server")
         except self.http.exceptions.RequestException as err:
             self.logger.error(err)
+            raise UserWarning("fail to get data from server")
 
     def deposit(self, balance):
         """자산 입출금을 할 수 있다"""

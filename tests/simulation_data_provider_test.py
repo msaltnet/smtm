@@ -77,7 +77,8 @@ class SimulationDataProviderTests(unittest.TestCase):
         dummy_response.json.side_effect = ValueError()
         mock_get.return_value = dummy_response
 
-        dp.initialize_from_server("mango", 300)
+        with self.assertRaises(UserWarning):
+            dp.initialize_from_server("mango", 300)
         self.assertEqual(dp.is_initialized, False)
 
     @patch("requests.get")
@@ -90,7 +91,8 @@ class SimulationDataProviderTests(unittest.TestCase):
         )
         mock_get.return_value = dummy_response
 
-        dp.initialize_from_server("mango", 300)
+        with self.assertRaises(UserWarning):
+            dp.initialize_from_server("mango", 300)
         self.assertEqual(dp.is_initialized, False)
 
     @patch("requests.get")
@@ -103,7 +105,8 @@ class SimulationDataProviderTests(unittest.TestCase):
         )
         mock_get.return_value = dummy_response
 
-        dp.initialize_from_server("mango", 300)
+        with self.assertRaises(UserWarning):
+            dp.initialize_from_server("mango", 300)
         self.assertEqual(dp.is_initialized, False)
 
     def test_get_info_return_None_without_initialize(self):
@@ -123,11 +126,12 @@ class SimulationDataProviderTests(unittest.TestCase):
         self.assertEqual(data2["opening_price"], 9717000.00000000)
         self.assertEqual(data2["low_price"], 9717000.00000000)
 
-    def test_ITG_get_info_use_server_data(self):
+    def test_ITG_get_info_use_server_data_without_end(self):
         dp = SimulationDataProvider()
-        dp.initialize_from_server(count=50)
+        return_value = dp.initialize_from_server(count=50)
         if dp.is_initialized is not True:
             self.assertEqual(dp.get_info(), None)
+            self.assertEqual(return_value, None)
             return
         info = dp.get_info()
         self.assertEqual("market" in info, True)
@@ -140,6 +144,45 @@ class SimulationDataProviderTests(unittest.TestCase):
         self.assertEqual("acc_volume" in info, True)
         self.assertEqual(dp.is_initialized, True)
         self.assertEqual(len(dp.data), 50)
+
+    def test_ITG_get_info_use_server_data(self):
+        dp = SimulationDataProvider()
+        end_date = "2020-04-30T07:30:00Z"
+        return_value = dp.initialize_from_server(end=end_date, count=50)
+        if dp.is_initialized is not True:
+            self.assertEqual(dp.get_info(), None)
+            self.assertEqual(return_value, None)
+            return
+        info = dp.get_info()
+        self.assertEqual("market" in info, True)
+        self.assertEqual("date_time" in info, True)
+        self.assertEqual("opening_price" in info, True)
+        self.assertEqual("high_price" in info, True)
+        self.assertEqual("low_price" in info, True)
+        self.assertEqual("closing_price" in info, True)
+        self.assertEqual("acc_price" in info, True)
+        self.assertEqual("acc_volume" in info, True)
+        self.assertEqual(dp.is_initialized, True)
+        self.assertEqual(len(dp.data), 50)
+
+        self.assertEqual(info["market"], "KRW-BTC")
+        self.assertEqual(info["date_time"], "2020-04-30T15:40:00")
+        self.assertEqual(info["opening_price"], 11356000.0)
+        self.assertEqual(info["high_price"], 11372000.0)
+        self.assertEqual(info["low_price"], 11356000.0)
+        self.assertEqual(info["closing_price"], 11372000.0)
+        self.assertEqual(info["acc_price"], 116037727.81296)
+        self.assertEqual(info["acc_volume"], 10.20941879)
+
+        info = dp.get_info()
+        self.assertEqual(info["market"], "KRW-BTC")
+        self.assertEqual(info["date_time"], "2020-04-30T15:41:00")
+        self.assertEqual(info["opening_price"], 11370000.0)
+        self.assertEqual(info["high_price"], 11372000.0)
+        self.assertEqual(info["low_price"], 11360000.0)
+        self.assertEqual(info["closing_price"], 11370000.0)
+        self.assertEqual(info["acc_price"], 239216440.29876)
+        self.assertEqual(info["acc_volume"], 21.05049702)
 
     def test_ITG_get_info_use_json_file(self):
         dp = SimulationDataProvider()
