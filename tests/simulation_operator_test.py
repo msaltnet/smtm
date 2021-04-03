@@ -84,9 +84,7 @@ class SimulationOperatorTests(unittest.TestCase):
         sop.initialize_simulation(
             "apple", "kiwi", data_provider, strategy, trader, analyzer, "papaya", "pear", "grape"
         )
-        data_provider.initialize_from_server.assert_called_once_with(
-            "apple", end="papaya", count="pear"
-        )
+        data_provider.initialize_from_server.assert_called_once_with(end="papaya", count="pear")
 
     def test_initialize_simulation_update_tag_correctly(self):
         operator = SimulationOperator()

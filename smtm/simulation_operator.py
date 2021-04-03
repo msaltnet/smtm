@@ -49,7 +49,7 @@ class SimulationOperator(Operator):
         self.tag = end_str + "-" + str(self.count) + "-BTC-" + str(round(time.time()))
 
         try:
-            data_provider.initialize_from_server(http, end=end, count=count)
+            data_provider.initialize_from_server(end=end, count=count)
             trader.initialize(http, end=end, count=count, budget=budget)
             strategy.initialize(budget)
 
