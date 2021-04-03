@@ -109,9 +109,12 @@ class VirtualMarket:
         """
         현금을 포함한 모든 자산 정보를 제공한다
 
-        balance: 계좌 현금 잔고
-        asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
-        quote: 종목별 현재 가격 딕셔너리
+        returns:
+        {
+            balance: 계좌 현금 잔고
+            asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
+            quote: 종목별 현재 가격 딕셔너리
+        }
         """
         asset_info = {"balance": self.balance}
         quote = None

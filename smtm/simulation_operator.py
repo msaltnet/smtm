@@ -18,6 +18,7 @@ class SimulationOperator(Operator):
         self.count = 0
         self.budget = 0
         self.tag = "simulation-tag"
+        self.last_report = None
 
     def initialize_simulation(
         self,
@@ -53,9 +54,17 @@ class SimulationOperator(Operator):
             trader.initialize(http, end=end, count=count, budget=budget)
             strategy.initialize(budget)
 
-            def handle_info_request(name, callback):
+            def handle_info_request(name):
+                # TODO : wait async function
                 if name == "asset":
-                    trader.send_account_info_request(callback)
+                    account_info = None
+
+                    def account_info_callback(info):
+                        nonlocal account_info
+                        account_info = info
+
+                    trader.send_account_info_request(account_info_callback)
+                    return account_info
 
             analyzer.initialize(handle_info_request, True)
         except (AttributeError, UserWarning) as msg:
@@ -77,7 +86,7 @@ class SimulationOperator(Operator):
             def send_request_callback(result):
                 self.logger.info("send_request_callback is called")
                 if result["msg"] == "game-over":
-                    self.analyzer.create_report(tag=self.tag)
+                    self.last_report = self.analyzer.create_report(tag=self.tag)
                     self.state = "terminated"
                     return
                 self.strategy.update_result(result)
@@ -95,6 +104,32 @@ class SimulationOperator(Operator):
         self.logger.debug("##################### trading is completed")
         self._start_timer()
         return True
+
+    def get_score(self, callback):
+        """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
+        시뮬레이션이 종료된 경우 마지막 수익률 전달한다
+
+        Returns:
+        (
+            start_budget: 시작 자산
+            final_balance: 최종 자산
+            cumulative_return : 기준 시점부터 누적 수익률
+            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+        )
+        """
+
+        if self.state != "running":
+            self.logger.info(f"already terminated return last report")
+            callback(self.last_report["summary"])
+            return
+
+        def get_and_return_score(task):
+            try:
+                task["callback"](self.analyzer.get_return_report())
+            except TypeError:
+                self.logger.error("invalid callback")
+
+        self.worker.post_task({"runnable": get_and_return_score, "callback": callback})
 
     def start(self):
         if self.state != "ready":

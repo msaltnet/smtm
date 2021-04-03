@@ -447,10 +447,10 @@ class AnalyzerTests(unittest.TestCase):
         """
         {
             "summary": (
-                cumulative_return: 기준 시점부터 누적 수익률
+                start_budget: 시작 자산
+                final_balance: 최종 자산
+                cumulative_return : 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
-                asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
-                date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
             ),
             "trading_table" : [
                 {

@@ -43,9 +43,9 @@ class SimulationOperatorTests(unittest.TestCase):
         )
         analyzer.initialize.assert_called_once_with(ANY, True)
         update_info_func = analyzer.initialize.call_args[0][0]
-        update_info_func("asset", "applemango")
-        trader.send_account_info_request.assert_called_once_with("applemango")
-        update_info_func("mango", "applemango")
+        update_info_func("asset")
+        trader.send_account_info_request.assert_called_once_with(ANY)
+        update_info_func("mango")
         trader.send_account_info_request.assert_called_once()
         self.assertEqual(sop.end, "papaya")
         self.assertEqual(sop.count, "pear")
@@ -269,3 +269,38 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.set_interval(27)
         operator._excute_trading(None)
         trader_mock.send_request.assert_not_called()
+
+    def test_get_score_should_call_work_post_task_with_correct_task(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = SimulationOperator()
+        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        operator.worker = MagicMock()
+        operator.state = "running"
+        operator.get_score("dummy")
+        operator.worker.post_task.assert_called_once_with({"runnable": ANY, "callback": "dummy"})
+
+        operator.analyzer = MagicMock()
+        operator.analyzer.get_return_report.return_value = "grape"
+        task = {"runnable": MagicMock(), "callback": MagicMock()}
+        runnable = operator.worker.post_task.call_args[0][0]["runnable"]
+        runnable(task)
+        operator.analyzer.get_return_report.assert_called_once()
+        task["callback"].assert_called_once_with("grape")
+
+    def test_get_score_call_callback_with_last_report_when_state_is_NOT_running(self):
+        timer_mock = Mock()
+        threading_mock = Mock()
+        threading_mock.Timer = MagicMock(return_value=timer_mock)
+
+        operator = SimulationOperator()
+        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        operator.worker = MagicMock()
+        operator.state = "pear"
+        operator.last_report = {"summary": "apple_report"}
+        callback = MagicMock()
+        operator.get_score(callback)
+        operator.worker.post_task.assert_not_called()
+        callback.assert_called_once_with("apple_report")
