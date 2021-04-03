@@ -94,13 +94,13 @@ class Analyzer:
         new = copy.deepcopy(result)
         new["kind"] = 2
         self.result.append(new)
-        self.update_info_func("asset", self.put_asset_info)
+        self.put_asset_info(self.update_info_func("asset"))
 
     def initialize(self, update_info_func, is_simulation=False):
         """콜백 함수를 입력받아 초기화한다
 
         Args:
-            update_info_func: 거래 데이터를 요청하는 콜백 함수로 func(arg1, arg2) arg1은 정보 타입, arg2는 콜백 함수
+            update_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
 
         """
         self.update_info_func = update_info_func
@@ -116,7 +116,7 @@ class Analyzer:
         self.request = []
         self.result = []
         self.asset_record_list = []
-        self.update_info_func("asset", self.put_asset_info)
+        self.put_asset_info(self.update_info_func("asset"))
 
     def make_score_record(self, new_info):
         """수익률 기록을 생성한다
@@ -203,7 +203,7 @@ class Analyzer:
                 date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
             )
         """
-        self.update_info_func("asset", self.put_asset_info)
+        self.put_asset_info(self.update_info_func("asset"))
         try:
             start_value = self.__get_start_property_value()
             last_value = self.__get_last_property_value()

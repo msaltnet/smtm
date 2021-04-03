@@ -47,6 +47,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         analyzer.initialize("mango")
         analyzer.update_info_func = MagicMock()
+        analyzer.put_asset_info = MagicMock()
 
         dummy_result = {"request": {"id": "orange"}, "price": 5000, "amount": 1}
         analyzer.put_result(dummy_result)
@@ -79,18 +80,21 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(analyzer.result[-1]["price"], 500)
         self.assertEqual(analyzer.result[-1]["amount"], 0.0000000000000000000000001)
         self.assertEqual(analyzer.result[-1]["kind"], 2)
+        analyzer.update_info_func.assert_called()
 
     def test_put_result_call_update_info_func_with_asset_type_and_callback(self):
         analyzer = Analyzer()
         analyzer.initialize("mango")
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
         dummy_result = {
             "request": {"id": "banana"},
             "price": 500,
             "amount": 0.0000000000000000000000001,
         }
         analyzer.put_result(dummy_result)
-        analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
+        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_initialize_keep_update_info_func(self):
         analyzer = Analyzer()
@@ -113,13 +117,16 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_make_start_point_call_update_info_func_with_asset_type_and_callback(self):
         analyzer = Analyzer()
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
         analyzer.make_start_point()
-        analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
+        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_make_start_point_clear_asset_info_and_request_result(self):
         analyzer = Analyzer()
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
         analyzer.request.append("mango")
         analyzer.result.append("banana")
         analyzer.asset_record_list.append("apple")
@@ -127,6 +134,8 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.request), 0)
         self.assertEqual(len(analyzer.result), 0)
         self.assertEqual(len(analyzer.asset_record_list), 0)
+        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(self):
         analyzer = Analyzer()
@@ -284,8 +293,9 @@ class AnalyzerTests(unittest.TestCase):
             "closing_price": 5500,
             "acc_price": 1500000000,
             "acc_volume": 1500,
+            "kind": 0,
         }
-        analyzer.put_trading_info(dummy_info)
+        analyzer.infos.append(dummy_info)
 
         dummy_request = {
             "id": "1607862457.560075",
@@ -293,8 +303,9 @@ class AnalyzerTests(unittest.TestCase):
             "price": 5000,
             "amount": 1,
             "date_time": "2020-02-23T00:00:00",
+            "kind": 1,
         }
-        analyzer.put_request(dummy_request)
+        analyzer.request.append(dummy_request)
 
         dummy_result = {
             "request": {"id": "1607862457.560075"},
@@ -304,8 +315,9 @@ class AnalyzerTests(unittest.TestCase):
             "msg": "success",
             "balance": 30000,
             "date_time": "2020-02-23T00:00:00",
+            "kind": 2,
         }
-        analyzer.put_result(dummy_result)
+        analyzer.result.append(dummy_result)
 
         dummy_asset_info = {
             "balance": 23456,
@@ -319,7 +331,17 @@ class AnalyzerTests(unittest.TestCase):
             "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
             "quote": {"banana": 2000, "mango": 300, "apple": 750},
         }
-        analyzer.put_asset_info(target_dummy_asset)
+        analyzer.asset_record_list.append(target_dummy_asset)
+        analyzer.score_record_list.append(
+            {
+                "balance": 5000,
+                "cumulative_return": -65.248,
+                "price_change_ratio": {"mango": -50.0, "apple": 50.0},
+                "asset": [("mango", 500, 300, 5.23, -40.0), ("apple", 250, 750, 2.11, 200.0)],
+                "date_time": "2020-02-23T00:00:00",
+                "kind": 3,
+            }
+        )
 
         dummy_info2 = {
             "market": "orange",
@@ -330,8 +352,9 @@ class AnalyzerTests(unittest.TestCase):
             "closing_price": 8000,
             "acc_price": 15000000,
             "acc_volume": 15000,
+            "kind": 0,
         }
-        analyzer.put_trading_info(dummy_info2)
+        analyzer.infos.append(dummy_info2)
 
         dummy_request2 = {
             "id": "1607862457.560075",
@@ -339,8 +362,9 @@ class AnalyzerTests(unittest.TestCase):
             "price": 6000,
             "amount": 0.5,
             "date_time": "2020-02-23T00:01:00",
+            "kind": 1,
         }
-        analyzer.put_request(dummy_request2)
+        analyzer.request.append(dummy_request2)
 
         dummy_result2 = {
             "request": {"id": "1607862457.560075"},
@@ -350,15 +374,27 @@ class AnalyzerTests(unittest.TestCase):
             "msg": "success",
             "balance": 33000,
             "date_time": "2020-02-23T00:01:00",
+            "kind": 2,
         }
-        analyzer.put_result(dummy_result2)
+        analyzer.result.append(dummy_result2)
 
         target_dummy_asset2 = {
             "balance": 5000,
             "asset": {"mango": (600, 4.23), "apple": (500, 3.11)},
             "quote": {"banana": 3000, "mango": 200, "apple": 0.750},
         }
-        analyzer.put_asset_info(target_dummy_asset2)
+        analyzer.asset_record_list.append(target_dummy_asset2)
+        analyzer.score_record_list.append(
+            {
+                "balance": 5000,
+                "cumulative_return": -75.067,
+                "price_change_ratio": {"mango": -66.667, "apple": -99.85},
+                "asset": [("mango", 600, 200, 4.23, -66.667), ("apple", 500, 0.75, 3.11, -99.85)],
+                "date_time": "2020-02-23T00:01:00",
+                "kind": 3,
+            }
+        )
+
         return (
             dummy_info,
             dummy_request,
@@ -381,9 +417,10 @@ class AnalyzerTests(unittest.TestCase):
         """
         analyzer = Analyzer()
         analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
-
         self.fill_test_data_for_report(analyzer)
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
+
         report = analyzer.get_return_report()
 
         self.assertEqual(len(report), 4)
@@ -396,6 +433,9 @@ class AnalyzerTests(unittest.TestCase):
         # 가격 변동률
         self.assertEqual(report[3]["mango"], -66.667)
         self.assertEqual(report[3]["apple"], -99.85)
+
+        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
@@ -422,7 +462,8 @@ class AnalyzerTests(unittest.TestCase):
         """
         analyzer = Analyzer()
         analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
 
         dummy_data = self.fill_test_data_for_report(analyzer)
 
@@ -466,13 +507,18 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][3]["mango"], -66.667)
         self.assertEqual(report["summary"][3]["apple"], -99.85)
 
+        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
+
     @patch("mplfinance.plot")
     def test_create_report_call_update_info_func_with_asset_type_and_callback(self, mock_plot):
         analyzer = Analyzer()
         analyzer.initialize("mango")
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
         analyzer.create_report()
-        analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
+        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
@@ -483,7 +529,8 @@ class AnalyzerTests(unittest.TestCase):
     ):
         analyzer = Analyzer()
         analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
 
         self.fill_test_data_for_report(analyzer)
 
@@ -521,6 +568,9 @@ class AnalyzerTests(unittest.TestCase):
         report = analyzer.create_report(tag=tag, filename=filename)
         mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + filename + ".txt", "w")
 
+        analyzer.update_info_func.assert_called()
+        analyzer.put_asset_info.assert_called()
+
     @patch("mplfinance.make_addplot")
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
@@ -548,7 +598,8 @@ class AnalyzerTests(unittest.TestCase):
         mock_DataFrame.return_value = dummyDataFrame
         analyzer = Analyzer()
         analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
         filename = "apple"
 
         dummy_data = self.fill_test_data_for_report(analyzer)
@@ -646,6 +697,8 @@ class AnalyzerTests(unittest.TestCase):
                 fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25
             ),
         )
+        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_get_trading_results_return_result(self):
         analyzer = Analyzer()
