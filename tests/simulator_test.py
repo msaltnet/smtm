@@ -205,3 +205,15 @@ class SimulatorTests(unittest.TestCase):
         simulator.operator = MagicMock()
         simulator.terminate()
         simulator.operator.stop.assert_called()
+
+    def test_run_single_call_start_and_terminate(self):
+        simulator = Simulator()
+        simulator.start = MagicMock()
+        simulator.initialize = MagicMock()
+        simulator.terminate = MagicMock()
+        simulator.operator = MagicMock()
+        simulator.operator.state = "terminated"
+        simulator.run_single()
+        simulator.start.assert_called()
+        simulator.initialize.assert_called()
+        simulator.terminate.assert_called()

@@ -1,9 +1,11 @@
 """smtm 모듈의 시작
 mode:
-    0 : simulator
+    0 : simulator with interative mode
     1 : controller for real trading
-Example) python -m smtm --mode=0 --count 100 --end 2020-12-20T18:00:00 --term 1 --strategy=0
+    2 : execute single simulation
+Example) python -m smtm --mode=0
 Example) python -m smtm --mode=1
+Example) python -m smtm --mode=2 --count 100 --end 2020-12-20T18:00:00 --term 1 --strategy=0
 """
 import argparse
 from . import Simulator
@@ -24,5 +26,8 @@ if __name__ == "__main__":
     if args.mode == "0":
         simulator = Simulator(args.end, args.count, args.term, args.strategy)
         simulator.main()
+    elif args.mode == "2":
+        simulator = Simulator(args.end, args.count, args.term, args.strategy)
+        simulator.run_single()
     else:
         print("Sorry. Simulator available only at this time. Run simulation mode use '--mode=0'")

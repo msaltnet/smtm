@@ -5,6 +5,7 @@ SimulationOperator를 사용해서 시뮬레이션을 컨트롤하는 모듈
 import signal
 import threading
 import requests
+import time
 from . import (
     LogManager,
     Analyzer,
@@ -157,6 +158,14 @@ class Simulator:
                 self.on_command(key)
             except EOFError:
                 break
+
+    def run_single(self):
+        self.initialize()
+        self.start()
+        while self.operator.state == "running":
+            time.sleep(0.5)
+
+        self.terminate()
 
     def print_help(self):
         """가이드 문구 출력"""

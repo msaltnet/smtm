@@ -77,6 +77,7 @@ class VirtualMarket:
         self.QUERY_STRING["to"] = self.end
         self.QUERY_STRING["count"] = self.count
 
+        print(self.QUERY_STRING)
         try:
             response = self.http.request("GET", self.URL, params=self.QUERY_STRING)
             response.raise_for_status()

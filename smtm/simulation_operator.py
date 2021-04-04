@@ -75,7 +75,7 @@ class SimulationOperator(Operator):
     def _excute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다"""
         self.logger.info(
-            f"##################### trading is started : {self.turn + 1} / {self.count - 1}"
+            f"##################### trading is started : {self.turn + 1} / {int(self.count) - 1}"
         )
         self.is_timer_running = False
         try:
