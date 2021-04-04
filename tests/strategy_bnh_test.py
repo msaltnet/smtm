@@ -50,40 +50,40 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_result = {
             "type": "orange",
             "request": {"id": "banana"},
-            "price": "apple",
-            "amount": "kiwi",
+            "price": 500,
+            "amount": 0.001,
             "msg": "melon",
             "balance": 500,
         }
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.result[-1]["type"], "orange")
         self.assertEqual(bnh.result[-1]["request"]["id"], "banana")
-        self.assertEqual(bnh.result[-1]["price"], "apple")
-        self.assertEqual(bnh.result[-1]["amount"], "kiwi")
+        self.assertEqual(bnh.result[-1]["price"], 500)
+        self.assertEqual(bnh.result[-1]["amount"], 0.001)
         self.assertEqual(bnh.result[-1]["msg"], "melon")
         self.assertEqual(bnh.result[-1]["balance"], 500)
 
     def test_update_result_update_balance(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(100, 10)
-        self.assertEqual(bnh.balance, 100)
+        bnh.initialize(100000, 10)
+        self.assertEqual(bnh.balance, 100000)
 
         dummy_result = {
             "type": "buy",
             "request": {"id": "orange"},
-            "price": 10,
+            "price": 10000,
             "amount": 5,
             "msg": "melon",
-            "balance": 100,
+            "balance": 9500,
         }
         bnh.update_result(dummy_result)
-        self.assertEqual(bnh.balance, 100)
+        self.assertEqual(bnh.balance, 49975)
         self.assertEqual(bnh.result[-1]["type"], "buy")
         self.assertEqual(bnh.result[-1]["request"]["id"], "orange")
-        self.assertEqual(bnh.result[-1]["price"], 10)
+        self.assertEqual(bnh.result[-1]["price"], 10000)
         self.assertEqual(bnh.result[-1]["amount"], 5)
         self.assertEqual(bnh.result[-1]["msg"], "melon")
-        self.assertEqual(bnh.result[-1]["balance"], 100)
+        self.assertEqual(bnh.result[-1]["balance"], 9500)
 
     def test_update_result_ignore_result_when_not_yet_initialized(self):
         bnh = StrategyBuyAndHold()
@@ -111,13 +111,13 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_last_data_is_None(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(1000, 100, False)
+        bnh.initialize(5000, 100, False)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
         request = bnh.get_request()
         self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 100 / 20000000)
+        self.assertEqual(request["amount"], 1000 / 20000000)
         self.assertEqual(request["type"], "buy")
         bnh.update_trading_info(None)
         request = bnh.get_request()
@@ -132,16 +132,16 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(request["price"], 0)
         self.assertEqual(request["amount"], 0)
 
-    def test_get_request_return_turn_over_when_balance_is_smaller_than_target_budget(self):
+    def test_get_request_use_balance_when_balance_is_smaller_than_target_budget(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(1000, 10, False)
         dummy_info = {}
         dummy_info["closing_price"] = 20000
         bnh.update_trading_info(dummy_info)
-        bnh.balance = 10
+        bnh.balance = 100
         request = bnh.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
+        self.assertEqual(request["price"], 20000)
+        self.assertEqual(request["amount"], 0.005)
 
     def test_get_request_return_turn_over_when_balance_is_smaller_than_min_price(self):
         bnh = StrategyBuyAndHold()
@@ -156,13 +156,13 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_correct_request(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(1000, 100, False)
+        bnh.initialize(5000, 100, False)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
         request = bnh.get_request()
         self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 100 / 20000000)
+        self.assertEqual(request["amount"], 1000 / 20000000)
         self.assertEqual(request["type"], "buy")
 
     def test_get_request_return_same_datetime_at_simulation(self):

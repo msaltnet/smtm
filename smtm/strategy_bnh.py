@@ -21,6 +21,7 @@ class StrategyBuyAndHold(Strategy):
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+    COMMISSION_RATIO = 0.0005
 
     def __init__(self):
         self.is_intialized = False
@@ -45,7 +46,7 @@ class StrategyBuyAndHold(Strategy):
             return
 
         try:
-            self.balance = result["balance"]
+            self.balance -= round(int(result["price"]) * float(result["amount"]) * (1 + self.COMMISSION_RATIO))
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {result['price']}, amount: {result['amount']}")
@@ -59,8 +60,8 @@ class StrategyBuyAndHold(Strategy):
         """
         데이터 분석 결과에 따라 거래 요청 정보를 생성한다
 
-        10번에 걸쳐 분할 매수 후 홀딩하는 전략
-        마지막 종가로 처음 예산의 1/10에 해당하는 양 만큼 매수시도
+        5번에 걸쳐 분할 매수 후 홀딩하는 전략
+        마지막 종가로 처음 예산의 1/5에 해당하는 양 만큼 매수시도
         Returns:
             {
                 "id": 요청 정보 id "1607862457.560075"
@@ -81,7 +82,7 @@ class StrategyBuyAndHold(Strategy):
                 last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
                 now = last_dt.isoformat()
 
-            target_budget = self.budget / 10
+            target_budget = self.budget / 5
             if last_data is None:
                 return {
                     "id": str(round(time.time(), 3)),
@@ -91,8 +92,8 @@ class StrategyBuyAndHold(Strategy):
                     "date_time": now,
                 }
 
-            if self.min_price > target_budget:
-                self.logger.info("target_budget is too small")
+            if self.min_price > target_budget or self.min_price > self.balance:
+                self.logger.info("target_budget or balance is too small")
                 return {
                     "id": str(round(time.time(), 3)),
                     "type": "buy",
@@ -102,14 +103,7 @@ class StrategyBuyAndHold(Strategy):
                 }
 
             if target_budget > self.balance:
-                self.logger.info("blance is too small")
-                return {
-                    "id": str(round(time.time(), 3)),
-                    "type": "buy",
-                    "price": 0,
-                    "amount": 0,
-                    "date_time": now,
-                }
+                target_budget = self.balance
 
             target_amount = target_budget / last_data["closing_price"]
             trading_request = {
