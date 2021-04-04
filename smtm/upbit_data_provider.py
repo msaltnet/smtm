@@ -22,14 +22,14 @@ class UpbitDataProvider(DataProvider):
 
     def get_info(self):
         """실시간 거래 정보 전달한다"""
-        data = self._get_data_from_server()
+        data = self.__get_data_from_server()
         return self.__create_candle_info(data[0])
 
-    def initialize(self, http):
-        """데이터를 가져와서 초기화한다"""
-        self.query_string = {"market": "KRW-BTC"}
+    def set_market(self, market="KRW-BTC"):
+        """마켓을 설정한다"""
+        self.query_string["market"] = market
 
-    def _create_candle_info(self, data):
+    def __create_candle_info(self, data):
         try:
             return {
                 "market": data["market"],
@@ -45,14 +45,17 @@ class UpbitDataProvider(DataProvider):
             self.logger.warning("invalid data for candle info")
             return None
 
-    def _get_data_from_server(self):
+    def __get_data_from_server(self):
         try:
             response = requests.get(self.URL, params=self.query_string)
             response.raise_for_status()
             return response.json()
-        except ValueError:
+        except ValueError as error:
             self.logger.error("Invalid data from server")
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
+            raise UserWarning("Fail get data from sever") from error
+        except requests.exceptions.HTTPError as error:
+            self.logger.error(error)
+            raise UserWarning("Fail get data from sever") from error
+        except requests.exceptions.RequestException as error:
+            self.logger.error(error)
+            raise UserWarning("Fail get data from sever") from error
