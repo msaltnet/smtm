@@ -146,7 +146,7 @@ class Analyzer:
             cumulative_return = 0
             new_asset_list = []
             price_change_ratio = {}
-            self.logger.info(f"quote {current_quote}")
+            self.logger.debug(f"quote {current_quote}")
 
             for name, item in new_info["asset"].items():
                 item_yield = 0

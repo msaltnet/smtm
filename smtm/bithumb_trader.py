@@ -125,7 +125,7 @@ class BithumbTrader(Trader):
                 name = self.MARKET
                 amount = value
                 result["asset"][name] = (price, amount)
-        self.logger.info(f"account info {response}")
+        self.logger.debug(f"account info {response}")
         callback(result)
 
     def _create_success_result(self, request):
@@ -165,7 +165,7 @@ class BithumbTrader(Trader):
 
     def _query_order_result(self, task):
         waiting_request = {}
-        self.logger.info(f"waiting order count {len(self.request_map)}")
+        self.logger.debug(f"waiting order count {len(self.request_map)}")
         for request_id, request_info in self.request_map.items():
             try:
                 order = self._query_order(self.MARKET, request_info["order_id"])
@@ -182,7 +182,7 @@ class BithumbTrader(Trader):
                 self.logger.error(f"query_order fail! request_id {request_id}")
 
         self.request_map = waiting_request
-        self.logger.info(f"After update, waiting order count {len(self.request_map)}")
+        self.logger.debug(f"After update, waiting order count {len(self.request_map)}")
         self._stop_timer()
         if len(self.request_map) > 0:
             self._start_timer()

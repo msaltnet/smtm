@@ -94,7 +94,7 @@ class UpbitTrader(Trader):
         except TypeError:
             self.logger.error("invalid response")
             result = "error!"
-        self.logger.info(f"account info {response}")
+        self.logger.debug(f"account info {response}")
         callback(result)
 
     def _create_success_result(self, request):
@@ -126,11 +126,11 @@ class UpbitTrader(Trader):
     def _query_order_result(self, task):
         results = self._query_order_list()
         waiting_request = {}
-        self.logger.info(f"waiting order count {len(self.request_map)}")
+        self.logger.debug(f"waiting order count {len(self.request_map)}")
         for request_id, request_info in self.request_map.items():
             for order in results:
                 if order["uuid"] == request_info["uuid"]:
-                    self.logger.info(f"find order! {request_info} {order}")
+                    self.logger.debug(f"find order! {request_info} {order}")
                     if order["state"] == "done" or order["state"] == "cancel":
                         result = request_info["result"]
                         result["date_time"] = order["created_at"]
@@ -138,7 +138,7 @@ class UpbitTrader(Trader):
                     elif order["state"] == "wait":
                         waiting_request[request_id] = request_info
         self.request_map = waiting_request
-        self.logger.info(f"After update, waiting order count {len(self.request_map)}")
+        self.logger.debug(f"After update, waiting order count {len(self.request_map)}")
         self._stop_timer()
         if len(self.request_map) > 0:
             self._start_timer()

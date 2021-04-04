@@ -74,8 +74,8 @@ class SimulationOperator(Operator):
 
     def _excute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다"""
-        self.logger.debug(
-            f"##################### trading is started : {self.turn + 1} / {self.count}"
+        self.logger.info(
+            f"##################### trading is started : {self.turn + 1} / {self.count - 1}"
         )
         self.is_timer_running = False
         try:
@@ -84,7 +84,7 @@ class SimulationOperator(Operator):
             self.analyzer.put_trading_info(trading_info)
 
             def send_request_callback(result):
-                self.logger.info("send_request_callback is called")
+                self.logger.debug("send_request_callback is called")
                 if result["msg"] == "game-over":
                     self.last_report = self.analyzer.create_report(tag=self.tag)
                     self.state = "terminated"
@@ -119,7 +119,7 @@ class SimulationOperator(Operator):
         """
 
         if self.state != "running":
-            self.logger.info(f"already terminated return last report")
+            self.logger.debug(f"already terminated return last report")
             callback(self.last_report["summary"])
             return
 

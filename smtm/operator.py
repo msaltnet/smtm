@@ -114,7 +114,7 @@ class Operator:
             self.analyzer.put_trading_info(trading_info)
 
             def send_request_callback(result):
-                self.logger.info("send_request_callback is called")
+                self.logger.debug("send_request_callback is called")
                 self.strategy.update_result(result)
                 self.analyzer.put_result(result)
 
@@ -196,7 +196,7 @@ class Operator:
 
         def send_trading_and_return_result(task):
             def send_manual_request_callback(result):
-                self.logger.info("send_manual_request_callback is called")
+                self.logger.debug("send_manual_request_callback is called")
                 self.strategy.update_result(result)
                 self.analyzer.put_result(result)
                 try:

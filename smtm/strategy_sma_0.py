@@ -61,11 +61,11 @@ class StrategySma0(Strategy):
             if sma_short > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
-                self.logger.info(f"process_unit updated {self.process_unit}")
+                self.logger.debug(f"process_unit updated {self.process_unit}")
             elif sma_short < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
-                self.logger.info(f"process_unit updated {self.process_unit}")
+                self.logger.debug(f"process_unit updated {self.process_unit}")
         except (KeyError, TypeError):
             self.logger.warning("invalid info")
 
@@ -158,7 +158,7 @@ class StrategySma0(Strategy):
             budget = self.balance
 
         if self.min_price > budget or self.process_unit[0] <= 0:
-            self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
+            self.logger.debug(f"target_budget is too small or invalid unit {self.process_unit}")
             return {
                 "id": str(round(time.time(), 3)),
                 "type": "buy",

@@ -123,9 +123,9 @@ class VirtualMarket:
                 self.data[self.turn_count]["market"]: self.data[self.turn_count]["opening_price"]
             }
             name = None
-            self.logger.info(f"asset list length {len(self.asset)} =====================")
+            self.logger.debug(f"asset list length {len(self.asset)} =====================")
             for name, item in self.asset.items():
-                self.logger.info(f"item: {name}, item price: {item[0]}, amount: {item[1]}")
+                self.logger.debug(f"item: {name}, item price: {item[0]}, amount: {item[1]}")
         except (KeyError, IndexError) as msg:
             self.logger.error(f"invalid trading data {msg}")
             return None

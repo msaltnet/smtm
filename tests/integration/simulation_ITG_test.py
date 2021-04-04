@@ -5,6 +5,7 @@ from smtm import SimulationTrader
 from smtm import StrategyBuyAndHold
 from smtm import StrategySma0
 from smtm import Analyzer
+from smtm import LogManager
 from .data import simulation_data
 from unittest.mock import *
 import requests
@@ -14,6 +15,7 @@ import time
 
 class SimulationIntegrationTests(unittest.TestCase):
     def setUp(self):
+        LogManager.set_stream_level(20)
         pass
 
     def tearDown(self):
