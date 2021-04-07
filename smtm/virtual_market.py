@@ -1,5 +1,6 @@
 """가상 거래소"""
 import json
+import requests
 from datetime import datetime, timedelta
 from .log_manager import LogManager
 
@@ -8,7 +9,6 @@ class VirtualMarket:
     """
     거래 요청 정보를 받아서 처리하여 가상의 거래 결과 정보를 생성한다
 
-    http: http client 모듈(requests)
     end: 거래기간의 끝
     count: 거래기간까지 가져올 데이터의 갯수
     data: 사용될 거래 정보 목록
@@ -25,7 +25,6 @@ class VirtualMarket:
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_initialized = False
-        self.http = None
         self.end = "2020-04-30 00:00:00"
         self.count = 100
         self.data = None
@@ -34,24 +33,22 @@ class VirtualMarket:
         self.commission_ratio = 0.0005
         self.asset = {}
 
-    def initialize(self, http, end, count):
+    def initialize(self, end, count):
         """
         실제 거래소에서 거래 데이터를 가져와서 초기화한다
 
-        http: http client 인스턴스
         end: 언제까지의 거래기간 정보를 사용할 것인지에 대한 날짜 시간 정보
         count: 거래기간까지 가져올 데이터의 갯수
         """
         if self.is_initialized:
             return
 
-        self.http = http
         if end is not None:
             self.end = end
         if count is not None:
             self.count = count
         self.__update_data_from_server()
-        self.logger.debug(f"Virtual Market is initialized {end}, {count}")
+        self.logger.debug(f"Virtual Market is initialized end: {end}, count: {count}")
 
     def initialize_from_file(self, filepath, end, count):
         """
@@ -79,9 +76,9 @@ class VirtualMarket:
 
         print(self.QUERY_STRING)
         try:
-            response = self.http.request("GET", self.URL, params=self.QUERY_STRING)
+            response = requests.get(self.URL, params=self.QUERY_STRING)
             response.raise_for_status()
-            self.data = json.loads(response.text)
+            self.data = response.json()
             self.data.reverse()
             self.is_initialized = True
         except AttributeError as msg:
@@ -90,10 +87,10 @@ class VirtualMarket:
         except ValueError:
             self.logger.error("Invalid data from server")
             raise UserWarning("fail to get data from server")
-        except self.http.exceptions.HTTPError as err:
+        except requests.exceptions.HTTPError as err:
             self.logger.error(err)
             raise UserWarning("fail to get data from server")
-        except self.http.exceptions.RequestException as err:
+        except requests.exceptions.RequestException as err:
             self.logger.error(err)
             raise UserWarning("fail to get data from server")
 

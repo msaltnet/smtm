@@ -1,81 +1,59 @@
 import os
 import unittest
+import requests
 from smtm import VirtualMarket
 from unittest.mock import *
 
 
-class VirtualMarketTests(unittest.TestCase):
+class VirtualMarketInitializeTests(unittest.TestCase):
     def setUp(self):
-        pass
+        self.patcher = patch("requests.get")
+        self.request_mock = self.patcher.start()
 
     def tearDown(self):
-        pass
+        self.patcher.stop()
 
-    def create_http_mock(self):
-        http_mock = Mock()
-
-        class HTTPError(Exception):
-            def __init__(self, value):
-                self.value = value
-
-            def __str__(self):
-                return self.value
-
-        class RequestException(Exception):
-            def __init__(self, value):
-                self.value = value
-
-            def __str__(self):
-                return self.value
-
-        http_mock.exceptions.HTTPError = HTTPError
-        http_mock.exceptions.RequestException = RequestException
-        return http_mock
-
-    def test_intialize_should_download_from_real_market(self):
+    def test_intialize_should_call_request_get_with_real_market_config(self):
         market = VirtualMarket()
-        http = Mock()
 
         class DummyResponse:
             pass
 
         dummy_response = DummyResponse()
-        dummy_response.text = '[{"market": "test"}]'
+        dummy_response.json = MagicMock()
         dummy_response.raise_for_status = MagicMock()
-        http.request = MagicMock(return_value=dummy_response)
-        market.initialize(http, None, None)
-        http.request.assert_called_once_with("GET", market.URL, params=market.QUERY_STRING)
+        self.request_mock.return_value = dummy_response
+        market.initialize(None, None)
+        self.request_mock.assert_called_once_with(market.URL, params=market.QUERY_STRING)
 
     def test_intialize_should_not_download_again_after_initialized(self):
         market = VirtualMarket()
-        http = Mock()
 
         class DummyResponse:
             pass
 
         dummy_response = DummyResponse()
-        dummy_response.text = '[{"market": "test"}]'
+        dummy_response.json = MagicMock()
         dummy_response.raise_for_status = MagicMock()
-        http.request = MagicMock(return_value=dummy_response)
-        with self.assertRaises(UserWarning):
-            market.initialize(None, None, None)
-
-        market.initialize(http, None, None)
-        market.initialize(http, None, None)
-        http.request.assert_called_once_with("GET", market.URL, params=market.QUERY_STRING)
+        self.request_mock.return_value = dummy_response
+        market.initialize(None, None)
+        market.initialize(None, None)
+        market.initialize(None, None)
+        self.request_mock.assert_called_once_with(market.URL, params=market.QUERY_STRING)
 
     def test_intialize_update_trading_data(self):
         market = VirtualMarket()
-        http = Mock()
 
         class DummyResponse:
             pass
 
         dummy_response = DummyResponse()
-        dummy_response.text = '[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]'
+        dummy_response.json = MagicMock(
+            return_value=[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]
+        )
         dummy_response.raise_for_status = MagicMock()
-        http.request = MagicMock(return_value=dummy_response)
-        market.initialize(http, None, None)
+        self.request_mock.return_value = dummy_response
+        market.initialize(None, None)
         # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
         self.assertEqual(market.data[0]["market"], "apple")
         self.assertEqual(market.data[1]["market"], "banana")
@@ -83,68 +61,41 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_intialize_NOT_initialize_with_invalid_response_data(self):
         market = VirtualMarket()
-        http = Mock()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.text = "mango"
-        http.request = MagicMock(return_value=dummy_response)
+        self.request_mock.side_effect = ValueError()
         with self.assertRaises(UserWarning):
-            market.initialize(http, None, None)
+            market.initialize(None, None)
         self.assertEqual(market.is_initialized, False)
 
     def test_intialize_NOT_initialize_when_receive_error(self):
         market = VirtualMarket()
-        http_mock = self.create_http_mock()
-
-        def raise_exception():
-            raise http_mock.exceptions.HTTPError("HTTPError dummy exception")
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.text = "mango"
-        dummy_response.raise_for_status = raise_exception
-        http_mock.request = MagicMock(return_value=dummy_response)
+        self.request_mock.side_effect = requests.exceptions.HTTPError("dummy exception")
         with self.assertRaises(UserWarning):
-            market.initialize(http_mock, None, None)
+            market.initialize(None, None)
         self.assertEqual(market.is_initialized, False)
 
     def test_intialize_NOT_initialize_when_connection_fail(self):
         market = VirtualMarket()
-        http_mock = self.create_http_mock()
-
-        def raise_exception():
-            raise http_mock.exceptions.RequestException("RequestException dummy exception")
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.text = "mango"
-        dummy_response.raise_for_status = raise_exception
-        http_mock.request = MagicMock(return_value=dummy_response)
+        self.request_mock.side_effect = requests.exceptions.RequestException("dummy exception")
         with self.assertRaises(UserWarning):
-            market.initialize(http_mock, None, None)
+            market.initialize(None, None)
         self.assertEqual(market.is_initialized, False)
 
     def test_initialize_set_default_params(self):
         market = VirtualMarket()
-        http_mock = self.create_http_mock()
 
         class DummyResponse:
             pass
 
         dummy_response = DummyResponse()
-        dummy_response.text = '[{"market": "mango"}]'
+        dummy_response.json = MagicMock(
+            return_value=[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]
+        )
         dummy_response.raise_for_status = MagicMock()
-        http_mock.request = MagicMock(return_value=dummy_response)
-        market.initialize(http_mock, None, None)
+        self.request_mock.return_value = dummy_response
+
+        market.initialize(None, None)
         dummy_response.raise_for_status.assert_called_once()
-        http_mock.request.assert_called_once_with("GET", market.URL, params=market.QUERY_STRING)
+        self.request_mock.assert_called_once_with(market.URL, params=market.QUERY_STRING)
         self.assertEqual(market.is_initialized, True)
         self.assertEqual(market.QUERY_STRING["to"], "2020-04-30 00:00:00")
         self.assertEqual(market.QUERY_STRING["count"], 100)
@@ -164,14 +115,24 @@ class VirtualMarketTests(unittest.TestCase):
             pass
 
         dummy_response = DummyResponse()
-        dummy_response.text = '[{"market": "banana"}]'
+        dummy_response.json = MagicMock(
+            return_value=[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]
+        )
         dummy_response.raise_for_status = MagicMock()
-        http.request = MagicMock(return_value=dummy_response)
-        market.initialize(http, None, None)
-        self.assertEqual(market.data[0]["market"], "banana")
+        self.request_mock.return_value = dummy_response
+        market.initialize(None, None)
+        self.assertEqual(market.data[0]["market"], "apple")
 
         market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        self.assertEqual(market.data[0]["market"], "banana")
+        self.assertEqual(market.data[0]["market"], "apple")
+
+
+class VirtualMarketTests(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
 
     def test_send_request_return_emtpy_result_when_NOT_initialized(self):
         market = VirtualMarket()

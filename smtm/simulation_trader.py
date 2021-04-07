@@ -20,9 +20,9 @@ class SimulationTrader(Trader):
         self.market = VirtualMarket()
         self.is_initialized = False
 
-    def initialize(self, http, end, count, budget):
+    def initialize(self, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""
-        self.market.initialize(http, end, count)
+        self.market.initialize(end, count)
         self.market.deposit(budget)
         self.is_initialized = True
 

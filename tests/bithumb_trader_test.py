@@ -11,27 +11,6 @@ class BithumbTraderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def create_http_mock(self):
-        http_mock = Mock()
-
-        class HTTPError(Exception):
-            def __init__(self, value):
-                self.value = value
-
-            def __str__(self):
-                return self.value
-
-        class RequestException(Exception):
-            def __init__(self, value):
-                self.value = value
-
-            def __str__(self):
-                return self.value
-
-        http_mock.exceptions.HTTPError = HTTPError
-        http_mock.exceptions.RequestException = RequestException
-        return http_mock
-
     def test_send_request_should_call_worker_post_task_correctly(self):
         trader = BithumbTrader()
         trader.worker = MagicMock()

@@ -22,8 +22,6 @@ class SimulationOperator(Operator):
 
     def initialize_simulation(
         self,
-        http,
-        threading,
         data_provider,
         strategy,
         trader,
@@ -39,7 +37,7 @@ class SimulationOperator(Operator):
         count: 사용될 거래 정도 갯수
         budget: 사용될 예산
         """
-        super().initialize(http, threading, data_provider, strategy, trader, analyzer, budget)
+        super().initialize(data_provider, strategy, trader, analyzer, budget)
 
         if end is not None:
             self.end = end
@@ -51,7 +49,7 @@ class SimulationOperator(Operator):
 
         try:
             data_provider.initialize_from_server(end=end, count=count)
-            trader.initialize(http, end=end, count=count, budget=budget)
+            trader.initialize(end=end, count=count, budget=budget)
 
             def handle_info_request(name):
                 # TODO : wait async function

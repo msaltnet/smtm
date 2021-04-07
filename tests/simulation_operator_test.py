@@ -5,111 +5,120 @@ import requests
 import threading
 
 
-class SimulationOperatorTests(unittest.TestCase):
+class SimulationInitializeOperatorTests(unittest.TestCase):
     def setUp(self):
-        pass
+        self.sop = SimulationOperator()
+        self.strategy_mock = MagicMock()
+        self.trader_mock = MagicMock()
+        self.analyzer_mock = MagicMock()
+        self.data_provider_mock = MagicMock()
 
     def tearDown(self):
         pass
 
     def test_initialize_simulation_keep_object_correctly(self):
-        operator = SimulationOperator()
-        strategy = MagicMock()
-        operator.initialize_simulation("apple", "kiwi", "mango", strategy, "orange", "grape")
-        self.assertEqual(operator.http, "apple")
-        self.assertEqual(operator.threading, "kiwi")
-        self.assertEqual(operator.data_provider, "mango")
-        self.assertEqual(operator.strategy, strategy)
-        self.assertEqual(operator.trader, "orange")
-        self.assertEqual(operator.analyzer, "grape")
-        strategy.initialize.assert_called_once_with(500)
+        self.sop.initialize_simulation(
+            self.data_provider_mock,
+            self.strategy_mock,
+            self.trader_mock,
+            self.analyzer_mock,
+        )
+        self.assertEqual(self.sop.data_provider, self.data_provider_mock)
+        self.assertEqual(self.sop.strategy, self.strategy_mock)
+        self.assertEqual(self.sop.trader, self.trader_mock)
+        self.assertEqual(self.sop.analyzer, self.analyzer_mock)
+        self.strategy_mock.initialize.assert_called_once_with(500)
 
     def test_initialize_simulation_call_simulator_trader_initialize_with_config(self):
-        sop = SimulationOperator()
-        trader = Mock()
-        trader.initialize = MagicMock()
-        trader.send_account_info_request = MagicMock()
-        strategy = Mock()
-        data_provider = Mock()
-        analyzer = Mock()
-        analyzer.intialize = MagicMock()
-        self.assertEqual(sop.turn, 0)
-        self.assertEqual(sop.end, "2020-12-20T16:23:00")
-        self.assertEqual(sop.count, 0)
-        self.assertEqual(sop.budget, 0)
-        sop.initialize_simulation(
-            "apple", "kiwi", data_provider, strategy, trader, analyzer, "papaya", "pear", "grape"
+        self.assertEqual(self.sop.turn, 0)
+        self.assertEqual(self.sop.end, "2020-12-20T16:23:00")
+        self.assertEqual(self.sop.count, 0)
+        self.assertEqual(self.sop.budget, 0)
+        self.sop.initialize_simulation(
+            self.data_provider_mock,
+            self.strategy_mock,
+            self.trader_mock,
+            self.analyzer_mock,
+            "papaya",
+            "pear",
+            "grape",
         )
-        trader.initialize.assert_called_once_with(
-            "apple", end="papaya", count="pear", budget="grape"
+        self.trader_mock.initialize.assert_called_once_with(
+            end="papaya", count="pear", budget="grape"
         )
-        analyzer.initialize.assert_called_once_with(ANY, True)
-        update_info_func = analyzer.initialize.call_args[0][0]
+        self.analyzer_mock.initialize.assert_called_once_with(ANY, True)
+        update_info_func = self.analyzer_mock.initialize.call_args[0][0]
         update_info_func("asset")
-        trader.send_account_info_request.assert_called_once_with(ANY)
+        self.trader_mock.send_account_info_request.assert_called_once_with(ANY)
         update_info_func("mango")
-        trader.send_account_info_request.assert_called_once()
-        self.assertEqual(sop.end, "papaya")
-        self.assertEqual(sop.count, "pear")
-        self.assertEqual(sop.budget, "grape")
+        self.trader_mock.send_account_info_request.assert_called_once()
+        self.assertEqual(self.sop.end, "papaya")
+        self.assertEqual(self.sop.count, "pear")
+        self.assertEqual(self.sop.budget, "grape")
 
     def test_initialize_simulation_call_strategy_initialize_with_config(self):
-        sop = SimulationOperator()
-        trader = Mock()
-        strategy = Mock()
-        strategy.initialize = MagicMock()
-        data_provider = Mock()
-        analyzer = Mock()
-        data_provider.initialize_from_server = MagicMock()
-        sop.initialize_simulation(
-            "apple", "kiwi", data_provider, strategy, trader, analyzer, "papaya", "pear", "grape"
+        self.sop.initialize_simulation(
+            self.data_provider_mock,
+            self.strategy_mock,
+            self.trader_mock,
+            self.analyzer_mock,
+            "papaya",
+            "pear",
+            "grape",
         )
-        strategy.initialize.assert_called_once_with("grape")
-
-    def test_initialize_simulation_set_state_None_when_AttributeError_occur(self):
-        sop = SimulationOperator()
-        trader = Mock()
-        strategy = Mock()
-        data_provider = "make_exception"
-        sop.initialize_simulation(
-            "apple", "kiwi", data_provider, strategy, trader, "papaya", "pear", "grape"
-        )
-        self.assertEqual(sop.state, None)
+        self.strategy_mock.initialize.assert_called_once_with("grape")
 
     def test_initialize_simulation_set_state_None_when_UserWarning_occur(self):
-        sop = SimulationOperator()
-        trader = MagicMock()
-        strategy = MagicMock()
-        data_provider = MagicMock()
-        data_provider.initialize_from_server = MagicMock(side_effect=UserWarning("TEST Exception"))
-        analyzer = MagicMock()
-        sop.initialize_simulation(
-            "apple", "kiwi", data_provider, strategy, trader, analyzer, "papaya", "pear", "grape"
+        self.data_provider_mock.initialize_from_server = MagicMock(
+            side_effect=UserWarning("TEST Exception")
         )
-        data_provider.initialize_from_server.assert_called_once()
-        self.assertEqual(sop.state, None)
+        self.sop.initialize_simulation(
+            self.data_provider_mock,
+            self.strategy_mock,
+            self.trader_mock,
+            self.analyzer_mock,
+            "papaya",
+            "pear",
+            "grape",
+        )
+        self.data_provider_mock.initialize_from_server.assert_called_once()
+        self.assertEqual(self.sop.state, None)
 
     def test_initialize_call_simulator_dataProvider_initialize_from_server_correctly(self):
-        sop = SimulationOperator()
-        trader = Mock()
-        strategy = Mock()
-        data_provider = Mock()
-        analyzer = Mock()
-        data_provider.initialize_from_server = MagicMock()
-        sop.initialize_simulation(
-            "apple", "kiwi", data_provider, strategy, trader, analyzer, "papaya", "pear", "grape"
+        self.sop.initialize_simulation(
+            self.data_provider_mock,
+            self.strategy_mock,
+            self.trader_mock,
+            self.analyzer_mock,
+            "papaya",
+            "pear",
+            "grape",
         )
-        data_provider.initialize_from_server.assert_called_once_with(end="papaya", count="pear")
+        self.data_provider_mock.initialize_from_server.assert_called_once_with(
+            end="papaya", count="pear"
+        )
 
     def test_initialize_simulation_update_tag_correctly(self):
-        operator = SimulationOperator()
-        end = "2020-10-01 13:12:00"
+        target_end = "2020-10-01 13:12:00"
         expected_tag = "2020-10-01T131200-35-BTC-"
-        strategy = MagicMock()
-        operator.initialize_simulation(
-            "apple", "kiwi", "mango", strategy, "orange", "grape", end=end, count=35
+        self.sop.initialize_simulation(
+            self.data_provider_mock,
+            self.strategy_mock,
+            self.trader_mock,
+            self.analyzer_mock,
+            target_end,
+            35,
+            "papaya",
         )
-        self.assertEqual(operator.tag[: len(expected_tag)], expected_tag)
+        self.assertEqual(self.sop.tag[: len(expected_tag)], expected_tag)
+
+
+class SimulationOperatorStartTests(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
 
     @patch("smtm.Operator.set_interval")
     def test_setup_call_super_setup(self, OperatorSetup):
@@ -129,18 +138,13 @@ class SimulationOperatorTests(unittest.TestCase):
 
     @patch("smtm.Operator.start")
     def test_start_should_call_analyzer_make_start_point(self, OperatorStart):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
         operator = SimulationOperator()
         analyzer_mock = Mock()
         analyzer_mock.make_start_point = MagicMock()
         trader_mock = Mock()
         dp_mock = Mock()
         strategy_mock = Mock()
-        operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
+        operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.start()
         OperatorStart.assert_called_once()
         analyzer_mock.make_start_point.assert_called_once()
@@ -151,11 +155,18 @@ class SimulationOperatorTests(unittest.TestCase):
         sop.stop()
         OperatorStop.assert_called_once()
 
-    def test_excute_trading_should_call_get_info_and_set_timer(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
 
+class SimulationOperatorTests(unittest.TestCase):
+    def setUp(self):
+        self.patcher = patch("threading.Timer")
+        self.threading_mock = self.patcher.start()
+        self.timer_mock = Mock()
+        self.threading_mock.return_value = self.timer_mock
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_excute_trading_should_call_get_info_and_set_timer(self):
         operator = SimulationOperator()
         self.assertEqual(operator.turn, 0)
         analyzer_mock = Mock()
@@ -170,22 +181,15 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
+        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator.state = "running"
         operator._excute_trading(None)
-        threading_mock.Timer.assert_called_once_with(27, ANY)
-        timer_mock.start.assert_called_once()
         dp_mock.get_info.assert_called_once()
         self.assertEqual(operator.turn, 1)
         analyzer_mock.put_trading_info.assert_called_once_with("mango")
 
     def test_excute_trading_should_call_trader_send_request_and_strategy_update_result(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
         operator = SimulationOperator()
         analyzer_mock = Mock()
         analyzer_mock.put_request = MagicMock()
@@ -201,9 +205,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
+        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator._excute_trading(None)
 
@@ -216,9 +218,6 @@ class SimulationOperatorTests(unittest.TestCase):
         analyzer_mock.put_result.assert_called_once_with(dummy_result)
 
     def test_excute_trading_should_call_creat_report_and_call_stop_when_result_msg_game_over(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
         operator = SimulationOperator()
         analyzer_mock = Mock()
         analyzer_mock.put_request = MagicMock()
@@ -235,9 +234,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
+        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator._excute_trading(None)
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
@@ -252,10 +249,6 @@ class SimulationOperatorTests(unittest.TestCase):
         self.assertEqual(operator.state, "terminated")
 
     def test_excute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
         operator = SimulationOperator()
         analyzer_mock = Mock()
         dp_mock = Mock()
@@ -266,21 +259,15 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=None)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
+        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator._excute_trading(None)
         trader_mock.send_request.assert_not_called()
 
     def test_get_score_should_call_work_post_task_with_correct_task(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
         operator = SimulationOperator()
         strategy = MagicMock()
-        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango")
+        operator.initialize("banana", strategy, "orange", "mango")
         operator.worker = MagicMock()
         operator.state = "running"
         operator.get_score("dummy")
@@ -295,13 +282,9 @@ class SimulationOperatorTests(unittest.TestCase):
         task["callback"].assert_called_once_with("grape")
 
     def test_get_score_call_callback_with_last_report_when_state_is_NOT_running(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
         operator = SimulationOperator()
         strategy = MagicMock()
-        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango")
+        operator.initialize("banana", strategy, "orange", "mango")
         operator.worker = MagicMock()
         operator.state = "pear"
         operator.last_report = {"summary": "apple_report"}

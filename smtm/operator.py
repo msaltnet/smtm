@@ -4,6 +4,7 @@
 """
 
 import time
+import threading
 from datetime import datetime
 from .log_manager import LogManager
 from .worker import Worker
@@ -17,7 +18,6 @@ class Operator:
         data_provider: 사용될 DataProvider 인스턴스
         strategy: 사용될 Strategy 인스턴스
         trader: 사용될 Trader 인스턴스
-        threading: 타이머를 위해서 사용될 시스템 threading 인스턴스
         analyzer: 거래 분석용 Analyzer 인스턴스
         interval: 매매 프로세스가 수행되는 간격 # default 10 second
     """
@@ -25,26 +25,22 @@ class Operator:
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(self):
-        self.http = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.data_provider = None
         self.strategy = None
         self.trader = None
         self.interval = 10  # default 10 second
         self.is_timer_running = False
-        self.threading = None
         self.timer = None
         self.analyzer = None
         self.worker = Worker("Operator-Worker")
         self.state = None
         self.is_trading_activated = False
 
-    def initialize(self, http, threading, data_provider, strategy, trader, analyzer, budget=500):
+    def initialize(self, data_provider, strategy, trader, analyzer, budget=500):
         """
         운영에 필요한 모듈과 정보를 설정 및 각 모듈 초기화 수행
 
-        http: http 클라이언트 requests 객체
-        threading: 타이머 동작을 위한 threading 객체
         data_provider: 운영에 사용될 DataProvider 객체
         strategy: 운영에 사용될 Strategy 객체
         trader: 운영에 사용될 Trader 객체
@@ -53,11 +49,9 @@ class Operator:
         if self.state is not None:
             return
 
-        self.http = http
         self.data_provider = data_provider
         self.strategy = strategy
         self.trader = trader
-        self.threading = threading
         self.analyzer = analyzer
         self.state = "ready"
         self.strategy.initialize(budget)
@@ -68,10 +62,6 @@ class Operator:
         interval : 매매 프로세스가 수행되는 간격
         """
         self.interval = interval
-
-    def is_running(self):
-        """running 상태인지 True / False 값으로 반환한다."""
-        return self.state == "running"
 
     def start(self):
         """자동 거래를 시작한다
@@ -93,7 +83,7 @@ class Operator:
     def _start_timer(self):
         """설정된 간격의 시간이 지난 후 Worker가 자동 거래를 수행하도록 타이머 설정"""
         self.logger.debug(
-            f"start timer {self.is_timer_running} : {self.state} : {self.threading.get_ident()}"
+            f"start timer {self.is_timer_running} : {self.state} : {threading.get_ident()}"
         )
         if self.is_timer_running or self.state != "running":
             return
@@ -101,7 +91,7 @@ class Operator:
         def on_timer_expired():
             self.worker.post_task({"runnable": self._excute_trading})
 
-        self.timer = self.threading.Timer(self.interval, on_timer_expired)
+        self.timer = threading.Timer(self.interval, on_timer_expired)
         self.timer.start()
 
         self.is_timer_running = True

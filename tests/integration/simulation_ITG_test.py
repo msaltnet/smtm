@@ -8,12 +8,10 @@ from smtm import Analyzer
 from smtm import LogManager
 from .data import simulation_data
 from unittest.mock import *
-import requests
-import threading
 import time
 
 
-class SimulationIntegrationTests(unittest.TestCase):
+class SimulationIntegrationBnhTests(unittest.TestCase):
     def setUp(self):
         LogManager.set_stream_level(20)
         pass
@@ -31,8 +29,6 @@ class SimulationIntegrationTests(unittest.TestCase):
         interval = 0.1
         TIME_LIMIT = 15
         operator.initialize_simulation(
-            requests,
-            threading,
             SimulationDataProvider(),
             strategy,
             SimulationTrader(),
@@ -75,9 +71,33 @@ class SimulationIntegrationTests(unittest.TestCase):
 
         self.assertIsNotNone(report)
         self.assertEqual(report[0], 100000)
-        self.assertEqual(report[1], 97718)
-        self.assertEqual(report[2], -2.282)
+        self.assertEqual(report[1], 98089)
+        self.assertEqual(report[2], -1.911)
         self.assertEqual(report[3]["KRW-BTC"], -2.059)
+
+    def check_equal_results_list(self, a, b):
+        self.assertEqual(len(a), len(b))
+        for i in range(len(a)):
+            self.assertEqual(a[i]["request"]["type"], b[i]["request"]["type"])
+            self.assertEqual(a[i]["request"]["price"], b[i]["request"]["price"])
+            self.assertEqual(a[i]["request"]["amount"], b[i]["request"]["amount"])
+            self.assertEqual(a[i]["request"]["date_time"], b[i]["request"]["date_time"])
+
+            self.assertEqual(a[i]["type"], b[i]["type"])
+            self.assertEqual(a[i]["price"], b[i]["price"])
+            self.assertEqual(a[i]["amount"], b[i]["amount"])
+            self.assertEqual(a[i]["msg"], b[i]["msg"])
+            self.assertEqual(a[i]["balance"], b[i]["balance"])
+            self.assertEqual(a[i]["date_time"], b[i]["date_time"])
+            self.assertEqual(a[i]["kind"], b[i]["kind"])
+
+class SimulationIntegrationSma0Tests(unittest.TestCase):
+    def setUp(self):
+        LogManager.set_stream_level(20)
+        pass
+
+    def tearDown(self):
+        pass
 
     def test_ITG_run_simulation_with_sma0_strategy(self):
         trading_snapshot = simulation_data.get_data("sma0_snapshot")
@@ -89,8 +109,6 @@ class SimulationIntegrationTests(unittest.TestCase):
         interval = 0.1
         TIME_LIMIT = 15
         operator.initialize_simulation(
-            requests,
-            threading,
             SimulationDataProvider(),
             strategy,
             SimulationTrader(),

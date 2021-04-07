@@ -13,28 +13,20 @@ class SimulationTraderTests(unittest.TestCase):
 
     def test_initialize_initialize_virtual_market(self):
         trader = SimulationTrader()
-
-        class DummyHttp:
-            pass
-
-        http = DummyHttp()
         trader.market.initialize = MagicMock()
         trader.market.deposit = MagicMock()
-        trader.initialize(http, "mango", 500, 5000)
-        trader.market.initialize.assert_called_once_with(http, "mango", 500)
+
+        trader.initialize("mango", 500, 5000)
+
+        trader.market.initialize.assert_called_once_with("mango", 500)
         trader.market.deposit.assert_called_once_with(5000)
         self.assertEqual(trader.is_initialized, True)
 
     def test_initialize_set_is_initialized_False_when_invalid_market(self):
         trader = SimulationTrader()
-
-        class DummyHttp:
-            pass
-
-        http = DummyHttp()
         trader.market = "make exception"
         with self.assertRaises(AttributeError):
-            trader.initialize(http, "mango", 500, 5000)
+            trader.initialize("mango", 500, 5000)
 
         self.assertEqual(trader.is_initialized, False)
 
