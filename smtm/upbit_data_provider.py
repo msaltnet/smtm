@@ -17,7 +17,7 @@ class UpbitDataProvider(DataProvider):
     URL = "https://api.upbit.com/v1/candles/minutes/1"
 
     def __init__(self):
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
         self.query_string = {"market": "KRW-BTC", "count": 1}
 
     def get_info(self):

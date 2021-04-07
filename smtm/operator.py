@@ -26,7 +26,7 @@ class Operator:
 
     def __init__(self):
         self.http = None
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
         self.data_provider = None
         self.strategy = None
         self.trader = None

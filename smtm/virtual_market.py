@@ -23,7 +23,7 @@ class VirtualMarket:
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(self):
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
         self.is_initialized = False
         self.http = None
         self.end = "2020-04-30 00:00:00"

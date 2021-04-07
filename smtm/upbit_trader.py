@@ -30,7 +30,7 @@ class UpbitTrader(Trader):
     MARKET = "KRW-BTC"
 
     def __init__(self):
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
         self.worker = Worker("UpbitTrader-Worker")
         self.worker.start()
         self.timer = None

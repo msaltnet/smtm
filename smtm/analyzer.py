@@ -35,7 +35,7 @@ class Analyzer:
         self.asset_record_list = []
         self.score_record_list = []
         self.update_info_func = None
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
 
     def put_trading_info(self, info):
@@ -247,7 +247,7 @@ class Analyzer:
                 ]
             }
         """
-        final_filename = "simulation-report"
+        final_filename = "untitled-report"
         if tag is not None:
             final_filename = tag
 

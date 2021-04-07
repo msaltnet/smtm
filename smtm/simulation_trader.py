@@ -16,7 +16,7 @@ class SimulationTrader(Trader):
     """
 
     def __init__(self):
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
         self.market = VirtualMarket()
         self.is_initialized = False
 

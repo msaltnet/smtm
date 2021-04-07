@@ -18,14 +18,20 @@ from .bithumb_trader import BithumbTrader
 from .upbit_data_provider import UpbitDataProvider
 
 __all__ = [
+    "Operator",
     "LogManager",
     "Analyzer",
     "SimulationTrader",
     "SimulationDataProvider",
+    "SimulationOperator",
     "StrategyBuyAndHold",
     "StrategySma0",
-    "SimulationOperator",
     "VirtualMarket",
     "LiveDataProvider",
+    "Worker",
+    "Simulator",
+    "UpbitTrader",
+    "BithumbTrader",
+    "UpbitDataProvider",
 ]
 __version__ = "0.1.0"

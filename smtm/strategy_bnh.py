@@ -32,7 +32,7 @@ class StrategyBuyAndHold(Strategy):
         self.min_price = 0
         self.result = []
         self.request = None
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트"""
@@ -46,7 +46,9 @@ class StrategyBuyAndHold(Strategy):
             return
 
         try:
-            self.balance -= round(int(result["price"]) * float(result["amount"]) * (1 + self.COMMISSION_RATIO))
+            self.balance -= round(
+                int(result["price"]) * float(result["amount"]) * (1 + self.COMMISSION_RATIO)
+            )
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {result['price']}, amount: {result['amount']}")

@@ -42,7 +42,7 @@ class StrategySma0(Strategy):
         self.current_process = "ready"
         self.closing_price_list = []
         self.process_unit = (0, 0)  # budget and amount
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트"""
@@ -158,7 +158,7 @@ class StrategySma0(Strategy):
             budget = self.balance
 
         if self.min_price > budget or self.process_unit[0] <= 0:
-            self.logger.debug(f"target_budget is too small or invalid unit {self.process_unit}")
+            self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
             return {
                 "id": str(round(time.time(), 3)),
                 "type": "buy",

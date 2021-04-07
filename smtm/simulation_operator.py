@@ -12,7 +12,7 @@ class SimulationOperator(Operator):
 
     def __init__(self):
         super().__init__()
-        self.logger = LogManager.get_logger(__name__)
+        self.logger = LogManager.get_logger(__class__.__name__)
         self.turn = 0
         self.end = "2020-12-20T16:23:00"
         self.count = 0
