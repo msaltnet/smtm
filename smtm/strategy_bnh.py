@@ -86,6 +86,7 @@ class StrategyBuyAndHold(Strategy):
 
             target_budget = self.budget / 5
             if last_data is None:
+                self.logger.info(f"last data is None")
                 return {
                     "id": str(round(time.time(), 3)),
                     "type": "buy",

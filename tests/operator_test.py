@@ -14,18 +14,21 @@ class OperatorTests(unittest.TestCase):
 
     def test_initialize_keep_object_correctly(self):
         operator = Operator()
-        operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
+        strategy = MagicMock()
+        operator.initialize("apple", "kiwi", "mango", strategy, "orange", "grape", "banana")
         self.assertEqual(operator.http, "apple")
         self.assertEqual(operator.threading, "kiwi")
         self.assertEqual(operator.data_provider, "mango")
-        self.assertEqual(operator.strategy, "banana")
+        self.assertEqual(operator.strategy, strategy)
         self.assertEqual(operator.trader, "orange")
         self.assertEqual(operator.analyzer, "grape")
+        strategy.initialize.assert_called_once_with("banana")
 
     def test_initialize_do_nothing_when_state_is_NOT_None(self):
         operator = Operator()
         operator.state = "mango"
-        operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
+        strategy = MagicMock()
+        operator.initialize("apple", "kiwi", "mango", strategy, "orange", "grape", "banana")
         self.assertEqual(operator.http, None)
         self.assertEqual(operator.threading, None)
         self.assertEqual(operator.data_provider, None)
@@ -47,7 +50,8 @@ class OperatorTests(unittest.TestCase):
 
     def test_start_should_call_worker_start_and_post_task(self):
         operator = Operator()
-        operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
+        strategy = MagicMock()
+        operator.initialize("apple", "kiwi", "mango", strategy, "orange", "grape", "banana")
         operator.worker = MagicMock()
         operator.start()
         operator.worker.start.assert_called_once()
@@ -74,7 +78,7 @@ class OperatorTests(unittest.TestCase):
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
         operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock, 100
         )
         operator.set_interval(27)
         operator.state = "running"
@@ -105,7 +109,7 @@ class OperatorTests(unittest.TestCase):
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
         operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock, 100
         )
         operator.set_interval(27)
         operator.state = "running"
@@ -136,7 +140,7 @@ class OperatorTests(unittest.TestCase):
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
         operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock, 100
         )
         operator.set_interval(27)
         operator.state = "running"
@@ -163,7 +167,7 @@ class OperatorTests(unittest.TestCase):
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
         operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
+            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock, 100
         )
         operator.set_interval(27)
         operator.state = "running"
@@ -210,7 +214,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
 
         operator.set_interval(27)
         operator.state = "running"
@@ -232,7 +237,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
         operator.set_interval(27)
         operator.state = "ready"
         operator._start_timer()
@@ -246,7 +252,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
         operator.state = "running"
         operator._start_timer()
         self.assertEqual(operator.is_timer_running, True)
@@ -257,7 +264,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
         operator.worker = MagicMock()
         operator.state = "running"
         operator.get_score("dummy")
@@ -277,7 +285,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
         operator.worker = MagicMock()
         operator.state = "pear"
         operator.get_score("dummy")
@@ -289,7 +298,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
         operator.worker = MagicMock()
         operator.state = "running"
         operator.send_manual_trading_request("buy", amount=10, price=500, callback="dummy_cb")
@@ -323,7 +333,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
         operator.worker = MagicMock()
         operator.state = "running"
         operator.send_manual_trading_request("buy", amount=0, price=500, callback="dummy_cb")
@@ -341,7 +352,8 @@ class OperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango", 100)
         operator.worker = MagicMock()
         operator.state = "pear"
         operator.send_manual_trading_request("buy", amount=10, price=500, callback="dummy_cb")

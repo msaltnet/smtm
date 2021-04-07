@@ -39,7 +39,7 @@ class Operator:
         self.state = None
         self.is_trading_activated = False
 
-    def initialize(self, http, threading, data_provider, strategy, trader, analyzer):
+    def initialize(self, http, threading, data_provider, strategy, trader, analyzer, budget=500):
         """
         운영에 필요한 모듈과 정보를 설정 및 각 모듈 초기화 수행
 
@@ -60,6 +60,7 @@ class Operator:
         self.threading = threading
         self.analyzer = analyzer
         self.state = "ready"
+        self.strategy.initialize(budget)
 
     def set_interval(self, interval):
         """자동 거래 시간 간격을 설정한다.
@@ -91,7 +92,9 @@ class Operator:
 
     def _start_timer(self):
         """설정된 간격의 시간이 지난 후 Worker가 자동 거래를 수행하도록 타이머 설정"""
-        self.logger.debug(f"{self.is_timer_running} : {self.state} : {self.threading.get_ident()}")
+        self.logger.debug(
+            f"start timer {self.is_timer_running} : {self.state} : {self.threading.get_ident()}"
+        )
         if self.is_timer_running or self.state != "running":
             return
 
@@ -112,6 +115,7 @@ class Operator:
             trading_info = self.data_provider.get_info()
             self.strategy.update_trading_info(trading_info)
             self.analyzer.put_trading_info(trading_info)
+            self.logger.debug(f"trading_info {trading_info}")
 
             def send_request_callback(result):
                 self.logger.debug("send_request_callback is called")
@@ -119,7 +123,7 @@ class Operator:
                 self.analyzer.put_result(result)
 
             target_request = self.strategy.get_request()
-
+            self.logger.debug(f"target_request {target_request}")
             if target_request is not None and target_request["price"] != 0:
                 self.trader.send_request(target_request, send_request_callback)
                 self.analyzer.put_request(target_request)

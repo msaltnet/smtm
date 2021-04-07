@@ -537,7 +537,7 @@ class AnalyzerTests(unittest.TestCase):
         tag = "orange"
         filename = "mango"
         report = analyzer.create_report()
-        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + "simulation-report.txt", "w")
+        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + "untitled-report.txt", "w")
         handle = mock_file()
         expected = [
             "### TRADING TABLE =================================\n",

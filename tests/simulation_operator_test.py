@@ -14,13 +14,15 @@ class SimulationOperatorTests(unittest.TestCase):
 
     def test_initialize_simulation_keep_object_correctly(self):
         operator = SimulationOperator()
-        operator.initialize_simulation("apple", "kiwi", "mango", "banana", "orange", "grape")
+        strategy = MagicMock()
+        operator.initialize_simulation("apple", "kiwi", "mango", strategy, "orange", "grape")
         self.assertEqual(operator.http, "apple")
         self.assertEqual(operator.threading, "kiwi")
         self.assertEqual(operator.data_provider, "mango")
-        self.assertEqual(operator.strategy, "banana")
+        self.assertEqual(operator.strategy, strategy)
         self.assertEqual(operator.trader, "orange")
         self.assertEqual(operator.analyzer, "grape")
+        strategy.initialize.assert_called_once_with(500)
 
     def test_initialize_simulation_call_simulator_trader_initialize_with_config(self):
         sop = SimulationOperator()
@@ -103,8 +105,9 @@ class SimulationOperatorTests(unittest.TestCase):
         operator = SimulationOperator()
         end = "2020-10-01 13:12:00"
         expected_tag = "2020-10-01T131200-35-BTC-"
+        strategy = MagicMock()
         operator.initialize_simulation(
-            "apple", "kiwi", "mango", "banana", "orange", "grape", end=end, count=35
+            "apple", "kiwi", "mango", strategy, "orange", "grape", end=end, count=35
         )
         self.assertEqual(operator.tag[: len(expected_tag)], expected_tag)
 
@@ -276,7 +279,8 @@ class SimulationOperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = SimulationOperator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango")
         operator.worker = MagicMock()
         operator.state = "running"
         operator.get_score("dummy")
@@ -296,7 +300,8 @@ class SimulationOperatorTests(unittest.TestCase):
         threading_mock.Timer = MagicMock(return_value=timer_mock)
 
         operator = SimulationOperator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+        strategy = MagicMock()
+        operator.initialize("apple", threading_mock, "banana", strategy, "orange", "mango")
         operator.worker = MagicMock()
         operator.state = "pear"
         operator.last_report = {"summary": "apple_report"}
