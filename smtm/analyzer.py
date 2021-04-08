@@ -61,7 +61,7 @@ class Analyzer:
             3: 수익률 정보
         """
         try:
-            if request["price"] <= 0 or request["amount"] <= 0:
+            if int(request["price"]) <= 0 or float(request["amount"]) <= 0:
                 return
         except KeyError:
             self.logger.warning("Invalid request")

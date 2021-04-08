@@ -109,6 +109,10 @@ class Operator:
 
             def send_request_callback(result):
                 self.logger.debug("send_request_callback is called")
+                if result == "error!":
+                    self.logger.error("request fail")
+                    return
+
                 self.strategy.update_result(result)
                 self.analyzer.put_result(result)
 

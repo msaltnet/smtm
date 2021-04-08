@@ -179,8 +179,8 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
-        self.logger.info("ORDER #####")
-        self.logger.info(f"market: {market} is_buy: {is_buy}, price: {price}, volume: {volume} ")
+        self.logger.info(f"ORDER ##### {'BUY' if is_buy else 'SELL'}")
+        self.logger.info(f"{market}, price: {price}, volume: {volume}")
         if price is not None and volume is not None:
             # 지정가 주문
             query_string = self._create_limit_order_query(market, is_buy, price, volume)
@@ -194,8 +194,6 @@ class UpbitTrader(Trader):
             # 잘못된 주문
             self.logger.error("Invalid order")
             return
-
-        self.logger.info(f"query_string {query_string}")
 
         jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
         authorize_token = "Bearer {}".format(jwt_token)

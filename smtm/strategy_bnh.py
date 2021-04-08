@@ -109,6 +109,7 @@ class StrategyBuyAndHold(Strategy):
                 target_budget = self.balance
 
             target_amount = target_budget / last_data["closing_price"]
+            target_amount = "{0:.4f}".format(round(target_amount, 4))
             trading_request = {
                 "id": str(round(time.time(), 3)),
                 "type": "buy",
@@ -120,6 +121,9 @@ class StrategyBuyAndHold(Strategy):
             self.logger.info(f"type: {trading_request['type']}")
             self.logger.info(
                 f"price: {trading_request['price']}, amount: {trading_request['amount']}"
+            )
+            self.logger.info(
+                f"total value: {round(float(trading_request['price']) * float(trading_request['amount']))}"
             )
             self.logger.info("================================================")
             return trading_request
