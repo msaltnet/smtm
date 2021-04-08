@@ -38,6 +38,7 @@ class UpbitTrader(Trader):
         self.ACCESS_KEY = os.environ.get("UPBIT_OPEN_API_ACCESS_KEY", "upbit_access_key")
         self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key")
         self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "upbit_server_url")
+        self.is_opt_mode = True
 
     def send_request(self, request, callback):
         """거래 요청을 처리한다
@@ -125,6 +126,9 @@ class UpbitTrader(Trader):
 
     def _query_order_result(self, task):
         results = self._query_order_list()
+        if results is None:
+            return
+
         waiting_request = {}
         self.logger.debug(f"waiting order count {len(self.request_map)}")
         for request_id, request_info in self.request_map.items():
@@ -183,6 +187,8 @@ class UpbitTrader(Trader):
         self.logger.info(f"{market}, price: {price}, volume: {volume}")
         if price is not None and volume is not None:
             # 지정가 주문
+            if self.is_opt_mode:
+                price = self._optimize_price(price, is_buy)
             query_string = self._create_limit_order_query(market, is_buy, price, volume)
         elif volume is not None and is_buy is False:
             # 시장가 매도
@@ -216,6 +222,19 @@ class UpbitTrader(Trader):
             return
 
         return result
+
+    def _optimize_price(self, price, is_buy):
+        latest = self.get_trade_tick(self.MARKET)
+        if latest is None:
+            return price
+
+        if (is_buy is True and latest[0]["trade_price"] < price) or (
+            is_buy is False and latest[0]["trade_price"] > price
+        ):
+            self.logger.info("price optimized! #####")
+            return latest[0]["trade_price"]
+
+        return price
 
     def _create_limit_order_query(self, market, is_buy, price, volume):
         query = {
@@ -295,7 +314,7 @@ class UpbitTrader(Trader):
 
         return self._request_get(self.SERVER_URL + "/v1/accounts", headers=headers)
 
-    def _request_get(self, url, headers, params=None):
+    def _request_get(self, url, headers=None, params=None):
         try:
             if params is not None:
                 response = requests.get(url, params=params, headers=headers)
@@ -328,3 +347,7 @@ class UpbitTrader(Trader):
             payload["query_hash_alg"] = "SHA512"
 
         return jwt.encode(payload, s_key)
+
+    def get_trade_tick(self, market):
+        querystring = {"market": market, "count": "1"}
+        return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)

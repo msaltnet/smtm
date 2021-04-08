@@ -1,5 +1,6 @@
 import os
 import unittest
+import requests
 from urllib.parse import urlencode
 from smtm import UpbitTrader
 from unittest.mock import *
@@ -214,97 +215,6 @@ class UpditTraderTests(unittest.TestCase):
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_not_called()
 
-    @patch("requests.post")
-    def test__send_order_should_send_correct_limit_order(self, mock_requests):
-        trader = UpbitTrader()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.raise_for_status = MagicMock()
-        dummy_response.json = MagicMock(return_value="mango_response")
-        mock_requests.return_value = dummy_response
-        trader._create_jwt_token = MagicMock(return_value="mango_token")
-        trader._create_limit_order_query = MagicMock(return_value="mango_query")
-
-        response = trader._send_order("mango", True, 500, 0.555)
-
-        self.assertEqual(response, "mango_response")
-        dummy_response.raise_for_status.assert_called_once()
-        dummy_response.json.assert_called_once()
-        trader._create_limit_order_query.assert_called_once_with("mango", True, 500, 0.555)
-        trader._create_jwt_token.assert_called_once_with(
-            trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
-        )
-        mock_requests.assert_called_once_with(
-            trader.SERVER_URL + "/v1/orders",
-            params="mango_query",
-            headers={"Authorization": "Bearer mango_token"},
-        )
-
-    @patch("requests.post")
-    def test__send_order_should_send_correct_market_price_buy_order(self, mock_requests):
-        trader = UpbitTrader()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.raise_for_status = MagicMock()
-        dummy_response.json = MagicMock(return_value="mango_response")
-        mock_requests.return_value = dummy_response
-        trader._create_jwt_token = MagicMock(return_value="mango_token")
-        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
-
-        response = trader._send_order("mango", True, 500)
-
-        self.assertEqual(response, "mango_response")
-        trader._create_market_price_order_query.assert_called_once_with("mango", price=500)
-
-    @patch("requests.post")
-    def test__send_order_should_send_correct_market_sell_order(self, mock_requests):
-        trader = UpbitTrader()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.raise_for_status = MagicMock()
-        dummy_response.json = MagicMock(return_value="mango_response")
-        mock_requests.return_value = dummy_response
-        trader._create_jwt_token = MagicMock(return_value="mango_token")
-        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
-
-        response = trader._send_order("mango", False, volume=0.55)
-
-        self.assertEqual(response, "mango_response")
-        trader._create_market_price_order_query.assert_called_once_with("mango", volume=0.55)
-
-    @patch("requests.post")
-    def test__send_order_should_NOT_send_invaild_order(self, mock_requests):
-        trader = UpbitTrader()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.raise_for_status = MagicMock()
-        dummy_response.json = MagicMock(return_value="mango_response")
-        mock_requests.return_value = dummy_response
-        trader._create_jwt_token = MagicMock(return_value="mango_token")
-        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
-
-        response = trader._send_order("mango", True, volume=0.55)
-        self.assertEqual(response, None)
-
-        response = trader._send_order("mango", False, price=500)
-        self.assertEqual(response, None)
-
-        response = trader._send_order("mango", True)
-        self.assertEqual(response, None)
-        trader._create_market_price_order_query.assert_not_called()
-
     def test__create_limit_order_query_return_correct_query(self):
         expected_query = {
             "market": "mango",
@@ -471,3 +381,201 @@ class UpditTraderTests(unittest.TestCase):
 
         self.assertEqual(trader._request_get("get/apple", headers=dummy_headers), None)
         mock_get.assert_called_once_with(expected_url, headers=dummy_headers)
+
+
+class UpditTraderSendOrderTests(unittest.TestCase):
+    def setUp(self):
+        self.post_patcher = patch("requests.post")
+        self.post_mock = self.post_patcher.start()
+        self.get_patcher = patch("requests.get")
+        self.get_mock = self.get_patcher.start()
+
+    def tearDown(self):
+        self.post_patcher.stop()
+        self.get_patcher.stop()
+
+    def test__send_order_should_send_correct_limit_order(self):
+        trader = UpbitTrader()
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.raise_for_status = MagicMock()
+        dummy_response.json = MagicMock(return_value="mango_response")
+        self.post_mock.return_value = dummy_response
+        trader.is_opt_mode = False
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_limit_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", True, 500, 0.555)
+
+        self.assertEqual(response, "mango_response")
+        dummy_response.raise_for_status.assert_called_once()
+        dummy_response.json.assert_called_once()
+        trader._create_limit_order_query.assert_called_once_with("mango", True, 500, 0.555)
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
+        )
+        self.post_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/orders",
+            params="mango_query",
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+    def test__send_order_should_send_correct_limit_order_with_opt_mode(self):
+        trader = UpbitTrader()
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.raise_for_status = MagicMock()
+        dummy_response.json = MagicMock(return_value="mango_response")
+        self.post_mock.return_value = dummy_response
+        dummy_get_response = DummyResponse()
+        dummy_get_response.raise_for_status = MagicMock()
+        dummy_get_response.json = MagicMock(return_value=[{"trade_price": 450}])
+        self.get_mock.return_value = dummy_get_response
+
+        trader.is_opt_mode = True
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_limit_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", True, 500, 0.555)
+
+        self.assertEqual(response, "mango_response")
+        dummy_response.raise_for_status.assert_called_once()
+        dummy_response.json.assert_called_once()
+        trader._create_limit_order_query.assert_called_once_with("mango", True, 450, 0.555)
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
+        )
+        self.post_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/orders",
+            params="mango_query",
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+    def test__send_order_should_send_correct_limit_order_with_opt_mode_when_query_failed(self):
+        trader = UpbitTrader()
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.raise_for_status = MagicMock()
+        dummy_response.json = MagicMock(return_value="mango_response")
+        self.post_mock.return_value = dummy_response
+        self.get_mock.side_effect = requests.exceptions.RequestException()
+
+        trader.is_opt_mode = True
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_limit_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", True, 500, 0.555)
+
+        self.assertEqual(response, "mango_response")
+        dummy_response.raise_for_status.assert_called_once()
+        dummy_response.json.assert_called_once()
+        trader._create_limit_order_query.assert_called_once_with("mango", True, 500, 0.555)
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
+        )
+        self.post_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/orders",
+            params="mango_query",
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+    def test__send_order_should_send_correct_market_price_buy_order(self):
+        trader = UpbitTrader()
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.raise_for_status = MagicMock()
+        dummy_response.json = MagicMock(return_value="mango_response")
+        self.post_mock.return_value = dummy_response
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", True, 500)
+
+        self.assertEqual(response, "mango_response")
+        trader._create_market_price_order_query.assert_called_once_with("mango", price=500)
+
+    def test__send_order_should_send_correct_market_sell_order(self):
+        trader = UpbitTrader()
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.raise_for_status = MagicMock()
+        dummy_response.json = MagicMock(return_value="mango_response")
+        self.post_mock.return_value = dummy_response
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", False, volume=0.55)
+
+        self.assertEqual(response, "mango_response")
+        trader._create_market_price_order_query.assert_called_once_with("mango", volume=0.55)
+
+    def test__send_order_should_return_None_when_receive_error_from_server(self):
+        trader = UpbitTrader()
+
+        self.post_mock.side_effect = requests.exceptions.HTTPError()
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", False, volume=0.55)
+
+        self.assertEqual(response, None)
+
+    def test__send_order_should_return_None_when_RequestException_occured(self):
+        trader = UpbitTrader()
+
+        self.post_mock.side_effect = requests.exceptions.RequestException()
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", False, volume=0.55)
+
+        self.assertEqual(response, None)
+
+    def test__send_order_should_return_None_when_receive_invalid_data(self):
+        trader = UpbitTrader()
+
+        self.post_mock.side_effect = ValueError()
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", False, volume=0.55)
+
+        self.assertEqual(response, None)
+
+    def test__send_order_should_NOT_send_invaild_order(self):
+        trader = UpbitTrader()
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.raise_for_status = MagicMock()
+        dummy_response.json = MagicMock(return_value="mango_response")
+        self.post_mock.return_value = dummy_response
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        trader._create_market_price_order_query = MagicMock(return_value="mango_query")
+
+        response = trader._send_order("mango", True, volume=0.55)
+        self.assertEqual(response, None)
+
+        response = trader._send_order("mango", False, price=500)
+        self.assertEqual(response, None)
+
+        response = trader._send_order("mango", True)
+        self.assertEqual(response, None)
+        trader._create_market_price_order_query.assert_not_called()
