@@ -109,7 +109,7 @@ class StrategyBuyAndHold(Strategy):
                 target_budget = self.balance
 
             target_amount = target_budget / last_data["closing_price"]
-            target_amount = "{0:.4f}".format(round(target_amount, 4))
+            target_amount = round(target_amount, 4)
             trading_request = {
                 "id": str(round(time.time(), 3)),
                 "type": "buy",

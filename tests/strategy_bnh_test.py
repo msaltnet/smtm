@@ -117,7 +117,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh.update_trading_info(dummy_info)
         request = bnh.get_request()
         self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 1000 / 20000000)
+        self.assertEqual(request["amount"], 0.0001)
         self.assertEqual(request["type"], "buy")
         bnh.update_trading_info(None)
         request = bnh.get_request()
@@ -162,7 +162,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh.update_trading_info(dummy_info)
         request = bnh.get_request()
         self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 1000 / 20000000)
+        self.assertEqual(request["amount"], 0.0001)
         self.assertEqual(request["type"], "buy")
 
     def test_get_request_return_same_datetime_at_simulation(self):
