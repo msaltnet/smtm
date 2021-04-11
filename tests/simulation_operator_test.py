@@ -16,8 +16,8 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_initialize_simulation_keep_object_correctly(self):
-        self.sop.initialize_simulation(
+    def test_initialize_keep_object_correctly(self):
+        self.sop.initialize(
             self.data_provider_mock,
             self.strategy_mock,
             self.trader_mock,
@@ -29,12 +29,13 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
         self.assertEqual(self.sop.analyzer, self.analyzer_mock)
         self.strategy_mock.initialize.assert_called_once_with(500)
 
-    def test_initialize_simulation_call_simulator_trader_initialize_with_config(self):
+    def test_initialize_call_simulator_trader_initialize_with_config(self):
         self.assertEqual(self.sop.turn, 0)
         self.assertEqual(self.sop.end, "2020-12-20T16:23:00")
         self.assertEqual(self.sop.count, 0)
         self.assertEqual(self.sop.budget, 0)
-        self.sop.initialize_simulation(
+        self.trader_mock.get_account_info = "banana"
+        self.sop.initialize(
             self.data_provider_mock,
             self.strategy_mock,
             self.trader_mock,
@@ -46,18 +47,13 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
         self.trader_mock.initialize.assert_called_once_with(
             end="papaya", count="pear", budget="grape"
         )
-        self.analyzer_mock.initialize.assert_called_once_with(ANY, True)
-        update_info_func = self.analyzer_mock.initialize.call_args[0][0]
-        update_info_func("asset")
-        self.trader_mock.send_account_info_request.assert_called_once_with(ANY)
-        update_info_func("mango")
-        self.trader_mock.send_account_info_request.assert_called_once()
+        self.analyzer_mock.initialize.assert_called_once_with("banana", True)
         self.assertEqual(self.sop.end, "papaya")
         self.assertEqual(self.sop.count, "pear")
         self.assertEqual(self.sop.budget, "grape")
 
-    def test_initialize_simulation_call_strategy_initialize_with_config(self):
-        self.sop.initialize_simulation(
+    def test_initialize_call_strategy_initialize_with_config(self):
+        self.sop.initialize(
             self.data_provider_mock,
             self.strategy_mock,
             self.trader_mock,
@@ -68,11 +64,11 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
         )
         self.strategy_mock.initialize.assert_called_once_with("grape")
 
-    def test_initialize_simulation_set_state_None_when_UserWarning_occur(self):
+    def test_initialize_set_state_None_when_UserWarning_occur(self):
         self.data_provider_mock.initialize_from_server = MagicMock(
             side_effect=UserWarning("TEST Exception")
         )
-        self.sop.initialize_simulation(
+        self.sop.initialize(
             self.data_provider_mock,
             self.strategy_mock,
             self.trader_mock,
@@ -85,7 +81,7 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
         self.assertEqual(self.sop.state, None)
 
     def test_initialize_call_simulator_dataProvider_initialize_from_server_correctly(self):
-        self.sop.initialize_simulation(
+        self.sop.initialize(
             self.data_provider_mock,
             self.strategy_mock,
             self.trader_mock,
@@ -98,10 +94,10 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
             end="papaya", count="pear"
         )
 
-    def test_initialize_simulation_update_tag_correctly(self):
+    def test_initialize_update_tag_correctly(self):
         target_end = "2020-10-01 13:12:00"
         expected_tag = "-simulation"  # 202010-131200-simulation
-        self.sop.initialize_simulation(
+        self.sop.initialize(
             self.data_provider_mock,
             self.strategy_mock,
             self.trader_mock,
@@ -181,7 +177,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator.state = "running"
         operator._excute_trading(None)
@@ -205,7 +201,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator._excute_trading(None)
 
@@ -234,7 +230,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator._excute_trading(None)
         analyzer_mock.put_request.assert_called_once_with(dummy_request)
@@ -259,7 +255,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.get_request = MagicMock(return_value=None)
         trader_mock = Mock()
         trader_mock.send_request = MagicMock()
-        operator.initialize_simulation(dp_mock, strategy_mock, trader_mock, analyzer_mock)
+        operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator._excute_trading(None)
         trader_mock.send_request.assert_not_called()
@@ -267,7 +263,9 @@ class SimulationOperatorTests(unittest.TestCase):
     def test_get_score_should_call_work_post_task_with_correct_task(self):
         operator = SimulationOperator()
         strategy = MagicMock()
-        operator.initialize("banana", strategy, "orange", "mango")
+        trader = MagicMock()
+        analyzer = MagicMock()
+        operator.initialize("banana", strategy, trader, analyzer)
         operator.worker = MagicMock()
         operator.state = "running"
         operator.get_score("dummy")
@@ -284,7 +282,9 @@ class SimulationOperatorTests(unittest.TestCase):
     def test_get_score_call_callback_with_last_report_when_state_is_NOT_running(self):
         operator = SimulationOperator()
         strategy = MagicMock()
-        operator.initialize("banana", strategy, "orange", "mango")
+        trader = MagicMock()
+        analyzer = MagicMock()
+        operator.initialize("banana", strategy, trader, analyzer)
         operator.worker = MagicMock()
         operator.state = "pear"
         operator.last_report = {"summary": "apple_report"}

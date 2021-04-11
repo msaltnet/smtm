@@ -63,25 +63,23 @@ class SimulationTraderTests(unittest.TestCase):
         with self.assertRaises(UserWarning):
             trader.send_request(None, None)
 
-    def test_send_account_info_request_call_callback_with_virtual_market_get_balance_result(self):
+    def test_get_account_info_call_callback_with_virtual_market_get_balance_result(self):
         trader = SimulationTrader()
         trader.is_initialized = True
-        callback = MagicMock()
         trader.market.get_balance = MagicMock(return_value="banana")
-        trader.send_account_info_request(callback)
+        self.assertEqual(trader.get_account_info(), "banana")
         trader.market.get_balance.assert_called_once()
-        callback.assert_called_once_with("banana")
 
-    def test_send_account_info_request_call_raise_exception_UserWarning_when_is_initialized_False(
+    def test_get_account_info_call_raise_exception_UserWarning_when_is_initialized_False(
         self,
     ):
         trader = SimulationTrader()
         trader.is_initialized = False
 
         with self.assertRaises(UserWarning):
-            trader.send_account_info_request(None)
+            trader.get_account_info()
 
-    def test_send_account_info_request_call_raise_exception_UserWarning_when_market_is_invalid(
+    def test_get_account_info_call_raise_exception_UserWarning_when_market_is_invalid(
         self,
     ):
         trader = SimulationTrader()
@@ -89,13 +87,13 @@ class SimulationTraderTests(unittest.TestCase):
         trader.market = "make exception"
 
         with self.assertRaises(UserWarning):
-            trader.send_account_info_request(None)
+            trader.get_account_info()
 
-    def test_send_account_info_request_call_raise_exception_UserWarning_when_callback_make_TypeError(
+    def test_get_account_info_call_raise_exception_UserWarning_when_callback_make_TypeError(
         self,
     ):
         trader = SimulationTrader()
         trader.is_initialized = True
 
         with self.assertRaises(UserWarning):
-            trader.send_account_info_request(None)
+            trader.get_account_info()

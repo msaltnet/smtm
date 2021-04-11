@@ -72,7 +72,7 @@ class UpbitTraderIntegrationTester(unittest.TestCase):
             for key, value in asset.items():
                 print(f"# {key} : price {value[0]}, amount {value[1]}")
 
-        self.upbitTrader.send_account_info_request(callback)
+        self.upbitTrader.get_account_info(callback)
 
     def buy_btc_10000(self):
         now = datetime.now().strftime(self.ISO_DATEFORMAT)

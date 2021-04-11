@@ -54,7 +54,7 @@ class UpbitTrader(Trader):
             {"runnable": self._excute_order, "request": request, "callback": callback}
         )
 
-    def send_account_info_request(self, callback):
+    def get_account_info(self):
         """계좌 요청 정보를 요청한다
         Returns:
             {
@@ -62,7 +62,22 @@ class UpbitTrader(Trader):
                 asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
             }
         """
-        self.worker.post_task({"runnable": self._excute_query, "callback": callback})
+        response = self._query_account()
+        result = {"asset": {}}
+        try:
+            for item in response:
+                if item["currency"] == "KRW":
+                    result["balance"] = item["balance"]
+                else:
+                    name = item["currency"]
+                    price = item["avg_buy_price"]
+                    amount = item["balance"]
+                    result["asset"][name] = (price, amount)
+        except TypeError as error:
+            self.logger.error(f"fail to get account info {error}")
+            raise UserWarning("fail to get account info") from error
+        self.logger.debug(f"account info {response}")
+        return result
 
     def _excute_order(self, task):
         request = task["request"]
@@ -79,25 +94,6 @@ class UpbitTrader(Trader):
             "result": result,
         }
         self._start_timer()
-
-    def _excute_query(self, task):
-        response = self._query_account()
-        callback = task["callback"]
-        result = {"asset": {}}
-        try:
-            for item in response:
-                if item["currency"] == "KRW":
-                    result["balance"] = item["balance"]
-                else:
-                    name = item["currency"]
-                    price = item["avg_buy_price"]
-                    amount = item["balance"]
-                    result["asset"][name] = (price, amount)
-        except TypeError:
-            self.logger.error("invalid response")
-            result = "error!"
-        self.logger.debug(f"account info {response}")
-        callback(result)
 
     def _create_success_result(self, request):
         return {

@@ -12,7 +12,7 @@ class Trader(metaclass=ABCMeta):
         """거래 요청 정보를 보낸다"""
 
     @abstractmethod
-    def send_account_info_request(self, callback):
+    def get_account_info(self):
         """계좌 요청 정보를 요청한다
         현금을 포함한 모든 자산 정보를 제공한다
 

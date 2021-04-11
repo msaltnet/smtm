@@ -56,6 +56,7 @@ class Operator:
         self.analyzer = analyzer
         self.state = "ready"
         self.strategy.initialize(budget)
+        self.analyzer.initialize(trader.get_account_info, False)
 
     def set_interval(self, interval):
         """자동 거래 시간 간격을 설정한다.

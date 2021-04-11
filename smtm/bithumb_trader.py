@@ -61,7 +61,7 @@ class BithumbTrader(Trader):
             {"runnable": self._excute_order, "request": request, "callback": callback}
         )
 
-    def send_account_info_request(self, callback):
+    def get_account_info(self):
         """계좌 요청 정보를 요청한다
         Returns:
             {
@@ -69,7 +69,32 @@ class BithumbTrader(Trader):
                 asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
             }
         """
-        self.worker.post_task({"runnable": self._excute_query, "callback": callback})
+        response = self._query_balance(self.MARKET)
+        if response is None:
+            self.logger.error("fail to get account info")
+            raise UserWarning("fail to get account info")
+
+        try:
+            assets = response["data"]
+
+            result = {"asset": {}}
+            for key, value in assets.items():
+                if key == "total_krw":
+                    result["balance"] = value
+                elif key == self.MARKET_KEY:
+                    price = None
+                    snapshot = self.query_latest_trade(self.MARKET)
+                    if snapshot is not None and snapshot["status"] == "0000":
+                        price = snapshot["data"][0]["price"]
+                    name = self.MARKET
+                    amount = value
+                    result["asset"][name] = (price, amount)
+            self.logger.debug(f"account info {response}")
+        except KeyError as error:
+            self.logger.error(f"fail to get account info {error}")
+            raise UserWarning("fail to get account info") from error
+
+        return result
 
     def _excute_order(self, task):
         request = task["request"]
@@ -109,25 +134,6 @@ class BithumbTrader(Trader):
             "result": result,
         }
         self._start_timer()
-
-    def _excute_query(self, task):
-        response = self._query_balance(self.MARKET)
-        assets = response["data"]
-        callback = task["callback"]
-        result = {"asset": {}}
-        for key, value in assets.items():
-            if key == "total_krw":
-                result["balance"] = value
-            elif key == self.MARKET_KEY:
-                price = None
-                snapshot = self.query_latest_trade(self.MARKET)
-                if snapshot is not None and snapshot["status"] == "0000":
-                    price = snapshot["data"][0]["price"]
-                name = self.MARKET
-                amount = value
-                result["asset"][name] = (price, amount)
-        self.logger.debug(f"account info {response}")
-        callback(result)
 
     def _create_success_result(self, request):
         return {

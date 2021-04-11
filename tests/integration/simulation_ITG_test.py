@@ -28,7 +28,7 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
         budget = 100000
         interval = 0.1
         TIME_LIMIT = 15
-        operator.initialize_simulation(
+        operator.initialize(
             SimulationDataProvider(),
             strategy,
             SimulationTrader(),
@@ -71,8 +71,8 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
 
         self.assertIsNotNone(report)
         self.assertEqual(report[0], 100000)
-        self.assertEqual(report[1], 98089)
-        self.assertEqual(report[2], -1.911)
+        self.assertEqual(report[1], 97575)
+        self.assertEqual(report[2], -2.425)
         self.assertEqual(report[3]["KRW-BTC"], -2.059)
 
     def check_equal_results_list(self, a, b):
@@ -91,6 +91,7 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
             self.assertEqual(a[i]["date_time"], b[i]["date_time"])
             self.assertEqual(a[i]["kind"], b[i]["kind"])
 
+
 class SimulationIntegrationSma0Tests(unittest.TestCase):
     def setUp(self):
         LogManager.set_stream_level(20)
@@ -108,7 +109,7 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
         budget = 100000
         interval = 0.1
         TIME_LIMIT = 15
-        operator.initialize_simulation(
+        operator.initialize(
             SimulationDataProvider(),
             strategy,
             SimulationTrader(),

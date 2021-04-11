@@ -9,16 +9,28 @@ class OperatorInitializeTests(unittest.TestCase):
     def setUp(self):
         self.operator = Operator()
         self.strategy_mock = MagicMock()
+        self.trader_mock = MagicMock()
+        self.analyzer_mock = MagicMock()
 
     def tearDown(self):
         pass
 
     def test_initialize_keep_object_correctly(self):
-        self.operator.initialize("mango", self.strategy_mock, "orange", "grape", "banana")
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
         self.assertEqual(self.operator.data_provider, "mango")
         self.assertEqual(self.operator.strategy, self.strategy_mock)
-        self.assertEqual(self.operator.trader, "orange")
-        self.assertEqual(self.operator.analyzer, "grape")
+        self.assertEqual(self.operator.trader, self.trader_mock)
+        self.assertEqual(self.operator.analyzer, self.analyzer_mock)
+        self.strategy_mock.initialize.assert_called_once_with("banana")
+
+    def test_initialize_should_call_analyzer_initialize_with_trader(self):
+        self.trader_mock.get_account_info = "orange"
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+        self.analyzer_mock.initialize.assert_called_once_with("orange", False)
         self.strategy_mock.initialize.assert_called_once_with("banana")
 
     def test_initialize_do_nothing_when_state_is_NOT_None(self):
@@ -40,7 +52,9 @@ class OperatorInitializeTests(unittest.TestCase):
         self.assertEqual(self.operator.start(), False)
 
     def test_start_should_call_worker_start_and_post_task(self):
-        self.operator.initialize("mango", self.strategy_mock, "orange", "grape", "banana")
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
         self.operator.worker = MagicMock()
         self.operator.start()
         self.operator.worker.start.assert_called_once()

@@ -23,16 +23,44 @@ class BithumbTraderTests(unittest.TestCase):
         self.assertEqual(called_arg["request"], "mango")
         self.assertEqual(called_arg["callback"], "banana")
 
-    def test_send_account_info_request_should_call_worker_post_task_correctly(self):
+    def test_get_account_info_should_return_correct_result(self):
         trader = BithumbTrader()
-        trader.worker = MagicMock()
+        dummy_respone = {"data": {"total_krw": 123456789}}
+        dummy_respone["data"][trader.MARKET_KEY] = 789
+        expected_result = {"balance": 123456789, "asset": {}}
+        expected_result["asset"][trader.MARKET] = ("800", 789)
+        trader.query_latest_trade = MagicMock(
+            return_value={
+                "status": "0000",
+                "data": [
+                    {
+                        "transaction_date": "2018-04-10 17:47:46",
+                        "type": "bid",
+                        "units_traded": "1.0",
+                        "price": "800",
+                        "total": "6779000",
+                    }
+                ],
+            }
+        )
+        trader._query_balance = MagicMock(return_value=dummy_respone)
 
-        trader.send_account_info_request("banana")
+        result = trader.get_account_info()
 
-        trader.worker.post_task.assert_called_once()
-        called_arg = trader.worker.post_task.call_args[0][0]
-        self.assertEqual(called_arg["runnable"], trader._excute_query)
-        self.assertEqual(called_arg["callback"], "banana")
+        trader._query_balance.assert_called_once_with(trader.MARKET)
+        self.assertEqual(result, expected_result)
+
+    def test_get_account_info_should_raise_UserWarning_when_retreive_failed(self):
+        trader = BithumbTrader()
+        dummy_respone = {"data": {"total_krw": 123456789}}
+        dummy_respone["data"][trader.MARKET_KEY] = 789
+        expected_result = {"balance": 123456789, "asset": {}}
+        expected_result["asset"][trader.MARKET] = ("800", 789)
+        trader.query_latest_trade = MagicMock()
+        trader._query_balance = MagicMock(return_value=None)
+
+        with self.assertRaises(UserWarning):
+            result = trader.get_account_info()
 
     def test__excute_order_handle_task_correctly_with_limit_order(self):
         dummy_task = {
@@ -154,37 +182,6 @@ class BithumbTraderTests(unittest.TestCase):
         dummy_invalid_task3["callback"].assert_called_once_with("error!")
         trader._create_success_result.assert_not_called()
         trader._start_timer.assert_not_called()
-
-    def test__excute_query_handle_task_correctly(self):
-        trader = BithumbTrader()
-        dummy_task = {
-            "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
-            "callback": MagicMock(),
-        }
-        dummy_respone = {"data": {"total_krw": 123456789}}
-        dummy_respone["data"][trader.MARKET_KEY] = 789
-        expected_result = {"balance": 123456789, "asset": {}}
-        expected_result["asset"][trader.MARKET] = ("800", 789)
-        trader.query_latest_trade = MagicMock(
-            return_value={
-                "status": "0000",
-                "data": [
-                    {
-                        "transaction_date": "2018-04-10 17:47:46",
-                        "type": "bid",
-                        "units_traded": "1.0",
-                        "price": "800",
-                        "total": "6779000",
-                    }
-                ],
-            }
-        )
-        trader._query_balance = MagicMock(return_value=dummy_respone)
-
-        trader._excute_query(dummy_task)
-
-        trader._query_balance.assert_called_once_with(trader.MARKET)
-        dummy_task["callback"].assert_called_once_with(expected_result)
 
     def test__create_success_result_return_correct_result(self):
         dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}

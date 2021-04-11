@@ -93,7 +93,7 @@ class AnalyzerTests(unittest.TestCase):
             "amount": 0.0000000000000000000000001,
         }
         analyzer.put_result(dummy_result)
-        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_initialize_keep_update_info_func(self):
@@ -120,7 +120,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_info_func = MagicMock(return_value="mango_asset")
         analyzer.put_asset_info = MagicMock()
         analyzer.make_start_point()
-        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_make_start_point_clear_asset_info_and_request_result(self):
@@ -134,7 +134,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.request), 0)
         self.assertEqual(len(analyzer.result), 0)
         self.assertEqual(len(analyzer.asset_record_list), 0)
-        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(self):
@@ -434,7 +434,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[3]["mango"], -66.667)
         self.assertEqual(report[3]["apple"], -99.85)
 
-        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     @patch("pandas.to_datetime")
@@ -507,7 +507,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][3]["mango"], -66.667)
         self.assertEqual(report["summary"][3]["apple"], -99.85)
 
-        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     @patch("mplfinance.plot")
@@ -517,7 +517,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_info_func = MagicMock(return_value="mango_asset")
         analyzer.put_asset_info = MagicMock()
         analyzer.create_report()
-        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     @patch("pandas.to_datetime")
@@ -697,7 +697,7 @@ class AnalyzerTests(unittest.TestCase):
                 fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25
             ),
         )
-        analyzer.update_info_func.assert_called_once_with("asset")
+        analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
 
     def test_get_trading_results_return_result(self):

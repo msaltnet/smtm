@@ -26,15 +26,25 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(called_arg["callback"], "banana")
 
     def test_send_account_info_request_should_call_worker_post_task_correctly(self):
+        dummy_respone = [
+            {"currency": "KRW", "balance": 123456789},
+            {"currency": "APPLE", "balance": 500, "avg_buy_price": 23456},
+        ]
         trader = UpbitTrader()
         trader.worker = MagicMock()
+        trader._query_account = MagicMock(return_value=dummy_respone)
+        result = trader.get_account_info()
 
-        trader.send_account_info_request("banana")
+        trader._query_account.assert_called_once()
+        self.assertEqual(result, {"balance": 123456789, "asset": {"APPLE": (23456, 500)}})
 
-        trader.worker.post_task.assert_called_once()
-        called_arg = trader.worker.post_task.call_args[0][0]
-        self.assertEqual(called_arg["runnable"], trader._excute_query)
-        self.assertEqual(called_arg["callback"], "banana")
+    def test_send_account_info_request_should_raise_UserWarning_when_None_response(self):
+        dummy_respone = None
+        trader = UpbitTrader()
+        trader._query_account = MagicMock(return_value=dummy_respone)
+
+        with self.assertRaises(UserWarning):
+            result = trader.get_account_info()
 
     def test__excute_order_handle_task_correctly(self):
         dummy_task = {
@@ -72,39 +82,6 @@ class UpditTraderTests(unittest.TestCase):
         trader._create_success_result.assert_not_called()
         trader._start_timer.assert_not_called()
         self.assertEqual(len(trader.request_map), 0)
-
-    def test__excute_query_handle_task_correctly(self):
-        dummy_task = {
-            "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
-            "callback": MagicMock(),
-        }
-        dummy_respone = [
-            {"currency": "KRW", "balance": 123456789},
-            {"currency": "APPLE", "balance": 500, "avg_buy_price": 23456},
-        ]
-        trader = UpbitTrader()
-        trader._query_account = MagicMock(return_value=dummy_respone)
-
-        trader._excute_query(dummy_task)
-
-        trader._query_account.assert_called_once()
-        dummy_task["callback"].assert_called_once_with(
-            {"balance": 123456789, "asset": {"APPLE": (23456, 500)}}
-        )
-
-    def test__excute_query_handle_None_response(self):
-        dummy_task = {
-            "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
-            "callback": MagicMock(),
-        }
-        dummy_respone = None
-        trader = UpbitTrader()
-        trader._query_account = MagicMock(return_value=dummy_respone)
-
-        trader._excute_query(dummy_task)
-
-        trader._query_account.assert_called_once()
-        dummy_task["callback"].assert_called_once_with("error!")
 
     def test__create_success_result_return_correct_result(self):
         dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}

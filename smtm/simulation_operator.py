@@ -20,7 +20,7 @@ class SimulationOperator(Operator):
         self.budget = 0
         self.last_report = None
 
-    def initialize_simulation(
+    def initialize(
         self,
         data_provider,
         strategy,
@@ -37,7 +37,16 @@ class SimulationOperator(Operator):
         count: 사용될 거래 정도 갯수
         budget: 사용될 예산
         """
-        super().initialize(data_provider, strategy, trader, analyzer, budget)
+        if self.state is not None:
+            return
+
+        self.data_provider = data_provider
+        self.strategy = strategy
+        self.trader = trader
+        self.analyzer = analyzer
+        self.state = "ready"
+        self.strategy.initialize(budget)
+        self.analyzer.initialize(trader.get_account_info, True)
 
         if end is not None:
             self.end = end
@@ -50,20 +59,6 @@ class SimulationOperator(Operator):
         try:
             data_provider.initialize_from_server(end=end, count=count)
             trader.initialize(end=end, count=count, budget=budget)
-
-            def handle_info_request(name):
-                # TODO : wait async function
-                if name == "asset":
-                    account_info = None
-
-                    def account_info_callback(info):
-                        nonlocal account_info
-                        account_info = info
-
-                    trader.send_account_info_request(account_info_callback)
-                    return account_info
-
-            analyzer.initialize(handle_info_request, True)
         except (AttributeError, UserWarning) as msg:
             self.state = None
             self.logger.error(f"initialize fail: {msg}")

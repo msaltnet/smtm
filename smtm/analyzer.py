@@ -94,7 +94,8 @@ class Analyzer:
         new = copy.deepcopy(result)
         new["kind"] = 2
         self.result.append(new)
-        self.put_asset_info(self.update_info_func("asset"))
+        if self.update_info_func is not None:
+            self.put_asset_info(self.update_info_func())
 
     def initialize(self, update_info_func, is_simulation=False):
         """콜백 함수를 입력받아 초기화한다
@@ -116,7 +117,8 @@ class Analyzer:
         self.request = []
         self.result = []
         self.asset_record_list = []
-        self.put_asset_info(self.update_info_func("asset"))
+        if self.update_info_func is not None:
+            self.put_asset_info(self.update_info_func())
 
     def make_score_record(self, new_info):
         """수익률 기록을 생성한다
@@ -203,7 +205,8 @@ class Analyzer:
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
             )
         """
-        self.put_asset_info(self.update_info_func("asset"))
+        if self.update_info_func is not None:
+            self.put_asset_info(self.update_info_func())
         try:
             start_value = self.__get_start_property_value()
             last_value = self.__get_last_property_value()

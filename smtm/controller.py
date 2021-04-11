@@ -22,7 +22,7 @@ class Controller:
 
     MAIN_STATEMENT = "명령어를 입력하세요. (h: 도움말): "
 
-    def __init__(self, interval=2, strategy=0, budget=50000):
+    def __init__(self, interval=10, strategy=0, budget=50000):
         self.logger = LogManager.get_logger("Controller")
         self.__terminating = False
         self.interval = interval

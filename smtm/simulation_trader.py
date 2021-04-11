@@ -41,7 +41,7 @@ class SimulationTrader(Trader):
             self.logger.error(f"invalid state {msg}")
             raise UserWarning("invalid state") from msg
 
-    def send_account_info_request(self, callback):
+    def get_account_info(self):
         """계좌 요청 정보를 요청한다
         현금을 포함한 모든 자산 정보를 제공한다
 
@@ -57,8 +57,7 @@ class SimulationTrader(Trader):
             raise UserWarning("Not initialzed")
 
         try:
-            result = self.market.get_balance()
-            callback(result)
+            return self.market.get_balance()
         except (TypeError, AttributeError) as msg:
             self.logger.error(f"invalid state {msg}")
             raise UserWarning("invalid state") from msg

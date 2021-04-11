@@ -254,7 +254,7 @@ class Simulator:
         print(f"interval: {self.interval}")
         print("====================================")
 
-        self.operator.initialize_simulation(
+        self.operator.initialize(
             SimulationDataProvider(),
             strategy,
             SimulationTrader(),
