@@ -157,6 +157,7 @@ class OperatorStopTests(unittest.TestCase):
 
     def test_stop_should_cancel_timer_and_set_variable_correctly(self):
         operator = Operator()
+        operator.analyzer = MagicMock()
         operator.state = "running"
         operator.timer = MagicMock()
         operator.is_timer_running = True
@@ -164,9 +165,11 @@ class OperatorStopTests(unittest.TestCase):
         self.assertFalse(operator.is_timer_running)
         self.assertEqual(operator.state, "terminating")
         operator.timer.cancel.assert_called_once()
+        operator.analyzer.create_report.assert_called_once_with(tag=operator.tag)
 
     def test_stop_do_nothing_when_state_is_not_running(self):
         operator = Operator()
+        operator.analyzer = MagicMock()
         operator.state = "ready"
         operator.is_timer_running = True
         operator.stop()
@@ -178,6 +181,7 @@ class OperatorStopTests(unittest.TestCase):
         operator.state = "running"
         operator.timer = MagicMock()
         operator.worker = MagicMock()
+        operator.analyzer = MagicMock()
         operator.stop()
         operator.worker.stop.assert_called_once()
         operator.worker.register_on_terminated.assert_called_once_with(ANY)

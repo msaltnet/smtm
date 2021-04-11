@@ -139,6 +139,7 @@ class Operator:
         if self.state != "running":
             return
 
+        self.last_report = self.analyzer.create_report(tag=self.tag)
         self.logger.info("===== Stop operating =====")
         try:
             self.timer.cancel()
