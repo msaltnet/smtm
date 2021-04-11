@@ -255,8 +255,6 @@ class Simulator:
         print("====================================")
 
         self.operator.initialize_simulation(
-            requests,
-            threading,
             SimulationDataProvider(),
             strategy,
             SimulationTrader(),
