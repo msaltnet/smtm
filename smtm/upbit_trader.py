@@ -28,6 +28,7 @@ class UpbitTrader(Trader):
 
     RESULT_CHECKING_INTERVAL = 5
     MARKET = "KRW-BTC"
+    MARKET_CURRENCY = "BTC"
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -60,15 +61,22 @@ class UpbitTrader(Trader):
             {
                 balance: 계좌 현금 잔고
                 asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
+                quote: 종목별 현재 가격 딕셔너리
             }
         """
         response = self._query_account()
-        result = {"asset": {}}
+        trade_info = self.get_trade_tick(self.MARKET)
+        result = {
+            "asset": {},
+            "quote": {},
+        }
+        result["quote"][self.MARKET_CURRENCY] = trade_info[0]["trade_price"]
+
         try:
             for item in response:
                 if item["currency"] == "KRW":
                     result["balance"] = item["balance"]
-                else:
+                elif item["currency"] == self.MARKET_CURRENCY:
                     name = item["currency"]
                     price = item["avg_buy_price"]
                     amount = item["balance"]

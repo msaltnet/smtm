@@ -25,23 +25,31 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(called_arg["request"], "mango")
         self.assertEqual(called_arg["callback"], "banana")
 
-    def test_send_account_info_request_should_call_worker_post_task_correctly(self):
+    def test_get_account_info_should_call_worker_post_task_correctly(self):
         dummy_respone = [
             {"currency": "KRW", "balance": 123456789},
             {"currency": "APPLE", "balance": 500, "avg_buy_price": 23456},
         ]
         trader = UpbitTrader()
+        trader.MARKET_CURRENCY = "APPLE"
+        trader.MARKET = "APPLE"
         trader.worker = MagicMock()
         trader._query_account = MagicMock(return_value=dummy_respone)
+        trader.get_trade_tick = MagicMock(return_value=[{"trade_price": 777}])
         result = trader.get_account_info()
 
         trader._query_account.assert_called_once()
-        self.assertEqual(result, {"balance": 123456789, "asset": {"APPLE": (23456, 500)}})
+        print(result)
+        self.assertEqual(result["balance"], 123456789)
+        self.assertEqual(result["asset"], {"APPLE": (23456, 500)})
+        self.assertEqual(result["quote"], {"APPLE": 777})
+        trader.get_trade_tick.assert_called_once_with("APPLE")
 
-    def test_send_account_info_request_should_raise_UserWarning_when_None_response(self):
+    def test_get_account_info_should_raise_UserWarning_when_None_response(self):
         dummy_respone = None
         trader = UpbitTrader()
         trader._query_account = MagicMock(return_value=dummy_respone)
+        trader.get_trade_tick = MagicMock()
 
         with self.assertRaises(UserWarning):
             result = trader.get_account_info()

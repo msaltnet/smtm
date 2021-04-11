@@ -143,7 +143,7 @@ class Analyzer:
 
             start_total = self.__get_start_property_value()
             start_quote = self.asset_record_list[0]["quote"]
-            current_total = new_info["balance"]
+            current_total = float(new_info["balance"])
             current_quote = new_info["quote"]
             cumulative_return = 0
             new_asset_list = []
@@ -152,17 +152,19 @@ class Analyzer:
 
             for name, item in new_info["asset"].items():
                 item_yield = 0
-                price = current_quote[name]
-                current_total += item[1] * price
-                item_price_diff = price - item[0]
+                amount = float(item[1])
+                avg_buy = float(item[0])
+                price = float(current_quote[name])
+                current_total += amount * price
+                item_price_diff = price - float(avg_buy)
                 if item_price_diff != 0:
-                    item_yield = (price - item[0]) / item[0] * 100
+                    item_yield = (price - avg_buy) / avg_buy * 100
                     item_yield = round(item_yield, 3)
 
                 self.logger.debug(
-                    f"yield record {name}, {item[0]}, {price}, {item[1]}, {item_yield}"
+                    f"yield record {name}, {avg_buy}, {price}, {amount}, {item_yield}"
                 )
-                new_asset_list.append((name, item[0], price, item[1], item_yield))
+                new_asset_list.append((name, avg_buy, price, amount, item_yield))
                 start_price = start_quote[name]
                 price_change_ratio[name] = 0
                 price_diff = price - start_price
@@ -413,8 +415,8 @@ class Analyzer:
         return round(self.__get_property_total_value(-1))
 
     def __get_property_total_value(self, index):
-        total = self.asset_record_list[index]["balance"]
+        total = float(self.asset_record_list[index]["balance"])
         quote = self.asset_record_list[index]["quote"]
         for name, item in self.asset_record_list[index]["asset"].items():
-            total += item[1] * quote[name]
+            total += float(item[1]) * float(quote[name])
         return total
