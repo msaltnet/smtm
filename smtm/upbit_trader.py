@@ -39,6 +39,7 @@ class UpbitTrader(Trader):
         self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key")
         self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "upbit_server_url")
         self.is_opt_mode = True
+        self.name = "Upbit"
 
     def send_request(self, request, callback):
         """거래 요청을 처리한다

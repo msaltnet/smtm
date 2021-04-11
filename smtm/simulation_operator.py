@@ -1,6 +1,7 @@
 """시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영"""
 
 import time
+from datetime import datetime
 from .log_manager import LogManager
 from .operator import Operator
 
@@ -17,7 +18,6 @@ class SimulationOperator(Operator):
         self.end = "2020-12-20T16:23:00"
         self.count = 0
         self.budget = 0
-        self.tag = "simulation-tag"
         self.last_report = None
 
     def initialize_simulation(
@@ -45,7 +45,7 @@ class SimulationOperator(Operator):
         self.budget = budget
         end_str = self.end.replace(" ", "T")
         end_str = end_str.replace(":", "")
-        self.tag = end_str + "-" + str(self.count) + "-BTC-" + str(round(time.time()))
+        self.tag = datetime.now().strftime("%Y%m%d-%H%M%S") + "-simulation"
 
         try:
             data_provider.initialize_from_server(end=end, count=count)

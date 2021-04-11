@@ -100,7 +100,7 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
 
     def test_initialize_simulation_update_tag_correctly(self):
         target_end = "2020-10-01 13:12:00"
-        expected_tag = "2020-10-01T131200-35-BTC-"
+        expected_tag = "-simulation"  # 202010-131200-simulation
         self.sop.initialize_simulation(
             self.data_provider_mock,
             self.strategy_mock,
@@ -110,7 +110,7 @@ class SimulationInitializeOperatorTests(unittest.TestCase):
             35,
             "papaya",
         )
-        self.assertEqual(self.sop.tag[: len(expected_tag)], expected_tag)
+        self.assertEqual(self.sop.tag[-len(expected_tag) :], expected_tag)
 
 
 class SimulationOperatorStartTests(unittest.TestCase):

@@ -43,6 +43,7 @@ class StrategySma0(Strategy):
         self.closing_price_list = []
         self.process_unit = (0, 0)  # budget and amount
         self.logger = LogManager.get_logger(__class__.__name__)
+        self.name = "SMA0"
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트"""

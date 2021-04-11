@@ -46,6 +46,7 @@ class BithumbTrader(Trader):
         self.ACCESS_KEY = os.environ.get("BITHUMB_API_ACCESS_KEY", "bithumb_access_key")
         self.SECRET_KEY = os.environ.get("BITHUMB_API_SECRET_KEY", "bithumb_secret_key")
         self.SERVER_URL = os.environ.get("BITHUMB_API_SERVER_URL", "bithumb_server_url")
+        self.name = "Bithumb"
 
     def send_request(self, request, callback):
         """거래 요청을 처리한다

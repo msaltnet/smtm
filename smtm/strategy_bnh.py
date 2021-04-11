@@ -33,6 +33,7 @@ class StrategyBuyAndHold(Strategy):
         self.result = []
         self.request = None
         self.logger = LogManager.get_logger(__class__.__name__)
+        self.name = "BnH"
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트"""

@@ -19,6 +19,8 @@ class SimulationTrader(Trader):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.market = VirtualMarket()
         self.is_initialized = False
+        self.name = "Simulation"
+        self.MARKET = "VirtualMarket"
 
     def initialize(self, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""

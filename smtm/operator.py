@@ -36,6 +36,7 @@ class Operator:
         self.worker = Worker("Operator-Worker")
         self.state = None
         self.is_trading_activated = False
+        self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     def initialize(self, data_provider, strategy, trader, analyzer, budget=500):
         """
@@ -78,6 +79,11 @@ class Operator:
         self.state = "running"
         self.worker.start()
         self.worker.post_task({"runnable": self._excute_trading})
+        self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
+        try:
+            self.tag += "-" + self.trader.name + "-" + self.strategy.name + "-" + self.trader.MARKET
+        except AttributeError:
+            self.logger.warning("can't get additional info form strategy and trader")
         return True
 
     def _start_timer(self):
