@@ -246,7 +246,7 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.update_result.assert_not_called()
         analyzer_mock.put_result.assert_not_called()
         analyzer_mock.create_report.assert_called_once()
-        self.assertEqual(operator.state, "terminated")
+        self.assertEqual(operator.state, "simulation_terminated")
 
     def test_excute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
         operator = SimulationOperator()

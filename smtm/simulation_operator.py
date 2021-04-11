@@ -70,7 +70,11 @@ class SimulationOperator(Operator):
             return
 
     def _excute_trading(self, task):
-        """자동 거래를 실행 후 타이머를 실행한다"""
+        """자동 거래를 실행 후 타이머를 실행한다
+
+        simulation_terminated 상태는 시뮬레이션에만 존재하는 상태로서 시뮬레이션이 끝났으나
+        Operator는 중지되지 않은 상태. Operator의 시작과 중지는 외부부터 실행되어야 한다.
+        """
         self.logger.info(
             f"##################### trading is started : {self.turn + 1} / {int(self.count) - 1}"
         )
@@ -84,7 +88,7 @@ class SimulationOperator(Operator):
                 self.logger.debug("send_request_callback is called")
                 if result["msg"] == "game-over":
                     self.last_report = self.analyzer.create_report(tag=self.tag)
-                    self.state = "terminated"
+                    self.state = "simulation_terminated"
                     return
                 self.strategy.update_result(result)
                 self.analyzer.put_result(result)
