@@ -17,6 +17,7 @@ from .simulator import Simulator
 from .upbit_trader import UpbitTrader
 from .bithumb_trader import BithumbTrader
 from .upbit_data_provider import UpbitDataProvider
+from .controller import Controller
 
 __all__ = [
     "Operator",
