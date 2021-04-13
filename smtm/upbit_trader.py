@@ -154,6 +154,9 @@ class UpbitTrader(Trader):
                     if order["state"] == "done" or order["state"] == "cancel":
                         result = request_info["result"]
                         result["date_time"] = order["created_at"]
+                        # 최종 체결 가격, 수량으로 업데이트
+                        result["price"] = order["price"]
+                        result["amount"] = order["executed_volume"]
                         request_info["callback"](result)
                         is_done = True
 

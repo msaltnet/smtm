@@ -125,8 +125,20 @@ class UpditTraderTests(unittest.TestCase):
 
     def test__query_order_result_should_call_callback_and_keep_waiting_request(self):
         dummy_result = [
-            {"uuid": "mango", "state": "done", "created_at": "today"},
-            {"uuid": "apple", "state": "cancel", "created_at": "yesterday"},
+            {
+                "uuid": "mango",
+                "state": "done",
+                "created_at": "today",
+                "price": 500,
+                "executed_volume": 0.007,
+            },
+            {
+                "uuid": "apple",
+                "state": "cancel",
+                "created_at": "yesterday",
+                "price": 1500,
+                "executed_volume": 0.54321,
+            },
         ]
         dummy_request_mango = {
             "uuid": "mango",
@@ -159,11 +171,15 @@ class UpditTraderTests(unittest.TestCase):
         mango_result = dummy_request_mango["callback"].call_args[0][0]
         self.assertEqual(mango_result["date_time"], "today")
         self.assertEqual(mango_result["id"], "mango_result")
+        self.assertEqual(mango_result["price"], 500)
+        self.assertEqual(mango_result["amount"], 0.007)
         dummy_request_mango["callback"].assert_called_once()
 
         apple_result = dummy_request_apple["callback"].call_args[0][0]
         self.assertEqual(apple_result["date_time"], "yesterday")
         self.assertEqual(apple_result["id"], "apple_result")
+        self.assertEqual(apple_result["price"], 1500)
+        self.assertEqual(apple_result["amount"], 0.54321)
         dummy_request_mango["callback"].assert_called_once()
 
         self.assertEqual(len(trader.request_map), 1)
@@ -174,8 +190,20 @@ class UpditTraderTests(unittest.TestCase):
 
     def test__query_order_result_should_NOT_start_timer_when_no_request_remains(self):
         dummy_result = [
-            {"uuid": "mango", "state": "done", "created_at": "today"},
-            {"uuid": "orange", "state": "cancel", "created_at": "yesterday"},
+            {
+                "uuid": "mango",
+                "state": "done",
+                "created_at": "today",
+                "price": 5000,
+                "executed_volume": 0.00001,
+            },
+            {
+                "uuid": "orange",
+                "state": "cancel",
+                "created_at": "yesterday",
+                "price": 2000,
+                "executed_volume": 0.1234,
+            },
         ]
         dummy_request_mango = {
             "uuid": "mango",
@@ -201,10 +229,14 @@ class UpditTraderTests(unittest.TestCase):
         mango_result = dummy_request_mango["callback"].call_args[0][0]
         self.assertEqual(mango_result["date_time"], "today")
         self.assertEqual(mango_result["id"], "mango_result")
+        self.assertEqual(mango_result["price"], 5000)
+        self.assertEqual(mango_result["amount"], 0.00001)
 
         orange_result = dummy_request_orange["callback"].call_args[0][0]
         self.assertEqual(orange_result["date_time"], "yesterday")
         self.assertEqual(orange_result["id"], "orange_result")
+        self.assertEqual(orange_result["price"], 2000)
+        self.assertEqual(orange_result["amount"], 0.1234)
         dummy_request_mango["callback"].assert_called_once()
 
         self.assertEqual(len(trader.request_map), 0)
