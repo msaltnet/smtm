@@ -25,7 +25,7 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(called_arg["request"], "mango")
         self.assertEqual(called_arg["callback"], "banana")
 
-    def test_get_account_info_should_call_worker_post_task_correctly(self):
+    def test_get_account_info_should_return_correct_info(self):
         dummy_respone = [
             {"currency": "KRW", "balance": 123456789},
             {"currency": "APPLE", "balance": 500, "avg_buy_price": 23456},
@@ -39,11 +39,10 @@ class UpditTraderTests(unittest.TestCase):
         result = trader.get_account_info()
 
         trader._query_account.assert_called_once()
-        print(result)
         self.assertEqual(result["balance"], 123456789)
         self.assertEqual(result["asset"], {"APPLE": (23456, 500)})
         self.assertEqual(result["quote"], {"APPLE": 777})
-        trader.get_trade_tick.assert_called_once_with("APPLE")
+        trader.get_trade_tick.assert_called_once_with()
 
     def test_get_account_info_should_raise_UserWarning_when_None_response(self):
         dummy_respone = None
@@ -127,7 +126,6 @@ class UpditTraderTests(unittest.TestCase):
     def test__query_order_result_should_call_callback_and_keep_waiting_request(self):
         dummy_result = [
             {"uuid": "mango", "state": "done", "created_at": "today"},
-            {"uuid": "banana", "state": "wait", "created_at": "tomorrow"},
             {"uuid": "apple", "state": "cancel", "created_at": "yesterday"},
         ]
         dummy_request_mango = {
@@ -172,10 +170,12 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(trader.request_map["banana"]["request"]["id"], "banana_id")
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_called_once()
+        trader._query_order_list.assert_called_once_with(["mango", "banana", "apple"], True)
 
     def test__query_order_result_should_NOT_start_timer_when_no_request_remains(self):
         dummy_result = [
             {"uuid": "mango", "state": "done", "created_at": "today"},
+            {"uuid": "orange", "state": "cancel", "created_at": "yesterday"},
         ]
         dummy_request_mango = {
             "uuid": "mango",
@@ -183,22 +183,34 @@ class UpditTraderTests(unittest.TestCase):
             "callback": MagicMock(),
             "result": {"id": "mango_result"},
         }
+        dummy_request_orange = {
+            "uuid": "orange",
+            "request": {"id": "orange_id"},
+            "callback": MagicMock(),
+            "result": {"id": "orange_result"},
+        }
         trader = UpbitTrader()
         trader._query_order_list = MagicMock(return_value=dummy_result)
         trader._stop_timer = MagicMock()
         trader._start_timer = MagicMock()
         trader.request_map["mango"] = dummy_request_mango
+        trader.request_map["orange"] = dummy_request_orange
 
         trader._query_order_result(None)
 
         mango_result = dummy_request_mango["callback"].call_args[0][0]
         self.assertEqual(mango_result["date_time"], "today")
         self.assertEqual(mango_result["id"], "mango_result")
+
+        orange_result = dummy_request_orange["callback"].call_args[0][0]
+        self.assertEqual(orange_result["date_time"], "yesterday")
+        self.assertEqual(orange_result["id"], "orange_result")
         dummy_request_mango["callback"].assert_called_once()
 
         self.assertEqual(len(trader.request_map), 0)
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_not_called()
+        trader._query_order_list.assert_called_once_with(["mango", "orange"], True)
 
     def test__create_limit_order_query_return_correct_query(self):
         expected_query = {
@@ -246,10 +258,12 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(query, None)
 
     @patch("requests.get")
-    def test__query_order_list_should_send_correct_request(self, mock_requests):
-        query_states = ["done", "wait", "cancel"]
-        states_query_string = "&".join(["states[]={}".format(state) for state in query_states])
-        expected_query_string = states_query_string.encode()
+    def test__query_order_list_should_get_correctly_when_is_done_state_True(self, mock_requests):
+        query_states = ["done", "cancel"]
+        uuids = ["mango", "orange"]
+        expected_query_string = (
+            "states[]=done&states[]=cancel&uuids[]=mango&uuids[]=orange".encode()
+        )
 
         class DummyResponse:
             pass
@@ -261,7 +275,39 @@ class UpditTraderTests(unittest.TestCase):
         trader = UpbitTrader()
         trader._create_jwt_token = MagicMock(return_value="mango_token")
 
-        response = trader._query_order_list()
+        response = trader._query_order_list(uuids, True)
+
+        self.assertEqual(response, "mango_response")
+        dummy_response.raise_for_status.assert_called_once()
+        dummy_response.json.assert_called_once()
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY, expected_query_string
+        )
+        mock_requests.assert_called_once_with(
+            trader.SERVER_URL + "/v1/orders",
+            params=expected_query_string,
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+    @patch("requests.get")
+    def test__query_order_list_should_get_correctly_when_is_done_state_False(self, mock_requests):
+        query_states = ["wait", "watch"]
+        uuids = ["banana", "orange"]
+        expected_query_string = (
+            "states[]=wait&states[]=watch&uuids[]=banana&uuids[]=orange".encode()
+        )
+
+        class DummyResponse:
+            pass
+
+        dummy_response = DummyResponse()
+        dummy_response.raise_for_status = MagicMock()
+        dummy_response.json = MagicMock(return_value="mango_response")
+        mock_requests.return_value = dummy_response
+        trader = UpbitTrader()
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+
+        response = trader._query_order_list(uuids, False)
 
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()

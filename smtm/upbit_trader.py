@@ -65,7 +65,7 @@ class UpbitTrader(Trader):
             }
         """
         response = self._query_account()
-        trade_info = self.get_trade_tick(self.MARKET)
+        trade_info = self.get_trade_tick()
         result = {
             "asset": {},
             "quote": {},
@@ -101,6 +101,7 @@ class UpbitTrader(Trader):
             "callback": task["callback"],
             "result": result,
         }
+        self.logger.debug(f"request inserted {self.request_map[request['id']]}")
         self._start_timer()
 
     def _create_success_result(self, request):
@@ -130,24 +131,38 @@ class UpbitTrader(Trader):
         self.timer = None
 
     def _query_order_result(self, task):
-        results = self._query_order_list()
+        uuids = []
+        for request_id, request_info in self.request_map.items():
+            uuids.append(request_info["uuid"])
+
+        if len(uuids) == 0:
+            return
+
+        results = self._query_order_list(uuids, True)
         if results is None:
             return
 
         waiting_request = {}
         self.logger.debug(f"waiting order count {len(self.request_map)}")
         for request_id, request_info in self.request_map.items():
+            is_done = False
             for order in results:
                 if order["uuid"] == request_info["uuid"]:
-                    self.logger.debug(f"find order! {request_info} {order}")
+                    self.logger.debug(f"Find done order! =====")
+                    self.logger.debug(request_info)
+                    self.logger.debug(order)
                     if order["state"] == "done" or order["state"] == "cancel":
                         result = request_info["result"]
                         result["date_time"] = order["created_at"]
                         request_info["callback"](result)
-                    elif order["state"] == "wait":
-                        waiting_request[request_id] = request_info
+                        is_done = True
+
+            if is_done is False:
+                self.logger.debug(f"can't find order! {request_info}")
+                waiting_request[request_id] = request_info
         self.request_map = waiting_request
         self.logger.debug(f"After update, waiting order count {len(self.request_map)}")
+
         self._stop_timer()
         if len(self.request_map) > 0:
             self._start_timer()
@@ -197,9 +212,11 @@ class UpbitTrader(Trader):
             query_string = self._create_limit_order_query(market, is_buy, price, volume)
         elif volume is not None and is_buy is False:
             # 시장가 매도
+            self.logger.warning("### Marker price order is submitted ###")
             query_string = self._create_market_price_order_query(market, volume=volume)
         elif price is not None and is_buy is True:
             # 시장가 매수
+            self.logger.warning("### Marker price order is submitted ###")
             query_string = self._create_market_price_order_query(market, price=price)
         else:
             # 잘못된 주문
@@ -229,7 +246,7 @@ class UpbitTrader(Trader):
         return result
 
     def _optimize_price(self, price, is_buy):
-        latest = self.get_trade_tick(self.MARKET)
+        latest = self.get_trade_tick()
         if latest is None:
             return price
 
@@ -271,7 +288,7 @@ class UpbitTrader(Trader):
         query_string = urlencode(query).encode()
         return query_string
 
-    def _query_order_list(self):
+    def _query_order_list(self, uuids, is_done_state):
         """
         response:
             uuid: 주문의 고유 아이디, String
@@ -290,10 +307,13 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
-        query_states = ["done", "wait", "cancel"]
+        query_states = ["wait", "watch"]
+        if is_done_state:
+            query_states = ["done", "cancel"]
 
         states_query_string = "&".join(["states[]={}".format(state) for state in query_states])
-        query_string = states_query_string.encode()
+        uuids_query_string = "&".join(["uuids[]={}".format(uuid) for uuid in uuids])
+        query_string = "{0}&{1}".format(states_query_string, uuids_query_string).encode()
 
         jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
         authorize_token = "Bearer {}".format(jwt_token)
@@ -353,6 +373,6 @@ class UpbitTrader(Trader):
 
         return jwt.encode(payload, s_key)
 
-    def get_trade_tick(self, market):
-        querystring = {"market": market, "count": "1"}
+    def get_trade_tick(self):
+        querystring = {"market": self.MARKET, "count": "1"}
         return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
