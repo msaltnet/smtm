@@ -87,6 +87,32 @@ class UpbitTrader(Trader):
         self.logger.debug(f"account info {response}")
         return result
 
+    def cancel_request(self, request_id):
+        if request_id not in self.request_map:
+            return
+
+        request = self.request_map[request_id]
+        del self.request_map[request_id]
+        response = self._cancel_order(request["uuid"])
+        if response is not None:
+            self.logger.debug(f"canceled order {response}")
+            result = request["result"]
+            result["price"] = response["price"]
+            result["amount"] = response["executed_volume"]
+            request["callback"](result)
+        else:
+            response = self._query_order_list([request["uuid"]], True)
+            self.logger.debug(f"canceled order check {response}")
+            if len(response) > 0:
+                result = request["result"]
+                result["price"] = response["price"]
+                result["amount"] = response[0]["executed_volume"]
+                request["callback"](result)
+
+    def get_trade_tick(self):
+        querystring = {"market": self.MARKET, "count": "1"}
+        return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
+
     def _excute_order(self, task):
         request = task["request"]
         is_buy = True if request["type"] == "buy" else False
@@ -256,7 +282,7 @@ class UpbitTrader(Trader):
         if (is_buy is True and latest[0]["trade_price"] < price) or (
             is_buy is False and latest[0]["trade_price"] > price
         ):
-            self.logger.info("price optimized! #####")
+            self.logger.info(f"price optimized! ##### {price} -> {latest[0]['trade_price']}")
             return latest[0]["trade_price"]
 
         return price
@@ -376,6 +402,54 @@ class UpbitTrader(Trader):
 
         return jwt.encode(payload, s_key)
 
-    def get_trade_tick(self):
-        querystring = {"market": self.MARKET, "count": "1"}
-        return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
+    def _cancel_order(self, uuid):
+        """
+        request:
+            uuid: 취소할 주문의 UUID, String
+
+        response:
+            uuid: 주문의 고유 아이디, String
+            side: 주문 종류, String
+            ord_type: 주문 방식, String
+            price: 주문 당시 화폐 가격, NumberString
+            avg_price: 체결 가격의 평균가, NumberString
+            state: 주문 상태, String
+            market: 마켓의 유일키, String
+            created_at: 주문 생성 시간, String
+            volume: 사용자가 입력한 주문 양, NumberString
+            remaining_volume: 체결 후 남은 주문 양, NumberString
+            reserved_fee: 수수료로 예약된 비용, NumberString
+            remaining_fee: 남은 수수료, NumberString
+            paid_fee: 사용된 수수료, NumberString
+            locked: 거래에 사용중인 비용, NumberString
+            executed_volume: 체결된 양, NumberString
+            trade_count: 해당 주문에 걸린 체결 수, Integer
+        """
+        self.logger.info(f"CANCEL ORDER ##### {uuid}")
+
+        query = {
+            "uuid": uuid,
+        }
+        query_string = urlencode(query).encode()
+
+        jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
+        authorize_token = "Bearer {}".format(jwt_token)
+        headers = {"Authorization": authorize_token}
+
+        try:
+            response = requests.delete(
+                self.SERVER_URL + "/v1/order", params=query_string, headers=headers
+            )
+            response.raise_for_status()
+            result = response.json()
+        except ValueError:
+            self.logger.error("Invalid data from server")
+            return
+        except requests.exceptions.HTTPError as msg:
+            self.logger.error(msg)
+            return
+        except requests.exceptions.RequestException as msg:
+            self.logger.error(msg)
+            return
+
+        return result

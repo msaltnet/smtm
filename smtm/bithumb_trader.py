@@ -97,6 +97,9 @@ class BithumbTrader(Trader):
 
         return result
 
+    def cancel_request(self, request_id):
+        pass
+
     def _excute_order(self, task):
         request = task["request"]
         is_buy = True if request["type"] == "buy" else False

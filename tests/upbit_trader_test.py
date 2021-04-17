@@ -13,46 +13,6 @@ class UpditTraderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_send_request_should_call_worker_post_task_correctly(self):
-        trader = UpbitTrader()
-        trader.worker = MagicMock()
-
-        trader.send_request("mango", "banana")
-
-        trader.worker.post_task.assert_called_once()
-        called_arg = trader.worker.post_task.call_args[0][0]
-        self.assertEqual(called_arg["runnable"], trader._excute_order)
-        self.assertEqual(called_arg["request"], "mango")
-        self.assertEqual(called_arg["callback"], "banana")
-
-    def test_get_account_info_should_return_correct_info(self):
-        dummy_respone = [
-            {"currency": "KRW", "balance": 123456789},
-            {"currency": "APPLE", "balance": 500, "avg_buy_price": 23456},
-        ]
-        trader = UpbitTrader()
-        trader.MARKET_CURRENCY = "APPLE"
-        trader.MARKET = "APPLE"
-        trader.worker = MagicMock()
-        trader._query_account = MagicMock(return_value=dummy_respone)
-        trader.get_trade_tick = MagicMock(return_value=[{"trade_price": 777}])
-        result = trader.get_account_info()
-
-        trader._query_account.assert_called_once()
-        self.assertEqual(result["balance"], 123456789)
-        self.assertEqual(result["asset"], {"APPLE": (23456, 500)})
-        self.assertEqual(result["quote"], {"APPLE": 777})
-        trader.get_trade_tick.assert_called_once_with()
-
-    def test_get_account_info_should_raise_UserWarning_when_None_response(self):
-        dummy_respone = None
-        trader = UpbitTrader()
-        trader._query_account = MagicMock(return_value=dummy_respone)
-        trader.get_trade_tick = MagicMock()
-
-        with self.assertRaises(UserWarning):
-            result = trader.get_account_info()
-
     def test__excute_order_handle_task_correctly(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
@@ -457,6 +417,18 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         self.post_patcher.stop()
         self.get_patcher.stop()
 
+    def test_send_request_should_call_worker_post_task_correctly(self):
+        trader = UpbitTrader()
+        trader.worker = MagicMock()
+
+        trader.send_request("mango", "banana")
+
+        trader.worker.post_task.assert_called_once()
+        called_arg = trader.worker.post_task.call_args[0][0]
+        self.assertEqual(called_arg["runnable"], trader._excute_order)
+        self.assertEqual(called_arg["request"], "mango")
+        self.assertEqual(called_arg["callback"], "banana")
+
     def test__send_order_should_send_correct_limit_order(self):
         trader = UpbitTrader()
 
@@ -642,3 +614,105 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         response = trader._send_order("mango", True)
         self.assertEqual(response, None)
         trader._create_market_price_order_query.assert_not_called()
+
+
+class UpditTraderGetAccountTests(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_get_account_info_should_return_correct_info(self):
+        dummy_respone = [
+            {"currency": "KRW", "balance": 123456789},
+            {"currency": "APPLE", "balance": 500, "avg_buy_price": 23456},
+        ]
+        trader = UpbitTrader()
+        trader.MARKET_CURRENCY = "APPLE"
+        trader.MARKET = "APPLE"
+        trader.worker = MagicMock()
+        trader._query_account = MagicMock(return_value=dummy_respone)
+        trader.get_trade_tick = MagicMock(return_value=[{"trade_price": 777}])
+        result = trader.get_account_info()
+
+        trader._query_account.assert_called_once()
+        self.assertEqual(result["balance"], 123456789)
+        self.assertEqual(result["asset"], {"APPLE": (23456, 500)})
+        self.assertEqual(result["quote"], {"APPLE": 777})
+        trader.get_trade_tick.assert_called_once_with()
+
+    def test_get_account_info_should_raise_UserWarning_when_None_response(self):
+        dummy_respone = None
+        trader = UpbitTrader()
+        trader._query_account = MagicMock(return_value=dummy_respone)
+        trader.get_trade_tick = MagicMock()
+
+        with self.assertRaises(UserWarning):
+            result = trader.get_account_info()
+
+
+class UpditTraderCancelRequestTests(unittest.TestCase):
+    def setUp(self):
+        self.patcher = patch("requests.delete")
+        self.delete_mock = self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_cancel_request_should_send_cancel_request(self):
+        trader = UpbitTrader()
+        dummy_request = {
+            "uuid": "mango_uuid",
+            "callback": MagicMock(),
+            "result": {
+                "request": {
+                    "id": "mango_request_1234",
+                    "type": "buy",
+                    "price": "888000",
+                    "amount": "0.0001234",
+                },
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+                "msg": "success",
+            },
+        }
+        trader.request_map["mango_request_1234"] = dummy_request
+
+        dummy_response = MagicMock()
+        dummy_response.json.return_value = {
+            "type": "buy",
+            "price": "887000",
+            "executed_volume": "0.0000034",
+            "msg": "success",
+        }
+        expected_result = {
+            "request": {
+                "id": "mango_request_1234",
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+            },
+            "type": "buy",
+            "price": "887000",
+            "amount": "0.0000034",
+            "msg": "success",
+        }
+        self.delete_mock.return_value = dummy_response
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+        expected_query_string = "uuid=mango_uuid".encode()
+
+        trader.cancel_request("mango_request_1234")
+
+        dummy_response.raise_for_status.assert_called_once()
+        dummy_response.json.assert_called_once()
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY, expected_query_string
+        )
+        self.delete_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/order",
+            params=expected_query_string,
+            headers={"Authorization": "Bearer mango_token"},
+        )
+        dummy_request["callback"].assert_called_once_with(expected_result)

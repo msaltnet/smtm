@@ -61,3 +61,6 @@ class SimulationTrader(Trader):
         except (TypeError, AttributeError) as msg:
             self.logger.error(f"invalid state {msg}")
             raise UserWarning("invalid state") from msg
+
+    def cancel_request(self, request_id):
+        pass
