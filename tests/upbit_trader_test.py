@@ -685,6 +685,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
 
         dummy_response = MagicMock()
         dummy_response.json.return_value = {
+            "created_at": "2018-04-10T15:42:23+09:00",
             "type": "buy",
             "price": "887000",
             "executed_volume": "0.0000034",
@@ -701,6 +702,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             "price": "887000",
             "amount": "0.0000034",
             "msg": "success",
+            "date_time": "2018-04-10T15:42:23",
         }
         self.delete_mock.return_value = dummy_response
         trader._create_jwt_token = MagicMock(return_value="mango_token")
@@ -755,19 +757,21 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             "price": "887000",
             "amount": "0.0000034",
             "msg": "success",
+            "date_time": "2018-04-10T15:42:23",
         }
         self.delete_mock.return_value = dummy_response
 
-        expected_query_string_get = (
-            "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
-        )
+        expected_query_string_get = "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
         dummy_response_get = MagicMock()
-        dummy_response_get.json.return_value = [{
-            "type": "buy",
-            "price": "887000",
-            "executed_volume": "0.0000034",
-            "msg": "success",
-        }]
+        dummy_response_get.json.return_value = [
+            {
+                "created_at": "2018-04-10T15:42:23+09:00",
+                "type": "buy",
+                "price": "887000",
+                "executed_volume": "0.0000034",
+                "msg": "success",
+            }
+        ]
         self.get_mock.return_value = dummy_response_get
         trader._create_jwt_token = MagicMock(return_value="mango_token")
 
@@ -777,7 +781,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         dummy_response.json.assert_called_once()
         self.assertEqual(trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY)
         self.assertEqual(trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete)
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete
+        )
         self.delete_mock.assert_called_once_with(
             trader.SERVER_URL + "/v1/order",
             params=expected_query_string_delete,
@@ -788,7 +794,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         dummy_response_get.json.assert_called_once()
         self.assertEqual(trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY)
         self.assertEqual(trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get)
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get
+        )
         self.get_mock.assert_called_once_with(
             trader.SERVER_URL + "/v1/orders",
             params=expected_query_string_get,
@@ -835,9 +843,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         }
         self.delete_mock.return_value = dummy_response
 
-        expected_query_string_get = (
-            "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
-        )
+        expected_query_string_get = "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
         dummy_response_get = MagicMock()
         dummy_response_get.json.return_value = []
         self.get_mock.return_value = dummy_response_get
@@ -849,7 +855,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         dummy_response.json.assert_called_once()
         self.assertEqual(trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY)
         self.assertEqual(trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete)
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete
+        )
         self.delete_mock.assert_called_once_with(
             trader.SERVER_URL + "/v1/order",
             params=expected_query_string_delete,
@@ -860,7 +868,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         dummy_response_get.json.assert_called_once()
         self.assertEqual(trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY)
         self.assertEqual(trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get)
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get
+        )
         self.get_mock.assert_called_once_with(
             trader.SERVER_URL + "/v1/orders",
             params=expected_query_string_get,

@@ -97,6 +97,7 @@ class UpbitTrader(Trader):
         if response is not None:
             self.logger.debug(f"canceled order {response}")
             result = order["result"]
+            result["date_time"] = response["created_at"].replace("+09:00", "")
             result["price"] = response["price"]
             result["amount"] = response["executed_volume"]
             order["callback"](result)
@@ -105,6 +106,7 @@ class UpbitTrader(Trader):
             self.logger.debug(f"canceled order check {response}")
             if len(response) > 0:
                 result = order["result"]
+                result["date_time"] = response[0]["created_at"].replace("+09:00", "")
                 result["price"] = response[0]["price"]
                 result["amount"] = response[0]["executed_volume"]
                 order["callback"](result)
@@ -179,7 +181,7 @@ class UpbitTrader(Trader):
                     self.logger.debug(order)
                     if order["state"] == "done" or order["state"] == "cancel":
                         result = request_info["result"]
-                        result["date_time"] = order["created_at"]
+                        result["date_time"] = order["created_at"].replace("+09:00", "")
                         # 최종 체결 가격, 수량으로 업데이트
                         result["price"] = order["price"]
                         result["amount"] = order["executed_volume"]
