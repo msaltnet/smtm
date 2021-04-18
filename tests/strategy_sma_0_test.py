@@ -10,15 +10,6 @@ class StrategySma0Tests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_initialize_update_simulation_mode(self):
-        sma = StrategySma0()
-        sma.initialize(50000, 50, False)
-        self.assertEqual(sma.is_simulation, False)
-
-        sma = StrategySma0()
-        sma.initialize(0, 0, True)
-        self.assertEqual(sma.is_simulation, True)
-
     def test_initialize_update_initial_balance(self):
         sma = StrategySma0()
         self.assertEqual(sma.is_intialized, False)
@@ -187,58 +178,58 @@ class StrategySma0Tests(unittest.TestCase):
 
         dummy_result = {
             "type": "orange",
-            "request": { "id": "banana"},
-            "price": "apple",
-            "amount": "kiwi",
+            "request": {"id": "banana"},
+            "price": "777000",
+            "amount": "0.0001234",
             "msg": "melon",
             "balance": 500,
         }
         sma.update_result(dummy_result)
         self.assertEqual(sma.result[-1]["type"], "orange")
         self.assertEqual(sma.result[-1]["request"]["id"], "banana")
-        self.assertEqual(sma.result[-1]["price"], "apple")
-        self.assertEqual(sma.result[-1]["amount"], "kiwi")
+        self.assertEqual(sma.result[-1]["price"], "777000")
+        self.assertEqual(sma.result[-1]["amount"], "0.0001234")
         self.assertEqual(sma.result[-1]["msg"], "melon")
         self.assertEqual(sma.result[-1]["balance"], 500)
 
     def test_update_result_update_balance_and_asset_amount(self):
         sma = StrategySma0()
-        sma.initialize(100, 10)
-        self.assertEqual(sma.balance, 100)
+        sma.initialize(100000, 10)
+        self.assertEqual(sma.balance, 100000)
         sma.asset_amount = 50
 
         dummy_result = {
             "type": "buy",
-            "request": { "id": "orange"},
-            "price": 10,
+            "request": {"id": "orange"},
+            "price": 1000,
             "amount": 5,
             "msg": "success",
             "balance": 100,
         }
         sma.update_result(dummy_result)
-        self.assertEqual(sma.balance, 100)
+        self.assertEqual(sma.balance, 94998)
         self.assertEqual(sma.asset_amount, 55)
         self.assertEqual(sma.result[-1]["type"], "buy")
         self.assertEqual(sma.result[-1]["request"]["id"], "orange")
-        self.assertEqual(sma.result[-1]["price"], 10)
+        self.assertEqual(sma.result[-1]["price"], 1000)
         self.assertEqual(sma.result[-1]["amount"], 5)
         self.assertEqual(sma.result[-1]["msg"], "success")
         self.assertEqual(sma.result[-1]["balance"], 100)
 
         dummy_result = {
             "type": "sell",
-            "request": { "id": "apple"},
-            "price": 100,
+            "request": {"id": "apple"},
+            "price": 1000,
             "amount": 53,
             "msg": "success",
             "balance": 1000,
         }
         sma.update_result(dummy_result)
-        self.assertEqual(sma.balance, 1000)
+        self.assertEqual(sma.balance, 147972)
         self.assertEqual(sma.asset_amount, 2)
         self.assertEqual(sma.result[-1]["type"], "sell")
         self.assertEqual(sma.result[-1]["request"]["id"], "apple")
-        self.assertEqual(sma.result[-1]["price"], 100)
+        self.assertEqual(sma.result[-1]["price"], 1000)
         self.assertEqual(sma.result[-1]["amount"], 53)
         self.assertEqual(sma.result[-1]["msg"], "success")
         self.assertEqual(sma.result[-1]["balance"], 1000)
@@ -255,13 +246,13 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_None_when_data_is_empty(self):
         sma = StrategySma0()
-        sma.initialize(100, 10, False)
+        sma.initialize(100, 10)
         request = sma.get_request()
         self.assertEqual(request, None)
 
     def test_get_request_return_None_when_data_is_invaild(self):
         sma = StrategySma0()
-        sma.initialize(100, 10, False)
+        sma.initialize(100, 10)
         dummy_info = {}
         sma.update_trading_info(dummy_info)
         request = sma.get_request()
@@ -270,7 +261,7 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_correct_request_at_buy_process(self):
         sma = StrategySma0()
-        sma.initialize(10000, 100, False)
+        sma.initialize(10000, 100)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
@@ -300,7 +291,7 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_correct_request_at_sell_process(self):
         sma = StrategySma0()
-        sma.initialize(10000, 100, False)
+        sma.initialize(10000, 100)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
@@ -323,7 +314,8 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_same_datetime_at_simulation(self):
         sma = StrategySma0()
-        sma.initialize(10000, 100, True)
+        sma.initialize(10000, 100)
+        sma.is_simulation = True
         dummy_info = {}
         dummy_info["date_time"] = "2020-02-25T15:41:09"
         dummy_info["closing_price"] = 20000000
@@ -339,7 +331,7 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_last_data_is_None(self):
         sma = StrategySma0()
-        sma.initialize(10000, 100, False)
+        sma.initialize(10000, 100)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
@@ -357,7 +349,7 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_target_budget_lt_min_price(self):
         sma = StrategySma0()
-        sma.initialize(1000, 500, False)
+        sma.initialize(1000, 500)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
@@ -370,7 +362,7 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_process_unit_invalid(self):
         sma = StrategySma0()
-        sma.initialize(1000, 500, False)
+        sma.initialize(1000, 500)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
@@ -391,7 +383,7 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_asset_amount_empty(self):
         sma = StrategySma0()
-        sma.initialize(900, 10, False)
+        sma.initialize(900, 10)
         dummy_info = {}
         dummy_info["closing_price"] = 20000
         sma.update_trading_info(dummy_info)

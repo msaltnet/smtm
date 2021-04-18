@@ -25,6 +25,7 @@ class StrategySma0(Strategy):
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+    COMMISSION_RATIO = 0.0005
     SHORT = 5
     LONG = 10
     STEP = 3
@@ -76,7 +77,13 @@ class StrategySma0(Strategy):
             return
 
         try:
-            self.balance = result["balance"]
+            total = int(result["price"]) * float(result["amount"])
+            fee = total * self.COMMISSION_RATIO
+            if result["type"] == "buy":
+                self.balance -= round(total + fee)
+            else:
+                self.balance += round(total - fee)
+
             if result["msg"] == "success":
                 if result["type"] == "buy":
                     self.asset_amount += result["amount"]
@@ -198,7 +205,7 @@ class StrategySma0(Strategy):
             "amount": amount,
         }
 
-    def initialize(self, budget, min_price=100, is_simulation=True):
+    def initialize(self, budget, min_price=100):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
@@ -206,7 +213,6 @@ class StrategySma0(Strategy):
             return
 
         self.is_intialized = True
-        self.is_simulation = is_simulation
         self.budget = budget
         self.balance = budget
         self.min_price = min_price

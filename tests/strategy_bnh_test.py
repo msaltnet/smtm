@@ -10,15 +10,6 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_initialize_update_simulation_mode(self):
-        bnh = StrategyBuyAndHold()
-        bnh.initialize(50000, 50, False)
-        self.assertEqual(bnh.is_simulation, False)
-
-        bnh = StrategyBuyAndHold()
-        bnh.initialize(0, 0, True)
-        self.assertEqual(bnh.is_simulation, True)
-
     def test_initialize_update_initial_balance(self):
         bnh = StrategyBuyAndHold()
         self.assertEqual(bnh.is_intialized, False)
@@ -63,7 +54,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(bnh.result[-1]["msg"], "melon")
         self.assertEqual(bnh.result[-1]["balance"], 500)
 
-    def test_update_result_update_balance(self):
+    def test_update_result_update_balance_at_buy(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100000, 10)
         self.assertEqual(bnh.balance, 100000)
@@ -85,6 +76,28 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(bnh.result[-1]["msg"], "melon")
         self.assertEqual(bnh.result[-1]["balance"], 9500)
 
+    def test_update_result_update_balance_at_sell(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(100000, 10)
+        self.assertEqual(bnh.balance, 100000)
+
+        dummy_result = {
+            "type": "sell",
+            "request": {"id": "orange"},
+            "price": 10000,
+            "amount": 5,
+            "msg": "melon",
+            "balance": 9500,
+        }
+        bnh.update_result(dummy_result)
+        self.assertEqual(bnh.balance, 149975)
+        self.assertEqual(bnh.result[-1]["type"], "sell")
+        self.assertEqual(bnh.result[-1]["request"]["id"], "orange")
+        self.assertEqual(bnh.result[-1]["price"], 10000)
+        self.assertEqual(bnh.result[-1]["amount"], 5)
+        self.assertEqual(bnh.result[-1]["msg"], "melon")
+        self.assertEqual(bnh.result[-1]["balance"], 9500)
+
     def test_update_result_ignore_result_when_not_yet_initialized(self):
         bnh = StrategyBuyAndHold()
         bnh.update_result("orange")
@@ -97,13 +110,13 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_None_when_data_is_empty(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(100, 10, False)
+        bnh.initialize(100, 10)
         request = bnh.get_request()
         self.assertEqual(request, None)
 
     def test_get_request_return_None_when_data_is_invaild(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(100, 10, False)
+        bnh.initialize(100, 10)
         dummy_info = {}
         bnh.update_trading_info(dummy_info)
         request = bnh.get_request()
@@ -111,7 +124,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_last_data_is_None(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(5000, 100, False)
+        bnh.initialize(5000, 100)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
@@ -126,7 +139,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_target_budget_is_too_small(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(100, 100, False)
+        bnh.initialize(100, 100)
         bnh.update_trading_info("banana")
         request = bnh.get_request()
         self.assertEqual(request["price"], 0)
@@ -134,7 +147,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_use_balance_when_balance_is_smaller_than_target_budget(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(1000, 10, False)
+        bnh.initialize(1000, 10)
         dummy_info = {}
         dummy_info["closing_price"] = 20000
         bnh.update_trading_info(dummy_info)
@@ -145,7 +158,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_balance_is_smaller_than_min_price(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(900, 10, False)
+        bnh.initialize(900, 10)
         dummy_info = {}
         dummy_info["closing_price"] = 20000
         bnh.update_trading_info(dummy_info)
@@ -156,7 +169,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_correct_request(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(5000, 100, False)
+        bnh.initialize(5000, 100)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
@@ -168,6 +181,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
     def test_get_request_return_same_datetime_at_simulation(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(1000, 100)
+        bnh.is_simulation = True
         dummy_info = {}
         dummy_info["date_time"] = "2020-02-25T15:41:09"
         dummy_info["closing_price"] = 20000000

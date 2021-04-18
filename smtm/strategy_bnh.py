@@ -28,7 +28,7 @@ class StrategyBuyAndHold(Strategy):
         self.is_simulation = False
         self.data = []
         self.budget = 0
-        self.balance = 0
+        self.balance = 0.0
         self.min_price = 0
         self.result = []
         self.request = None
@@ -47,9 +47,13 @@ class StrategyBuyAndHold(Strategy):
             return
 
         try:
-            self.balance -= round(
-                int(result["price"]) * float(result["amount"]) * (1 + self.COMMISSION_RATIO)
-            )
+            total = int(result["price"]) * float(result["amount"])
+            fee = total * self.COMMISSION_RATIO
+            if result["type"] == "buy":
+                self.balance -= round(total + fee)
+            else:
+                self.balance += round(total - fee)
+
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {result['price']}, amount: {result['amount']}")
@@ -135,7 +139,7 @@ class StrategyBuyAndHold(Strategy):
         except AttributeError as msg:
             self.logger.error(msg)
 
-    def initialize(self, budget, min_price=100, is_simulation=True):
+    def initialize(self, budget, min_price=100):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
@@ -143,7 +147,6 @@ class StrategyBuyAndHold(Strategy):
             return
 
         self.is_intialized = True
-        self.is_simulation = is_simulation
         self.budget = budget
         self.balance = budget
         self.min_price = min_price
