@@ -23,6 +23,7 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
         trading_snapshot = simulation_data.get_data("bnh_snapshot")
         operator = SimulationOperator()
         strategy = StrategyBuyAndHold()
+        strategy.is_simulation = True
         end_date = "2020-04-30T07:30:00Z"
         count = 100
         budget = 100000
@@ -104,6 +105,7 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
         trading_snapshot = simulation_data.get_data("sma0_snapshot")
         operator = SimulationOperator()
         strategy = StrategySma0()
+        strategy.is_simulation = True
         end_date = "2020-04-30T07:30:00Z"
         count = 100
         budget = 100000
