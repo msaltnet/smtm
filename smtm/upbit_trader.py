@@ -105,7 +105,7 @@ class UpbitTrader(Trader):
             self.logger.debug(f"canceled order check {response}")
             if len(response) > 0:
                 result = request["result"]
-                result["price"] = response["price"]
+                result["price"] = response[0]["price"]
                 result["amount"] = response[0]["executed_volume"]
                 request["callback"](result)
 

@@ -654,13 +654,16 @@ class UpditTraderGetAccountTests(unittest.TestCase):
 
 class UpditTraderCancelRequestTests(unittest.TestCase):
     def setUp(self):
-        self.patcher = patch("requests.delete")
-        self.delete_mock = self.patcher.start()
+        self.patcher_delete = patch("requests.delete")
+        self.patcher_get = patch("requests.get")
+        self.delete_mock = self.patcher_delete.start()
+        self.get_mock = self.patcher_get.start()
 
     def tearDown(self):
-        self.patcher.stop()
+        self.patcher_delete.stop()
+        self.patcher_get.stop()
 
-    def test_cancel_request_should_send_cancel_request(self):
+    def test_cancel_request_should_call_callback_when_cancel_order_return_info(self):
         trader = UpbitTrader()
         dummy_request = {
             "uuid": "mango_uuid",
@@ -716,3 +719,153 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             headers={"Authorization": "Bearer mango_token"},
         )
         dummy_request["callback"].assert_called_once_with(expected_result)
+        self.assertFalse("mango_request_1234" in trader.request_map)
+
+    def test_cancel_request_should_call_callback_when_cancel_order_return_None(self):
+        trader = UpbitTrader()
+        dummy_request = {
+            "uuid": "mango_uuid",
+            "callback": MagicMock(),
+            "result": {
+                "request": {
+                    "id": "mango_request_1234",
+                    "type": "buy",
+                    "price": "888000",
+                    "amount": "0.0001234",
+                },
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+                "msg": "success",
+            },
+        }
+        trader.request_map["mango_request_1234"] = dummy_request
+
+        dummy_response = MagicMock()
+        dummy_response.json.side_effect = ValueError()
+        expected_query_string_delete = "uuid=mango_uuid".encode()
+        expected_result = {
+            "request": {
+                "id": "mango_request_1234",
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+            },
+            "type": "buy",
+            "price": "887000",
+            "amount": "0.0000034",
+            "msg": "success",
+        }
+        self.delete_mock.return_value = dummy_response
+
+        expected_query_string_get = (
+            "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
+        )
+        dummy_response_get = MagicMock()
+        dummy_response_get.json.return_value = [{
+            "type": "buy",
+            "price": "887000",
+            "executed_volume": "0.0000034",
+            "msg": "success",
+        }]
+        self.get_mock.return_value = dummy_response_get
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+
+        trader.cancel_request("mango_request_1234")
+
+        dummy_response.raise_for_status.assert_called_once()
+        dummy_response.json.assert_called_once()
+        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete)
+        self.delete_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/order",
+            params=expected_query_string_delete,
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+        dummy_response_get.raise_for_status.assert_called_once()
+        dummy_response_get.json.assert_called_once()
+        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get)
+        self.get_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/orders",
+            params=expected_query_string_get,
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+        dummy_request["callback"].assert_called_once_with(expected_result)
+        self.assertFalse("mango_request_1234" in trader.request_map)
+
+    def test_cancel_request_should_remove_request_even_when_cancel_nothing(self):
+        trader = UpbitTrader()
+        dummy_request = {
+            "uuid": "mango_uuid",
+            "callback": MagicMock(),
+            "result": {
+                "request": {
+                    "id": "mango_request_1234",
+                    "type": "buy",
+                    "price": "888000",
+                    "amount": "0.0001234",
+                },
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+                "msg": "success",
+            },
+        }
+        trader.request_map["mango_request_1234"] = dummy_request
+
+        dummy_response = MagicMock()
+        dummy_response.json.side_effect = ValueError()
+        expected_query_string_delete = "uuid=mango_uuid".encode()
+        expected_result = {
+            "request": {
+                "id": "mango_request_1234",
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+            },
+            "type": "buy",
+            "price": "887000",
+            "amount": "0.0000034",
+            "msg": "success",
+        }
+        self.delete_mock.return_value = dummy_response
+
+        expected_query_string_get = (
+            "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
+        )
+        dummy_response_get = MagicMock()
+        dummy_response_get.json.return_value = []
+        self.get_mock.return_value = dummy_response_get
+        trader._create_jwt_token = MagicMock(return_value="mango_token")
+
+        trader.cancel_request("mango_request_1234")
+
+        dummy_response.raise_for_status.assert_called_once()
+        dummy_response.json.assert_called_once()
+        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete)
+        self.delete_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/order",
+            params=expected_query_string_delete,
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+        dummy_response_get.raise_for_status.assert_called_once()
+        dummy_response_get.json.assert_called_once()
+        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY)
+        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get)
+        self.get_mock.assert_called_once_with(
+            trader.SERVER_URL + "/v1/orders",
+            params=expected_query_string_get,
+            headers={"Authorization": "Bearer mango_token"},
+        )
+
+        dummy_request["callback"].assert_not_called()
+        self.assertFalse("mango_request_1234" in trader.request_map)
