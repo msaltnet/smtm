@@ -25,7 +25,7 @@ class Simulator:
     def __init__(self, end=None, count=100, interval=2, strategy=0):
         self.logger = LogManager.get_logger("Simulator")
         self.__terminating = False
-        self.end = "2020-12-20T16:23:00"
+        self.end = "2020-12-20T16:23:00Z"
         self.count = 100
         self.interval = interval
         self.operator = None
@@ -39,8 +39,8 @@ class Simulator:
             self.strategy = 0
             print(f"invalid strategy: {self.strategy}, replaced with 0")
 
-        if self.end is not None:
-            self.end = self.end.replace("T", " ")
+        if end is not None:
+            self.end = end.replace("T", " ")
 
         if count is not None:
             self.count = count
@@ -91,7 +91,7 @@ class Simulator:
                 "cmd": "end",
                 "short": "e",
                 "need_value": True,
-                "value_guide": "input simulation period end datetime(ex. 2020-12-20T18:00:00) :",
+                "value_guide": "input simulation period end datetime(ex. 2020-12-20T18:00:00Z) :",
                 "action": self._set_end,
             },
             {
@@ -254,13 +254,17 @@ class Simulator:
         print(f"interval: {self.interval}")
         print("====================================")
 
+        end_str = self.end.replace(" ", "T")
+        data_provider = SimulationDataProvider()
+        data_provider.initialize_simulation(end=end_str, count=self.count)
+        trader = SimulationTrader()
+        trader.initialize_simulation(end=end_str, count=self.count, budget=self.budget)
+
         self.operator.initialize(
-            SimulationDataProvider(),
+            data_provider,
             strategy,
-            SimulationTrader(),
+            trader,
             Analyzer(),
-            end=self.end,
-            count=self.count,
             budget=self.budget,
         )
         self.operator.set_interval(self.interval)
