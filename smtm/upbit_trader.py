@@ -35,7 +35,7 @@ class UpbitTrader(Trader):
         self.worker = Worker("UpbitTrader-Worker")
         self.worker.start()
         self.timer = None
-        self.request_map = {}
+        self.order_map = {}
         self.ACCESS_KEY = os.environ.get("UPBIT_OPEN_API_ACCESS_KEY", "upbit_access_key")
         self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key")
         self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "upbit_server_url")
@@ -88,26 +88,26 @@ class UpbitTrader(Trader):
         return result
 
     def cancel_request(self, request_id):
-        if request_id not in self.request_map:
+        if request_id not in self.order_map:
             return
 
-        request = self.request_map[request_id]
-        del self.request_map[request_id]
-        response = self._cancel_order(request["uuid"])
+        order = self.order_map[request_id]
+        del self.order_map[request_id]
+        response = self._cancel_order(order["uuid"])
         if response is not None:
             self.logger.debug(f"canceled order {response}")
-            result = request["result"]
+            result = order["result"]
             result["price"] = response["price"]
             result["amount"] = response["executed_volume"]
-            request["callback"](result)
+            order["callback"](result)
         else:
-            response = self._query_order_list([request["uuid"]], True)
+            response = self._query_order_list([order["uuid"]], True)
             self.logger.debug(f"canceled order check {response}")
             if len(response) > 0:
-                result = request["result"]
+                result = order["result"]
                 result["price"] = response[0]["price"]
                 result["amount"] = response[0]["executed_volume"]
-                request["callback"](result)
+                order["callback"](result)
 
     def get_trade_tick(self):
         querystring = {"market": self.MARKET, "count": "1"}
@@ -122,12 +122,12 @@ class UpbitTrader(Trader):
             return
 
         result = self._create_success_result(request)
-        self.request_map[request["id"]] = {
+        self.order_map[request["id"]] = {
             "uuid": response["uuid"],
             "callback": task["callback"],
             "result": result,
         }
-        self.logger.debug(f"request inserted {self.request_map[request['id']]}")
+        self.logger.debug(f"request inserted {self.order_map[request['id']]}")
         self._start_timer()
 
     def _create_success_result(self, request):
@@ -158,7 +158,7 @@ class UpbitTrader(Trader):
 
     def _query_order_result(self, task):
         uuids = []
-        for request_id, request_info in self.request_map.items():
+        for request_id, request_info in self.order_map.items():
             uuids.append(request_info["uuid"])
 
         if len(uuids) == 0:
@@ -169,8 +169,8 @@ class UpbitTrader(Trader):
             return
 
         waiting_request = {}
-        self.logger.debug(f"waiting order count {len(self.request_map)}")
-        for request_id, request_info in self.request_map.items():
+        self.logger.debug(f"waiting order count {len(self.order_map)}")
+        for request_id, request_info in self.order_map.items():
             is_done = False
             for order in results:
                 if order["uuid"] == request_info["uuid"]:
@@ -189,11 +189,11 @@ class UpbitTrader(Trader):
             if is_done is False:
                 self.logger.debug(f"can't find order! {request_info}")
                 waiting_request[request_id] = request_info
-        self.request_map = waiting_request
-        self.logger.debug(f"After update, waiting order count {len(self.request_map)}")
+        self.order_map = waiting_request
+        self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
 
         self._stop_timer()
-        if len(self.request_map) > 0:
+        if len(self.order_map) > 0:
             self._start_timer()
 
     def _send_order(self, market, is_buy, price=None, volume=None):

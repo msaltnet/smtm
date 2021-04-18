@@ -28,9 +28,9 @@ class UpditTraderTests(unittest.TestCase):
         trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
         trader._create_success_result.assert_called_once_with(dummy_task["request"])
         trader._start_timer.assert_called_once()
-        self.assertEqual(trader.request_map["apple"]["uuid"], "mango")
-        self.assertEqual(trader.request_map["apple"]["callback"], "kiwi")
-        self.assertEqual(trader.request_map["apple"]["result"], "banana")
+        self.assertEqual(trader.order_map["apple"]["uuid"], "mango")
+        self.assertEqual(trader.order_map["apple"]["callback"], "kiwi")
+        self.assertEqual(trader.order_map["apple"]["result"], "banana")
 
     def test__excute_order_should_call_callback_with_error_when__send_order_return_None(self):
         dummy_task = {
@@ -48,7 +48,7 @@ class UpditTraderTests(unittest.TestCase):
         trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
         trader._create_success_result.assert_not_called()
         trader._start_timer.assert_not_called()
-        self.assertEqual(len(trader.request_map), 0)
+        self.assertEqual(len(trader.order_map), 0)
 
     def test__create_success_result_return_correct_result(self):
         dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}
@@ -122,9 +122,9 @@ class UpditTraderTests(unittest.TestCase):
         trader._query_order_list = MagicMock(return_value=dummy_result)
         trader._stop_timer = MagicMock()
         trader._start_timer = MagicMock()
-        trader.request_map["mango"] = dummy_request_mango
-        trader.request_map["banana"] = dummy_request_banana
-        trader.request_map["apple"] = dummy_request_apple
+        trader.order_map["mango"] = dummy_request_mango
+        trader.order_map["banana"] = dummy_request_banana
+        trader.order_map["apple"] = dummy_request_apple
 
         trader._query_order_result(None)
 
@@ -142,8 +142,8 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(apple_result["amount"], 0.54321)
         dummy_request_mango["callback"].assert_called_once()
 
-        self.assertEqual(len(trader.request_map), 1)
-        self.assertEqual(trader.request_map["banana"]["request"]["id"], "banana_id")
+        self.assertEqual(len(trader.order_map), 1)
+        self.assertEqual(trader.order_map["banana"]["request"]["id"], "banana_id")
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_called_once()
         trader._query_order_list.assert_called_once_with(["mango", "banana", "apple"], True)
@@ -181,8 +181,8 @@ class UpditTraderTests(unittest.TestCase):
         trader._query_order_list = MagicMock(return_value=dummy_result)
         trader._stop_timer = MagicMock()
         trader._start_timer = MagicMock()
-        trader.request_map["mango"] = dummy_request_mango
-        trader.request_map["orange"] = dummy_request_orange
+        trader.order_map["mango"] = dummy_request_mango
+        trader.order_map["orange"] = dummy_request_orange
 
         trader._query_order_result(None)
 
@@ -199,7 +199,7 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(orange_result["amount"], 0.1234)
         dummy_request_mango["callback"].assert_called_once()
 
-        self.assertEqual(len(trader.request_map), 0)
+        self.assertEqual(len(trader.order_map), 0)
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_not_called()
         trader._query_order_list.assert_called_once_with(["mango", "orange"], True)
@@ -681,7 +681,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
                 "msg": "success",
             },
         }
-        trader.request_map["mango_request_1234"] = dummy_request
+        trader.order_map["mango_request_1234"] = dummy_request
 
         dummy_response = MagicMock()
         dummy_response.json.return_value = {
@@ -719,7 +719,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             headers={"Authorization": "Bearer mango_token"},
         )
         dummy_request["callback"].assert_called_once_with(expected_result)
-        self.assertFalse("mango_request_1234" in trader.request_map)
+        self.assertFalse("mango_request_1234" in trader.order_map)
 
     def test_cancel_request_should_call_callback_when_cancel_order_return_None(self):
         trader = UpbitTrader()
@@ -739,7 +739,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
                 "msg": "success",
             },
         }
-        trader.request_map["mango_request_1234"] = dummy_request
+        trader.order_map["mango_request_1234"] = dummy_request
 
         dummy_response = MagicMock()
         dummy_response.json.side_effect = ValueError()
@@ -796,7 +796,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         )
 
         dummy_request["callback"].assert_called_once_with(expected_result)
-        self.assertFalse("mango_request_1234" in trader.request_map)
+        self.assertFalse("mango_request_1234" in trader.order_map)
 
     def test_cancel_request_should_remove_request_even_when_cancel_nothing(self):
         trader = UpbitTrader()
@@ -816,7 +816,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
                 "msg": "success",
             },
         }
-        trader.request_map["mango_request_1234"] = dummy_request
+        trader.order_map["mango_request_1234"] = dummy_request
 
         dummy_response = MagicMock()
         dummy_response.json.side_effect = ValueError()
@@ -868,4 +868,4 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         )
 
         dummy_request["callback"].assert_not_called()
-        self.assertFalse("mango_request_1234" in trader.request_map)
+        self.assertFalse("mango_request_1234" in trader.order_map)
