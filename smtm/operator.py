@@ -78,6 +78,7 @@ class Operator:
 
         self.logger.info("===== Start operating =====")
         self.state = "running"
+        self.analyzer.make_start_point()
         self.worker.start()
         self.worker.post_task({"runnable": self._excute_trading})
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")

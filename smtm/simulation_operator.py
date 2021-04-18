@@ -24,7 +24,7 @@ class SimulationOperator(Operator):
         simulation_terminated 상태는 시뮬레이션에만 존재하는 상태로서 시뮬레이션이 끝났으나
         Operator는 중지되지 않은 상태. Operator의 시작과 중지는 외부부터 실행되어야 한다.
         """
-        self.logger.info(f"##################### trading is started : {self.turn + 1}")
+        self.logger.info(f"############# Simulation trading is started : {self.turn + 1}")
         self.is_timer_running = False
         try:
             trading_info = self.data_provider.get_info()
@@ -41,7 +41,6 @@ class SimulationOperator(Operator):
                 self.analyzer.put_result(result)
 
             target_request = self.strategy.get_request()
-
             if target_request is not None:
                 self.trader.send_request(target_request, send_request_callback)
                 self.analyzer.put_request(target_request)
@@ -49,7 +48,7 @@ class SimulationOperator(Operator):
             self.logger.error("excuting fail")
 
         self.turn += 1
-        self.logger.debug("##################### trading is completed")
+        self.logger.debug("############# Simulation trading is completed")
         self._start_timer()
         return True
 
@@ -78,12 +77,3 @@ class SimulationOperator(Operator):
                 self.logger.error("invalid callback")
 
         self.worker.post_task({"runnable": get_and_return_score, "callback": callback})
-
-    def start(self):
-        if self.state != "ready":
-            return False
-        try:
-            self.analyzer.make_start_point()
-        except AttributeError:
-            self.logger.error("make start point fail")
-        return super().start()

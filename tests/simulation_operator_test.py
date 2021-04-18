@@ -5,49 +5,6 @@ import requests
 import threading
 
 
-class SimulationOperatorStartTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    @patch("smtm.Operator.set_interval")
-    def test_setup_call_super_setup(self, OperatorSetup):
-        sop = SimulationOperator()
-        sop.set_interval(10)
-        OperatorSetup.assert_called_once_with(10)
-
-    @patch("smtm.Operator.start")
-    def test_start_call_super_start(self, OperatorStart):
-        sop = SimulationOperator()
-        sop.state = "mango"
-        sop.start()
-        OperatorStart.assert_not_called()
-        sop.state = "ready"
-        sop.start()
-        OperatorStart.assert_called_once()
-
-    @patch("smtm.Operator.start")
-    def test_start_should_call_analyzer_make_start_point(self, OperatorStart):
-        operator = SimulationOperator()
-        analyzer_mock = Mock()
-        analyzer_mock.make_start_point = MagicMock()
-        trader_mock = Mock()
-        dp_mock = Mock()
-        strategy_mock = Mock()
-        operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
-        operator.start()
-        OperatorStart.assert_called_once()
-        analyzer_mock.make_start_point.assert_called_once()
-
-    @patch("smtm.Operator.stop")
-    def test_stop_call_super_stop(self, OperatorStop):
-        sop = SimulationOperator()
-        sop.stop()
-        OperatorStop.assert_called_once()
-
-
 class SimulationOperatorTests(unittest.TestCase):
     def setUp(self):
         self.patcher = patch("threading.Timer")

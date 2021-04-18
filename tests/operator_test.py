@@ -62,6 +62,14 @@ class OperatorInitializeTests(unittest.TestCase):
         called_task = self.operator.worker.post_task.call_args[0][0]
         self.assertEqual(called_task["runnable"], self.operator._excute_trading)
 
+    def test_start_should_call_analyzer_make_start_point(self):
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+        self.operator.worker = MagicMock()
+        self.operator.start()
+        self.analyzer_mock.make_start_point.assert_called_once()
+
 
 class OperatorExcuteTradingTests(unittest.TestCase):
     def setUp(self):
