@@ -28,14 +28,19 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
         count = 100
         budget = 100000
         interval = 0.1
-        TIME_LIMIT = 15
+        time_limit = 15
+        end_str = end_date.replace(" ", "T")
+
+        data_provider = SimulationDataProvider()
+        data_provider.initialize_simulation(end=end_str, count=count)
+        trader = SimulationTrader()
+        trader.initialize_simulation(end=end_str, count=count, budget=budget)
+
         operator.initialize(
-            SimulationDataProvider(),
+            data_provider,
             strategy,
-            SimulationTrader(),
+            trader,
             Analyzer(),
-            end=end_date,
-            count=count,
             budget=budget,
         )
 
@@ -44,7 +49,7 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
         start_time = time.time()
         while operator.state == "running":
             time.sleep(0.5)
-            if time.time() - start_time > TIME_LIMIT:
+            if time.time() - start_time > time_limit:
                 self.assertTrue(False, "Time out")
                 break
 
@@ -66,7 +71,7 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
 
         while waiting:
             time.sleep(0.5)
-            if time.time() - start_time > TIME_LIMIT:
+            if time.time() - start_time > time_limit:
                 self.assertTrue(False, "Time out")
                 break
 
@@ -110,14 +115,19 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
         count = 100
         budget = 100000
         interval = 0.1
-        TIME_LIMIT = 15
+        time_limit = 15
+        end_str = end_date.replace(" ", "T")
+
+        data_provider = SimulationDataProvider()
+        data_provider.initialize_simulation(end=end_str, count=count)
+        trader = SimulationTrader()
+        trader.initialize_simulation(end=end_str, count=count, budget=budget)
+
         operator.initialize(
-            SimulationDataProvider(),
+            data_provider,
             strategy,
-            SimulationTrader(),
+            trader,
             Analyzer(),
-            end=end_date,
-            count=count,
             budget=budget,
         )
 
@@ -126,7 +136,7 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
         start_time = time.time()
         while operator.state == "running":
             time.sleep(0.5)
-            if time.time() - start_time > TIME_LIMIT:
+            if time.time() - start_time > time_limit:
                 self.assertTrue(False, "Time out")
                 break
 
@@ -148,7 +158,7 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
 
         while waiting:
             time.sleep(0.5)
-            if time.time() - start_time > TIME_LIMIT:
+            if time.time() - start_time > time_limit:
                 self.assertTrue(False, "Time out")
                 break
 

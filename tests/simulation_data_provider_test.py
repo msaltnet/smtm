@@ -11,6 +11,12 @@ class SimulationDataProviderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_initialize_simulation_call_initialize_from_server(self):
+        dp = SimulationDataProvider()
+        dp.initialize_from_server = MagicMock()
+        dp.initialize_simulation("mango", "banana")
+        dp.initialize_from_server.assert_called_once_with("mango", "banana")
+
     def test_initialize_with_file_update_data_correctly(self):
         dp = SimulationDataProvider()
         dp.index = 50

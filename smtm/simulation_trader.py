@@ -22,7 +22,7 @@ class SimulationTrader(Trader):
         self.name = "Simulation"
         self.MARKET = "VirtualMarket"
 
-    def initialize(self, end, count, budget):
+    def initialize_simulation(self, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""
         self.market.initialize(end, count)
         self.market.deposit(budget)

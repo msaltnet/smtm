@@ -15,54 +15,8 @@ class SimulationOperator(Operator):
         super().__init__()
         self.logger = LogManager.get_logger(__class__.__name__)
         self.turn = 0
-        self.end = "2020-12-20T16:23:00"
-        self.count = 0
         self.budget = 0
         self.last_report = None
-
-    def initialize(
-        self,
-        data_provider,
-        strategy,
-        trader,
-        analyzer,
-        end=None,
-        count=100,
-        budget=500,
-    ):
-        """
-        시뮬레이션에 사용될 각 모듈을 전달 받아 초기화를 진행한다
-
-        end: 언제까지의 거래기간 정보를 사용할 것인지에 대한 날짜 시간 정보 yyyy-MM-dd HH:mm:ss
-        count: 사용될 거래 정도 갯수
-        budget: 사용될 예산
-        """
-        if self.state is not None:
-            return
-
-        self.data_provider = data_provider
-        self.strategy = strategy
-        self.trader = trader
-        self.analyzer = analyzer
-        self.state = "ready"
-        self.strategy.initialize(budget)
-        self.analyzer.initialize(trader.get_account_info, True)
-
-        if end is not None:
-            self.end = end
-        self.count = count
-        self.budget = budget
-        end_str = self.end.replace(" ", "T")
-        end_str = end_str.replace(":", "")
-        self.tag = datetime.now().strftime("%Y%m%d-%H%M%S") + "-simulation"
-
-        try:
-            data_provider.initialize_from_server(end=end, count=count)
-            trader.initialize(end=end, count=count, budget=budget)
-        except (AttributeError, UserWarning) as msg:
-            self.state = None
-            self.logger.error(f"initialize fail: {msg}")
-            return
 
     def _excute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다
@@ -70,9 +24,7 @@ class SimulationOperator(Operator):
         simulation_terminated 상태는 시뮬레이션에만 존재하는 상태로서 시뮬레이션이 끝났으나
         Operator는 중지되지 않은 상태. Operator의 시작과 중지는 외부부터 실행되어야 한다.
         """
-        self.logger.info(
-            f"##################### trading is started : {self.turn + 1} / {int(self.count) - 1}"
-        )
+        self.logger.info(f"##################### trading is started : {self.turn + 1}")
         self.is_timer_running = False
         try:
             trading_info = self.data_provider.get_info()

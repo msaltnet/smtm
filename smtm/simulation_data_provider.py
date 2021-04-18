@@ -24,6 +24,9 @@ class SimulationDataProvider(DataProvider):
         self.data = []
         self.index = 0
 
+    def initialize_simulation(self, end, count):
+        self.initialize_from_server(end, count)
+
     def get_info(self):
         """순차적으로 거래 정보 전달한다"""
         now = self.index
