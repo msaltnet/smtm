@@ -183,7 +183,7 @@ class UpbitTrader(Trader):
                         result = request_info["result"]
                         result["date_time"] = order["created_at"].replace("+09:00", "")
                         # 최종 체결 가격, 수량으로 업데이트
-                        result["price"] = float(order["price"])
+                        result["price"] = float(order["price"]) if order["price"] is not None else 0
                         result["amount"] = float(order["executed_volume"])
                         request_info["callback"](result)
                         is_done = True
