@@ -70,7 +70,7 @@ class UpbitTrader(Trader):
             "asset": {},
             "quote": {},
         }
-        result["quote"][self.MARKET_CURRENCY] = trade_info[0]["trade_price"]
+        result["quote"][self.MARKET_CURRENCY] = float(trade_info[0]["trade_price"])
 
         try:
             for item in response:
@@ -78,8 +78,8 @@ class UpbitTrader(Trader):
                     result["balance"] = item["balance"]
                 elif item["currency"] == self.MARKET_CURRENCY:
                     name = item["currency"]
-                    price = item["avg_buy_price"]
-                    amount = item["balance"]
+                    price = float(item["avg_buy_price"])
+                    amount = float(item["balance"])
                     result["asset"][name] = (price, amount)
         except TypeError as error:
             self.logger.error(f"fail to get account info {error}")
@@ -98,8 +98,8 @@ class UpbitTrader(Trader):
             self.logger.debug(f"canceled order {response}")
             result = order["result"]
             result["date_time"] = response["created_at"].replace("+09:00", "")
-            result["price"] = response["price"]
-            result["amount"] = response["executed_volume"]
+            result["price"] = float(response["price"])
+            result["amount"] = float(response["executed_volume"])
             order["callback"](result)
         else:
             response = self._query_order_list([order["uuid"]], True)
@@ -107,8 +107,8 @@ class UpbitTrader(Trader):
             if len(response) > 0:
                 result = order["result"]
                 result["date_time"] = response[0]["created_at"].replace("+09:00", "")
-                result["price"] = response[0]["price"]
-                result["amount"] = response[0]["executed_volume"]
+                result["price"] = float(response[0]["price"])
+                result["amount"] = float(response[0]["executed_volume"])
                 order["callback"](result)
 
     def get_trade_tick(self):
@@ -183,8 +183,8 @@ class UpbitTrader(Trader):
                         result = request_info["result"]
                         result["date_time"] = order["created_at"].replace("+09:00", "")
                         # 최종 체결 가격, 수량으로 업데이트
-                        result["price"] = order["price"]
-                        result["amount"] = order["executed_volume"]
+                        result["price"] = float(order["price"])
+                        result["amount"] = float(order["executed_volume"])
                         request_info["callback"](result)
                         is_done = True
 

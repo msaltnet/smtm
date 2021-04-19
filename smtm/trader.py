@@ -13,23 +13,23 @@ class Trader(metaclass=ABCMeta):
 
         요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
         request: 거래 요청 정보
-            {
-                "id": 요청 정보 id "1607862457.560075"
-                "type": 거래 유형 sell, buy
-                "price": 거래 가격
-                "amount": 거래 수량
-                "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 생성 시간
-            }
+        {
+            "id": 요청 정보 id "1607862457.560075"
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 생성 시간
+        }
         callback(result):
-            {
-                "request": 요청 정보 전체
-                "type": 거래 유형 sell, buy
-                "price": 거래 가격
-                "amount": 거래 수량
-                "msg": 거래 결과 메세지 success, internal error
-                "balance": 거래 후 계좌 현금 잔고
-                "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 request의 시간
-            }
+        {
+            "request": 요청 정보 전체
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "msg": 거래 결과 메세지 success, internal error
+            "balance": 거래 후 계좌 현금 잔고
+            "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 request의 시간
+        }
         """
 
     @abstractmethod

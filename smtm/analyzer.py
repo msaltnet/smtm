@@ -54,6 +54,14 @@ class Analyzer:
     def put_request(self, request):
         """거래 요청 정보를 저장한다
 
+        request:
+        {
+            "id": 요청 정보 id "1607862457.560075"
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
+        }
         kind: 보고서를 위한 데이터 종류
             0: 거래 데이터
             1: 매매 요청
@@ -61,19 +69,31 @@ class Analyzer:
             3: 수익률 정보
         """
         try:
-            if int(request["price"]) <= 0 or float(request["amount"]) <= 0:
+            if float(request["price"]) <= 0 or float(request["amount"]) <= 0:
                 return
         except KeyError:
             self.logger.warning("Invalid request")
             return
 
         new = copy.deepcopy(request)
+        new["price"] = float(new["price"])
+        new["amount"] = float(new["amount"])
         new["kind"] = 1
         self.request.append(new)
 
     def put_result(self, result):
         """거래 결과 정보를 저장한다
 
+        request: 거래 요청 정보
+        result:
+        {
+            "request": 요청 정보
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "msg": 거래 결과 메세지
+            "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
+        }
         kind: 보고서를 위한 데이터 종류
             0: 거래 데이터
             1: 매매 요청
@@ -85,17 +105,18 @@ class Analyzer:
             self.logger.warning("update_info_func is NOT set")
             return
         try:
-            if result["price"] <= 0 or result["amount"] <= 0:
+            if float(result["price"]) <= 0 or float(result["amount"]) <= 0:
                 return
         except KeyError:
             self.logger.warning("Invalid result")
             return
 
         new = copy.deepcopy(result)
+        new["price"] = float(new["price"])
+        new["amount"] = float(new["amount"])
         new["kind"] = 2
         self.result.append(new)
-        if self.update_info_func is not None:
-            self.put_asset_info(self.update_info_func())
+        self.put_asset_info(self.update_info_func())
 
     def initialize(self, update_info_func, is_simulation=False):
         """콜백 함수를 입력받아 초기화한다
@@ -108,8 +129,18 @@ class Analyzer:
         self.is_simulation = is_simulation
 
     def put_asset_info(self, asset_info):
-        """자산 정보를 저장한다"""
-        self.asset_record_list.append(copy.deepcopy(asset_info))
+        """자산 정보를 저장한다
+
+        returns:
+        {
+            balance: 계좌 현금 잔고
+            asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
+            quote: 종목별 현재 가격 딕셔너리
+        }
+        """
+        new = copy.deepcopy(asset_info)
+        new["balance"] = float(new["balance"])
+        self.asset_record_list.append(new)
         self.make_score_record(asset_info)
 
     def make_start_point(self):
@@ -123,12 +154,13 @@ class Analyzer:
     def make_score_record(self, new_info):
         """수익률 기록을 생성한다
 
-        Args:
+        score_record:
             balance: 계좌 현금 잔고
             cumulative_return: 기준 시점부터 누적 수익률
             price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
             asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
             date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
+            kind: 3, 보고서를 위한 데이터 종류
         """
         if len(self.infos) <= 0:
             return
@@ -185,7 +217,7 @@ class Analyzer:
 
             self.score_record_list.append(
                 {
-                    "balance": new_info["balance"],
+                    "balance": float(new_info["balance"]),
                     "cumulative_return": cumulative_return,
                     "price_change_ratio": price_change_ratio,
                     "asset": new_asset_list,
@@ -290,7 +322,7 @@ class Analyzer:
         {date_time}, [->] {id}, {type}, {price}, {amount}
         2020-02-23T00:00:01, 1607862457.560075, sell, 1234567890, 1234567890
 
-        {date_time}, [<-] {request id}, {type}, {price}, {amount}, {msg}, {balance}
+        {date_time}, [<-] {request id}, {type}, {price}, {amount}, {msg}
         2020-02-23T00:00:01, 1607862457.560075, sell, 1234567890, 1234567890, success, 1234567890
 
         {date_time}, [#] {balance}, {cumulative_return}, {price_change_ratio}, {asset}
@@ -318,7 +350,7 @@ class Analyzer:
                     )
                 elif item["kind"] == 2:
                     f.write(
-                        f"{item['date_time']}, [<-] {item['request']['id']}, {item['type']}, {item['price']}, {item['amount']}, {item['msg']}, {item['balance']}\n"
+                        f"{item['date_time']}, [<-] {item['request']['id']}, {item['type']}, {item['price']}, {item['amount']}, {item['msg']}\n"
                     )
                 elif item["kind"] == 3:
                     f.write(

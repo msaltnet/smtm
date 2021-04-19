@@ -47,7 +47,20 @@ class StrategySma0(Strategy):
         self.name = "SMA0"
 
     def update_trading_info(self, info):
-        """새로운 거래 정보를 업데이트"""
+        """새로운 거래 정보를 업데이트
+
+        Returns: 거래 정보 딕셔너리
+        {
+            "market": 거래 시장 종류 BTC
+            "date_time": 정보의 기준 시간
+            "opening_price": 시작 거래 가격
+            "high_price": 최고 거래 가격
+            "low_price": 최저 거래 가격
+            "closing_price": 마지막 거래 가격
+            "acc_price": 단위 시간내 누적 거래 금액
+            "acc_volume": 단위 시간내 누적 거래 양
+        }
+        """
         if self.is_intialized is not True:
             return
         self.data.append(copy.deepcopy(info))
@@ -72,12 +85,24 @@ class StrategySma0(Strategy):
             self.logger.warning("invalid info")
 
     def update_result(self, result):
-        """요청한 거래의 결과를 업데이트"""
+        """요청한 거래의 결과를 업데이트
+
+        request: 거래 요청 정보
+        result:
+        {
+            "request": 요청 정보
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "msg": 거래 결과 메세지
+            "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
+        }
+        """
         if self.is_intialized is not True:
             return
 
         try:
-            total = int(result["price"]) * float(result["amount"])
+            total = float(result["price"]) * float(result["amount"])
             fee = total * self.COMMISSION_RATIO
             if result["type"] == "buy":
                 self.balance -= round(total + fee)

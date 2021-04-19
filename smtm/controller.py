@@ -3,9 +3,6 @@
 Operator를 사용해서 시스템을 컨트롤하는 모듈
 """
 import signal
-import threading
-import requests
-import time
 from . import (
     LogManager,
     Analyzer,

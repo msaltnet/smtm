@@ -3,8 +3,6 @@
 SimulationOperator를 사용해서 시뮬레이션을 컨트롤하는 모듈
 """
 import signal
-import threading
-import requests
 import time
 from . import (
     LogManager,

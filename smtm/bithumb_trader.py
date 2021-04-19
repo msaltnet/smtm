@@ -50,12 +50,26 @@ class BithumbTrader(Trader):
 
     def send_request(self, request, callback):
         """거래 요청을 처리한다
-        request:
+
+        요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
+        request: 거래 요청 정보
+        {
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy
             "price": 거래 가격
             "amount": 거래 수량
-            "date_time": 요청 데이터 생성 시간
+            "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 생성 시간
+        }
+        callback(result):
+        {
+            "request": 요청 정보 전체
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "msg": 거래 결과 메세지 success, internal error
+            "balance": 거래 후 계좌 현금 잔고
+            "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 request의 시간
+        }
         """
         self.worker.post_task(
             {"runnable": self._excute_order, "request": request, "callback": callback}
@@ -63,13 +77,16 @@ class BithumbTrader(Trader):
 
     def get_account_info(self):
         """계좌 요청 정보를 요청한다
-        Returns:
-            {
-                balance: 계좌 현금 잔고
-                asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
-                quote: 종목별 현재 가격 딕셔너리
-            }
+        현금을 포함한 모든 자산 정보를 제공한다
+
+        returns:
+        {
+            balance: 계좌 현금 잔고
+            asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
+            quote: 종목별 현재 가격 딕셔너리
+        }
         """
+
         response = self._query_balance(self.MARKET)
         if response is None:
             self.logger.error("fail to get account info")
@@ -81,14 +98,14 @@ class BithumbTrader(Trader):
             result = {"asset": {}}
             for key, value in assets.items():
                 if key == "total_krw":
-                    result["balance"] = value
+                    result["balance"] = float(value)
                 elif key == self.MARKET_KEY:
                     price = None
                     snapshot = self.query_latest_trade(self.MARKET)
                     if snapshot is not None and snapshot["status"] == "0000":
-                        price = snapshot["data"][0]["price"]
+                        price = float(snapshot["data"][0]["price"])
                     name = self.MARKET
-                    amount = value
+                    amount = float(value)
                     result["asset"][name] = (price, amount)
             self.logger.debug(f"account info {response}")
         except KeyError as error:
@@ -98,7 +115,9 @@ class BithumbTrader(Trader):
         return result
 
     def cancel_request(self, request_id):
-        pass
+        """거래를 취소한다
+        request_id: 취소하고자 하는 request의 id
+        """
 
     def _excute_order(self, task):
         request = task["request"]
@@ -185,7 +204,7 @@ class BithumbTrader(Trader):
                     result["amount"] = float(order["data"]["order_qty"])
                     result["date_time"] = self._convert_timestamp(int(order["data"]["order_date"]))
                     if result["price"] is None:
-                        result["price"] = self._get_total_trading_price(order["data"]["contract"])
+                        result["price"] = float(self._get_total_trading_price(order["data"]["contract"]))
                     request_info["callback"](result)
                 else:
                     waiting_request[request_id] = request_info

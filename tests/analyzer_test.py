@@ -105,15 +105,25 @@ class AnalyzerTests(unittest.TestCase):
     def test_put_asset_info_append_asset_info(self):
         analyzer = Analyzer()
         analyzer.make_score_record = MagicMock()
-        analyzer.put_asset_info("apple")
-        self.assertEqual(analyzer.asset_record_list[-1], "apple")
+        dummy_info = {
+            "balance": 5000,
+            "asset": "apple",
+            "quote": "apple_quote",
+        }
+        analyzer.put_asset_info(dummy_info)
+        self.assertEqual(analyzer.asset_record_list[-1], dummy_info)
 
     def test_put_asset_info_should_call_make_score_record(self):
         analyzer = Analyzer()
         analyzer.make_score_record = MagicMock()
-        analyzer.put_asset_info("apple")
-        self.assertEqual(analyzer.asset_record_list[-1], "apple")
-        analyzer.make_score_record.assert_called_once_with("apple")
+        dummy_info = {
+            "balance": 5000,
+            "asset": "apple",
+            "quote": "apple_quote",
+        }
+        analyzer.put_asset_info(dummy_info)
+        self.assertEqual(analyzer.asset_record_list[-1], dummy_info)
+        analyzer.make_score_record.assert_called_once_with(dummy_info)
 
     def test_make_start_point_call_update_info_func_with_asset_type_and_callback(self):
         analyzer = Analyzer()
@@ -313,7 +323,6 @@ class AnalyzerTests(unittest.TestCase):
             "price": 5000,
             "amount": 1,
             "msg": "success",
-            "balance": 30000,
             "date_time": "2020-02-23T00:00:00",
             "kind": 2,
         }
@@ -372,7 +381,6 @@ class AnalyzerTests(unittest.TestCase):
             "price": 6000,
             "amount": 0.5,
             "msg": "success",
-            "balance": 33000,
             "date_time": "2020-02-23T00:01:00",
             "kind": 2,
         }
@@ -543,11 +551,11 @@ class AnalyzerTests(unittest.TestCase):
             "### TRADING TABLE =================================\n",
             "2020-02-23T00:00:00, 5000, 15000, 4500, 5500, 1500000000, 1500\n",
             "2020-02-23T00:00:00, [->] 1607862457.560075, buy, 5000, 1\n",
-            "2020-02-23T00:00:00, [<-] 1607862457.560075, buy, 5000, 1, success, 30000\n",
+            "2020-02-23T00:00:00, [<-] 1607862457.560075, buy, 5000, 1, success\n",
             "2020-02-23T00:00:00, [#] 5000, -65.248, {'mango': -50.0, 'apple': 50.0}, [('mango', 500, 300, 5.23, -40.0), ('apple', 250, 750, 2.11, 200.0)]\n",
             "2020-02-23T00:01:00, 5500, 19000, 4900, 8000, 15000000, 15000\n",
             "2020-02-23T00:01:00, [->] 1607862457.560075, sell, 6000, 0.5\n",
-            "2020-02-23T00:01:00, [<-] 1607862457.560075, sell, 6000, 0.5, success, 33000\n",
+            "2020-02-23T00:01:00, [<-] 1607862457.560075, sell, 6000, 0.5, success\n",
             "2020-02-23T00:01:00, [#] 5000, -75.067, {'mango': -66.667, 'apple': -99.85}, [('mango', 600, 200, 4.23, -66.667), ('apple', 500, 0.75, 3.11, -99.85)]\n",
             "### SUMMARY =======================================\n",
             "Property                      23456 ->       5848\n",

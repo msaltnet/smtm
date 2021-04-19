@@ -699,8 +699,8 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
                 "amount": "0.0001234",
             },
             "type": "buy",
-            "price": "887000",
-            "amount": "0.0000034",
+            "price": 887000.0,
+            "amount": 0.0000034,
             "msg": "success",
             "date_time": "2018-04-10T15:42:23",
         }
@@ -736,8 +736,8 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
                     "amount": "0.0001234",
                 },
                 "type": "buy",
-                "price": "888000",
-                "amount": "0.0001234",
+                "price": 888000.0,
+                "amount": 0.0001234,
                 "msg": "success",
             },
         }
@@ -754,8 +754,8 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
                 "amount": "0.0001234",
             },
             "type": "buy",
-            "price": "887000",
-            "amount": "0.0000034",
+            "price": 887000.0,
+            "amount": 0.0000034,
             "msg": "success",
             "date_time": "2018-04-10T15:42:23",
         }

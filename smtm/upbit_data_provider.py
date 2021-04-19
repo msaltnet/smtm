@@ -21,7 +21,20 @@ class UpbitDataProvider(DataProvider):
         self.query_string = {"market": "KRW-BTC", "count": 1}
 
     def get_info(self):
-        """실시간 거래 정보 전달한다"""
+        """실시간 거래 정보 전달한다
+
+        Returns: 거래 정보 딕셔너리
+        {
+            "market": 거래 시장 종류 BTC
+            "date_time": 정보의 기준 시간
+            "opening_price": 시작 거래 가격
+            "high_price": 최고 거래 가격
+            "low_price": 최저 거래 가격
+            "closing_price": 마지막 거래 가격
+            "acc_price": 단위 시간내 누적 거래 금액
+            "acc_volume": 단위 시간내 누적 거래 양
+        }
+        """
         data = self.__get_data_from_server()
         return self.__create_candle_info(data[0])
 
@@ -34,12 +47,12 @@ class UpbitDataProvider(DataProvider):
             return {
                 "market": data["market"],
                 "date_time": data["candle_date_time_kst"],
-                "opening_price": data["opening_price"],
-                "high_price": data["high_price"],
-                "low_price": data["low_price"],
-                "closing_price": data["trade_price"],
-                "acc_price": data["candle_acc_trade_price"],
-                "acc_volume": data["candle_acc_trade_volume"],
+                "opening_price": float(data["opening_price"]),
+                "high_price": float(data["high_price"]),
+                "low_price": float(data["low_price"]),
+                "closing_price": float(data["trade_price"]),
+                "acc_price": float(data["candle_acc_trade_price"]),
+                "acc_volume": float(data["candle_acc_trade_volume"]),
             }
         except KeyError:
             self.logger.warning("invalid data for candle info")

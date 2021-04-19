@@ -11,7 +11,6 @@ from .simulation_operator import SimulationOperator
 from .strategy_bnh import StrategyBuyAndHold
 from .strategy_sma_0 import StrategySma0
 from .virtual_market import VirtualMarket
-from .live_data_provider import LiveDataProvider
 from .worker import Worker
 from .simulator import Simulator
 from .upbit_trader import UpbitTrader
@@ -29,7 +28,6 @@ __all__ = [
     "StrategyBuyAndHold",
     "StrategySma0",
     "VirtualMarket",
-    "LiveDataProvider",
     "Worker",
     "Simulator",
     "UpbitTrader",
