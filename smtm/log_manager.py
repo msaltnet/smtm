@@ -16,7 +16,7 @@ class LogManager:
         fmt="%(asctime)s %(levelname)5.5s %(name)20.20s %(lineno)5d - %(message)s"
     )
     file_handler = RotatingFileHandler(filename="smtm.log", maxBytes=1000000, backupCount=10)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
     stream_formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)5.5s %(name)20.20s - %(message)s"
