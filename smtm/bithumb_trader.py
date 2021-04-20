@@ -72,7 +72,7 @@ class BithumbTrader(Trader):
         }
         """
         self.worker.post_task(
-            {"runnable": self._excute_order, "request": request, "callback": callback}
+            {"runnable": self._execute_order, "request": request, "callback": callback}
         )
 
     def get_account_info(self):
@@ -119,7 +119,7 @@ class BithumbTrader(Trader):
         request_id: 취소하고자 하는 request의 id
         """
 
-    def _excute_order(self, task):
+    def _execute_order(self, task):
         request = task["request"]
         is_buy = True if request["type"] == "buy" else False
 
@@ -204,7 +204,9 @@ class BithumbTrader(Trader):
                     result["amount"] = float(order["data"]["order_qty"])
                     result["date_time"] = self._convert_timestamp(int(order["data"]["order_date"]))
                     if result["price"] is None:
-                        result["price"] = float(self._get_total_trading_price(order["data"]["contract"]))
+                        result["price"] = float(
+                            self._get_total_trading_price(order["data"]["contract"])
+                        )
                     request_info["callback"](result)
                 else:
                     waiting_request[request_id] = request_info

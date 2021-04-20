@@ -60,7 +60,7 @@ class OperatorInitializeTests(unittest.TestCase):
         self.operator.worker.start.assert_called_once()
         self.operator.worker.post_task.assert_called_once_with(ANY)
         called_task = self.operator.worker.post_task.call_args[0][0]
-        self.assertEqual(called_task["runnable"], self.operator._excute_trading)
+        self.assertEqual(called_task["runnable"], self.operator._execute_trading)
 
     def test_start_should_call_analyzer_make_start_point(self):
         self.operator.initialize(
@@ -86,7 +86,7 @@ class OperatorExcuteTradingTests(unittest.TestCase):
     def tearDown(self):
         self.patcher.stop()
 
-    def test_excute_trading_should_call_get_info_and_set_timer(self):
+    def test_execute_trading_should_call_get_info_and_set_timer(self):
         self.dp_mock.get_info = MagicMock(return_value="mango")
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         self.strategy_mock.get_request = MagicMock(return_value=dummy_request)
@@ -97,14 +97,14 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         )
         self.operator.set_interval(27)
         self.operator.state = "running"
-        self.operator._excute_trading(None)
+        self.operator._execute_trading(None)
 
         self.threading_mock.assert_called_once_with(27, ANY)
         self.timer_mock.start.assert_called_once()
         self.dp_mock.get_info.assert_called_once()
         self.analyzer_mock.put_trading_info.assert_called_once_with("mango")
 
-    def test_excute_trading_should_call_trader_send_request_and_strategy_update_result(self):
+    def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(self):
         self.dp_mock.get_info = MagicMock(return_value="mango")
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         self.strategy_mock.update_result = MagicMock()
@@ -115,7 +115,7 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         )
         self.operator.set_interval(27)
         self.operator.state = "running"
-        self.operator._excute_trading(None)
+        self.operator._execute_trading(None)
 
         self.analyzer_mock.put_request.assert_called_once_with(dummy_request)
         self.strategy_mock.update_trading_info.assert_called_once_with(ANY)
@@ -124,7 +124,7 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         self.strategy_mock.update_result.assert_called_once_with("mango")
         self.analyzer_mock.put_result.assert_called_once_with("mango")
 
-    def test_excute_trading_should_NOT_call_trader_send_request_when_price_is_zero(self):
+    def test_execute_trading_should_NOT_call_trader_send_request_when_price_is_zero(self):
         dummy_request = {"id": "mango", "type": "orange", "price": 0, "amount": 10}
         self.strategy_mock.get_request = MagicMock(return_value=dummy_request)
 
@@ -133,13 +133,13 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         )
         self.operator.set_interval(27)
         self.operator.state = "running"
-        self.operator._excute_trading(None)
+        self.operator._execute_trading(None)
 
         self.analyzer_mock.put_request.assert_not_called()
         self.trader_mock.send_request.assert_not_called()
         self.analyzer_mock.put_result.assert_not_called()
 
-    def test_excute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
+    def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
         self.strategy_mock.get_request = MagicMock(return_value=None)
 
         self.operator.initialize(
@@ -147,7 +147,7 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         )
         self.operator.set_interval(27)
         self.operator.state = "running"
-        self.operator._excute_trading(None)
+        self.operator._execute_trading(None)
 
         self.analyzer_mock.put_request.assert_not_called()
         self.trader_mock.send_request.assert_not_called()
@@ -247,7 +247,7 @@ class OperatorTests(unittest.TestCase):
         self.operator.worker.post_task.assert_called_once_with(ANY)
         self.assertEqual(
             self.operator.worker.post_task.call_args[0][0]["runnable"],
-            self.operator._excute_trading,
+            self.operator._execute_trading,
         )
 
     def test_start_timer_should_NOT_start_Timer_when_state_is_NOT_running(self):

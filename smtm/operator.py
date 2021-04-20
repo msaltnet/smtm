@@ -80,7 +80,7 @@ class Operator:
         self.state = "running"
         self.analyzer.make_start_point()
         self.worker.start()
-        self.worker.post_task({"runnable": self._excute_trading})
+        self.worker.post_task({"runnable": self._execute_trading})
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         try:
             self.tag += "-" + self.trader.name + "-" + self.strategy.name + "-" + self.trader.MARKET
@@ -97,7 +97,7 @@ class Operator:
             return
 
         def on_timer_expired():
-            self.worker.post_task({"runnable": self._excute_trading})
+            self.worker.post_task({"runnable": self._execute_trading})
 
         self.timer = threading.Timer(self.interval, on_timer_expired)
         self.timer.start()
@@ -105,7 +105,7 @@ class Operator:
         self.is_timer_running = True
         return
 
-    def _excute_trading(self, task):
+    def _execute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다"""
         self.logger.debug("trading is started #####################")
         self.is_timer_running = False

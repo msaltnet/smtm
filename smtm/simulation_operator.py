@@ -18,7 +18,7 @@ class SimulationOperator(Operator):
         self.budget = 0
         self.last_report = None
 
-    def _excute_trading(self, task):
+    def _execute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다
 
         simulation_terminated 상태는 시뮬레이션에만 존재하는 상태로서 시뮬레이션이 끝났으나

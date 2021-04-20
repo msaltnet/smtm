@@ -13,7 +13,7 @@ class UpditTraderTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test__excute_order_handle_task_correctly(self):
+    def test__execute_order_handle_task_correctly(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
             "callback": "kiwi",
@@ -23,7 +23,7 @@ class UpditTraderTests(unittest.TestCase):
         trader._create_success_result = MagicMock(return_value="banana")
         trader._start_timer = MagicMock()
 
-        trader._excute_order(dummy_task)
+        trader._execute_order(dummy_task)
 
         trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
         trader._create_success_result.assert_called_once_with(dummy_task["request"])
@@ -32,7 +32,7 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(trader.order_map["apple"]["callback"], "kiwi")
         self.assertEqual(trader.order_map["apple"]["result"], "banana")
 
-    def test__excute_order_should_call_callback_with_error_when__send_order_return_None(self):
+    def test__execute_order_should_call_callback_with_error_when__send_order_return_None(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
             "callback": MagicMock(),
@@ -42,7 +42,7 @@ class UpditTraderTests(unittest.TestCase):
         trader._create_success_result = MagicMock(return_value="banana")
         trader._start_timer = MagicMock()
 
-        trader._excute_order(dummy_task)
+        trader._execute_order(dummy_task)
 
         dummy_task["callback"].assert_called_once_with("error!")
         trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
@@ -425,7 +425,7 @@ class UpditTraderSendOrderTests(unittest.TestCase):
 
         trader.worker.post_task.assert_called_once()
         called_arg = trader.worker.post_task.call_args[0][0]
-        self.assertEqual(called_arg["runnable"], trader._excute_order)
+        self.assertEqual(called_arg["runnable"], trader._execute_order)
         self.assertEqual(called_arg["request"], "mango")
         self.assertEqual(called_arg["callback"], "banana")
 

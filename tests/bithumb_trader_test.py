@@ -19,7 +19,7 @@ class BithumbTraderTests(unittest.TestCase):
 
         trader.worker.post_task.assert_called_once()
         called_arg = trader.worker.post_task.call_args[0][0]
-        self.assertEqual(called_arg["runnable"], trader._excute_order)
+        self.assertEqual(called_arg["runnable"], trader._execute_order)
         self.assertEqual(called_arg["request"], "mango")
         self.assertEqual(called_arg["callback"], "banana")
 
@@ -62,7 +62,7 @@ class BithumbTraderTests(unittest.TestCase):
         with self.assertRaises(UserWarning):
             result = trader.get_account_info()
 
-    def test__excute_order_handle_task_correctly_with_limit_order(self):
+    def test__execute_order_handle_task_correctly_with_limit_order(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
             "callback": "kiwi",
@@ -74,7 +74,7 @@ class BithumbTraderTests(unittest.TestCase):
         trader._create_success_result = MagicMock(return_value="banana")
         trader._start_timer = MagicMock()
 
-        trader._excute_order(dummy_task)
+        trader._execute_order(dummy_task)
 
         trader._send_limit_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
         trader._create_success_result.assert_called_once_with(dummy_task["request"])
@@ -83,7 +83,7 @@ class BithumbTraderTests(unittest.TestCase):
         self.assertEqual(trader.request_map["apple"]["callback"], "kiwi")
         self.assertEqual(trader.request_map["apple"]["result"], "banana")
 
-    def test__excute_order_handle_task_correctly_with_market_price_sell_order(self):
+    def test__execute_orderr_handle_task_correctly_with_market_price_sell_order(self):
         dummy_task = {
             "request": {"id": "apple", "price": None, "amount": 0.0001, "type": "sell"},
             "callback": "kiwi",
@@ -95,7 +95,7 @@ class BithumbTraderTests(unittest.TestCase):
         trader._create_success_result = MagicMock(return_value="banana")
         trader._start_timer = MagicMock()
 
-        trader._excute_order(dummy_task)
+        trader._execute_order(dummy_task)
 
         trader._send_market_price_order.assert_called_once_with(trader.MARKET, False, 0.0001)
         trader._create_success_result.assert_called_once_with(dummy_task["request"])
@@ -104,7 +104,7 @@ class BithumbTraderTests(unittest.TestCase):
         self.assertEqual(trader.request_map["apple"]["callback"], "kiwi")
         self.assertEqual(trader.request_map["apple"]["result"], "banana")
 
-    def test__excute_order_handle_task_correctly_with_market_price_buy_order(self):
+    def test__execute_order_handle_task_correctly_with_market_price_buy_order(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": None, "type": "buy"},
             "callback": MagicMock(),
@@ -130,7 +130,7 @@ class BithumbTraderTests(unittest.TestCase):
             }
         )
 
-        trader._excute_order(dummy_task)
+        trader._execute_order(dummy_task)
         trader.query_latest_trade.assert_called_once_with(trader.MARKET)
         trader._send_market_price_order.assert_called_once_with(trader.MARKET, True, 5.0)
         trader._create_success_result.assert_called_once_with(dummy_task["request"])
@@ -138,7 +138,7 @@ class BithumbTraderTests(unittest.TestCase):
         self.assertEqual(trader.request_map["apple"]["order_id"], "apple_order_id")
         self.assertEqual(trader.request_map["apple"]["result"], "banana")
 
-    def test__excute_order_call_callback_with_error_when_market_price_buy_order_return_None(self):
+    def test__execute_order_call_callback_with_error_when_market_price_buy_order_return_None(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": None, "type": "buy"},
             "callback": MagicMock(),
@@ -151,13 +151,13 @@ class BithumbTraderTests(unittest.TestCase):
         trader._start_timer = MagicMock()
         trader.query_latest_trade = MagicMock(return_value=None)
 
-        trader._excute_order(dummy_task)
+        trader._execute_order(dummy_task)
         trader.query_latest_trade.assert_called_once_with(trader.MARKET)
         trader._send_market_price_buy_order.assert_not_called()
         trader._create_success_result.assert_not_called()
         dummy_task["callback"].assert_called_once_with("error!")
 
-    def test__excute_order_handle_task_correctly_with_invalid_order(self):
+    def test__execute_order_handle_task_correctly_with_invalid_order(self):
         dummy_invalid_task1 = {
             "request": {"id": "apple", "price": None, "amount": None, "type": "buy"},
             "callback": MagicMock(),
@@ -173,9 +173,9 @@ class BithumbTraderTests(unittest.TestCase):
         trader = BithumbTrader()
         trader._create_success_result = MagicMock()
         trader._start_timer = MagicMock()
-        trader._excute_order(dummy_invalid_task1)
-        trader._excute_order(dummy_invalid_task2)
-        trader._excute_order(dummy_invalid_task3)
+        trader._execute_order(dummy_invalid_task1)
+        trader._execute_order(dummy_invalid_task2)
+        trader._execute_order(dummy_invalid_task3)
 
         dummy_invalid_task1["callback"].assert_called_once_with("error!")
         dummy_invalid_task2["callback"].assert_called_once_with("error!")

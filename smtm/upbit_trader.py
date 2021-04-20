@@ -52,7 +52,7 @@ class UpbitTrader(Trader):
             "date_time": 요청 데이터 생성 시간
         """
         self.worker.post_task(
-            {"runnable": self._excute_order, "request": request, "callback": callback}
+            {"runnable": self._execute_order, "request": request, "callback": callback}
         )
 
     def get_account_info(self):
@@ -115,7 +115,7 @@ class UpbitTrader(Trader):
         querystring = {"market": self.MARKET, "count": "1"}
         return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
 
-    def _excute_order(self, task):
+    def _execute_order(self, task):
         request = task["request"]
         is_buy = True if request["type"] == "buy" else False
         response = self._send_order(self.MARKET, is_buy, request["price"], request["amount"])
