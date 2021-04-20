@@ -34,11 +34,11 @@ class SimulationTraderTests(unittest.TestCase):
         trader = SimulationTrader()
         trader.is_initialized = True
 
-        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
+        dummy_requests = [{"id": "mango", "type": "orange", "price": 500, "amount": 10}]
         callback = MagicMock()
         trader.market.send_request = MagicMock(return_value="banana")
-        trader.send_request(dummy_request, callback)
-        trader.market.send_request.assert_called_once_with(dummy_request)
+        trader.send_request(dummy_requests, callback)
+        trader.market.send_request.assert_called_once_with(dummy_requests[0])
         callback.assert_called_once_with("banana")
 
     def test_send_request_call_raise_exception_UserWarning_when_is_initialized_False(self):

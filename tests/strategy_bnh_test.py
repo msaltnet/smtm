@@ -128,22 +128,22 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
-        request = bnh.get_request()
-        self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 0.0001)
-        self.assertEqual(request["type"], "buy")
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["price"], 20000000)
+        self.assertEqual(requests[0]["amount"], 0.0001)
+        self.assertEqual(requests[0]["type"], "buy")
         bnh.update_trading_info(None)
-        request = bnh.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
 
     def test_get_request_return_turn_over_when_target_budget_is_too_small(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 100)
         bnh.update_trading_info("banana")
-        request = bnh.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
 
     def test_get_request_use_balance_when_balance_is_smaller_than_target_budget(self):
         bnh = StrategyBuyAndHold()
@@ -152,9 +152,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_info["closing_price"] = 20000
         bnh.update_trading_info(dummy_info)
         bnh.balance = 100
-        request = bnh.get_request()
-        self.assertEqual(request["price"], 20000)
-        self.assertEqual(request["amount"], 0.005)
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["price"], 20000)
+        self.assertEqual(requests[0]["amount"], 0.005)
 
     def test_get_request_return_turn_over_when_balance_is_smaller_than_min_price(self):
         bnh = StrategyBuyAndHold()
@@ -163,9 +163,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_info["closing_price"] = 20000
         bnh.update_trading_info(dummy_info)
         bnh.balance = 9.5
-        request = bnh.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
 
     def test_get_request_return_correct_request(self):
         bnh = StrategyBuyAndHold()
@@ -173,10 +173,10 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
-        request = bnh.get_request()
-        self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 0.0001)
-        self.assertEqual(request["type"], "buy")
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["price"], 20000000)
+        self.assertEqual(requests[0]["amount"], 0.0001)
+        self.assertEqual(requests[0]["type"], "buy")
 
     def test_get_request_return_same_datetime_at_simulation(self):
         bnh = StrategyBuyAndHold()
@@ -186,11 +186,11 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         dummy_info["date_time"] = "2020-02-25T15:41:09"
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
-        request = bnh.get_request()
-        self.assertEqual(request["date_time"], "2020-02-25T15:41:09")
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["date_time"], "2020-02-25T15:41:09")
 
         dummy_info["date_time"] = "2020-02-25T23:59:59"
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
-        request = bnh.get_request()
-        self.assertEqual(request["date_time"], "2020-02-25T23:59:59")
+        requests = bnh.get_request()
+        self.assertEqual(requests[0]["date_time"], "2020-02-25T23:59:59")

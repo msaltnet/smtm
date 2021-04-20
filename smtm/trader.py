@@ -12,14 +12,14 @@ class Trader(metaclass=ABCMeta):
         """거래를 요청한다
 
         요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
-        request: 거래 요청 정보
-        {
+        request: 한 개 이상의 거래 요청 정보 리스트
+        [{
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy
             "price": 거래 가격
             "amount": 거래 수량
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 생성 시간
-        }
+        }]
         callback(result):
         {
             "request": 요청 정보 전체

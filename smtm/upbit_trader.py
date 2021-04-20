@@ -42,18 +42,32 @@ class UpbitTrader(Trader):
         self.is_opt_mode = True
         self.name = "Upbit"
 
-    def send_request(self, request, callback):
+    def send_request(self, requests, callback):
         """거래 요청을 처리한다
-        request:
+
+        requests: 한 개 이상의 거래 요청 정보 리스트
+        [{
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy
             "price": 거래 가격
             "amount": 거래 수량
             "date_time": 요청 데이터 생성 시간
+        }]
+        callback(result):
+        {
+            "request": 요청 정보 전체
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "msg": 거래 결과 메세지 success, internal error
+            "balance": 거래 후 계좌 현금 잔고
+            "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 request의 시간
+        }
         """
-        self.worker.post_task(
-            {"runnable": self._execute_order, "request": request, "callback": callback}
-        )
+        for request in requests:
+            self.worker.post_task(
+                {"runnable": self._execute_order, "request": request, "callback": callback}
+            )
 
     def get_account_info(self):
         """계좌 요청 정보를 요청한다

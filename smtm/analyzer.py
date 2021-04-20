@@ -51,7 +51,7 @@ class Analyzer:
         new["kind"] = 0
         self.infos.append(new)
 
-    def put_request(self, request):
+    def put_requests(self, requests):
         """거래 요청 정보를 저장한다
 
         request:
@@ -68,18 +68,22 @@ class Analyzer:
             2: 매매 결과
             3: 수익률 정보
         """
-        try:
-            if float(request["price"]) <= 0 or float(request["amount"]) <= 0:
-                return
-        except KeyError:
-            self.logger.warning("Invalid request")
-            return
+        for request in requests:
+            if request["type"] == "cancel":
+                continue
 
-        new = copy.deepcopy(request)
-        new["price"] = float(new["price"])
-        new["amount"] = float(new["amount"])
-        new["kind"] = 1
-        self.request.append(new)
+            try:
+                if float(request["price"]) <= 0 or float(request["amount"]) <= 0:
+                    return
+            except KeyError:
+                self.logger.warning("Invalid request")
+                return
+
+            new = copy.deepcopy(request)
+            new["price"] = float(new["price"])
+            new["amount"] = float(new["amount"])
+            new["kind"] = 1
+            self.request.append(new)
 
     def put_result(self, result):
         """거래 결과 정보를 저장한다

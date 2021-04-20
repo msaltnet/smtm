@@ -130,14 +130,14 @@ class StrategySma0(Strategy):
         장기 이동 평균선과 단기 이동 평균선이 교차할 때부터 3회에 걸쳐 매매 주문 요청
         교차 지점과 거래 단위는 update_trading_info에서 결정
         사전에 결정된 정보를 바탕으로 매매 요청 생성
-        Returns:
-            {
-                "id": 요청 정보 id "1607862457.560075"
-                "type": 거래 유형 sell, buy
-                "price": 거래 가격
-                "amount": 거래 수량
-                "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
-            }
+        Returns: 배열에 한 개 이상의 요청 정보를 전달
+        [{
+            "id": 요청 정보 id "1607862457.560075"
+            "type": 거래 유형 sell, buy
+            "price": 거래 가격
+            "amount": 거래 수량
+            "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
+        }]
         """
         if self.is_intialized is not True:
             return None
@@ -151,33 +151,37 @@ class StrategySma0(Strategy):
                 now = last_dt.isoformat()
 
             if last_data is None:
-                return {
-                    "id": str(round(time.time(), 3)),
-                    "type": "buy",
-                    "price": 0,
-                    "amount": 0,
-                    "date_time": now,
-                }
+                return [
+                    {
+                        "id": str(round(time.time(), 3)),
+                        "type": "buy",
+                        "price": 0,
+                        "amount": 0,
+                        "date_time": now,
+                    }
+                ]
 
             if self.current_process == "buy":
                 request = self.__create_buy()
             elif self.current_process == "sell":
                 request = self.__create_sell()
             else:
-                return {
-                    "id": str(round(time.time(), 3)),
-                    "type": "buy",
-                    "price": 0,
-                    "amount": 0,
-                    "date_time": now,
-                }
+                return [
+                    {
+                        "id": str(round(time.time(), 3)),
+                        "type": "buy",
+                        "price": 0,
+                        "amount": 0,
+                        "date_time": now,
+                    }
+                ]
 
             request["date_time"] = now
             self.logger.info(f"[REQ] id: {request['id']} =====================")
             self.logger.info(f"type: {request['type']}")
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
-            return request
+            return [request]
         except (ValueError, KeyError):
             self.logger.error("invalid data")
         except IndexError:

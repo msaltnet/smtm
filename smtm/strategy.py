@@ -42,14 +42,15 @@ class Strategy(metaclass=ABCMeta):
     @abstractmethod
     def get_request(self):
         """전략에 따라 거래 요청 정보를 생성한다
-        Returns:
-        {
+
+        Returns: 배열에 한 개 이상의 요청 정보를 전달
+        [{
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy
             "price": 거래 가격
             "amount": 거래 수량
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
-        }
+        }]
         """
 
     @abstractmethod

@@ -128,7 +128,7 @@ class Operator:
             self.logger.debug(f"target_request {target_request}")
             if target_request is not None and target_request["price"] != 0:
                 self.trader.send_request(target_request, send_request_callback)
-                self.analyzer.put_request(target_request)
+                self.analyzer.put_requests(target_request)
         except AttributeError as msg:
             self.logger.error(f"excuting fail {msg}")
 
@@ -213,7 +213,7 @@ class Operator:
 
             try:
                 self.trader.send_request(task["request"], send_manual_request_callback)
-                self.analyzer.put_request(task["request"])
+                self.analyzer.put_requests(task["request"])
             except KeyError:
                 self.logger.error("invalid task")
 

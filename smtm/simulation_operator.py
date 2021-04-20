@@ -43,7 +43,7 @@ class SimulationOperator(Operator):
             target_request = self.strategy.get_request()
             if target_request is not None:
                 self.trader.send_request(target_request, send_request_callback)
-                self.analyzer.put_request(target_request)
+                self.analyzer.put_requests(target_request)
         except AttributeError:
             self.logger.error("excuting fail")
 

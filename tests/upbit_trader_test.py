@@ -421,12 +421,17 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         trader = UpbitTrader()
         trader.worker = MagicMock()
 
-        trader.send_request("mango", "banana")
+        trader.send_request(["mango", "orange"], "banana")
 
-        trader.worker.post_task.assert_called_once()
-        called_arg = trader.worker.post_task.call_args[0][0]
+        trader.worker.post_task.assert_called()
+        called_arg = trader.worker.post_task.call_args_list[0][0][0]
         self.assertEqual(called_arg["runnable"], trader._execute_order)
         self.assertEqual(called_arg["request"], "mango")
+        self.assertEqual(called_arg["callback"], "banana")
+
+        called_arg = trader.worker.post_task.call_args_list[1][0][0]
+        self.assertEqual(called_arg["runnable"], trader._execute_order)
+        self.assertEqual(called_arg["request"], "orange")
         self.assertEqual(called_arg["callback"], "banana")
 
     def test__send_order_should_send_correct_limit_order(self):

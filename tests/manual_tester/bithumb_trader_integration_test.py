@@ -107,5 +107,5 @@ class BithumbTraderIntegrationTester(unittest.TestCase):
 
         self.bithumbTrader.send_request(request, callback)
 
-    def excute_action(self):
+    def execute_action(self):
         print("테스트 코드가 실행 되었습니다!!! ===")

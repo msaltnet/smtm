@@ -41,7 +41,7 @@ class SimulationOperatorTests(unittest.TestCase):
     def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(self):
         operator = SimulationOperator()
         analyzer_mock = Mock()
-        analyzer_mock.put_request = MagicMock()
+        analyzer_mock.put_requests = MagicMock()
         analyzer_mock.put_result = MagicMock()
         dp_mock = Mock()
         dp_mock.initialize = MagicMock(return_value="")
@@ -59,7 +59,7 @@ class SimulationOperatorTests(unittest.TestCase):
         operator._execute_trading(None)
 
         dummy_result = {"name": "mango", "type": "buy", "msg": "success"}
-        analyzer_mock.put_request.assert_called_once_with(dummy_request)
+        analyzer_mock.put_requests.assert_called_once_with(dummy_request)
         strategy_mock.update_trading_info.assert_called_once_with(ANY)
         trader_mock.send_request.assert_called_once_with(ANY, ANY)
         trader_mock.send_request.call_args[0][1](dummy_result)
@@ -69,7 +69,7 @@ class SimulationOperatorTests(unittest.TestCase):
     def test_execute_trading_should_call_creat_report_and_call_stop_when_result_msg_game_over(self):
         operator = SimulationOperator()
         analyzer_mock = Mock()
-        analyzer_mock.put_request = MagicMock()
+        analyzer_mock.put_requests = MagicMock()
         analyzer_mock.put_result = MagicMock()
         analyzer_mock.create_report = MagicMock()
         dp_mock = Mock()
@@ -86,7 +86,7 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
         operator._execute_trading(None)
-        analyzer_mock.put_request.assert_called_once_with(dummy_request)
+        analyzer_mock.put_requests.assert_called_once_with(dummy_request)
         strategy_mock.update_trading_info.assert_called_once_with(ANY)
         trader_mock.send_request.assert_called_once_with(ANY, ANY)
 

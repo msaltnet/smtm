@@ -241,23 +241,23 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_get_request_return_None_when_not_yet_initialized(self):
         sma = StrategySma0()
-        request = sma.get_request()
-        self.assertEqual(request, None)
+        requests = sma.get_request()
+        self.assertEqual(requests, None)
 
     def test_get_request_return_None_when_data_is_empty(self):
         sma = StrategySma0()
         sma.initialize(100, 10)
-        request = sma.get_request()
-        self.assertEqual(request, None)
+        requests = sma.get_request()
+        self.assertEqual(requests, None)
 
     def test_get_request_return_None_when_data_is_invaild(self):
         sma = StrategySma0()
         sma.initialize(100, 10)
         dummy_info = {}
         sma.update_trading_info(dummy_info)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
 
     def test_get_request_return_correct_request_at_buy_process(self):
         sma = StrategySma0()
@@ -267,27 +267,27 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         sma.current_process = "buy"
         sma.process_unit = (4000, 0)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 4000 / 20000000)
-        self.assertEqual(request["type"], "buy")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 20000000)
+        self.assertEqual(requests[0]["amount"], 4000 / 20000000)
+        self.assertEqual(requests[0]["type"], "buy")
 
         dummy_info = {}
         dummy_info["closing_price"] = 10000000
         sma.update_trading_info(dummy_info)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 10000000)
-        self.assertEqual(request["amount"], 4000 / 10000000)
-        self.assertEqual(request["type"], "buy")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 10000000)
+        self.assertEqual(requests[0]["amount"], 4000 / 10000000)
+        self.assertEqual(requests[0]["type"], "buy")
 
         dummy_info = {}
         dummy_info["closing_price"] = 100
         sma.update_trading_info(dummy_info)
         sma.balance = 2000
-        request = sma.get_request()
-        self.assertEqual(request["price"], 100)
-        self.assertEqual(request["amount"], 2000 / 100)
-        self.assertEqual(request["type"], "buy")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 100)
+        self.assertEqual(requests[0]["amount"], 2000 / 100)
+        self.assertEqual(requests[0]["type"], "buy")
 
     def test_get_request_return_correct_request_at_sell_process(self):
         sma = StrategySma0()
@@ -298,19 +298,19 @@ class StrategySma0Tests(unittest.TestCase):
         sma.current_process = "sell"
         sma.asset_amount = 60
         sma.process_unit = (0, 20)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 20)
-        self.assertEqual(request["type"], "sell")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 20000000)
+        self.assertEqual(requests[0]["amount"], 20)
+        self.assertEqual(requests[0]["type"], "sell")
 
         dummy_info = {}
         dummy_info["closing_price"] = 10000000
         sma.asset_amount = 10
         sma.update_trading_info(dummy_info)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 10000000)
-        self.assertEqual(request["amount"], 10)
-        self.assertEqual(request["type"], "sell")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 10000000)
+        self.assertEqual(requests[0]["amount"], 10)
+        self.assertEqual(requests[0]["type"], "sell")
 
     def test_get_request_return_same_datetime_at_simulation(self):
         sma = StrategySma0()
@@ -323,11 +323,11 @@ class StrategySma0Tests(unittest.TestCase):
         sma.current_process = "sell"
         sma.asset_amount = 60
         sma.process_unit = (0, 20)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 20)
-        self.assertEqual(request["type"], "sell")
-        self.assertEqual(request["date_time"], "2020-02-25T15:41:09")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 20000000)
+        self.assertEqual(requests[0]["amount"], 20)
+        self.assertEqual(requests[0]["type"], "sell")
+        self.assertEqual(requests[0]["date_time"], "2020-02-25T15:41:09")
 
     def test_get_request_return_turn_over_when_last_data_is_None(self):
         sma = StrategySma0()
@@ -337,15 +337,15 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         sma.current_process = "buy"
         sma.process_unit = (4000, 0)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 20000000)
-        self.assertEqual(request["amount"], 4000 / 20000000)
-        self.assertEqual(request["type"], "buy")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 20000000)
+        self.assertEqual(requests[0]["amount"], 4000 / 20000000)
+        self.assertEqual(requests[0]["type"], "buy")
 
         sma.update_trading_info(None)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
 
     def test_get_request_return_turn_over_when_target_budget_lt_min_price(self):
         sma = StrategySma0()
@@ -355,10 +355,10 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         sma.current_process = "buy"
         sma.process_unit = (300, 0)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
-        self.assertEqual(request["type"], "buy")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
+        self.assertEqual(requests[0]["type"], "buy")
 
     def test_get_request_return_turn_over_when_process_unit_invalid(self):
         sma = StrategySma0()
@@ -368,18 +368,18 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         sma.current_process = "buy"
         sma.process_unit = (0, 0)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
-        self.assertEqual(request["type"], "buy")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
+        self.assertEqual(requests[0]["type"], "buy")
 
         sma.current_process = "sell"
         sma.asset_amount = 60
         sma.process_unit = (0, 0)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
-        self.assertEqual(request["type"], "sell")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
+        self.assertEqual(requests[0]["type"], "sell")
 
     def test_get_request_return_turn_over_when_asset_amount_empty(self):
         sma = StrategySma0()
@@ -390,7 +390,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.current_process = "sell"
         sma.asset_amount = 0
         sma.process_unit = (0, 10)
-        request = sma.get_request()
-        self.assertEqual(request["price"], 0)
-        self.assertEqual(request["amount"], 0)
-        self.assertEqual(request["type"], "sell")
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["price"], 0)
+        self.assertEqual(requests[0]["amount"], 0)
+        self.assertEqual(requests[0]["type"], "sell")

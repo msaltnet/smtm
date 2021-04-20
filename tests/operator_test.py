@@ -71,7 +71,7 @@ class OperatorInitializeTests(unittest.TestCase):
         self.analyzer_mock.make_start_point.assert_called_once()
 
 
-class OperatorExcuteTradingTests(unittest.TestCase):
+class OperatorExecuteTradingTests(unittest.TestCase):
     def setUp(self):
         self.patcher = patch("threading.Timer")
         self.threading_mock = self.patcher.start()
@@ -117,7 +117,7 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         self.operator.state = "running"
         self.operator._execute_trading(None)
 
-        self.analyzer_mock.put_request.assert_called_once_with(dummy_request)
+        self.analyzer_mock.put_requests.assert_called_once_with(dummy_request)
         self.strategy_mock.update_trading_info.assert_called_once_with(ANY)
         self.trader_mock.send_request.assert_called_once_with(ANY, ANY)
         self.trader_mock.send_request.call_args[0][1]("mango")
@@ -135,7 +135,7 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         self.operator.state = "running"
         self.operator._execute_trading(None)
 
-        self.analyzer_mock.put_request.assert_not_called()
+        self.analyzer_mock.put_requests.assert_not_called()
         self.trader_mock.send_request.assert_not_called()
         self.analyzer_mock.put_result.assert_not_called()
 
@@ -149,7 +149,7 @@ class OperatorExcuteTradingTests(unittest.TestCase):
         self.operator.state = "running"
         self.operator._execute_trading(None)
 
-        self.analyzer_mock.put_request.assert_not_called()
+        self.analyzer_mock.put_requests.assert_not_called()
         self.trader_mock.send_request.assert_not_called()
         self.analyzer_mock.put_result.assert_not_called()
 
@@ -323,7 +323,7 @@ class OperatorTests(unittest.TestCase):
         runnable = self.operator.worker.post_task.call_args[0][0]["runnable"]
         task = {"runnable": MagicMock(), "callback": MagicMock(), "request": "dummy_request"}
         runnable(task)
-        self.analyzer_mock.put_request.assert_called_once_with("dummy_request")
+        self.analyzer_mock.put_requests.assert_called_once_with("dummy_request")
         self.trader_mock.send_request.assert_called_once_with("dummy_request", ANY)
 
         trader_callback = self.trader_mock.send_request.call_args[0][1]

@@ -94,14 +94,14 @@ class StrategyBuyAndHold(Strategy):
 
         5번에 걸쳐 분할 매수 후 홀딩하는 전략
         마지막 종가로 처음 예산의 1/5에 해당하는 양 만큼 매수시도
-        Returns:
-        {
+        Returns: 배열에 한 개 이상의 요청 정보를 전달
+        [{
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy
             "price": 거래 가격
             "amount": 거래 수량
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
-        }
+        }]
         """
         if self.is_intialized is not True:
             return None
@@ -117,23 +117,27 @@ class StrategyBuyAndHold(Strategy):
             target_budget = self.budget / 5
             if last_data is None:
                 self.logger.info(f"last data is None")
-                return {
-                    "id": str(round(time.time(), 3)),
-                    "type": "buy",
-                    "price": 0,
-                    "amount": 0,
-                    "date_time": now,
-                }
+                return [
+                    {
+                        "id": str(round(time.time(), 3)),
+                        "type": "buy",
+                        "price": 0,
+                        "amount": 0,
+                        "date_time": now,
+                    }
+                ]
 
             if self.min_price > target_budget or self.min_price > self.balance:
                 self.logger.info("target_budget or balance is too small")
-                return {
-                    "id": str(round(time.time(), 3)),
-                    "type": "buy",
-                    "price": 0,
-                    "amount": 0,
-                    "date_time": now,
-                }
+                return [
+                    {
+                        "id": str(round(time.time(), 3)),
+                        "type": "buy",
+                        "price": 0,
+                        "amount": 0,
+                        "date_time": now,
+                    }
+                ]
 
             if target_budget > self.balance:
                 target_budget = self.balance
@@ -156,7 +160,7 @@ class StrategyBuyAndHold(Strategy):
                 f"total value: {round(float(trading_request['price']) * float(trading_request['amount']))}"
             )
             self.logger.info("================================================")
-            return trading_request
+            return [trading_request]
         except (ValueError, KeyError):
             self.logger.error("invalid data")
         except IndexError:
