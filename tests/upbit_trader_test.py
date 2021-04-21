@@ -32,6 +32,24 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(trader.order_map["apple"]["callback"], "kiwi")
         self.assertEqual(trader.order_map["apple"]["result"], "banana")
 
+    def test__execute_order_call_cancel_request_when_request_type_is_cancel(self):
+        dummy_task = {
+            "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "cancel"},
+            "callback": "kiwi",
+        }
+        trader = UpbitTrader()
+        trader.cancel_request = MagicMock()
+        trader._send_order = MagicMock()
+        trader._create_success_result = MagicMock()
+        trader._start_timer = MagicMock()
+
+        trader._execute_order(dummy_task)
+
+        trader._send_order.assert_not_called()
+        trader._create_success_result.assert_not_called()
+        trader._start_timer.assert_not_called()
+        trader.cancel_request.assert_called_once_with("apple")
+
     def test__execute_order_should_call_callback_with_error_when__send_order_return_None(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},

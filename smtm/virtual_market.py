@@ -141,7 +141,7 @@ class VirtualMarket:
             result:
             {
                 "request": 요청 정보
-                "type": 거래 유형 sell, buy
+                "type": 거래 유형 sell, buy, cancel
                 "price": 거래 가격
                 "amount": 거래 수량
                 "msg": 거래 결과 메세지

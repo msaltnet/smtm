@@ -91,7 +91,7 @@ class StrategySma0(Strategy):
         result:
         {
             "request": 요청 정보
-            "type": 거래 유형 sell, buy
+            "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
             "msg": 거래 결과 메세지
@@ -133,7 +133,7 @@ class StrategySma0(Strategy):
         Returns: 배열에 한 개 이상의 요청 정보를 전달
         [{
             "id": 요청 정보 id "1607862457.560075"
-            "type": 거래 유형 sell, buy
+            "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간

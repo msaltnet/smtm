@@ -27,7 +27,7 @@ class BithumbTrader(Trader):
     거래 요청 정보를 받아서 거래소에 요청하고 거래소에서 받은 결과를 제공해주는 클래스
 
     id: 요청 정보 id "1607862457.560075"
-    type: 거래 유형 sell, buy
+    type: 거래 유형 sell, buy, cancel
     price: 거래 가격
     amount: 거래 수량
     """
@@ -55,7 +55,7 @@ class BithumbTrader(Trader):
         request: 거래 요청 정보
         {
             "id": 요청 정보 id "1607862457.560075"
-            "type": 거래 유형 sell, buy
+            "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 생성 시간
@@ -63,7 +63,7 @@ class BithumbTrader(Trader):
         callback(result):
         {
             "request": 요청 정보 전체
-            "type": 거래 유형 sell, buy
+            "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
             "msg": 거래 결과 메세지 success, internal error
