@@ -41,3 +41,10 @@ Test with real trading market.
 # run unittest directly
 python -m unittest tests\integration_tester\bithumb_trader_integration_test.py
 ```
+
+### Tip
+clear jupyter notebook output before make commit
+
+```
+jupyter nbconvert --clear-output --inplace {file.ipynb}
+````
