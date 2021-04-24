@@ -138,15 +138,16 @@ class VirtualMarket:
 
         request: 거래 요청 정보
         Returns:
-            result:
+        result:
             {
                 "request": 요청 정보
                 "type": 거래 유형 sell, buy, cancel
                 "price": 거래 가격
                 "amount": 거래 수량
+                "state": 거래 상태 requested, done
                 "msg": 거래 결과 메세지
-                "balance": 거래 후 계좌 현금 잔고
                 "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
+                "balance": 거래 후 계좌 현금 잔고
             }
         """
         if self.is_initialized is not True:
@@ -170,6 +171,7 @@ class VirtualMarket:
                 "msg": "game-over",
                 "balance": self.balance,
                 "date_time": now,
+                "state": "done",
             }
 
         if request["price"] == 0 or request["amount"] == 0:
@@ -181,6 +183,7 @@ class VirtualMarket:
                 "msg": "turn over",
                 "balance": self.balance,
                 "date_time": now,
+                "state": "done",
             }
 
         if request["type"] == "buy":
@@ -198,6 +201,7 @@ class VirtualMarket:
                 "msg": "invalid type",
                 "balance": self.balance,
                 "date_time": now,
+                "state": "done",
             }
         return result
 
@@ -212,6 +216,7 @@ class VirtualMarket:
                 "amount": 0,
                 "msg": "no money",
                 "balance": self.balance,
+                "state": "done",
             }
 
         try:
@@ -223,6 +228,7 @@ class VirtualMarket:
                     "amount": 0,
                     "msg": "not matched",
                     "balance": self.balance,
+                    "state": "done",
                 }
             name = self.data[next_index]["market"]
             if name in self.asset:
@@ -243,6 +249,7 @@ class VirtualMarket:
                 "amount": request["amount"],
                 "msg": "success",
                 "balance": self.balance,
+                "state": "done",
             }
         except KeyError as msg:
             self.logger.error(f"invalid trading data {msg}")
@@ -253,6 +260,7 @@ class VirtualMarket:
                 "amount": -1,
                 "msg": "internal error",
                 "balance": self.balance,
+                "state": "done",
             }
 
     def __handle_sell_request(self, request, next_index):
@@ -267,6 +275,7 @@ class VirtualMarket:
                     "amount": 0,
                     "msg": "asset empty",
                     "balance": self.balance,
+                    "state": "done",
                 }
 
             if request["price"] >= self.data[next_index]["high_price"]:
@@ -277,6 +286,7 @@ class VirtualMarket:
                     "amount": 0,
                     "msg": "not matched",
                     "balance": self.balance,
+                    "state": "done",
                 }
 
             sell_amount = request["amount"]
@@ -303,6 +313,7 @@ class VirtualMarket:
                 "amount": sell_amount,
                 "msg": "success",
                 "balance": self.balance,
+                "state": "done",
             }
         except KeyError as msg:
             self.logger.error(f"invalid trading data {msg}")
@@ -313,6 +324,7 @@ class VirtualMarket:
                 "amount": -1,
                 "msg": "internal error",
                 "balance": self.balance,
+                "state": "done",
             }
 
     def __print_balance_info(self, trading_type, old, new, total_asset_value):
