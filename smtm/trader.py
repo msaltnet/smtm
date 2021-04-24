@@ -34,8 +34,14 @@ class Trader(metaclass=ABCMeta):
 
     @abstractmethod
     def cancel_request(self, request_id):
-        """거래를 취소한다
+        """거래 요청을 취소한다
         request_id: 취소하고자 하는 request의 id
+        """
+
+    @abstractmethod
+    def cancel_all_requests(self):
+        """모든 거래 요청을 취소한다
+        체결되지 않고 대기중인 모든 거래 요청을 취소한다
         """
 
     @abstractmethod

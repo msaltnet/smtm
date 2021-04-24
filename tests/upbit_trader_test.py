@@ -907,3 +907,48 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
 
         dummy_request["callback"].assert_not_called()
         self.assertFalse("mango_request_1234" in trader.order_map)
+
+    def test_cancel_all_requests_should_call_cancel_request_correctly(self):
+        trader = UpbitTrader()
+        dummy_request = {
+            "uuid": "mango_uuid",
+            "callback": MagicMock(),
+            "result": {
+                "request": {
+                    "id": "mango_request_1234",
+                    "type": "buy",
+                    "price": "888000",
+                    "amount": "0.0001234",
+                },
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+                "msg": "success",
+            },
+        }
+        trader.order_map["mango_request_1234"] = dummy_request
+
+        dummy_request2 = {
+            "uuid": "mango_uuid2",
+            "callback": MagicMock(),
+            "result": {
+                "request": {
+                    "id": "mango_request_5678",
+                    "type": "buy",
+                    "price": "888000",
+                    "amount": "0.0001234",
+                },
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+                "msg": "success",
+            },
+        }
+        trader.order_map["mango_request_5678"] = dummy_request
+        trader.cancel_request = MagicMock()
+
+        trader.cancel_all_requests()
+
+        trader.cancel_request.assert_called()
+        self.assertEqual(trader.cancel_request.call_args_list[0][0][0], "mango_request_1234")
+        self.assertEqual(trader.cancel_request.call_args_list[1][0][0], "mango_request_5678")

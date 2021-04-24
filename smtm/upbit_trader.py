@@ -1,6 +1,7 @@
 """업비트 거래소를 통한 거래 처리"""
 
 import os
+import copy
 import jwt  # PyJWT
 import uuid
 import hashlib
@@ -102,6 +103,9 @@ class UpbitTrader(Trader):
         return result
 
     def cancel_request(self, request_id):
+        """거래 요청을 취소한다
+        request_id: 취소하고자 하는 request의 id
+        """
         if request_id not in self.order_map:
             return
 
@@ -126,6 +130,14 @@ class UpbitTrader(Trader):
                 result["amount"] = float(response[0]["executed_volume"])
                 result["state"] = "done"
                 order["callback"](result)
+
+    def cancel_all_requests(self):
+        """모든 거래 요청을 취소한다
+        체결되지 않고 대기중인 모든 거래 요청을 취소한다
+        """
+        orders = copy.deepcopy(self.order_map)
+        for request_id, request_info in orders.items():
+            self.cancel_request(request_id)
 
     def get_trade_tick(self):
         querystring = {"market": self.MARKET, "count": "1"}
