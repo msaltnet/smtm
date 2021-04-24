@@ -34,6 +34,7 @@ class StrategyBuyAndHold(Strategy):
         self.request = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.name = "BnH"
+        self.waiting_requests = {}
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트
@@ -65,6 +66,7 @@ class StrategyBuyAndHold(Strategy):
             "price": 거래 가격
             "amount": 거래 수량
             "msg": 거래 결과 메세지
+            "state": 거래 상태 requested, done
             "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
         }
         """
@@ -72,6 +74,13 @@ class StrategyBuyAndHold(Strategy):
             return
 
         try:
+            request = result["request"]
+            if result["state"] == "requested":
+                self.waiting_requests[request["id"]] = result
+                return
+            elif result["state"] == "done" and request["id"] in self.waiting_requests:
+                del self.waiting_requests[request["id"]]
+
             total = float(result["price"]) * float(result["amount"])
             fee = total * self.COMMISSION_RATIO
             if result["type"] == "buy":
@@ -85,8 +94,8 @@ class StrategyBuyAndHold(Strategy):
             self.logger.info(f"balance: {self.balance}")
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
-        except AttributeError as msg:
-            self.logger.warning(msg)
+        except (AttributeError, TypeError) as msg:
+            self.logger.error(msg)
 
     def get_request(self):
         """

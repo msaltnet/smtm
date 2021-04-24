@@ -183,6 +183,7 @@ class StrategySma0Tests(unittest.TestCase):
             "amount": "0.0001234",
             "msg": "melon",
             "balance": 500,
+            "state": "done",
         }
         sma.update_result(dummy_result)
         self.assertEqual(sma.result[-1]["type"], "orange")
@@ -191,6 +192,47 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.result[-1]["amount"], "0.0001234")
         self.assertEqual(sma.result[-1]["msg"], "melon")
         self.assertEqual(sma.result[-1]["balance"], 500)
+
+    def test_update_result_remove_from_waiting_requests(self):
+        sma = StrategySma0()
+        sma.initialize(100, 10)
+        sma.waiting_requests["banana"] = "banana_request"
+
+        dummy_result = {
+            "type": "orange",
+            "request": {"id": "banana"},
+            "price": "777000",
+            "amount": "0.0001234",
+            "msg": "melon",
+            "balance": 500,
+            "state": "done",
+        }
+        sma.update_result(dummy_result)
+        self.assertEqual(sma.result[-1]["type"], "orange")
+        self.assertEqual(sma.result[-1]["request"]["id"], "banana")
+        self.assertEqual(sma.result[-1]["price"], "777000")
+        self.assertEqual(sma.result[-1]["amount"], "0.0001234")
+        self.assertEqual(sma.result[-1]["msg"], "melon")
+        self.assertEqual(sma.result[-1]["balance"], 500)
+        self.assertFalse("banana" in sma.waiting_requests)
+
+    def test_update_result_insert_into_waiting_requests(self):
+        sma = StrategySma0()
+        sma.initialize(100, 10)
+        sma.waiting_requests["banana"] = "banana_request"
+
+        dummy_result = {
+            "type": "orange",
+            "request": {"id": "banana"},
+            "price": "777000",
+            "amount": "0.0001234",
+            "msg": "melon",
+            "balance": 500,
+            "state": "requested",
+        }
+        sma.update_result(dummy_result)
+        self.assertEqual(len(sma.result), 0)
+        self.assertTrue("banana" in sma.waiting_requests)
 
     def test_update_result_update_balance_and_asset_amount(self):
         sma = StrategySma0()
@@ -205,6 +247,7 @@ class StrategySma0Tests(unittest.TestCase):
             "amount": 5,
             "msg": "success",
             "balance": 100,
+            "state": "done",
         }
         sma.update_result(dummy_result)
         self.assertEqual(sma.balance, 94998)
@@ -223,6 +266,7 @@ class StrategySma0Tests(unittest.TestCase):
             "amount": 53,
             "msg": "success",
             "balance": 1000,
+            "state": "done",
         }
         sma.update_result(dummy_result)
         self.assertEqual(sma.balance, 147972)

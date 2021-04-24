@@ -45,6 +45,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
             "amount": 0.001,
             "msg": "melon",
             "balance": 500,
+            "state": "done",
         }
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.result[-1]["type"], "orange")
@@ -66,6 +67,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
             "amount": 5,
             "msg": "melon",
             "balance": 9500,
+            "state": "done",
         }
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.balance, 49975)
@@ -88,6 +90,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
             "amount": 5,
             "msg": "melon",
             "balance": 9500,
+            "state": "done",
         }
         bnh.update_result(dummy_result)
         self.assertEqual(bnh.balance, 149975)
@@ -97,6 +100,50 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(bnh.result[-1]["amount"], 5)
         self.assertEqual(bnh.result[-1]["msg"], "melon")
         self.assertEqual(bnh.result[-1]["balance"], 9500)
+
+    def test_update_result_remove_from_waiting_requests(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(100000, 10)
+        self.assertEqual(bnh.balance, 100000)
+        bnh.waiting_requests["orange"] = "orage_request"
+
+        dummy_result = {
+            "type": "sell",
+            "request": {"id": "orange"},
+            "price": 10000,
+            "amount": 5,
+            "msg": "melon",
+            "balance": 9500,
+            "state": "done",
+        }
+        bnh.update_result(dummy_result)
+        self.assertEqual(bnh.balance, 149975)
+        self.assertEqual(bnh.result[-1]["type"], "sell")
+        self.assertEqual(bnh.result[-1]["request"]["id"], "orange")
+        self.assertEqual(bnh.result[-1]["price"], 10000)
+        self.assertEqual(bnh.result[-1]["amount"], 5)
+        self.assertEqual(bnh.result[-1]["msg"], "melon")
+        self.assertEqual(bnh.result[-1]["balance"], 9500)
+        self.assertFalse("orange" in bnh.waiting_requests)
+
+    def test_update_result_insert_into_waiting_requests(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(100000, 10)
+        self.assertEqual(bnh.balance, 100000)
+
+        dummy_result = {
+            "type": "sell",
+            "request": {"id": "orange"},
+            "price": 10000,
+            "amount": 5,
+            "msg": "melon",
+            "balance": 9500,
+            "state": "requested",
+        }
+        bnh.update_result(dummy_result)
+        self.assertEqual(bnh.balance, 100000)
+        self.assertEqual(len(bnh.result), 0)
+        self.assertTrue("orange" in bnh.waiting_requests)
 
     def test_update_result_ignore_result_when_not_yet_initialized(self):
         bnh = StrategyBuyAndHold()
