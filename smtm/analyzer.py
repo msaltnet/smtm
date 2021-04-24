@@ -95,6 +95,7 @@ class Analyzer:
             "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
+            "state": 거래 상태 requested, done
             "msg": 거래 결과 메세지
             "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
         }

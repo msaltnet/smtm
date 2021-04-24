@@ -16,7 +16,7 @@ class UpditTraderTests(unittest.TestCase):
     def test__execute_order_handle_task_correctly(self):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
-            "callback": "kiwi",
+            "callback": MagicMock(),
         }
         trader = UpbitTrader()
         trader._send_order = MagicMock(return_value={"uuid": "mango"})
@@ -26,11 +26,12 @@ class UpditTraderTests(unittest.TestCase):
         trader._execute_order(dummy_task)
 
         trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
-        trader._create_success_result.assert_called_once_with(dummy_task["request"])
+        trader._create_success_result.assert_called_once_with(dummy_task["request"], "mango")
         trader._start_timer.assert_called_once()
         self.assertEqual(trader.order_map["apple"]["uuid"], "mango")
-        self.assertEqual(trader.order_map["apple"]["callback"], "kiwi")
+        self.assertEqual(trader.order_map["apple"]["callback"], dummy_task["callback"])
         self.assertEqual(trader.order_map["apple"]["result"], "banana")
+        dummy_task["callback"].assert_called_once()
 
     def test__execute_order_call_cancel_request_when_request_type_is_cancel(self):
         dummy_task = {
@@ -71,13 +72,15 @@ class UpditTraderTests(unittest.TestCase):
     def test__create_success_result_return_correct_result(self):
         dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}
         trader = UpbitTrader()
-        success_result = trader._create_success_result(dummy_request)
+        success_result = trader._create_success_result(dummy_request, "mango_uuid")
 
         self.assertEqual(success_result["request"]["id"], dummy_request["id"])
         self.assertEqual(success_result["type"], dummy_request["type"])
         self.assertEqual(success_result["price"], dummy_request["price"])
         self.assertEqual(success_result["amount"], dummy_request["amount"])
         self.assertEqual(success_result["msg"], "success")
+        self.assertEqual(success_result["state"], "requested")
+        self.assertEqual(success_result["uuid"], "mango_uuid")
 
     @patch("threading.Timer")
     def test_start_timer_should_start_Timer(self, mock_timer):
@@ -726,6 +729,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             "amount": 0.0000034,
             "msg": "success",
             "date_time": "2018-04-10T15:42:23",
+            "state": "done",
         }
         self.delete_mock.return_value = dummy_response
         trader._create_jwt_token = MagicMock(return_value="mango_token")
@@ -781,6 +785,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             "amount": 0.0000034,
             "msg": "success",
             "date_time": "2018-04-10T15:42:23",
+            "state": "done",
         }
         self.delete_mock.return_value = dummy_response
 

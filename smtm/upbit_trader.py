@@ -55,13 +55,13 @@ class UpbitTrader(Trader):
         }]
         callback(result):
         {
-            "request": 요청 정보 전체
+            "request": 요청 정보
             "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
-            "msg": 거래 결과 메세지 success, internal error
-            "balance": 거래 후 계좌 현금 잔고
-            "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 request의 시간
+            "state": 거래 상태 requested, done
+            "msg": 거래 결과 메세지
+            "date_time": 거래 체결 시간
         }
         """
         for request in requests:
@@ -114,6 +114,7 @@ class UpbitTrader(Trader):
             result["date_time"] = response["created_at"].replace("+09:00", "")
             result["price"] = float(response["price"])
             result["amount"] = float(response["executed_volume"])
+            result["state"] = "done"
             order["callback"](result)
         else:
             response = self._query_order_list([order["uuid"]], True)
@@ -123,6 +124,7 @@ class UpbitTrader(Trader):
                 result["date_time"] = response[0]["created_at"].replace("+09:00", "")
                 result["price"] = float(response[0]["price"])
                 result["amount"] = float(response[0]["executed_volume"])
+                result["state"] = "done"
                 order["callback"](result)
 
     def get_trade_tick(self):
@@ -140,18 +142,20 @@ class UpbitTrader(Trader):
         if response is None:
             task["callback"]("error!")
             return
-
-        result = self._create_success_result(request)
+        result = self._create_success_result(request, response["uuid"])
         self.order_map[request["id"]] = {
             "uuid": response["uuid"],
             "callback": task["callback"],
             "result": result,
         }
+        task["callback"](result)
         self.logger.debug(f"request inserted {self.order_map[request['id']]}")
         self._start_timer()
 
-    def _create_success_result(self, request):
+    def _create_success_result(self, request, uuid):
         return {
+            "uuid": uuid,
+            "state": "requested",
             "request": request,
             "type": request["type"],
             "price": request["price"],
@@ -203,6 +207,7 @@ class UpbitTrader(Trader):
                         # 최종 체결 가격, 수량으로 업데이트
                         result["price"] = float(order["price"]) if order["price"] is not None else 0
                         result["amount"] = float(order["executed_volume"])
+                        result["state"] = "done"
                         request_info["callback"](result)
                         is_done = True
 
