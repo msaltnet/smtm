@@ -120,16 +120,17 @@ class Operator:
                 if result == "error!":
                     self.logger.error("request fail")
                     return
-
                 self.strategy.update_result(result)
-                self.analyzer.put_result(result)
+
+                if "state" in result and result["state"] != "requested":
+                    self.analyzer.put_result(result)
 
             target_request = self.strategy.get_request()
             self.logger.debug(f"target_request {target_request}")
             if target_request is not None and target_request["price"] != 0:
                 self.trader.send_request(target_request, send_request_callback)
                 self.analyzer.put_requests(target_request)
-        except AttributeError as msg:
+        except (AttributeError, TypeError) as msg:
             self.logger.error(f"excuting fail {msg}")
 
         self.logger.debug("trading is completed #####################")

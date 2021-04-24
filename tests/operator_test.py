@@ -120,9 +120,10 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         self.analyzer_mock.put_requests.assert_called_once_with(dummy_request)
         self.strategy_mock.update_trading_info.assert_called_once_with(ANY)
         self.trader_mock.send_request.assert_called_once_with(ANY, ANY)
-        self.trader_mock.send_request.call_args[0][1]("mango")
-        self.strategy_mock.update_result.assert_called_once_with("mango")
-        self.analyzer_mock.put_result.assert_called_once_with("mango")
+        self.trader_mock.send_request.call_args[0][1]({"id": "mango", "state": "done"})
+        self.trader_mock.send_request.call_args[0][1]({"id": "orange", "state": "requested"})
+        self.strategy_mock.update_result.assert_called()
+        self.analyzer_mock.put_result.assert_called_once_with({"id": "mango", "state": "done"})
 
     def test_execute_trading_should_NOT_call_trader_send_request_when_price_is_zero(self):
         dummy_request = {"id": "mango", "type": "orange", "price": 0, "amount": 10}
