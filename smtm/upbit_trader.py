@@ -149,6 +149,10 @@ class UpbitTrader(Trader):
             self.cancel_request(request["id"])
             return
 
+        if request["price"] == 0:
+            self.logger.warning("invalid price request. market price is not supported now")
+            return
+
         is_buy = True if request["type"] == "buy" else False
         response = self._send_order(self.MARKET, is_buy, request["price"], request["amount"])
         if response is None:

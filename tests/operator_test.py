@@ -125,21 +125,6 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         self.strategy_mock.update_result.assert_called()
         self.analyzer_mock.put_result.assert_called_once_with({"id": "mango", "state": "done"})
 
-    def test_execute_trading_should_NOT_call_trader_send_request_when_price_is_zero(self):
-        dummy_request = {"id": "mango", "type": "orange", "price": 0, "amount": 10}
-        self.strategy_mock.get_request = MagicMock(return_value=dummy_request)
-
-        self.operator.initialize(
-            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
-        )
-        self.operator.set_interval(27)
-        self.operator.state = "running"
-        self.operator._execute_trading(None)
-
-        self.analyzer_mock.put_requests.assert_not_called()
-        self.trader_mock.send_request.assert_not_called()
-        self.analyzer_mock.put_result.assert_not_called()
-
     def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
         self.strategy_mock.get_request = MagicMock(return_value=None)
 

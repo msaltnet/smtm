@@ -127,7 +127,7 @@ class Operator:
 
             target_request = self.strategy.get_request()
             self.logger.debug(f"target_request {target_request}")
-            if target_request is not None and target_request["price"] != 0:
+            if target_request is not None:
                 self.trader.send_request(target_request, send_request_callback)
                 self.analyzer.put_requests(target_request)
         except (AttributeError, TypeError) as msg:
