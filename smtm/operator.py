@@ -142,6 +142,7 @@ class Operator:
         if self.state != "running":
             return
 
+        self.trader.cancel_all_requests()
         self.last_report = self.analyzer.create_report(tag=self.tag)
         self.logger.info("===== Stop operating =====")
         try:
