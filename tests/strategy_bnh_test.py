@@ -225,6 +225,26 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 0.0001)
         self.assertEqual(requests[0]["type"], "buy")
 
+    def test_get_request_return_correct_request_with_cancel_requests(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(5000, 100)
+        bnh.waiting_requests["mango_id"] = {"request": {"id": "mango_id"}}
+        bnh.waiting_requests["orange_id"] = {"request": {"id": "orange_id"}}
+        dummy_info = {}
+        dummy_info["closing_price"] = 20000000
+        bnh.update_trading_info(dummy_info)
+        requests = bnh.get_request()
+
+        self.assertEqual(requests[0]["id"], "mango_id")
+        self.assertEqual(requests[0]["type"], "cancel")
+
+        self.assertEqual(requests[1]["id"], "orange_id")
+        self.assertEqual(requests[1]["type"], "cancel")
+
+        self.assertEqual(requests[2]["price"], 20000000)
+        self.assertEqual(requests[2]["amount"], 0.0001)
+        self.assertEqual(requests[2]["type"], "buy")
+
     def test_get_request_return_same_datetime_at_simulation(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(1000, 100)

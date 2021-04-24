@@ -356,6 +356,29 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 10)
         self.assertEqual(requests[0]["type"], "sell")
 
+    def test_get_request_return_request_with_cancel_requests(self):
+        sma = StrategySma0()
+        sma.initialize(10000, 100)
+        sma.waiting_requests["mango_id"] = {"request": {"id": "mango_id"}}
+        sma.waiting_requests["orange_id"] = {"request": {"id": "orange_id"}}
+        sma.is_simulation = True
+        dummy_info = {}
+        dummy_info["date_time"] = "2020-02-25T15:41:09"
+        dummy_info["closing_price"] = 20000000
+        sma.update_trading_info(dummy_info)
+        sma.current_process = "sell"
+        sma.asset_amount = 60
+        sma.process_unit = (0, 20)
+        requests = sma.get_request()
+        self.assertEqual(requests[0]["id"], "mango_id")
+        self.assertEqual(requests[0]["type"], "cancel")
+        self.assertEqual(requests[1]["id"], "orange_id")
+        self.assertEqual(requests[1]["type"], "cancel")
+        self.assertEqual(requests[2]["price"], 20000000)
+        self.assertEqual(requests[2]["amount"], 20)
+        self.assertEqual(requests[2]["type"], "sell")
+        self.assertEqual(requests[2]["date_time"], "2020-02-25T15:41:09")
+
     def test_get_request_return_same_datetime_at_simulation(self):
         sma = StrategySma0()
         sma.initialize(10000, 100)

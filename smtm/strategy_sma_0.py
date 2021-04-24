@@ -190,7 +190,12 @@ class StrategySma0(Strategy):
             self.logger.info(f"type: {request['type']}")
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
-            return [request]
+            final_requests = []
+            for request_id in self.waiting_requests:
+                self.logger.info(f"cancel request added! {request_id}")
+                final_requests.append({"id": request_id, "type": "cancel"})
+            final_requests.append(request)
+            return final_requests
         except (ValueError, KeyError):
             self.logger.error("invalid data")
         except IndexError:

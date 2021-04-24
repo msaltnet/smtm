@@ -169,7 +169,12 @@ class StrategyBuyAndHold(Strategy):
                 f"total value: {round(float(trading_request['price']) * float(trading_request['amount']))}"
             )
             self.logger.info("================================================")
-            return [trading_request]
+            final_requests = []
+            for request_id in self.waiting_requests:
+                self.logger.info(f"cancel request added! {request_id}")
+                final_requests.append({"id": request_id, "type": "cancel"})
+            final_requests.append(trading_request)
+            return final_requests
         except (ValueError, KeyError):
             self.logger.error("invalid data")
         except IndexError:
