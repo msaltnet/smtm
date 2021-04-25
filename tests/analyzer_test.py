@@ -552,7 +552,6 @@ class AnalyzerTests(unittest.TestCase):
             "kind": 3,
         }
 
-        print(report["trading_table"])
         self.assertEqual(len(report["trading_table"]), 9)
         self.assertEqual(report["trading_table"][0], expected_info)
         self.assertEqual(report["trading_table"][1], expected_request)

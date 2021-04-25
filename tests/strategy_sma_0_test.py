@@ -300,8 +300,7 @@ class StrategySma0Tests(unittest.TestCase):
         dummy_info = {}
         sma.update_trading_info(dummy_info)
         requests = sma.get_request()
-        self.assertEqual(requests[0]["price"], 0)
-        self.assertEqual(requests[0]["amount"], 0)
+        self.assertEqual(requests, None)
 
     def test_get_request_return_correct_request_at_buy_process(self):
         sma = StrategySma0()
@@ -414,10 +413,12 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["price"], 0)
         self.assertEqual(requests[0]["amount"], 0)
 
-    def test_get_request_return_turn_over_when_target_budget_lt_min_price(self):
+    def test_get_request_return_turn_over_when_target_budget_lt_min_price_at_simulation(self):
         sma = StrategySma0()
         sma.initialize(1000, 500)
+        sma.is_simulation = True
         dummy_info = {}
+        dummy_info["date_time"] = "2020-02-25T15:41:09"
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
         sma.current_process = "buy"
@@ -427,10 +428,12 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 0)
         self.assertEqual(requests[0]["type"], "buy")
 
-    def test_get_request_return_turn_over_when_process_unit_invalid(self):
+    def test_get_request_return_turn_over_when_process_unit_invalid_at_simulation(self):
         sma = StrategySma0()
         sma.initialize(1000, 500)
+        sma.is_simulation = True
         dummy_info = {}
+        dummy_info["date_time"] = "2020-02-25T15:41:09"
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
         sma.current_process = "buy"
@@ -448,10 +451,12 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 0)
         self.assertEqual(requests[0]["type"], "sell")
 
-    def test_get_request_return_turn_over_when_asset_amount_empty(self):
+    def test_get_request_return_turn_over_when_asset_amount_empty_at_simulation(self):
         sma = StrategySma0()
         sma.initialize(900, 10)
+        sma.is_simulation = True
         dummy_info = {}
+        dummy_info["date_time"] = "2020-02-25T15:41:09"
         dummy_info["closing_price"] = 20000
         sma.update_trading_info(dummy_info)
         sma.current_process = "sell"

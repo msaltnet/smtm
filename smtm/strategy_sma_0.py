@@ -175,15 +175,20 @@ class StrategySma0(Strategy):
             elif self.current_process == "sell":
                 request = self.__create_sell()
             else:
-                return [
-                    {
-                        "id": str(round(time.time(), 3)),
-                        "type": "buy",
-                        "price": 0,
-                        "amount": 0,
-                        "date_time": now,
-                    }
-                ]
+                if self.is_simulation:
+                    return [
+                        {
+                            "id": str(round(time.time(), 3)),
+                            "type": "buy",
+                            "price": 0,
+                            "amount": 0,
+                            "date_time": now,
+                        }
+                    ]
+                return
+
+            if request is None:
+                return
 
             request["date_time"] = now
             self.logger.info(f"[REQ] id: {request['id']} =====================")
@@ -204,8 +209,8 @@ class StrategySma0(Strategy):
                 )
             final_requests.append(request)
             return final_requests
-        except (ValueError, KeyError):
-            self.logger.error("invalid data")
+        except (ValueError, KeyError) as msg:
+            self.logger.error(f"invalid data {msg}")
         except IndexError:
             self.logger.error("empty data")
         except AttributeError as msg:
@@ -218,12 +223,14 @@ class StrategySma0(Strategy):
 
         if self.min_price > budget or self.process_unit[0] <= 0:
             self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
-            return {
-                "id": str(round(time.time(), 3)),
-                "type": "buy",
-                "price": 0,
-                "amount": 0,
-            }
+            if self.is_simulation:
+                return {
+                    "id": str(round(time.time(), 3)),
+                    "type": "buy",
+                    "price": 0,
+                    "amount": 0,
+                }
+            return
 
         price = self.data[-1]["closing_price"]
         amount = budget / price
@@ -241,12 +248,14 @@ class StrategySma0(Strategy):
 
         if self.asset_amount == 0 or self.process_unit[1] <= 0:
             self.logger.info(f"asset is empty or invalid unit {self.process_unit}")
-            return {
-                "id": str(round(time.time(), 3)),
-                "type": "sell",
-                "price": 0,
-                "amount": 0,
-            }
+            if self.is_simulation:
+                return {
+                    "id": str(round(time.time(), 3)),
+                    "type": "sell",
+                    "price": 0,
+                    "amount": 0,
+                }
+            return
 
         price = self.data[-1]["closing_price"]
         return {

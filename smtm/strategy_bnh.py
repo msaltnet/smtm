@@ -136,20 +136,22 @@ class StrategyBuyAndHold(Strategy):
                     }
                 ]
 
-            if self.min_price > target_budget or self.min_price > self.balance:
-                self.logger.info("target_budget or balance is too small")
-                return [
-                    {
-                        "id": str(round(time.time(), 3)),
-                        "type": "buy",
-                        "price": 0,
-                        "amount": 0,
-                        "date_time": now,
-                    }
-                ]
-
             if target_budget > self.balance:
                 target_budget = self.balance
+
+            if self.min_price > target_budget or self.min_price > self.balance:
+                self.logger.info("target_budget or balance is too small")
+                if self.is_simulation:
+                    return [
+                        {
+                            "id": str(round(time.time(), 3)),
+                            "type": "buy",
+                            "price": 0,
+                            "amount": 0,
+                            "date_time": now,
+                        }
+                    ]
+                return
 
             target_amount = target_budget / last_data["closing_price"]
             target_amount = round(target_amount, 4)
@@ -183,14 +185,14 @@ class StrategyBuyAndHold(Strategy):
                 )
             final_requests.append(trading_request)
             return final_requests
-        except (ValueError, KeyError):
-            self.logger.error("invalid data")
+        except (ValueError, KeyError) as msg:
+            self.logger.error(f"invalid data {msg}")
         except IndexError:
             self.logger.error("empty data")
         except AttributeError as msg:
             self.logger.error(msg)
 
-    def initialize(self, budget, min_price=100):
+    def initialize(self, budget, min_price=5000):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """

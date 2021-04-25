@@ -184,10 +184,14 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(requests[0]["price"], 0)
         self.assertEqual(requests[0]["amount"], 0)
 
-    def test_get_request_return_turn_over_when_target_budget_is_too_small(self):
+    def test_get_request_return_turn_over_when_target_budget_is_too_small_at_simulation(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 100)
-        bnh.update_trading_info("banana")
+        bnh.is_simulation = True
+        dummy_info = {}
+        dummy_info["date_time"] = "2020-02-25T15:41:09"
+        dummy_info["closing_price"] = 20000
+        bnh.update_trading_info(dummy_info)
         requests = bnh.get_request()
         self.assertEqual(requests[0]["price"], 0)
         self.assertEqual(requests[0]["amount"], 0)
@@ -203,16 +207,31 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(requests[0]["price"], 20000)
         self.assertEqual(requests[0]["amount"], 0.005)
 
-    def test_get_request_return_turn_over_when_balance_is_smaller_than_min_price(self):
+    def test_get_request_return_turn_over_when_balance_is_smaller_than_min_price_at_simulation(
+        self,
+    ):
         bnh = StrategyBuyAndHold()
         bnh.initialize(900, 10)
+        bnh.is_simulation = True
         dummy_info = {}
+        dummy_info["date_time"] = "2020-02-25T15:41:09"
         dummy_info["closing_price"] = 20000
         bnh.update_trading_info(dummy_info)
         bnh.balance = 9.5
         requests = bnh.get_request()
         self.assertEqual(requests[0]["price"], 0)
         self.assertEqual(requests[0]["amount"], 0)
+
+    def test_get_request_return_None_when_balance_is_smaller_than_min_price(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(900, 10)
+        bnh.is_simulation = False
+        dummy_info = {}
+        dummy_info["closing_price"] = 20000
+        bnh.update_trading_info(dummy_info)
+        bnh.balance = 9.5
+        requests = bnh.get_request()
+        self.assertEqual(requests, None)
 
     def test_get_request_return_correct_request(self):
         bnh = StrategyBuyAndHold()
