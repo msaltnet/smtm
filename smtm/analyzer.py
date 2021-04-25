@@ -119,7 +119,7 @@ class Analyzer:
         self.result.append(new)
         self.put_asset_info(self.update_info_func())
 
-    def initialize(self, update_info_func, is_simulation=False):
+    def initialize(self, update_info_func):
         """콜백 함수를 입력받아 초기화한다
 
         Args:
@@ -127,7 +127,6 @@ class Analyzer:
 
         """
         self.update_info_func = update_info_func
-        self.is_simulation = is_simulation
 
     def put_asset_info(self, asset_info):
         """자산 정보를 저장한다
@@ -370,26 +369,37 @@ class Analyzer:
         last_avr_price = None
         last_acc_return = 0
         plot_data = []
+        last_info_time_str = "mysterious result!!!"
 
+        # 그래프를 그리기 위해 매매, 수익률 정보를 트레이딩 정보와 합쳐서 하나의 테이블로 생성
         for info in self.infos:
             new = info.copy()
             info_time = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
 
-            if result_pos < len(self.result):
+            # 매매 정보를 생성해서 추가
+            while result_pos < len(self.result):
                 result = self.result[result_pos]
                 result_time = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
-                if info_time == result_time:
+                if info_time >= result_time:
+                    if info_time > result_time:
+                        new["date_time"] = last_info_time_str
+                    else:
+                        new["date_time"] = result["date_time"]
+
                     if result["type"] == "buy":
                         new["buy"] = result["price"]
                     elif result["type"] == "sell":
                         new["sell"] = result["price"]
                     result_pos += 1
-                elif info_time > result_time:
-                    result_pos += 1
+                else:
+                    break
+            last_info_time_str = info["date_time"]
 
+            # 수익률 정보를 추가. 정보가 없는 경우 마지막 정보로 채움
             if score_pos < len(self.score_record_list):
                 score = self.score_record_list[score_pos]
                 score_time = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
+
                 if info_time == score_time:
                     new["return"] = last_acc_return = score["cumulative_return"]
                     if len(score["asset"]) > 0:
@@ -404,7 +414,6 @@ class Analyzer:
                     new["return"] = last_acc_return
                     if last_avr_price is not None:
                         new["avr_price"] = last_avr_price
-
             plot_data.append(new)
         return plot_data
 

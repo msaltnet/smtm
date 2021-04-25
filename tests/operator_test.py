@@ -30,7 +30,7 @@ class OperatorInitializeTests(unittest.TestCase):
         self.operator.initialize(
             "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
         )
-        self.analyzer_mock.initialize.assert_called_once_with("orange", False)
+        self.analyzer_mock.initialize.assert_called_once_with("orange")
         self.strategy_mock.initialize.assert_called_once_with("banana")
 
     def test_initialize_do_nothing_when_state_is_NOT_None(self):

@@ -129,9 +129,8 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_initialize_keep_update_info_func(self):
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
+        analyzer.initialize("mango")
         self.assertEqual(analyzer.update_info_func, "mango")
-        self.assertEqual(analyzer.is_simulation, True)
 
     def test_put_asset_info_append_asset_info(self):
         analyzer = Analyzer()
@@ -188,7 +187,8 @@ class AnalyzerTests(unittest.TestCase):
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
         analyzer.asset_record_list.append(dummy_asset_info)
-        analyzer.initialize(MagicMock(), True)
+        analyzer.initialize(MagicMock())
+        analyzer.is_simulation = True
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         target_dummy_asset = {
             "balance": 50000,
@@ -352,7 +352,7 @@ class AnalyzerTests(unittest.TestCase):
             "request": {"id": "1607862457.560075"},
             "type": "buy",
             "price": 5000,
-            "amount": 1,
+            "amount": 0.5,
             "msg": "success",
             "date_time": "2020-02-23T00:00:00",
             "kind": 2,
@@ -408,14 +408,25 @@ class AnalyzerTests(unittest.TestCase):
 
         dummy_result2 = {
             "request": {"id": "1607862457.560075"},
+            "type": "buy",
+            "price": 5000,
+            "amount": 0.5,
+            "msg": "success",
+            "date_time": "2020-02-23T00:00:05",
+            "kind": 2,
+        }
+        analyzer.result.append(dummy_result2)
+
+        dummy_result3 = {
+            "request": {"id": "1607862457.560075"},
             "type": "sell",
             "price": 6000,
-            "amount": 0.5,
+            "amount": 0.2,
             "msg": "success",
             "date_time": "2020-02-23T00:01:00",
             "kind": 2,
         }
-        analyzer.result.append(dummy_result2)
+        analyzer.result.append(dummy_result3)
 
         target_dummy_asset2 = {
             "balance": 5000,
@@ -443,6 +454,7 @@ class AnalyzerTests(unittest.TestCase):
             dummy_request2,
             dummy_result2,
             target_dummy_asset2,
+            dummy_result3,
         )
 
     def test_get_return_report_return_correct_report(self):
@@ -455,7 +467,8 @@ class AnalyzerTests(unittest.TestCase):
         }
         """
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
         self.fill_test_data_for_report(analyzer)
         analyzer.update_info_func = MagicMock(return_value="mango_asset")
         analyzer.put_asset_info = MagicMock()
@@ -500,7 +513,8 @@ class AnalyzerTests(unittest.TestCase):
         }
         """
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
         analyzer.update_info_func = MagicMock(return_value="mango_asset")
         analyzer.put_asset_info = MagicMock()
 
@@ -519,16 +533,36 @@ class AnalyzerTests(unittest.TestCase):
         expected_request2["kind"] = 1
         expected_result2 = copy.deepcopy(dummy_data[6])
         expected_result2["kind"] = 2
+        expected_result3 = copy.deepcopy(dummy_data[8])
+        expected_result3["kind"] = 2
+        expected_return1 = {
+            "balance": 5000,
+            "cumulative_return": -65.248,
+            "price_change_ratio": {"mango": -50.0, "apple": 50.0},
+            "asset": [("mango", 500, 300, 5.23, -40.0), ("apple", 250, 750, 2.11, 200.0)],
+            "date_time": "2020-02-23T00:00:00",
+            "kind": 3,
+        }
+        expected_return2 = {
+            "balance": 5000,
+            "cumulative_return": -75.067,
+            "price_change_ratio": {"mango": -66.667, "apple": -99.85},
+            "asset": [("mango", 600, 200, 4.23, -66.667), ("apple", 500, 0.75, 3.11, -99.85)],
+            "date_time": "2020-02-23T00:01:00",
+            "kind": 3,
+        }
 
-        self.assertEqual(len(report["trading_table"]), 8)
+        print(report["trading_table"])
+        self.assertEqual(len(report["trading_table"]), 9)
         self.assertEqual(report["trading_table"][0], expected_info)
         self.assertEqual(report["trading_table"][1], expected_request)
         self.assertEqual(report["trading_table"][2], expected_result)
-        self.assertEqual(report["trading_table"][3], ANY)
-        self.assertEqual(report["trading_table"][4], expected_info2)
-        self.assertEqual(report["trading_table"][5], expected_request2)
-        self.assertEqual(report["trading_table"][6], expected_result2)
-        self.assertEqual(report["trading_table"][7], ANY)
+        self.assertEqual(report["trading_table"][3], expected_return1)
+        self.assertEqual(report["trading_table"][4], expected_result2)
+        self.assertEqual(report["trading_table"][5], expected_info2)
+        self.assertEqual(report["trading_table"][6], expected_request2)
+        self.assertEqual(report["trading_table"][7], expected_result3)
+        self.assertEqual(report["trading_table"][8], expected_return2)
 
         # 입금 자산, 최종 자산, 누적 수익률, 가격 변동률을 포함한다
         self.assertEqual(len(report["summary"]), 4)
@@ -567,7 +601,7 @@ class AnalyzerTests(unittest.TestCase):
         self, mock_file, mock_plot, mock_DataFrame, mock_to_datetime
     ):
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
+        analyzer.initialize("mango")
         analyzer.update_info_func = MagicMock(return_value="mango_asset")
         analyzer.put_asset_info = MagicMock()
 
@@ -582,11 +616,12 @@ class AnalyzerTests(unittest.TestCase):
             "### TRADING TABLE =================================\n",
             "2020-02-23T00:00:00, 5000, 15000, 4500, 5500, 1500000000, 1500\n",
             "2020-02-23T00:00:00, [->] 1607862457.560075, buy, 5000, 1\n",
-            "2020-02-23T00:00:00, [<-] 1607862457.560075, buy, 5000, 1, success\n",
+            "2020-02-23T00:00:00, [<-] 1607862457.560075, buy, 5000, 0.5, success\n",
             "2020-02-23T00:00:00, [#] 5000, -65.248, {'mango': -50.0, 'apple': 50.0}, [('mango', 500, 300, 5.23, -40.0), ('apple', 250, 750, 2.11, 200.0)]\n",
+            "2020-02-23T00:00:05, [<-] 1607862457.560075, buy, 5000, 0.5, success\n",
             "2020-02-23T00:01:00, 5500, 19000, 4900, 8000, 15000000, 15000\n",
             "2020-02-23T00:01:00, [->] 1607862457.560075, sell, 6000, 0.5\n",
-            "2020-02-23T00:01:00, [<-] 1607862457.560075, sell, 6000, 0.5, success\n",
+            "2020-02-23T00:01:00, [<-] 1607862457.560075, sell, 6000, 0.2, success\n",
             "2020-02-23T00:01:00, [#] 5000, -75.067, {'mango': -66.667, 'apple': -99.85}, [('mango', 600, 200, 4.23, -66.667), ('apple', 500, 0.75, 3.11, -99.85)]\n",
             "### SUMMARY =======================================\n",
             "Property                      23456 ->       5848\n",
@@ -636,7 +671,7 @@ class AnalyzerTests(unittest.TestCase):
         dummyDataFrame = DummyDataFrame()
         mock_DataFrame.return_value = dummyDataFrame
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
+        analyzer.initialize("mango")
         analyzer.update_info_func = MagicMock(return_value="mango_asset")
         analyzer.put_asset_info = MagicMock()
         filename = "apple"
@@ -670,12 +705,14 @@ class AnalyzerTests(unittest.TestCase):
                     "acc_price": 15000000,
                     "acc_volume": 15000,
                     "kind": 0,
+                    "buy": 5000,
                     "sell": 6000,
                     "return": -75.067,
                     "avr_price": 600,
                 },
             ]
         )
+
         dummyDataFrame.rename.assert_called_once_with(
             columns={
                 "date_time": "Date",

@@ -146,21 +146,20 @@ class VirtualMarket:
                 "amount": 거래 수량
                 "state": 거래 상태 requested, done
                 "msg": 거래 결과 메세지
-                "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
+                "date_time": 시뮬레이션 모드에서는 데이터 시간
                 "balance": 거래 후 계좌 현금 잔고
             }
         """
         if self.is_initialized is not True:
             self.logger.warning("virtual market is NOT initialized")
             return None
-        next_index = self.turn_count + 1
-        self.turn_count = next_index
-        result = None
-
         current_dt = datetime.strptime(
             self.data[self.turn_count]["candle_date_time_kst"], self.ISO_DATEFORMAT
         )
         now = current_dt.isoformat()
+        self.turn_count += 1
+        next_index = self.turn_count
+        result = None
 
         if next_index >= len(self.data) - 1:
             return {

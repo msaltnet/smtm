@@ -244,6 +244,7 @@ class Simulator:
             strategy = StrategyBuyAndHold()
         else:
             strategy = StrategySma0()
+        strategy.is_simulation = True
         self.operator = SimulationOperator()
 
         print("##### simulation is intialized #####")
@@ -257,12 +258,13 @@ class Simulator:
         data_provider.initialize_simulation(end=end_str, count=self.count)
         trader = SimulationTrader()
         trader.initialize_simulation(end=end_str, count=self.count, budget=self.budget)
-
+        analyzer = Analyzer()
+        analyzer.is_simulation = True
         self.operator.initialize(
             data_provider,
             strategy,
             trader,
-            Analyzer(),
+            analyzer,
             budget=self.budget,
         )
         self.operator.set_interval(self.interval)
