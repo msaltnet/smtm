@@ -143,6 +143,8 @@ class Operator:
             return
 
         self.trader.cancel_all_requests()
+        trading_info = self.data_provider.get_info()
+        self.analyzer.put_trading_info(trading_info)
         self.last_report = self.analyzer.create_report(tag=self.tag)
         self.logger.info("===== Stop operating =====")
         try:

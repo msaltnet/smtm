@@ -169,6 +169,7 @@ class OperatorStopTests(unittest.TestCase):
         operator.trader = MagicMock()
         operator.state = "running"
         operator.timer = MagicMock()
+        operator.data_provider = MagicMock()
         operator.is_timer_running = True
         operator.stop()
         self.assertFalse(operator.is_timer_running)
@@ -193,14 +194,18 @@ class OperatorStopTests(unittest.TestCase):
         operator.worker = MagicMock()
         operator.analyzer = MagicMock()
         operator.trader = MagicMock()
+        operator.data_provider = MagicMock()
+        operator.data_provider.get_info.return_value = "mango"
         operator.stop()
         operator.worker.stop.assert_called_once()
         operator.worker.register_on_terminated.assert_called_once_with(ANY)
+        operator.data_provider.get_info.assert_called_once_with()
         callback = operator.worker.register_on_terminated.call_args[0][0]
         self.assertEqual(operator.state, "terminating")
         callback()
         self.assertEqual(operator.state, "ready")
         operator.trader.cancel_all_requests.assert_called_once()
+        operator.analyzer.put_trading_info.assert_called_once_with("mango")
 
 
 class OperatorTests(unittest.TestCase):
