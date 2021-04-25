@@ -172,7 +172,15 @@ class StrategyBuyAndHold(Strategy):
             final_requests = []
             for request_id in self.waiting_requests:
                 self.logger.info(f"cancel request added! {request_id}")
-                final_requests.append({"id": request_id, "type": "cancel"})
+                final_requests.append(
+                    {
+                        "id": request_id,
+                        "type": "cancel",
+                        "price": 0,
+                        "amount": 0,
+                        "date_time": now,
+                    }
+                )
             final_requests.append(trading_request)
             return final_requests
         except (ValueError, KeyError):
