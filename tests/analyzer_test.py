@@ -183,6 +183,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 50000,
             "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
             "quote": {"banana": 1700, "mango": 700, "apple": 500},
+            "date_time": "2020-02-27T23:59:59",
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
@@ -194,6 +195,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 50000,
             "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
             "quote": {"banana": 2000, "mango": 1050, "apple": 400},
+            "date_time": "2020-02-27T23:59:59",
         }
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
@@ -232,6 +234,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 50000,
             "asset": {"banana": (1500, 10), "apple": (250, 2)},
             "quote": {"banana": 1700, "mango": 500, "apple": 500},
+            "date_time": "2020-02-27T23:59:59",
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
@@ -240,6 +243,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 10000,
             "asset": {"mango": (1000, 7.5), "apple": (250, 10.7)},
             "quote": {"banana": 2000, "mango": 500, "apple": 800},
+            "date_time": "2020-02-27T23:59:59",
         }
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
@@ -270,6 +274,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 23456,
             "asset": {},
             "quote": {"banana": 1700, "mango": 300, "apple": 500},
+            "date_time": "2020-02-27T23:59:59",
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
@@ -279,6 +284,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 5000,
             "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
             "quote": {"banana": 2000, "mango": 300, "apple": 750},
+            "date_time": "2020-02-27T23:59:59",
         }
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
@@ -307,12 +313,22 @@ class AnalyzerTests(unittest.TestCase):
         self,
     ):
         analyzer = Analyzer()
-        dummy_asset_info = {"balance": 1000, "asset": {}, "quote": {"apple": 500}}
+        dummy_asset_info = {
+            "balance": 1000,
+            "asset": {},
+            "quote": {"apple": 500},
+            "date_time": "2020-02-27T23:59:59",
+        }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
         analyzer.asset_record_list.append(dummy_asset_info)
 
-        target_dummy_asset = {"balance": 1000, "asset": {}, "quote": {"apple": 750}}
+        target_dummy_asset = {
+            "balance": 1000,
+            "asset": {},
+            "quote": {"apple": 750},
+            "date_time": "2020-02-27T23:59:59",
+        }
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)

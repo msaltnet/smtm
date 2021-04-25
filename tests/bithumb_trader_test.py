@@ -27,7 +27,7 @@ class BithumbTraderTests(unittest.TestCase):
         trader = BithumbTrader()
         dummy_respone = {"data": {"total_krw": 123456789}}
         dummy_respone["data"][trader.MARKET_KEY] = 789
-        expected_result = {"balance": 123456789.0, "asset": {}}
+        expected_result = {"balance": 123456789.0, "asset": {}, "date_time": ANY}
         expected_result["asset"][trader.MARKET] = (800.0, 789.0)
         trader.query_latest_trade = MagicMock(
             return_value={

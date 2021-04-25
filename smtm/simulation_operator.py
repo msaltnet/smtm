@@ -34,6 +34,8 @@ class SimulationOperator(Operator):
             def send_request_callback(result):
                 self.logger.debug("send_request_callback is called")
                 if result["msg"] == "game-over":
+                    trading_info = self.data_provider.get_info()
+                    self.analyzer.put_trading_info(trading_info)
                     self.last_report = self.analyzer.create_report(tag=self.tag)
                     self.state = "simulation_terminated"
                     return

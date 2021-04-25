@@ -35,12 +35,14 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
         data_provider.initialize_simulation(end=end_str, count=count)
         trader = SimulationTrader()
         trader.initialize_simulation(end=end_str, count=count, budget=budget)
+        analyzer = Analyzer()
+        analyzer.is_simulation = True
 
         operator.initialize(
             data_provider,
             strategy,
             trader,
-            Analyzer(),
+            analyzer,
             budget=budget,
         )
 
@@ -122,12 +124,14 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
         data_provider.initialize_simulation(end=end_str, count=count)
         trader = SimulationTrader()
         trader.initialize_simulation(end=end_str, count=count, budget=budget)
+        analyzer = Analyzer()
+        analyzer.is_simulation = True
 
         operator.initialize(
             data_provider,
             strategy,
             trader,
-            Analyzer(),
+            analyzer,
             budget=budget,
         )
 

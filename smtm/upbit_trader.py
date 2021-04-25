@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 import requests
 import threading
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -30,6 +31,7 @@ class UpbitTrader(Trader):
     RESULT_CHECKING_INTERVAL = 5
     MARKET = "KRW-BTC"
     MARKET_CURRENCY = "BTC"
+    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -77,6 +79,7 @@ class UpbitTrader(Trader):
                 balance: 계좌 현금 잔고
                 asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
                 quote: 종목별 현재 가격 딕셔너리
+                date_time: 현재 시간
             }
         """
         response = self._query_account()
@@ -84,6 +87,7 @@ class UpbitTrader(Trader):
         result = {
             "asset": {},
             "quote": {},
+            "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
         }
         result["quote"][self.MARKET_CURRENCY] = float(trade_info[0]["trade_price"])
 

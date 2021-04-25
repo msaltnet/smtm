@@ -1,4 +1,4 @@
-"""가상 거래소"""
+"""업비트 정보를 이용한 가상 거래소"""
 import json
 import requests
 from datetime import datetime, timedelta
@@ -111,6 +111,7 @@ class VirtualMarket:
             balance: 계좌 현금 잔고
             asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
             quote: 종목별 현재 가격 딕셔너리
+            date_time: 기준 데이터 시간
         }
         """
         asset_info = {"balance": self.balance}
@@ -129,6 +130,7 @@ class VirtualMarket:
 
         asset_info["asset"] = self.asset
         asset_info["quote"] = quote
+        asset_info["date_time"] = self.data[self.turn_count]["candle_date_time_kst"]
         return asset_info
 
     def send_request(self, request):

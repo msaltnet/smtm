@@ -666,6 +666,7 @@ class UpditTraderGetAccountTests(unittest.TestCase):
         self.assertEqual(result["balance"], 123456789)
         self.assertEqual(result["asset"], {"APPLE": (23456, 500)})
         self.assertEqual(result["quote"], {"APPLE": 777})
+        self.assertEqual("date_time" in result, True)
         trader.get_trade_tick.assert_called_once_with()
 
     def test_get_account_info_should_raise_UserWarning_when_None_response(self):

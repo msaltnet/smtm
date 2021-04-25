@@ -140,8 +140,10 @@ class Analyzer:
         """
         new = copy.deepcopy(asset_info)
         new["balance"] = float(new["balance"])
+        if self.is_simulation is True and len(self.infos) > 0:
+            new["date_time"] = self.infos[-1]["date_time"]
         self.asset_record_list.append(new)
-        self.make_score_record(asset_info)
+        self.make_score_record(new)
 
     def make_start_point(self):
         """시작시점 거래정보를 기록한다"""
@@ -162,17 +164,8 @@ class Analyzer:
             date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
             kind: 3, 보고서를 위한 데이터 종류
         """
-        if len(self.infos) <= 0:
-            return
 
         try:
-            now = datetime.now().strftime(self.ISO_DATEFORMAT)
-
-            if self.is_simulation:
-                last_dt = datetime.strptime(self.infos[-1]["date_time"], self.ISO_DATEFORMAT)
-                now = last_dt
-                now = now.isoformat()
-
             start_total = self.__get_start_property_value()
             start_quote = self.asset_record_list[0]["quote"]
             current_total = float(new_info["balance"])
@@ -180,7 +173,7 @@ class Analyzer:
             cumulative_return = 0
             new_asset_list = []
             price_change_ratio = {}
-            self.logger.debug(f"quote {current_quote}")
+            self.logger.debug(f"make_score_record new_info {new_info}")
 
             for name, item in new_info["asset"].items():
                 item_yield = 0
@@ -194,7 +187,7 @@ class Analyzer:
                     item_yield = round(item_yield, 3)
 
                 self.logger.debug(
-                    f"yield record {name}, {avg_buy}, {price}, {amount}, {item_yield}"
+                    f"yield record {name}, avg_buy: {avg_buy}, {price}, {amount}, {item_yield}"
                 )
                 new_asset_list.append((name, avg_buy, price, amount, item_yield))
                 start_price = start_quote[name]
@@ -221,7 +214,7 @@ class Analyzer:
                     "cumulative_return": cumulative_return,
                     "price_change_ratio": price_change_ratio,
                     "asset": new_asset_list,
-                    "date_time": now,
+                    "date_time": new_info["date_time"],
                     "kind": 3,
                 }
             )
@@ -385,7 +378,7 @@ class Analyzer:
                     if info_time > result_time:
                         new["date_time"] = last_info_time_str
                     else:
-                        new["date_time"] = result["date_time"]
+                        new["date_time"] = info["date_time"]
 
                     if result["type"] == "buy":
                         new["buy"] = result["price"]
@@ -397,25 +390,24 @@ class Analyzer:
             last_info_time_str = info["date_time"]
 
             # 수익률 정보를 추가. 정보가 없는 경우 마지막 정보로 채움
-            if score_pos < len(self.score_record_list):
+            while score_pos < len(self.score_record_list):
                 score = self.score_record_list[score_pos]
                 score_time = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
 
-                if info_time == score_time:
+                # keep last one only
+                if info_time >= score_time:
                     new["return"] = last_acc_return = score["cumulative_return"]
+                    new["date_time"] = info["date_time"]
                     if len(score["asset"]) > 0:
                         new["avr_price"] = last_avr_price = score["asset"][0][1]
                     else:
                         last_avr_price = None
                     score_pos += 1
-                elif info_time > score_time:
-                    new["return"] = last_acc_return
-                    score_pos += 1
                 else:
                     new["return"] = last_acc_return
                     if last_avr_price is not None:
                         new["avr_price"] = last_avr_price
-            self.logger.debug(new)
+                    break
             plot_data.append(new)
         return plot_data
 
