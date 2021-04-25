@@ -69,19 +69,15 @@ class Analyzer:
             3: 수익률 정보
         """
         for request in requests:
-            if request["type"] == "cancel":
-                continue
-
-            try:
-                if float(request["price"]) <= 0 or float(request["amount"]) <= 0:
-                    return
-            except KeyError:
-                self.logger.warning("Invalid request")
-                return
-
             new = copy.deepcopy(request)
-            new["price"] = float(new["price"])
-            new["amount"] = float(new["amount"])
+            if request["type"] == "cancel":
+                new["price"] = 0
+                new["amount"] = 0
+            else:
+                if float(request["price"]) <= 0 or float(request["amount"]) <= 0:
+                    continue
+                new["price"] = float(new["price"])
+                new["amount"] = float(new["amount"])
             new["kind"] = 1
             self.request.append(new)
 

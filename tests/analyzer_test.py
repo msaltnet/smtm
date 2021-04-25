@@ -16,47 +16,57 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         dummy_requests = [
             {"id": "orange", "type": "buy", "price": 5000, "amount": 1},
-            {"id": "mango", "type": "cancel", "price": 500, "amount": 0.0001},
+            {"id": "mango", "type": "cancel"},
         ]
         analyzer.put_requests(dummy_requests)
         self.assertEqual(
-            analyzer.request[-1],
+            analyzer.request[-2],
             {"id": "orange", "type": "buy", "price": 5000.0, "amount": 1.0, "kind": 1},
+        )
+        self.assertEqual(
+            analyzer.request[-1],
+            {"id": "mango", "type": "cancel", "price": 0, "amount": 0, "kind": 1},
         )
 
         dummy_requests = [
             {"id": "banana", "type": "buy", "price": 0, "amount": 1},
-            {"id": "mango", "type": "cancel", "price": 500, "amount": 0.0001},
+            {"id": "apple", "type": "cancel"},
+        ]
+        analyzer.put_requests(dummy_requests)
+        self.assertEqual(analyzer.request[-2]["id"], "mango")
+        self.assertEqual(analyzer.request[-1]["id"], "apple")
+        self.assertEqual(analyzer.request[-1]["type"], "cancel")
+
+        dummy_requests = [
+            {"id": "pineapple", "type": "buy", "price": 500, "amount": 0},
         ]
         analyzer.put_requests(dummy_requests)
         self.assertNotEqual(analyzer.request[-1], dummy_requests[0])
-        self.assertEqual(analyzer.request[-1]["id"], "orange")
+        self.assertEqual(analyzer.request[-1]["id"], "apple")
 
         dummy_requests = [
-            {"id": "apple", "type": "buy", "price": 500, "amount": 0},
-            {"id": "mango", "type": "cancel", "price": 500, "amount": 0.0001},
+            {"id": "papaya", "type": "sell", "price": 5000, "amount": 0.0007},
+            {"id": "orange", "type": "cancel", "price": 500, "amount": 0.0001},
+            {"id": "pear", "type": "buy", "price": 500, "amount": 0.0000000000000000000000001},
         ]
         analyzer.put_requests(dummy_requests)
-        self.assertNotEqual(analyzer.request[-1], dummy_requests[0])
-        self.assertEqual(analyzer.request[-1]["id"], "orange")
-
-        dummy_requests = [
-            {"id": "kiwi", "type": "sell", "price": 5000, "amount": 0.0007},
-            {"id": "mango", "type": "cancel", "price": 500, "amount": 0.0001},
-            {"id": "kiwi2", "type": "buy", "price": 500, "amount": 0.0000000000000000000000001},
-        ]
-        analyzer.put_requests(dummy_requests)
-        self.assertEqual(analyzer.request[-1]["id"], "kiwi2")
+        self.assertEqual(analyzer.request[-1]["id"], "pear")
         self.assertEqual(analyzer.request[-1]["type"], "buy")
         self.assertEqual(analyzer.request[-1]["price"], 500.0)
         self.assertEqual(analyzer.request[-1]["amount"], 0.0000000000000000000000001)
         self.assertEqual(analyzer.request[-1]["kind"], 1)
 
-        self.assertEqual(analyzer.request[-2]["id"], "kiwi")
-        self.assertEqual(analyzer.request[-2]["type"], "sell")
-        self.assertEqual(analyzer.request[-2]["price"], 5000.0)
-        self.assertEqual(analyzer.request[-2]["amount"], 0.0007)
+        self.assertEqual(analyzer.request[-2]["id"], "orange")
+        self.assertEqual(analyzer.request[-2]["type"], "cancel")
+        self.assertEqual(analyzer.request[-2]["price"], 0)
+        self.assertEqual(analyzer.request[-2]["amount"], 0)
         self.assertEqual(analyzer.request[-2]["kind"], 1)
+
+        self.assertEqual(analyzer.request[-3]["id"], "papaya")
+        self.assertEqual(analyzer.request[-3]["type"], "sell")
+        self.assertEqual(analyzer.request[-3]["price"], 5000.0)
+        self.assertEqual(analyzer.request[-3]["amount"], 0.0007)
+        self.assertEqual(analyzer.request[-3]["kind"], 1)
 
     def test_put_trading_info_append_trading_info(self):
         analyzer = Analyzer()
