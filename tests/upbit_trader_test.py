@@ -104,7 +104,7 @@ class UpditTraderTests(unittest.TestCase):
         timer_mock.cancel.assert_called_once()
         self.assertEqual(trader.timer, None)
 
-    def test__query_order_result_should_call_callback_and_keep_waiting_request(self):
+    def test__query_order_result_should_call__call_callback_and_keep_waiting_request(self):
         dummy_result = [
             {
                 "uuid": "mango",
@@ -125,21 +125,22 @@ class UpditTraderTests(unittest.TestCase):
             "uuid": "mango",
             "request": {"id": "mango_id"},
             "callback": MagicMock(),
-            "result": {"id": "mango_result"},
+            "result": {"id": "mango_result", "state": "done", "type": "buy"},
         }
         dummy_request_banana = {
             "uuid": "banana",
             "request": {"id": "banana_id"},
             "callback": MagicMock(),
-            "result": {"id": "banana_result"},
+            "result": {"id": "banana_result", "state": "done", "type": "sell"},
         }
         dummy_request_apple = {
             "uuid": "apple",
             "request": {"id": "apple_id"},
             "callback": MagicMock(),
-            "result": {"id": "apple_result"},
+            "result": {"id": "apple_result", "state": "done", "type": "buy"},
         }
         trader = UpbitTrader()
+        trader._call_callback = MagicMock()
         trader._query_order_list = MagicMock(return_value=dummy_result)
         trader._stop_timer = MagicMock()
         trader._start_timer = MagicMock()
@@ -149,19 +150,27 @@ class UpditTraderTests(unittest.TestCase):
 
         trader._query_order_result(None)
 
-        mango_result = dummy_request_mango["callback"].call_args[0][0]
+        mango_result = trader._call_callback.call_args_list[0][0][1]
         self.assertEqual(mango_result["date_time"], "today")
         self.assertEqual(mango_result["id"], "mango_result")
         self.assertEqual(mango_result["price"], 500)
+        self.assertEqual(mango_result["type"], "buy")
+        self.assertEqual(mango_result["state"], "done")
         self.assertEqual(mango_result["amount"], 0.007)
-        dummy_request_mango["callback"].assert_called_once()
+        self.assertEqual(
+            trader._call_callback.call_args_list[0][0][0], dummy_request_mango["callback"]
+        )
 
-        apple_result = dummy_request_apple["callback"].call_args[0][0]
+        apple_result = trader._call_callback.call_args_list[1][0][1]
         self.assertEqual(apple_result["date_time"], "yesterday")
         self.assertEqual(apple_result["id"], "apple_result")
         self.assertEqual(apple_result["price"], 1500)
+        self.assertEqual(mango_result["type"], "buy")
+        self.assertEqual(mango_result["state"], "done")
         self.assertEqual(apple_result["amount"], 0.54321)
-        dummy_request_mango["callback"].assert_called_once()
+        self.assertEqual(
+            trader._call_callback.call_args_list[1][0][0], dummy_request_apple["callback"]
+        )
 
         self.assertEqual(len(trader.order_map), 1)
         self.assertEqual(trader.order_map["banana"]["request"]["id"], "banana_id")
@@ -174,12 +183,14 @@ class UpditTraderTests(unittest.TestCase):
             {
                 "uuid": "mango",
                 "state": "done",
+                "type": "buy",
                 "created_at": "today",
                 "price": 5000,
                 "executed_volume": 0.00001,
             },
             {
                 "uuid": "orange",
+                "type": "sell",
                 "state": "cancel",
                 "created_at": "yesterday",
                 "price": 2000,
@@ -190,15 +201,16 @@ class UpditTraderTests(unittest.TestCase):
             "uuid": "mango",
             "request": {"id": "mango_id"},
             "callback": MagicMock(),
-            "result": {"id": "mango_result"},
+            "result": {"id": "mango_result", "state": "done", "type": "buy"},
         }
         dummy_request_orange = {
             "uuid": "orange",
             "request": {"id": "orange_id"},
             "callback": MagicMock(),
-            "result": {"id": "orange_result"},
+            "result": {"id": "orange_result", "state": "done", "type": "sell"},
         }
         trader = UpbitTrader()
+        trader._call_callback = MagicMock()
         trader._query_order_list = MagicMock(return_value=dummy_result)
         trader._stop_timer = MagicMock()
         trader._start_timer = MagicMock()
@@ -207,18 +219,27 @@ class UpditTraderTests(unittest.TestCase):
 
         trader._query_order_result(None)
 
-        mango_result = dummy_request_mango["callback"].call_args[0][0]
+        mango_result = trader._call_callback.call_args_list[0][0][1]
         self.assertEqual(mango_result["date_time"], "today")
         self.assertEqual(mango_result["id"], "mango_result")
         self.assertEqual(mango_result["price"], 5000)
+        self.assertEqual(mango_result["type"], "buy")
+        self.assertEqual(mango_result["state"], "done")
         self.assertEqual(mango_result["amount"], 0.00001)
+        self.assertEqual(
+            trader._call_callback.call_args_list[0][0][0], dummy_request_mango["callback"]
+        )
 
-        orange_result = dummy_request_orange["callback"].call_args[0][0]
+        orange_result = trader._call_callback.call_args_list[1][0][1]
         self.assertEqual(orange_result["date_time"], "yesterday")
         self.assertEqual(orange_result["id"], "orange_result")
         self.assertEqual(orange_result["price"], 2000)
+        self.assertEqual(orange_result["type"], "sell")
+        self.assertEqual(orange_result["state"], "done")
         self.assertEqual(orange_result["amount"], 0.1234)
-        dummy_request_mango["callback"].assert_called_once()
+        self.assertEqual(
+            trader._call_callback.call_args_list[1][0][0], dummy_request_orange["callback"]
+        )
 
         self.assertEqual(len(trader.order_map), 0)
         trader._stop_timer.assert_called_once()
@@ -655,28 +676,19 @@ class UpditTraderGetAccountTests(unittest.TestCase):
             {"currency": "APPLE", "balance": 500, "avg_buy_price": 23456},
         ]
         trader = UpbitTrader()
+        trader.balance = 123456789
+        trader.asset = (23456, 500)
         trader.MARKET_CURRENCY = "APPLE"
         trader.MARKET = "APPLE"
         trader.worker = MagicMock()
-        trader._query_account = MagicMock(return_value=dummy_respone)
         trader.get_trade_tick = MagicMock(return_value=[{"trade_price": 777}])
         result = trader.get_account_info()
 
-        trader._query_account.assert_called_once()
         self.assertEqual(result["balance"], 123456789)
         self.assertEqual(result["asset"], {"APPLE": (23456, 500)})
         self.assertEqual(result["quote"], {"APPLE": 777})
         self.assertEqual("date_time" in result, True)
         trader.get_trade_tick.assert_called_once_with()
-
-    def test_get_account_info_should_raise_UserWarning_when_None_response(self):
-        dummy_respone = None
-        trader = UpbitTrader()
-        trader._query_account = MagicMock(return_value=dummy_respone)
-        trader.get_trade_tick = MagicMock()
-
-        with self.assertRaises(UserWarning):
-            result = trader.get_account_info()
 
 
 class UpditTraderCancelRequestTests(unittest.TestCase):
@@ -690,8 +702,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         self.patcher_delete.stop()
         self.patcher_get.stop()
 
-    def test_cancel_request_should_call_callback_when_cancel_order_return_info(self):
+    def test_cancel_request_should_call__call_callback_when_cancel_order_return_info(self):
         trader = UpbitTrader()
+        trader._call_callback = MagicMock()
         dummy_request = {
             "uuid": "mango_uuid",
             "callback": MagicMock(),
@@ -748,11 +761,12 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             params=expected_query_string,
             headers={"Authorization": "Bearer mango_token"},
         )
-        dummy_request["callback"].assert_called_once_with(expected_result)
+        trader._call_callback.assert_called_once_with(dummy_request["callback"], expected_result)
         self.assertFalse("mango_request_1234" in trader.order_map)
 
-    def test_cancel_request_should_call_callback_when_cancel_order_return_None(self):
+    def test_cancel_request_should_call__call_callback_when_cancel_order_return_None(self):
         trader = UpbitTrader()
+        trader._call_callback = MagicMock()
         dummy_request = {
             "uuid": "mango_uuid",
             "callback": MagicMock(),
@@ -832,7 +846,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             headers={"Authorization": "Bearer mango_token"},
         )
 
-        dummy_request["callback"].assert_called_once_with(expected_result)
+        trader._call_callback.assert_called_once_with(dummy_request["callback"], expected_result)
         self.assertFalse("mango_request_1234" in trader.order_map)
 
     def test_cancel_request_should_remove_request_even_when_cancel_nothing(self):
@@ -953,3 +967,83 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         trader.cancel_request.assert_called()
         self.assertEqual(trader.cancel_request.call_args_list[0][0][0], "mango_request_1234")
         self.assertEqual(trader.cancel_request.call_args_list[1][0][0], "mango_request_5678")
+
+
+class UpditTraderBalanceTests(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test__call_callback_update_balance_correctly_when_buy(self):
+        trader = UpbitTrader()
+        trader.balance = 550000
+        trader.asset = (67000000, 1.000001)
+        dummy_result = {
+            "request": {
+                "id": "mango_request_5678",
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+            },
+            "type": "buy",
+            "price": "62000000",
+            "amount": "0.0012345",
+            "msg": "success",
+            "state": "done",
+        }
+        dummy_callback = MagicMock()
+        trader._call_callback(dummy_callback, dummy_result)
+
+        self.assertEqual(trader.balance, 473423)
+        self.assertEqual(trader.asset, (66993835.1167133, 1.0012355))
+        dummy_callback.assert_called_once_with(dummy_result)
+
+    def test__call_callback_update_balance_correctly_when_sell(self):
+        trader = UpbitTrader()
+        trader.balance = 550000
+        trader.asset = (67000000, 1.000001)
+        dummy_result = {
+            "request": {
+                "id": "mango_request_5678",
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+            },
+            "type": "sell",
+            "price": "62000000",
+            "amount": "0.0012345",
+            "msg": "success",
+            "state": "done",
+        }
+        dummy_callback = MagicMock()
+        trader._call_callback(dummy_callback, dummy_result)
+
+        self.assertEqual(trader.balance, 626501)
+        self.assertEqual(trader.asset, (67000000, 0.9987664999999999))
+        dummy_callback.assert_called_once_with(dummy_result)
+
+    def test__call_callback_NOT_update_when_type_is_not_done(self):
+        trader = UpbitTrader()
+        trader.balance = 550000
+        trader.asset = (67000000, 1.000001)
+        dummy_result = {
+            "request": {
+                "id": "mango_request_5678",
+                "type": "buy",
+                "price": "888000",
+                "amount": "0.0001234",
+            },
+            "type": "sell",
+            "price": "62000000",
+            "amount": "0.0012345",
+            "msg": "success",
+            "state": "requested",
+        }
+        dummy_callback = MagicMock()
+        trader._call_callback(dummy_callback, dummy_result)
+
+        self.assertEqual(trader.balance, 550000)
+        self.assertEqual(trader.asset, (67000000, 1.000001))
+        dummy_callback.assert_called_once_with(dummy_result)

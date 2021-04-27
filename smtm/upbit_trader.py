@@ -32,8 +32,9 @@ class UpbitTrader(Trader):
     MARKET = "KRW-BTC"
     MARKET_CURRENCY = "BTC"
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+    COMMISSION_RATIO = 0.0005
 
-    def __init__(self):
+    def __init__(self, budget=50000):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.worker = Worker("UpbitTrader-Worker")
         self.worker.start()
@@ -43,6 +44,8 @@ class UpbitTrader(Trader):
         self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key")
         self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "upbit_server_url")
         self.is_opt_mode = True
+        self.asset = (0, 0)  # avr_price, amount
+        self.balance = budget
         self.name = "Upbit"
 
     def send_request(self, requests, callback):
@@ -82,28 +85,15 @@ class UpbitTrader(Trader):
                 date_time: 현재 시간
             }
         """
-        response = self._query_account()
         trade_info = self.get_trade_tick()
         result = {
-            "asset": {},
+            "balance": self.balance,
+            "asset": {self.MARKET_CURRENCY: self.asset},
             "quote": {},
             "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
         }
         result["quote"][self.MARKET_CURRENCY] = float(trade_info[0]["trade_price"])
-
-        try:
-            for item in response:
-                if item["currency"] == "KRW":
-                    result["balance"] = item["balance"]
-                elif item["currency"] == self.MARKET_CURRENCY:
-                    name = item["currency"]
-                    price = float(item["avg_buy_price"])
-                    amount = float(item["balance"])
-                    result["asset"][name] = (price, amount)
-        except TypeError as error:
-            self.logger.error(f"fail to get account info {error}")
-            raise UserWarning("fail to get account info") from error
-        self.logger.debug(f"account info {response}")
+        self.logger.debug(f"account info {result}")
         return result
 
     def cancel_request(self, request_id):
@@ -115,25 +105,23 @@ class UpbitTrader(Trader):
 
         order = self.order_map[request_id]
         del self.order_map[request_id]
+        result = order["result"]
         response = self._cancel_order(order["uuid"])
-        if response is not None:
-            self.logger.debug(f"canceled order {response}")
-            result = order["result"]
-            result["date_time"] = response["created_at"].replace("+09:00", "")
-            result["price"] = float(response["price"])
-            result["amount"] = float(response["executed_volume"])
-            result["state"] = "done"
-            order["callback"](result)
-        else:
+
+        if response is None:
             response = self._query_order_list([order["uuid"]], True)
-            self.logger.debug(f"canceled order check {response}")
             if len(response) > 0:
-                result = order["result"]
-                result["date_time"] = response[0]["created_at"].replace("+09:00", "")
-                result["price"] = float(response[0]["price"])
-                result["amount"] = float(response[0]["executed_volume"])
-                result["state"] = "done"
-                order["callback"](result)
+                response = response[0]
+            else:
+                return
+
+        self.logger.debug(f"canceled order {response}")
+        result["date_time"] = response["created_at"].replace("+09:00", "")
+        # 최종 체결 가격, 수량으로 업데이트
+        result["price"] = float(response["price"]) if response["price"] is not None else 0
+        result["amount"] = float(response["executed_volume"])
+        result["state"] = "done"
+        self._call_callback(order["callback"], result)
 
     def cancel_all_requests(self):
         """모든 거래 요청을 취소한다
@@ -158,10 +146,16 @@ class UpbitTrader(Trader):
             return
 
         is_buy = True if request["type"] == "buy" else False
+        if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
+            self.logger.warning("invalid price request. balance is too small!")
+            task["callback"]("error!")
+            return
+
         response = self._send_order(self.MARKET, is_buy, request["price"], request["amount"])
         if response is None:
             task["callback"]("error!")
             return
+
         result = self._create_success_result(request, response["uuid"])
         self.order_map[request["id"]] = {
             "uuid": response["uuid"],
@@ -221,18 +215,17 @@ class UpbitTrader(Trader):
                     self.logger.debug(f"Find done order! =====")
                     self.logger.debug(request_info)
                     self.logger.debug(order)
-                    if order["state"] == "done" or order["state"] == "cancel":
-                        result = request_info["result"]
-                        result["date_time"] = order["created_at"].replace("+09:00", "")
-                        # 최종 체결 가격, 수량으로 업데이트
-                        result["price"] = float(order["price"]) if order["price"] is not None else 0
-                        result["amount"] = float(order["executed_volume"])
-                        result["state"] = "done"
-                        request_info["callback"](result)
-                        is_done = True
+                    result = request_info["result"]
+                    result["date_time"] = order["created_at"].replace("+09:00", "")
+                    # 최종 체결 가격, 수량으로 업데이트
+                    result["price"] = float(order["price"]) if order["price"] is not None else 0
+                    result["amount"] = float(order["executed_volume"])
+                    result["state"] = "done"
+                    self._call_callback(request_info["callback"], result)
+                    is_done = True
 
             if is_done is False:
-                self.logger.debug(f"can't find order! {request_info}")
+                self.logger.debug(f"waiting order {request_info}")
                 waiting_request[request_id] = request_info
         self.order_map = waiting_request
         self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
@@ -240,6 +233,24 @@ class UpbitTrader(Trader):
         self._stop_timer()
         if len(self.order_map) > 0:
             self._start_timer()
+
+    def _call_callback(self, callback, result):
+        result_value = float(result["price"]) * float(result["amount"])
+        fee = result_value * self.COMMISSION_RATIO
+
+        if result["state"] == "done" and result["type"] == "buy":
+            old_value = self.asset[0] * self.asset[1]
+            new_value = old_value + result_value
+            new_amount = self.asset[1] + float(result["amount"])
+            self.asset = (new_value / new_amount, new_amount)
+            self.balance -= round(result_value + fee)
+        elif result["state"] == "done" and result["type"] == "sell":
+            old_avr_price = self.asset[0]
+            new_amount = self.asset[1] - float(result["amount"])
+            self.asset = (old_avr_price, new_amount)
+            self.balance += round(result_value - fee)
+
+        callback(result)
 
     def _send_order(self, market, is_buy, price=None, volume=None):
         """
