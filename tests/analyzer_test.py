@@ -191,9 +191,16 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.initialize(MagicMock())
         analyzer.is_simulation = True
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
+        # 유효하지 않은 정보 무시
         target_dummy_asset = {
             "balance": 50000,
-            "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
+            "asset": {
+                "banana": (1500, 10),
+                "mango": (1000, 4.5),
+                "apple": (250, 2),
+                "pineapple": (0, 2),
+                "kiwi": (77700, 0),
+            },
             "quote": {"banana": 2000, "mango": 1050, "apple": 400},
             "date_time": "2020-02-27T23:59:59",
         }

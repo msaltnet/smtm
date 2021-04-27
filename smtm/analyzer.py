@@ -179,6 +179,8 @@ class Analyzer:
                 item_yield = 0
                 amount = float(item[1])
                 avg_buy = float(item[0])
+                if amount == 0 or avg_buy == 0:
+                    continue
                 price = float(current_quote[name])
                 current_total += amount * price
                 item_price_diff = price - float(avg_buy)
