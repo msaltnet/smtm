@@ -139,7 +139,18 @@ class StrategyBuyAndHold(Strategy):
             if target_budget > self.balance:
                 target_budget = self.balance
 
-            if self.min_price > target_budget or self.min_price > self.balance:
+            target_amount = target_budget / last_data["closing_price"]
+            target_amount = round(target_amount, 4)
+            trading_request = {
+                "id": str(round(time.time(), 3)),
+                "type": "buy",
+                "price": last_data["closing_price"],
+                "amount": target_amount,
+                "date_time": now,
+            }
+            total_value = round(float(trading_request["price"]) * float(trading_request["amount"]))
+
+            if self.min_price > target_budget or total_value > self.balance:
                 self.logger.info("target_budget or balance is too small")
                 if self.is_simulation:
                     return [
@@ -153,23 +164,12 @@ class StrategyBuyAndHold(Strategy):
                     ]
                 return
 
-            target_amount = target_budget / last_data["closing_price"]
-            target_amount = round(target_amount, 4)
-            trading_request = {
-                "id": str(round(time.time(), 3)),
-                "type": "buy",
-                "price": last_data["closing_price"],
-                "amount": target_amount,
-                "date_time": now,
-            }
             self.logger.info(f"[REQ] id: {trading_request['id']} =====================")
             self.logger.info(f"type: {trading_request['type']}")
             self.logger.info(
                 f"price: {trading_request['price']}, amount: {trading_request['amount']}"
             )
-            self.logger.info(
-                f"total value: {round(float(trading_request['price']) * float(trading_request['amount']))}"
-            )
+            self.logger.info(f"total value: {total_value}")
             self.logger.info("================================================")
             final_requests = []
             for request_id in self.waiting_requests:

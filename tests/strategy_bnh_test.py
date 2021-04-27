@@ -207,6 +207,16 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(requests[0]["price"], 20000)
         self.assertEqual(requests[0]["amount"], 0.005)
 
+    def test_get_request_return_None_when_balance_is_smaller_than_total_value(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(50000, 10)
+        dummy_info = {}
+        dummy_info["closing_price"] = 62000000
+        bnh.update_trading_info(dummy_info)
+        bnh.balance = 10000
+        requests = bnh.get_request()
+        self.assertEqual(requests, None)
+
     def test_get_request_return_turn_over_when_balance_is_smaller_than_min_price_at_simulation(
         self,
     ):
