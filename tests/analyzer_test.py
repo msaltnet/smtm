@@ -3,6 +3,7 @@ import copy
 import unittest
 from smtm import Analyzer
 from unittest.mock import *
+from datetime import datetime, timedelta
 
 
 class AnalyzerTests(unittest.TestCase):
@@ -70,9 +71,59 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_put_trading_info_append_trading_info(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_info = {"name": "orange"}
         analyzer.put_trading_info(dummy_info)
         self.assertEqual(analyzer.infos[-1], {"name": "orange", "kind": 0})
+        analyzer.make_periodic_record.assert_called_once()
+
+    def test_make_periodic_record_should_call_put_asset_info_after_60s_from_last_asset_info(self):
+        analyzer = Analyzer()
+        ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+        last = datetime.now() - timedelta(seconds=91)
+        dummy_info1 = {"name": "mango", "date_time": last.strftime(ISO_DATEFORMAT)}
+        dummy_info2 = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
+        analyzer.put_asset_info = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango")
+        analyzer.asset_record_list.append(dummy_info1)
+        analyzer.asset_record_list.append(dummy_info2)
+
+        analyzer.make_periodic_record()
+
+        analyzer.put_asset_info.assert_called_once_with("mango")
+        analyzer.update_info_func.assert_called_once()
+
+    def test_make_periodic_record_should_NOT_call_put_asset_info_in_60s_from_last_asset_info(self):
+        analyzer = Analyzer()
+        ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+        last = datetime.now() - timedelta(seconds=85)
+        dummy_info1 = {"name": "mango", "date_time": last.strftime(ISO_DATEFORMAT)}
+        dummy_info2 = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
+        analyzer.put_asset_info = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango")
+        analyzer.asset_record_list.append(dummy_info1)
+        analyzer.asset_record_list.append(dummy_info2)
+
+        analyzer.make_periodic_record()
+
+        analyzer.put_asset_info.assert_not_called()
+        analyzer.update_info_func.assert_not_called()
+
+    def test_make_periodic_record_should_NOT_call_put_asset_info_asset_info_list_is_less_than_2(
+        self,
+    ):
+        analyzer = Analyzer()
+        ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+        last = datetime.now() - timedelta(seconds=85)
+        dummy_info = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
+        analyzer.put_asset_info = MagicMock()
+        analyzer.update_info_func = MagicMock(return_value="mango")
+        analyzer.asset_record_list.append(dummy_info)
+
+        analyzer.make_periodic_record()
+
+        analyzer.put_asset_info.assert_not_called()
+        analyzer.update_info_func.assert_not_called()
 
     def test_put_result_append_only_success_result(self):
         analyzer = Analyzer()
@@ -179,6 +230,7 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
             "balance": 50000,
             "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
@@ -234,9 +286,11 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record["price_change_ratio"]["apple"], -20)
         self.assertEqual(score_record["date_time"], "2020-02-27T23:59:59")
         self.assertEqual(score_record["kind"], 3)
+        analyzer.make_periodic_record.assert_called_once()
 
     def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
             "balance": 50000,
             "asset": {"banana": (1500, 10), "apple": (250, 2)},
@@ -274,9 +328,11 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(score_record["price_change_ratio"]["mango"], 0)
         self.assertEqual(score_record["price_change_ratio"]["apple"], 60)
+        analyzer.make_periodic_record.assert_called_once()
 
     def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
             "balance": 23456,
             "asset": {},
@@ -315,6 +371,7 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(score_record["price_change_ratio"]["mango"], 0)
         self.assertEqual(score_record["price_change_ratio"]["apple"], 50)
+        analyzer.make_periodic_record.assert_called_once()
 
     def test_make_score_record_create_correct_score_record_when_asset_and_balance_is_NOT_changed(
         self,
@@ -336,6 +393,7 @@ class AnalyzerTests(unittest.TestCase):
             "quote": {"apple": 750},
             "date_time": "2020-02-27T23:59:59",
         }
+        analyzer.make_periodic_record = MagicMock()
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_record_list), 1)
@@ -346,6 +404,7 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(len(score_record["asset"]), 0)
         self.assertEqual(len(score_record["price_change_ratio"].keys()), 0)
+        analyzer.make_periodic_record.assert_called_once()
 
     def fill_test_data_for_report(self, analyzer):
         dummy_info = {

@@ -50,6 +50,7 @@ class Analyzer:
         new = copy.deepcopy(info)
         new["kind"] = 0
         self.infos.append(new)
+        self.make_periodic_record()
 
     def put_requests(self, requests):
         """거래 요청 정보를 저장한다
@@ -151,6 +152,18 @@ class Analyzer:
         self.result = []
         self.asset_record_list = []
         if self.update_info_func is not None:
+            self.put_asset_info(self.update_info_func())
+
+    def make_periodic_record(self):
+        now = datetime.now()
+        if self.is_simulation:
+            now = datetime.strptime(self.infos[-1]["date_time"], self.ISO_DATEFORMAT)
+        if len(self.asset_record_list) < 2:
+            return
+        last = datetime.strptime(self.asset_record_list[-1]["date_time"], self.ISO_DATEFORMAT)
+        delta = now - last
+
+        if delta.total_seconds() > 90 and self.update_info_func is not None:
             self.put_asset_info(self.update_info_func())
 
     def make_score_record(self, new_info):
