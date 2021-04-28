@@ -242,7 +242,11 @@ class UpbitTrader(Trader):
             old_value = self.asset[0] * self.asset[1]
             new_value = old_value + result_value
             new_amount = self.asset[1] + float(result["amount"])
-            self.asset = (new_value / new_amount, new_amount)
+            if new_amount == 0:
+                avr_price = 0
+            else:
+                avr_price = new_value / new_amount
+            self.asset = (avr_price, new_amount)
             self.balance -= round(result_value + fee)
         elif result["state"] == "done" and result["type"] == "sell":
             old_avr_price = self.asset[0]
