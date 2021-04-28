@@ -80,7 +80,7 @@ class AnalyzerTests(unittest.TestCase):
     def test_make_periodic_record_should_call_put_asset_info_after_60s_from_last_asset_info(self):
         analyzer = Analyzer()
         ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-        last = datetime.now() - timedelta(seconds=91)
+        last = datetime.now() - timedelta(seconds=61)
         dummy_info1 = {"name": "mango", "date_time": last.strftime(ISO_DATEFORMAT)}
         dummy_info2 = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
         analyzer.put_asset_info = MagicMock()
@@ -96,7 +96,7 @@ class AnalyzerTests(unittest.TestCase):
     def test_make_periodic_record_should_NOT_call_put_asset_info_in_60s_from_last_asset_info(self):
         analyzer = Analyzer()
         ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-        last = datetime.now() - timedelta(seconds=85)
+        last = datetime.now() - timedelta(seconds=55)
         dummy_info1 = {"name": "mango", "date_time": last.strftime(ISO_DATEFORMAT)}
         dummy_info2 = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
         analyzer.put_asset_info = MagicMock()
@@ -114,7 +114,7 @@ class AnalyzerTests(unittest.TestCase):
     ):
         analyzer = Analyzer()
         ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-        last = datetime.now() - timedelta(seconds=85)
+        last = datetime.now() - timedelta(seconds=55)
         dummy_info = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
         analyzer.put_asset_info = MagicMock()
         analyzer.update_info_func = MagicMock(return_value="mango")

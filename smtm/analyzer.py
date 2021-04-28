@@ -163,7 +163,7 @@ class Analyzer:
         last = datetime.strptime(self.asset_record_list[-1]["date_time"], self.ISO_DATEFORMAT)
         delta = now - last
 
-        if delta.total_seconds() > 90 and self.update_info_func is not None:
+        if delta.total_seconds() > 60 and self.update_info_func is not None:
             self.put_asset_info(self.update_info_func())
 
     def make_score_record(self, new_info):
