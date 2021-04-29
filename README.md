@@ -15,12 +15,12 @@ Performance critical approach is NOT suitable. e.g. trading in seconds. If you w
  --- repeat ---
 4. Create analyzing result by Analyzer
 
-|Layered Architecture||||
-|:---:|:---:|:---:|:---:|
-|Controller|||
-|Operator|||
-|Analyzer|Trader|Strategy|Data Provider|
-|Requests(lib)|Pandas(lib)|Mpl plot(lib)|
+| Layered Architecture | Role |
+|:---:|:---:|
+| Controller | User Interface |
+| Operator | Operating Manager |
+| Analyzer, Trader, Strategy, Data Provider | Main Modules |
+| Requests(lib), Pandas(lib), Mpl plot(lib) | External Lib |
 
 
 ## User guide
