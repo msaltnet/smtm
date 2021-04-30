@@ -234,7 +234,7 @@ class AnalyzerTests(unittest.TestCase):
         dummy_asset_info = {
             "balance": 50000,
             "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
-            "quote": {"banana": 1700, "mango": 700, "apple": 500},
+            "quote": {"banana": 1700, "mango": 700, "apple": 500, "pineapple": 300, "kiwi": 77000},
             "date_time": "2020-02-27T23:59:59",
         }
 
@@ -253,7 +253,7 @@ class AnalyzerTests(unittest.TestCase):
                 "pineapple": (0, 2),
                 "kiwi": (77700, 0),
             },
-            "quote": {"banana": 2000, "mango": 1050, "apple": 400},
+            "quote": {"banana": 2000, "mango": 1050, "apple": 400, "pineapple": 300, "kiwi": 77000},
             "date_time": "2020-02-27T23:59:59",
         }
         analyzer.make_score_record(target_dummy_asset)
@@ -261,7 +261,7 @@ class AnalyzerTests(unittest.TestCase):
 
         score_record = analyzer.score_record_list[0]
         self.assertEqual(score_record["balance"], 50000)
-        self.assertEqual(score_record["cumulative_return"], 6.149)
+        self.assertEqual(score_record["cumulative_return"], 6.992)
 
         self.assertEqual(score_record["asset"][0][0], "banana")
         self.assertEqual(score_record["asset"][0][1], 1500)

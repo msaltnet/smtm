@@ -252,7 +252,7 @@ class StrategySma0(Strategy):
         total_value = price * amount
 
         if amount <= 0 or total_value < self.min_price:
-            self.logger.info(f"asset is empty or invalid unit {self.process_unit}")
+            self.logger.info(f"asset is too small or invalid unit {self.process_unit}")
             if self.is_simulation:
                 return {
                     "id": str(round(time.time(), 3)),

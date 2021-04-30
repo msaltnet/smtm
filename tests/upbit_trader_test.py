@@ -69,6 +69,44 @@ class UpditTraderTests(unittest.TestCase):
         trader._start_timer.assert_not_called()
         self.assertEqual(len(trader.order_map), 0)
 
+    def test__execute_order_should_call_callback_with_error_at_balance_lack(self):
+        dummy_task = {
+            "request": {"id": "apple", "price": 50000, "amount": 0.01, "type": "buy"},
+            "callback": MagicMock(),
+        }
+        trader = UpbitTrader()
+        trader._send_order = MagicMock()
+        trader._create_success_result = MagicMock()
+        trader._start_timer = MagicMock()
+        trader.balance = 450
+
+        trader._execute_order(dummy_task)
+
+        dummy_task["callback"].assert_called_once_with("error!")
+        trader._send_order.assert_not_called()
+        trader._create_success_result.assert_not_called()
+        trader._start_timer.assert_not_called()
+        self.assertEqual(len(trader.order_map), 0)
+
+    def test__execute_order_should_call_callback_with_error_at_asset_lack(self):
+        dummy_task = {
+            "request": {"id": "apple", "price": 50000, "amount": 0.01, "type": "sell"},
+            "callback": MagicMock(),
+        }
+        trader = UpbitTrader()
+        trader._send_order = MagicMock()
+        trader._create_success_result = MagicMock()
+        trader._start_timer = MagicMock()
+        trader.asset = (45000, 0.009)
+
+        trader._execute_order(dummy_task)
+
+        dummy_task["callback"].assert_called_once_with("error!")
+        trader._send_order.assert_not_called()
+        trader._create_success_result.assert_not_called()
+        trader._start_timer.assert_not_called()
+        self.assertEqual(len(trader.order_map), 0)
+
     def test__create_success_result_return_correct_result(self):
         dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}
         trader = UpbitTrader()

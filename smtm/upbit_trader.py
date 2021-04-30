@@ -151,6 +151,11 @@ class UpbitTrader(Trader):
             task["callback"]("error!")
             return
 
+        if is_buy == False and float(request["amount"]) > self.asset[1]:
+            self.logger.warning("invalid price request. rest asset amount is less than request!")
+            task["callback"]("error!")
+            return
+
         response = self._send_order(self.MARKET, is_buy, request["price"], request["amount"])
         if response is None:
             task["callback"]("error!")
