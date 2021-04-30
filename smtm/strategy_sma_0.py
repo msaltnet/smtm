@@ -27,7 +27,7 @@ class StrategySma0(Strategy):
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     COMMISSION_RATIO = 0.0005
     SHORT = 5
-    LONG = 10
+    LONG = 20
     STEP = 3
 
     def __init__(self):
@@ -189,7 +189,7 @@ class StrategySma0(Strategy):
 
             if request is None:
                 return
-
+            request["amount"] = round(request["amount"], 4)
             request["date_time"] = now
             self.logger.info(f"[REQ] id: {request['id']} =====================")
             self.logger.info(f"type: {request['type']}")
@@ -225,7 +225,7 @@ class StrategySma0(Strategy):
         price = float(self.data[-1]["closing_price"])
         amount = budget / price
 
-        if self.min_price > budget or self.process_unit[0] <= 0:
+        if self.min_price > budget or self.process_unit[0] <= 0 or budget < self.min_price:
             self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
             if self.is_simulation:
                 return {
@@ -248,7 +248,10 @@ class StrategySma0(Strategy):
         if amount > self.asset_amount:
             amount = self.asset_amount
 
-        if self.asset_amount == 0 or self.process_unit[1] <= 0:
+        price = float(self.data[-1]["closing_price"])
+        total_value = price * amount
+
+        if amount <= 0 or total_value < self.min_price:
             self.logger.info(f"asset is empty or invalid unit {self.process_unit}")
             if self.is_simulation:
                 return {
@@ -259,7 +262,6 @@ class StrategySma0(Strategy):
                 }
             return
 
-        price = self.data[-1]["closing_price"]
         return {
             "id": str(round(time.time(), 3)),
             "type": "sell",
@@ -267,7 +269,7 @@ class StrategySma0(Strategy):
             "amount": amount,
         }
 
-    def initialize(self, budget, min_price=100):
+    def initialize(self, budget, min_price=5000):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
