@@ -168,8 +168,8 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
 
         self.assertIsNotNone(report)
         self.assertEqual(report[0], 100000)
-        self.assertEqual(report[1], 98357)
-        self.assertEqual(report[2], -1.643)
+        self.assertEqual(report[1], 97619)
+        self.assertEqual(report[2], -2.381)
         self.assertEqual(report[3]["KRW-BTC"], -2.059)
 
     def check_equal_results_list(self, a, b):
