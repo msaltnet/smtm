@@ -1,23 +1,25 @@
-"""업비트 거래소의 실시간 거래 데이터를 제공하는 DataProvider"""
+"""빗썸 거래소의 실시간 거래 데이터를 제공하는 DataProvider"""
 
 import requests
+from datetime import datetime
 from .data_provider import DataProvider
 from .log_manager import LogManager
 
 
-class UpbitDataProvider(DataProvider):
+class BithumbDataProvider(DataProvider):
     """
-    업비트 거래소의 실시간 거래 데이터를 제공하는 클래스
+    빗썸 거래소의 실시간 거래 데이터를 제공하는 클래스
 
-    업비트의 open api를 사용. 별도의 가입, 인증, token 없이 사용 가능
-    https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
+    빗썸의 open api를 사용. 별도의 가입, 인증, token 없이 사용 가능
+    https://api.bithumb.com/public/candlestick/{order_currency}_{payment_currency}/{chart_intervals}
+    https://api.bithumb.com/public/candlestick/BTC_KRW/1m
+    https://apidocs.bithumb.com/docs/candlestick
     """
 
-    URL = "https://api.upbit.com/v1/candles/minutes/1"
+    URL = "https://api.bithumb.com/public/candlestick/BTC_KRW/1m"
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.query_string = {"market": "KRW-BTC", "count": 1}
 
     def get_info(self):
         """실시간 거래 정보 전달한다
@@ -35,23 +37,22 @@ class UpbitDataProvider(DataProvider):
         }
         """
         data = self.__get_data_from_server()
-        return self.__create_candle_info(data[0])
+        if data["status"] != "0000":
+            raise UserWarning("Fail get data from sever")
 
-    def set_market(self, market="KRW-BTC"):
-        """마켓을 설정한다"""
-        self.query_string["market"] = market
+        return self.__create_candle_info(data["data"][-1])
 
     def __create_candle_info(self, data):
         try:
             return {
-                "market": data["market"],
-                "date_time": data["candle_date_time_kst"],
-                "opening_price": float(data["opening_price"]),
-                "high_price": float(data["high_price"]),
-                "low_price": float(data["low_price"]),
-                "closing_price": float(data["trade_price"]),
-                "acc_price": float(data["candle_acc_trade_price"]),
-                "acc_volume": float(data["candle_acc_trade_volume"]),
+                "market": "BTC",
+                "date_time": datetime.fromtimestamp(data[0] / 1000.0).isoformat(),
+                "opening_price": float(data[1]),
+                "high_price": float(data[2]),
+                "low_price": float(data[3]),
+                "closing_price": float(data[4]),
+                "acc_price": 0,  # not supported
+                "acc_volume": float(data[5]),
             }
         except KeyError:
             self.logger.warning("invalid data for candle info")
@@ -59,7 +60,7 @@ class UpbitDataProvider(DataProvider):
 
     def __get_data_from_server(self):
         try:
-            response = requests.get(self.URL, params=self.query_string)
+            response = requests.get(self.URL)
             response.raise_for_status()
             return response.json()
         except ValueError as error:
