@@ -37,6 +37,7 @@ class Operator:
         self.state = None
         self.is_trading_activated = False
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.timer_expired_time = datetime.now()
 
     def initialize(self, data_provider, strategy, trader, analyzer, budget=500):
         """
@@ -97,9 +98,15 @@ class Operator:
             return
 
         def on_timer_expired():
+            self.timer_expired_time = datetime.now()
             self.worker.post_task({"runnable": self._execute_trading})
 
-        self.timer = threading.Timer(self.interval, on_timer_expired)
+        adjusted_interval = self.interval
+        if self.interval > 1:
+            time_delta = datetime.now() - self.timer_expired_time
+            adjusted_interval = self.interval - round(time_delta.total_seconds(), 1)
+
+        self.timer = threading.Timer(adjusted_interval, on_timer_expired)
         self.timer.start()
 
         self.is_timer_running = True
