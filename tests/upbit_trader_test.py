@@ -1035,7 +1035,7 @@ class UpditTraderBalanceTests(unittest.TestCase):
         trader._call_callback(dummy_callback, dummy_result)
 
         self.assertEqual(trader.balance, 473423)
-        self.assertEqual(trader.asset, (66993835.1167133, 1.0012355))
+        self.assertEqual(trader.asset, (66993868.57231318, 1.001235))
         dummy_callback.assert_called_once_with(dummy_result)
 
     def test__call_callback_update_balance_correctly_when_sell(self):
@@ -1059,7 +1059,7 @@ class UpditTraderBalanceTests(unittest.TestCase):
         trader._call_callback(dummy_callback, dummy_result)
 
         self.assertEqual(trader.balance, 626501)
-        self.assertEqual(trader.asset, (67000000, 0.9987664999999999))
+        self.assertEqual(trader.asset, (67000000, 0.998766))
         dummy_callback.assert_called_once_with(dummy_result)
 
     def test__call_callback_NOT_update_when_type_is_not_done(self):

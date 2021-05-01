@@ -234,6 +234,7 @@ class VirtualMarket:
             if name in self.asset:
                 old = self.asset[name]
                 final_amount = old[1] + request["amount"]
+                final_amount = round(final_amount, 6)
                 total_value = (request["amount"] * request["price"]) + (old[0] * old[1])
                 self.asset[name] = (round(total_value / final_amount), final_amount)
             else:
@@ -297,9 +298,11 @@ class VirtualMarket:
                 )
                 del self.asset[name]
             else:
+                final_amount = self.asset[name][1] - sell_amount
+                final_amount = round(final_amount, 6)
                 self.asset[name] = (
                     self.asset[name][0],
-                    self.asset[name][1] - sell_amount,
+                    final_amount,
                 )
 
             sell_asset_value = sell_amount * request["price"]

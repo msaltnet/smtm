@@ -27,6 +27,7 @@ class Analyzer:
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     OUTPUT_FOLDER = "output/"
+    SMA = (5, 20)
 
     def __init__(self):
         self.request = []
@@ -411,7 +412,11 @@ class Analyzer:
                 if info_time >= score_time:
                     new["return"] = last_acc_return = score["cumulative_return"]
                     new["date_time"] = info["date_time"]
-                    if len(score["asset"]) > 0:
+                    if (
+                        len(score["asset"]) > 0
+                        and score["asset"][0][1] > 0  # 평균 가격
+                        and score["asset"][0][3] > 0  # 현재 수량
+                    ):
                         new["avr_price"] = last_avr_price = score["asset"][0][1]
                     else:
                         last_avr_price = None
@@ -453,6 +458,7 @@ class Analyzer:
             type="candle",
             volume=True,
             addplot=apds,
+            mav=self.SMA,
             style="starsandstripes",
             savefig=dict(fname=self.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25),
         )

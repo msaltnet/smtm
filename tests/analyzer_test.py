@@ -849,6 +849,7 @@ class AnalyzerTests(unittest.TestCase):
             type="candle",
             volume=True,
             addplot=ANY,
+            mav=analyzer.SMA,
             style="starsandstripes",
             savefig=dict(
                 fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25

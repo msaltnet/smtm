@@ -121,7 +121,7 @@ class Simulator:
                 "cmd": "strategy",
                 "short": "st",
                 "need_value": True,
-                "value_guide": "input starting budget (ex. 70000) :",
+                "value_guide": "input strategy number 0: buy and hold, 1: simple moving average-0 :",
                 "action": self._set_strategy,
             },
             {
