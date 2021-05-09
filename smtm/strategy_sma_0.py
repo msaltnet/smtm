@@ -224,8 +224,10 @@ class StrategySma0(Strategy):
         budget -= budget * self.COMMISSION_RATIO
         price = float(self.data[-1]["closing_price"])
         amount = budget / price
+        amount = round(amount, 4)
+        final_value = amount * price
 
-        if self.min_price > budget or self.process_unit[0] <= 0 or budget < self.min_price:
+        if self.min_price > budget or self.process_unit[0] <= 0 or final_value > self.balance:
             self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
             if self.is_simulation:
                 return {
