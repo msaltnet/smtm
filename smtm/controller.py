@@ -21,7 +21,7 @@ class Controller:
 
     def __init__(self, interval=10, strategy=0, budget=50000):
         self.logger = LogManager.get_logger("Controller")
-        self.__terminating = False
+        self.terminating = False
         self.interval = interval
         self.operator = Operator()
         self.budget = budget
@@ -69,7 +69,7 @@ class Controller:
                 "cmd": "query",
                 "short": "q",
                 "need_value": True,
-                "value_guide": "input query target (ex. state, score, result) :",
+                "value_guide": "무엇을 조회할까요? (ex. state, score, result) :",
                 "action": self._on_query_command,
             },
         ]
@@ -95,7 +95,7 @@ class Controller:
         signal.signal(signal.SIGINT, self.terminate)
         signal.signal(signal.SIGTERM, self.terminate)
 
-        while not self.__terminating:
+        while not self.terminating:
             try:
                 key = input(self.MAIN_STATEMENT)
                 self._on_command(key)
@@ -115,8 +115,10 @@ class Controller:
             if cmd["cmd"] == key or cmd["short"] == key:
                 if cmd["need_value"]:
                     value = input(cmd["value_guide"])
+                    print(f"{cmd['cmd']} - {value} 명령어를 실행합니다.")
                     cmd["action"](value)
                 else:
+                    print(f"{cmd['cmd']} 명령어를 실행합니다.")
                     cmd["action"]()
                 return
         print("잘못된 명령어가 입력되었습니다")
@@ -154,5 +156,5 @@ class Controller:
             print("강제 종료 신호 감지")
         print("프로그램 종료 중.....")
         self.stop()
-        self.__terminating = True
+        self.terminating = True
         print("Good Bye~")
