@@ -175,7 +175,7 @@ class Simulator:
         """커맨드 처리"""
         value = None
         for cmd in self.command_list:
-            if cmd["cmd"] == key or cmd["short"] == key:
+            if cmd["cmd"] == key.lower() or cmd["short"] == key.lower():
                 if cmd["need_value"]:
                     value = input(cmd["value_guide"])
                 self.execute_command(key, value)
@@ -185,7 +185,7 @@ class Simulator:
     def execute_command(self, command, value):
         """가이드 문구 출력"""
         for cmd in self.command_list:
-            if cmd["cmd"] == command or cmd["short"] == command:
+            if cmd["cmd"] == command.lower() or cmd["short"] == command.lower():
                 if cmd["need_value"]:
                     cmd["action"](value)
                 else:
@@ -195,11 +195,12 @@ class Simulator:
 
     def _on_query_command(self, value):
         """가이드 문구 출력"""
-        if value == "state":
+        key = value.lower()
+        if key in ["state", "1"]:
             print(self.operator.state)
-        elif value == "score":
+        elif key in ["score", "2"]:
             self._get_score()
-        elif value == "result":
+        elif key in ["result", "3"]:
             print(self.operator.get_trading_results())
 
     def _set_end(self, value):

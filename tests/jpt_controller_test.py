@@ -87,7 +87,7 @@ class JptControllerTests(unittest.TestCase):
         controller.operator = MagicMock()
         controller.operator.state = "mango"
         controller._on_query_command("state")
-        mock_print.assert_called_once_with("현재 상태: mango")
+        mock_print.assert_called_once_with("현재 상태: MANGO")
         controller._on_query_command("score")
         controller.operator.get_score.assert_called_once_with(ANY)
         controller._on_query_command("result")

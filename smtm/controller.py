@@ -38,38 +38,38 @@ class Controller:
         self.command_list = [
             {
                 "guide": "{0:15}도움말 출력".format("h, help"),
-                "cmd": "help",
-                "short": "h",
+                "cmd": ["help"],
+                "short": ["h"],
                 "need_value": False,
                 "action": self.print_help,
             },
             {
                 "guide": "{0:15}자동 거래 시작".format("r, run"),
-                "cmd": "run",
-                "short": "r",
+                "cmd": ["run"],
+                "short": ["r"],
                 "need_value": False,
                 "action": self.start,
             },
             {
                 "guide": "{0:15}자동 거래 중지".format("s, stop"),
-                "cmd": "stop",
-                "short": "s",
+                "cmd": ["stop"],
+                "short": ["s"],
                 "need_value": False,
                 "action": self.stop,
             },
             {
                 "guide": "{0:15}프로그램 종료".format("t, terminate"),
-                "cmd": "terminate",
-                "short": "t",
+                "cmd": ["terminate"],
+                "short": ["t"],
                 "need_value": False,
                 "action": self.terminate,
             },
             {
                 "guide": "{0:15}정보 조회".format("q, query"),
-                "cmd": "query",
-                "short": "q",
+                "cmd": ["query"],
+                "short": ["q"],
                 "need_value": True,
-                "value_guide": "무엇을 조회할까요? (ex. state, score, result) :",
+                "value_guide": "무엇을 조회할까요? (ex. 1.state, 2.score, 3.result) :",
                 "action": self._on_query_command,
             },
         ]
@@ -113,24 +113,25 @@ class Controller:
         """커맨드 처리를 담당"""
         value = None
         for cmd in self.command_list:
-            if cmd["cmd"] == key or cmd["short"] == key:
+            if key.lower() in cmd["cmd"] or key.lower() in cmd["short"]:
                 if cmd["need_value"]:
                     value = input(cmd["value_guide"])
-                    print(f"{cmd['cmd']} - {value} 명령어를 실행합니다.")
+                    print(f"{cmd['cmd'][0].upper()} - {value.upper()} 명령어를 실행합니다.")
                     cmd["action"](value)
                 else:
-                    print(f"{cmd['cmd']} 명령어를 실행합니다.")
+                    print(f"{cmd['cmd'][0].upper()} 명령어를 실행합니다.")
                     cmd["action"]()
                 return
         print("잘못된 명령어가 입력되었습니다")
 
     def _on_query_command(self, value):
         """가이드 문구 출력"""
-        if value == "state":
-            print(f"현재 상태: {self.operator.state}")
-        elif value == "score":
+        key = value.lower()
+        if key in ["state", "1"]:
+            print(f"현재 상태: {self.operator.state.upper()}")
+        elif key in ["score", "2"]:
             self._get_score()
-        elif value == "result":
+        elif key in ["result", "3"]:
             print(self.operator.get_trading_results())
 
     def _get_score(self):

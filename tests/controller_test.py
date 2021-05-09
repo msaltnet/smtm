@@ -87,10 +87,22 @@ class ControllerTests(unittest.TestCase):
         controller.operator = MagicMock()
         controller.operator.state = "mango"
         controller._on_query_command("state")
-        mock_print.assert_called_once_with("현재 상태: mango")
+        mock_print.assert_called_once_with("현재 상태: MANGO")
         controller._on_query_command("score")
         controller.operator.get_score.assert_called_once_with(ANY)
         controller._on_query_command("result")
+        controller.operator.get_trading_results.assert_called_once()
+
+    @patch("builtins.print")
+    def test__on_query_command_should_handle_command_by_number(self, mock_print):
+        controller = Controller()
+        controller.operator = MagicMock()
+        controller.operator.state = "mango"
+        controller._on_query_command("1")
+        mock_print.assert_called_once_with("현재 상태: MANGO")
+        controller._on_query_command("2")
+        controller.operator.get_score.assert_called_once_with(ANY)
+        controller._on_query_command("3")
         controller.operator.get_trading_results.assert_called_once()
 
     def test_start_call_operator_start(self):

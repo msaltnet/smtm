@@ -3,6 +3,7 @@
 Jupyter notebook에서 사용하기 좋게 만든 Operator를 사용해서 시스템을 컨트롤하는 모듈
 """
 import signal
+import time
 from IPython.display import clear_output
 from IPython.display import Image, display
 from . import (
@@ -49,6 +50,7 @@ class JptController(Controller):
             try:
                 key = input(self.MAIN_STATEMENT)
                 clear_output(wait=False)
+                time.sleep(0.1)
                 self.logger.debug(f"Execute command {key}")
                 self._on_command(key)
             except EOFError:
