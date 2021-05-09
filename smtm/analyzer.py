@@ -235,7 +235,7 @@ class Analyzer:
         except (IndexError, AttributeError) as msg:
             self.logger.error(f"making score record fail {msg}")
 
-    def get_return_report(self):
+    def get_return_report(self, graph_filename=None):
         """현시점 기준 간단한 수익률 보고서를 제공한다
 
         Returns:
@@ -244,16 +244,21 @@ class Analyzer:
                 final_balance: 최종 자산
                 cumulative_return : 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+                graph: 그래프 파일 패스
             )
         """
         if self.update_info_func is not None:
             self.put_asset_info(self.update_info_func())
         try:
+            graph = None
             start_value = self.__get_start_property_value()
             last_value = self.__get_last_property_value()
             last_return = self.score_record_list[-1]["cumulative_return"]
             change_ratio = self.score_record_list[-1]["price_change_ratio"]
-            summary = (start_value, last_value, last_return, change_ratio)
+            if graph_filename is not None:
+                graph = self.__draw_graph(graph_filename, is_fullpath=True)
+
+            summary = (start_value, last_value, last_return, change_ratio, graph)
             self.logger.info("### Return Report ===============================")
             self.logger.info(f"Property                 {start_value:10} -> {last_value:10}")
             self.logger.info(
@@ -282,6 +287,7 @@ class Analyzer:
                     final_balance: 최종 자산
                     cumulative_return : 기준 시점부터 누적 수익률
                     price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+                    graph: 그래프 파일 패스
                 ),
                 "trading_table" : [
                     {
@@ -429,7 +435,7 @@ class Analyzer:
             plot_data.append(new)
         return plot_data
 
-    def __draw_graph(self, filename):
+    def __draw_graph(self, filename, is_fullpath=False):
         total = pd.DataFrame(self.__create_plot_data())
         total = total.rename(
             columns={
@@ -444,6 +450,7 @@ class Analyzer:
         total = total.set_index("Date")
         total.index = pd.to_datetime(total.index)
         apds = []
+
         if "buy" in total.columns:
             apds.append(mpf.make_addplot(total["buy"], type="scatter", markersize=100, marker="^"))
         if "sell" in total.columns:
@@ -453,6 +460,10 @@ class Analyzer:
         if "return" in total.columns:
             apds.append(mpf.make_addplot((total["return"]), panel=1, color="g", secondary_y=True))
 
+        destination = self.OUTPUT_FOLDER + filename + ".jpg"
+        if is_fullpath:
+            destination = filename
+
         mpf.plot(
             total,
             type="candle",
@@ -460,8 +471,9 @@ class Analyzer:
             addplot=apds,
             mav=self.SMA,
             style="starsandstripes",
-            savefig=dict(fname=self.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25),
+            savefig=dict(fname=destination, dpi=100, pad_inches=0.25),
         )
+        return destination
 
     def __get_start_property_value(self):
         return round(self.__get_property_total_value(0))

@@ -546,6 +546,7 @@ class AnalyzerTests(unittest.TestCase):
             price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
             asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
             date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+            graph: 그래프 파일 패스
         }
         """
         analyzer = Analyzer()
@@ -557,7 +558,7 @@ class AnalyzerTests(unittest.TestCase):
 
         report = analyzer.get_return_report()
 
-        self.assertEqual(len(report), 4)
+        self.assertEqual(len(report), 5)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -570,6 +571,48 @@ class AnalyzerTests(unittest.TestCase):
 
         analyzer.update_info_func.assert_called_once()
         analyzer.put_asset_info.assert_called_once_with("mango_asset")
+
+    @patch("mplfinance.plot")
+    def test_get_return_report_draw_graph_when_graph_filename_exist(self, mock_plot):
+        """
+        {
+            cumulative_return: 기준 시점부터 누적 수익률
+            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+            asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
+            date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+            graph: 그래프 파일 패스
+        }
+        """
+        analyzer = Analyzer()
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
+        self.fill_test_data_for_report(analyzer)
+        analyzer.update_info_func = MagicMock(return_value="mango_asset")
+        analyzer.put_asset_info = MagicMock()
+        report = analyzer.get_return_report("mango_graph.png")
+
+        self.assertEqual(len(report), 5)
+        # 입금 자산
+        self.assertEqual(report[0], 23456)
+        # 최종 자산
+        self.assertEqual(report[1], 5848)
+        # 누적 수익률
+        self.assertEqual(report[2], -75.067)
+        # 가격 변동률
+        self.assertEqual(report[3]["mango"], -66.667)
+        self.assertEqual(report[3]["apple"], -99.85)
+
+        analyzer.update_info_func.assert_called_once()
+        analyzer.put_asset_info.assert_called_once_with("mango_asset")
+        mock_plot.assert_called_once_with(
+            ANY,
+            type="candle",
+            volume=True,
+            addplot=ANY,
+            mav=analyzer.SMA,
+            style="starsandstripes",
+            savefig=dict(fname="mango_graph.png", dpi=100, pad_inches=0.25),
+        )
 
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
@@ -585,6 +628,7 @@ class AnalyzerTests(unittest.TestCase):
                 final_balance: 최종 자산
                 cumulative_return : 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+                graph: 그래프 파일 패스
             ),
             "trading_table" : [
                 {
@@ -646,7 +690,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["trading_table"][8], expected_return2)
 
         # 입금 자산, 최종 자산, 누적 수익률, 가격 변동률을 포함한다
-        self.assertEqual(len(report["summary"]), 4)
+        self.assertEqual(len(report["summary"]), 5)
 
         # 입금 자산
         self.assertEqual(report["summary"][0], 23456)

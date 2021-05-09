@@ -98,6 +98,7 @@ class Controller:
         while not self.terminating:
             try:
                 key = input(self.MAIN_STATEMENT)
+                self.logger.debug(f"Execute command {key}")
                 self._on_command(key)
             except EOFError:
                 break

@@ -4,6 +4,7 @@ Jupyter notebook에서 사용하기 좋게 만든 Operator를 사용해서 시�
 """
 import signal
 from IPython.display import clear_output
+from IPython.display import Image, display
 from . import (
     LogManager,
     Analyzer,
@@ -48,6 +49,16 @@ class JptController(Controller):
             try:
                 key = input(self.MAIN_STATEMENT)
                 clear_output(wait=False)
+                self.logger.debug(f"Execute command {key}")
                 self._on_command(key)
             except EOFError:
                 break
+
+    def _get_score(self):
+        def print_score_and_main_statement(score):
+            print("current score ==========")
+            print(score)
+            if len(score) > 4 and score[4] is not None:
+                display(Image(filename=score[4]))
+
+        self.operator.get_score(print_score_and_main_statement)
