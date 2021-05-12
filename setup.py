@@ -11,7 +11,16 @@ AUTHOR = "msalt"
 VERSION = "0.1"
 
 # What packages are required for this module to be executed?
-REQUIRED = ["requests", "matplotlib", "pandas", "mplfinance", "pyjwt", "python-dotenv"]
+REQUIRED = [
+    "requests",
+    "numpy",
+    "matplotlib",
+    "pandas",
+    "mplfinance",
+    "pyjwt",
+    "python-dotenv",
+    "jupyter",
+]
 
 
 def long_description():

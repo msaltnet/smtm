@@ -4,6 +4,7 @@
 """
 import copy
 import matplotlib
+import os
 
 matplotlib.use("Agg")
 import mplfinance as mpf
@@ -38,6 +39,9 @@ class Analyzer:
         self.update_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
+        if os.path.isdir("output") is False:
+            print("create output folder")
+            os.mkdir("output")
 
     def put_trading_info(self, info):
         """거래 정보를 저장한다
