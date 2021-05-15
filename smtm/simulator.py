@@ -20,7 +20,7 @@ class Simulator:
 
     MAIN_STATEMENT = "input command (h:help): "
 
-    def __init__(self, end=None, count=100, interval=2, strategy=0):
+    def __init__(self, end=None, count=100, interval=2, strategy=0, from_dash_to=None):
         self.logger = LogManager.get_logger("Simulator")
         self.__terminating = False
         self.end = "2020-12-20T16:23:00Z"
@@ -31,6 +31,9 @@ class Simulator:
         self.budget = 50000
         self.is_initialized = False
         self.command_list = []
+        if from_dash_to is not None:
+            self.end, self.count = DateConverter.to_end_min(from_dash_to)
+
         self.create_command()
 
         if self.strategy != 0 and self.strategy != 1:

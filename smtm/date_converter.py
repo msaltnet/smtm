@@ -9,7 +9,7 @@ class DateConverter:
 
         Returns:
             (
-                datetime: %Y-%m-%dT%H:%M:%S 형태의 datetime 문자열
+                datetime: %Y-%m-%dT%H:%M:%SZ 형태의 datetime 문자열
                 count: 주어진 기간을 분으로 변환
             )
         to_end_min('200220-200320')
@@ -25,7 +25,7 @@ class DateConverter:
             return
         delta = to_dt - from_dt
         count = round(delta.total_seconds() / 60.0)
-        return (cls.to_iso_string(to_dt), count)
+        return cls.to_iso_string(to_dt) + "Z", count
 
     @classmethod
     def num_2_datetime(cls, number_string):
