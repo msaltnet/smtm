@@ -28,6 +28,10 @@ class DateConverterTests(unittest.TestCase):
         expect = ("2020-03-20T23:55:10Z", 42475)
         self.assertEqual(result, expect)
 
+        result = DateConverter.to_end_min("201220.170000-201220.180000")
+        expect = ("2020-12-20T18:00:00Z", 60)
+        self.assertEqual(result, expect)
+
         result = DateConverter.to_end_min("200520-200320")
         self.assertEqual(result, None)
 

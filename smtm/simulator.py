@@ -12,6 +12,7 @@ from . import (
     StrategyBuyAndHold,
     StrategySma0,
     SimulationOperator,
+    DateConverter,
 )
 
 
@@ -31,9 +32,6 @@ class Simulator:
         self.budget = 50000
         self.is_initialized = False
         self.command_list = []
-        if from_dash_to is not None:
-            self.end, self.count = DateConverter.to_end_min(from_dash_to)
-
         self.create_command()
 
         if self.strategy != 0 and self.strategy != 1:
@@ -45,6 +43,11 @@ class Simulator:
 
         if count is not None:
             self.count = count
+
+        if from_dash_to is not None:
+            dt = DateConverter.to_end_min(from_dash_to)
+            self.end = dt[0]
+            self.count = dt[1]
 
         if interval is not None:
             self.interval = float(self.interval)
@@ -279,6 +282,9 @@ class Simulator:
         if self.is_initialized is not True:
             print("Not initialized")
             return
+
+        self.logger.info(f"Simulation start! ==================")
+        self.logger.info(f"end: {self.end}, count: {self.count}")
 
         if self.operator.start() is not True:
             print("Fail operator start")
