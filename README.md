@@ -72,4 +72,5 @@ clear jupyter notebook output before make commit
 
 ```
 jupyter nbconvert --clear-output --inplace {file.ipynb}
+#jupyter nbconvert --clear-output --inplace .\notebook\*.ipynb
 ```
