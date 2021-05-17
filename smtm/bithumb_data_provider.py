@@ -1,7 +1,7 @@
 """빗썸 거래소의 실시간 거래 데이터를 제공하는 DataProvider"""
 
 import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from .data_provider import DataProvider
 from .log_manager import LogManager
 
@@ -17,6 +17,8 @@ class BithumbDataProvider(DataProvider):
     """
 
     URL = "https://api.bithumb.com/public/candlestick/BTC_KRW/1m"
+    KST = timezone(timedelta(hours=9))
+    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -46,7 +48,9 @@ class BithumbDataProvider(DataProvider):
         try:
             return {
                 "market": "BTC",
-                "date_time": datetime.fromtimestamp(data[0] / 1000.0).isoformat(),
+                "date_time": datetime.fromtimestamp(data[0] / 1000.0, tz=self.KST).strftime(
+                    self.ISO_DATEFORMAT
+                ),
                 "opening_price": float(data[1]),
                 "high_price": float(data[2]),
                 "low_price": float(data[3]),
