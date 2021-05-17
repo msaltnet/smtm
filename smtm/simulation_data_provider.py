@@ -1,8 +1,8 @@
 """시뮬레이션을 위한 DataProvider 구현체"""
 
+import copy
 import json
 import requests
-import copy
 from .data_provider import DataProvider
 from .log_manager import LogManager
 
@@ -24,8 +24,32 @@ class SimulationDataProvider(DataProvider):
         self.data = []
         self.index = 0
 
-    def initialize_simulation(self, end, count):
-        self.initialize_from_server(end, count)
+    def initialize_simulation(self, end=None, count=100):
+        """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
+
+        self.index = 0
+        query_string = copy.deepcopy(self.QUERY_STRING)
+
+        if end is not None:
+            query_string["to"] = end
+
+        query_string["count"] = count
+        try:
+            response = requests.get(self.URL, params=query_string)
+            response.raise_for_status()
+            self.data = response.json()
+            self.data.reverse()
+            self.is_initialized = True
+            self.logger.info(f"data is updated from server # end: {end}, count: {count}")
+        except ValueError as error:
+            self.logger.error("Invalid data from server")
+            raise UserWarning("Fail get data from sever") from error
+        except requests.exceptions.HTTPError as error:
+            self.logger.error(error)
+            raise UserWarning("Fail get data from sever") from error
+        except requests.exceptions.RequestException as error:
+            self.logger.error(error)
+            raise UserWarning("Fail get data from sever") from error
 
     def get_info(self):
         """순차적으로 거래 정보 전달한다
@@ -51,33 +75,6 @@ class SimulationDataProvider(DataProvider):
         self.logger.info(f'[DATA] @ {self.data[now]["candle_date_time_utc"]}')
         return self.__create_candle_info(self.data[now])
 
-    def initialize_with_file(self, filepath):
-        """파일로부터 데이터를 가져와서 초기화한다"""
-        if self.is_initialized:
-            return
-
-        self.index = 0
-        self.__get_data_from_file(filepath)
-        self.logger.info(f"data is updated from file # file: {filepath}")
-
-    def initialize_from_server(self, end=None, count=100):
-        """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
-        if self.is_initialized:
-            return
-
-        self.index = 0
-        self.__get_data_from_server(end, count)
-
-    def __get_data_from_file(self, filepath):
-        try:
-            with open(filepath, "r") as data_file:
-                self.data = json.loads(data_file.read())
-                self.is_initialized = True
-        except FileNotFoundError:
-            self.logger.error("Invalid filepath")
-        except ValueError:
-            self.logger.error("Invalid JSON data")
-
     def __create_candle_info(self, data):
         try:
             return {
@@ -93,27 +90,3 @@ class SimulationDataProvider(DataProvider):
         except KeyError:
             self.logger.warning("invalid data for candle info")
             return None
-
-    def __get_data_from_server(self, end, count):
-        query_string = copy.deepcopy(self.QUERY_STRING)
-
-        if end is not None:
-            query_string["to"] = end
-
-        query_string["count"] = count
-        try:
-            response = requests.get(self.URL, params=query_string)
-            response.raise_for_status()
-            self.data = response.json()
-            self.data.reverse()
-            self.is_initialized = True
-            self.logger.info(f"data is updated from server # end: {end}, count: {count}")
-        except ValueError as error:
-            self.logger.error("Invalid data from server")
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.HTTPError as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.RequestException as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
