@@ -65,3 +65,10 @@ class DateConverterTests(unittest.TestCase):
         dt = date(1981, 4, 30)
         result = DateConverter.to_iso_string(dt)
         self.assertEqual(result, "1981-04-30T00:00:00")
+
+    def test_to_ktc_iso_str_return_correct_string(self):
+        result = DateConverter.to_ktc_iso_str("2019-01-04T13:48:09+09:00")
+        self.assertEqual(result, "2019-01-04T22:48:09")
+
+        result = DateConverter.to_ktc_iso_str("2019-01-04T23:48:09+09:00")
+        self.assertEqual(result, "2019-01-05T08:48:09")

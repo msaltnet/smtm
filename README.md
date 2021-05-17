@@ -62,6 +62,9 @@ Test with real trading market. Some integration tests are excuted via Jupyter no
 ```
 # run unittest directly
 python -m unittest tests\integration_tester\bithumb_trader_integration_test.py
+
+# or
+python -m unittest tests.integration.simulation_ITG_test
 ```
 
 #### Tip

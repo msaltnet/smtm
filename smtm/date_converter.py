@@ -1,8 +1,11 @@
 """Datetime 포맷을 변경해주는 기능을 제공"""
 from datetime import datetime
+from datetime import timedelta
 
 
 class DateConverter:
+    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+
     @classmethod
     def to_end_min(cls, from_dash_to):
         """숫자로 주어진 기간을 분으로 계산해서 마지막 날짜와 분을 반환
@@ -46,5 +49,11 @@ class DateConverter:
     @classmethod
     def to_iso_string(cls, datetime):
         """datetime 객체를 %Y-%m-%dT%H:%M:%S 형태의 문자열로 변환하여 반환"""
-        ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-        return datetime.strftime(ISO_DATEFORMAT)
+        return datetime.strftime(cls.ISO_DATEFORMAT)
+
+    @classmethod
+    def to_ktc_iso_str(cls, datetime_str):
+        removed_timezone = datetime_str.replace("+09:00", "")
+        dt = datetime.strptime(removed_timezone, "%Y-%m-%dT%H:%M:%S")
+        dt = dt + timedelta(hours=9)
+        return dt.strftime(cls.ISO_DATEFORMAT)
