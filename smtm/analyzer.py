@@ -3,14 +3,14 @@
 이 모듈은 거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스인 Analayzer를 포함하고 있다.
 """
 import copy
-import matplotlib
 import os
+from datetime import datetime
+import matplotlib
+import pandas as pd
+import mplfinance as mpf
+from .log_manager import LogManager
 
 matplotlib.use("Agg")
-import mplfinance as mpf
-import pandas as pd
-from datetime import datetime
-from .log_manager import LogManager
 
 
 class Analyzer:
@@ -28,6 +28,7 @@ class Analyzer:
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     OUTPUT_FOLDER = "output/"
+    RECORD_INTERVAL = 60
     SMA = (5, 20)
 
     def __init__(self):
@@ -160,6 +161,7 @@ class Analyzer:
             self.put_asset_info(self.update_info_func())
 
     def make_periodic_record(self):
+        """주기적으로 수익율을 기록한다"""
         now = datetime.now()
         if self.is_simulation:
             now = datetime.strptime(self.infos[-1]["date_time"], self.ISO_DATEFORMAT)
@@ -168,7 +170,7 @@ class Analyzer:
         last = datetime.strptime(self.asset_record_list[-1]["date_time"], self.ISO_DATEFORMAT)
         delta = now - last
 
-        if delta.total_seconds() > 60 and self.update_info_func is not None:
+        if delta.total_seconds() > self.RECORD_INTERVAL and self.update_info_func is not None:
             self.put_asset_info(self.update_info_func())
 
     def make_score_record(self, new_info):
@@ -312,7 +314,7 @@ class Analyzer:
             summary = self.get_return_report()
             if summary is None:
                 self.logger.error("invalid return report")
-                return
+                return None
 
             list_sum = self.request + self.infos + self.score_record_list + self.result
             trading_table = sorted(
@@ -333,16 +335,16 @@ class Analyzer:
         보고서를 정해진 형식에 맞게 파일로 출력한다
 
         ### TRADING TABLE =================================
-        {date_time}, {opening_price}, {high_price}, {low_price}, {closing_price}, {acc_price}, {acc_volume}
+        date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume
         2020-02-23T00:00:00, 5000, 15000, 4500, 5500, 1500000000, 1500
 
-        {date_time}, [->] {id}, {type}, {price}, {amount}
+        date_time, [->] id, type, price, amount
         2020-02-23T00:00:01, 1607862457.560075, sell, 1234567890, 1234567890
 
-        {date_time}, [<-] {request id}, {type}, {price}, {amount}, {msg}
+        date_time, [<-] request id, type, price, amount, msg
         2020-02-23T00:00:01, 1607862457.560075, sell, 1234567890, 1234567890, success, 1234567890
 
-        {date_time}, [#] {balance}, {cumulative_return}, {price_change_ratio}, {asset}
+        date_time, [#] balance, cumulative_return, price_change_ratio, asset
         2020-02-23T00:00:01, 1234567890, 1234567890, 1234567890, 1234567890
 
         ### SUMMARY =======================================
@@ -352,33 +354,35 @@ class Analyzer:
         Price_change_ratio {'mango': -50.0, 'apple': 50.0}
         """
         final_path = self.OUTPUT_FOLDER + filepath + ".txt"
-        with open(final_path, "w") as f:
+        with open(final_path, "w") as report_file:
             if len(trading_table) > 0:
-                f.write("### TRADING TABLE =================================\n")
+                report_file.write("### TRADING TABLE =================================\n")
 
             for item in trading_table:
                 if item["kind"] == 0:
-                    f.write(
+                    report_file.write(
                         f"{item['date_time']}, {item['opening_price']}, {item['high_price']}, {item['low_price']}, {item['closing_price']}, {item['acc_price']}, {item['acc_volume']}\n"
                     )
                 elif item["kind"] == 1:
-                    f.write(
+                    report_file.write(
                         f"{item['date_time']}, [->] {item['id']}, {item['type']}, {item['price']}, {item['amount']}\n"
                     )
                 elif item["kind"] == 2:
-                    f.write(
+                    report_file.write(
                         f"{item['date_time']}, [<-] {item['request']['id']}, {item['type']}, {item['price']}, {item['amount']}, {item['msg']}\n"
                     )
                 elif item["kind"] == 3:
-                    f.write(
+                    report_file.write(
                         f"{item['date_time']}, [#] {item['balance']}, {item['cumulative_return']}, {item['price_change_ratio']}, {item['asset']}\n"
                     )
 
-            f.write("### SUMMARY =======================================\n")
-            f.write(f"Property                 {summary[0]:10} -> {summary[1]:10}\n")
-            f.write(f"Gap                                    {summary[1] - summary[0]:10}\n")
-            f.write(f"Cumulative return                    {summary[2]:10} %\n")
-            f.write(f"Price_change_ratio {summary[3]}\n")
+            report_file.write("### SUMMARY =======================================\n")
+            report_file.write(f"Property                 {summary[0]:10} -> {summary[1]:10}\n")
+            report_file.write(
+                f"Gap                                    {summary[1] - summary[0]:10}\n"
+            )
+            report_file.write(f"Cumulative return                    {summary[2]:10} %\n")
+            report_file.write(f"Price_change_ratio {summary[3]}\n")
 
     def __create_plot_data(self):
         result_pos = 0
@@ -386,7 +390,6 @@ class Analyzer:
         last_avr_price = None
         last_acc_return = 0
         plot_data = []
-        last_info_time_str = "mysterious result!!!"
 
         # 그래프를 그리기 위해 매매, 수익률 정보를 트레이딩 정보와 합쳐서 하나의 테이블로 생성
         self.logger.debug("report plot data ===================================")
@@ -394,26 +397,20 @@ class Analyzer:
             new = info.copy()
             info_time = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
 
-            # 매매 정보를 생성해서 추가
+            # 매매 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 매매별 하나씩만 추가됨
             while result_pos < len(self.result):
                 result = self.result[result_pos]
                 result_time = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
-                if info_time >= result_time:
-                    if info_time > result_time:
-                        new["date_time"] = last_info_time_str
-                    else:
-                        new["date_time"] = info["date_time"]
-
-                    if result["type"] == "buy":
-                        new["buy"] = result["price"]
-                    elif result["type"] == "sell":
-                        new["sell"] = result["price"]
-                    result_pos += 1
-                else:
+                if info_time < result_time:
                     break
-            last_info_time_str = info["date_time"]
 
-            # 수익률 정보를 추가. 정보가 없는 경우 마지막 정보로 채움
+                if result["type"] == "buy":
+                    new["buy"] = result["price"]
+                elif result["type"] == "sell":
+                    new["sell"] = result["price"]
+                result_pos += 1
+
+            # 수익률 정보를 추가. 정보가 없는 경우 최근 정보로 채움
             while score_pos < len(self.score_record_list):
                 score = self.score_record_list[score_pos]
                 score_time = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
@@ -421,15 +418,14 @@ class Analyzer:
                 # keep last one only
                 if info_time >= score_time:
                     new["return"] = last_acc_return = score["cumulative_return"]
-                    new["date_time"] = info["date_time"]
+                    last_avr_price = None
+
                     if (
                         len(score["asset"]) > 0
                         and score["asset"][0][1] > 0  # 평균 가격
                         and score["asset"][0][3] > 0  # 현재 수량
                     ):
                         new["avr_price"] = last_avr_price = score["asset"][0][1]
-                    else:
-                        last_avr_price = None
                     score_pos += 1
                 else:
                     new["return"] = last_acc_return
