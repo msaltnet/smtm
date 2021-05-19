@@ -87,9 +87,8 @@ class Controller:
         )
 
         self.operator.set_interval(self.interval)
-        strategy_name = "Buy and Hold" if isinstance(self.strategy, StrategyBuyAndHold) else "SMA0"
         print("##### smtm is intialized #####")
-        print(f"interval: {self.interval}, strategy: {strategy_name}")
+        print(f"interval: {self.interval}, strategy: {self.strategy.name}")
         print("==============================")
 
         self.logger.info(f"interval: {self.interval}")
