@@ -125,6 +125,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
             "amount": 0.0005,
         }
         self.assertEqual(request[0]["type"], "cancel")
+        self.assertEqual(request[0]["id"], last_id)
         self.assertEqual(request[1]["type"], expected_request["type"])
         self.assertEqual(request[1]["price"], expected_request["price"])
         self.assertEqual(request[1]["amount"], expected_request["amount"])
