@@ -181,8 +181,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(requests[0]["type"], "buy")
         bnh.update_trading_info(None)
         requests = bnh.get_request()
-        self.assertEqual(requests[0]["price"], 0)
-        self.assertEqual(requests[0]["amount"], 0)
+        self.assertEqual(requests, None)
 
     def test_get_request_return_turn_over_when_target_budget_is_too_small_at_simulation(self):
         bnh = StrategyBuyAndHold()

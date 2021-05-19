@@ -92,7 +92,7 @@ class StrategyBuyAndHold(Strategy):
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {result['price']}, amount: {result['amount']}")
-            self.logger.info(f"balance: {self.balance}")
+            self.logger.info(f"total: {total}, balance: {self.balance}")
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
         except (AttributeError, TypeError) as msg:
@@ -117,60 +117,35 @@ class StrategyBuyAndHold(Strategy):
             return None
 
         try:
-            last_data = self.data[-1]
+            if len(self.data) == 0 or self.data[-1] is None:
+                raise UserWarning("data is empty")
+
+            last_closing_price = self.data[-1]["closing_price"]
             now = datetime.now().strftime(self.ISO_DATEFORMAT)
 
             if self.is_simulation:
-                last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
-                now = last_dt.isoformat()
+                now = self.data[-1]["date_time"]
 
             target_budget = self.budget / 5
-            if last_data is None:
-                self.logger.info("last data is None")
-                return [
-                    {
-                        "id": str(round(time.time(), 3)),
-                        "type": "buy",
-                        "price": 0,
-                        "amount": 0,
-                        "date_time": now,
-                    }
-                ]
-
             if target_budget > self.balance:
                 target_budget = self.balance
 
-            target_amount = target_budget / last_data["closing_price"]
-            target_amount = round(target_amount, 4)
+            amount = round(target_budget / last_closing_price, 4)
             trading_request = {
                 "id": str(round(time.time(), 3)),
                 "type": "buy",
-                "price": last_data["closing_price"],
-                "amount": target_amount,
+                "price": last_closing_price,
+                "amount": amount,
                 "date_time": now,
             }
-            total_value = round(float(trading_request["price"]) * float(trading_request["amount"]))
+            total_value = round(float(last_closing_price) * float(amount))
 
             if self.min_price > target_budget or total_value > self.balance:
-                self.logger.info("target_budget or balance is too small")
-                if self.is_simulation:
-                    return [
-                        {
-                            "id": str(round(time.time(), 3)),
-                            "type": "buy",
-                            "price": 0,
-                            "amount": 0,
-                            "date_time": now,
-                        }
-                    ]
-                return None
+                raise UserWarning("target_budget or balance is too small")
 
             self.logger.info(f"[REQ] id: {trading_request['id']} =====================")
-            self.logger.info(f"type: {trading_request['type']}")
-            self.logger.info(
-                f"price: {trading_request['price']}, amount: {trading_request['amount']}"
-            )
-            self.logger.info(f"total value: {total_value}")
+            self.logger.info(f"price: {last_closing_price}, amount: {amount}")
+            self.logger.info(f"type: buy, total value: {total_value}")
             self.logger.info("================================================")
             final_requests = []
             for request_id in self.waiting_requests:
@@ -192,6 +167,19 @@ class StrategyBuyAndHold(Strategy):
             self.logger.error("empty data")
         except AttributeError as msg:
             self.logger.error(msg)
+        except UserWarning as msg:
+            self.logger.info(msg)
+            if self.is_simulation:
+                return [
+                    {
+                        "id": str(round(time.time(), 3)),
+                        "type": "buy",
+                        "price": 0,
+                        "amount": 0,
+                        "date_time": now,
+                    }
+                ]
+            return None
 
     def initialize(self, budget, min_price=5000):
         """
