@@ -48,11 +48,11 @@ class BithumbTrader(Trader):
         self.SERVER_URL = os.environ.get("BITHUMB_API_SERVER_URL", "bithumb_server_url")
         self.name = "Bithumb"
 
-    def send_request(self, request, callback):
+    def send_request(self, request_list, callback):
         """거래 요청을 처리한다
 
         요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
-        request: 거래 요청 정보
+        request_list: 거래 요청 정보
         {
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy, cancel
@@ -72,7 +72,7 @@ class BithumbTrader(Trader):
         }
         """
         self.worker.post_task(
-            {"runnable": self._execute_order, "request": request, "callback": callback}
+            {"runnable": self._execute_order, "request": request_list, "callback": callback}
         )
 
     def get_account_info(self):

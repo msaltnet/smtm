@@ -4,6 +4,8 @@ from datetime import timedelta
 
 
 class DateConverter:
+    """날짜와 시간을 변경해주는 클래스"""
+
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     @classmethod
@@ -21,11 +23,11 @@ class DateConverter:
         to_end_min('200220.120015-200320.235510')
         """
         count = -1
-        ft = from_dash_to.split("-")
-        from_dt = cls.num_2_datetime(ft[0])
-        to_dt = cls.num_2_datetime(ft[1])
+        from_to = from_dash_to.split("-")
+        from_dt = cls.num_2_datetime(from_to[0])
+        to_dt = cls.num_2_datetime(from_to[1])
         if to_dt <= from_dt:
-            return
+            return None
         delta = to_dt - from_dt
         count = round(delta.total_seconds() / 60.0)
         return cls.to_iso_string(to_dt) + "Z", count
@@ -41,18 +43,19 @@ class DateConverter:
         number_string = str(number_string)
         if len(number_string) == 6:
             return datetime.strptime(number_string, "%y%m%d")
-        elif len(number_string) == 13:
+        if len(number_string) == 13:
             return datetime.strptime(number_string, "%y%m%d.%H%M%S")
-        else:
-            raise ValueError("unsupported number string")
+
+        raise ValueError("unsupported number string")
 
     @classmethod
-    def to_iso_string(cls, datetime):
+    def to_iso_string(cls, dt):
         """datetime 객체를 %Y-%m-%dT%H:%M:%S 형태의 문자열로 변환하여 반환"""
-        return datetime.strftime(cls.ISO_DATEFORMAT)
+        return dt.strftime(cls.ISO_DATEFORMAT)
 
     @classmethod
     def to_ktc_iso_str(cls, datetime_str):
+        """%Y-%m-%dT%H:%M:%S+09:00 형태의 문자열에서 +09:00 빼고, 9시간 더한 문자열 반환"""
         removed_timezone = datetime_str.replace("+09:00", "")
         dt = datetime.strptime(removed_timezone, "%Y-%m-%dT%H:%M:%S")
         dt = dt + timedelta(hours=9)

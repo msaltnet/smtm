@@ -39,6 +39,7 @@ class Operator:
         self.is_trading_activated = False
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         self.timer_expired_time = datetime.now()
+        self.last_report = None
 
     def initialize(self, data_provider, strategy, trader, analyzer, budget=500):
         """
@@ -115,6 +116,7 @@ class Operator:
 
     def _execute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다"""
+        del task
         self.logger.debug("trading is started #####################")
         self.is_timer_running = False
         try:
@@ -199,6 +201,7 @@ class Operator:
         return self.analyzer.get_trading_results()
 
     def send_manual_trading_request(self, trading_type, price=0, amount=0, callback=None):
+        """수동 거래 요청"""
         if price == 0 or amount == 0 or callback is None:
             return
 

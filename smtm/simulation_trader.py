@@ -20,7 +20,6 @@ class SimulationTrader(Trader):
         self.market = VirtualMarket()
         self.is_initialized = False
         self.name = "Simulation"
-        self.MARKET = "VirtualMarket"
 
     def initialize_simulation(self, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""
@@ -28,11 +27,11 @@ class SimulationTrader(Trader):
         self.market.deposit(budget)
         self.is_initialized = True
 
-    def send_request(self, requests, callback):
+    def send_request(self, request_list, callback):
         """거래 요청을 처리한다
 
         요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
-        requests: 한 개 이상의 거래 요청 정보 리스트
+        request_list: 한 개 이상의 거래 요청 정보 리스트
         [{
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy, cancel
@@ -56,7 +55,7 @@ class SimulationTrader(Trader):
             raise UserWarning("Not initialzed")
 
         try:
-            result = self.market.send_request(requests[0])
+            result = self.market.handle_request(request_list[0])
             callback(result)
         except (TypeError, AttributeError) as msg:
             self.logger.error(f"invalid state {msg}")

@@ -1,7 +1,7 @@
 """빗썸 거래소의 실시간 거래 데이터를 제공하는 DataProvider"""
 
-import requests
 from datetime import datetime, timezone, timedelta
+import requests
 from .data_provider import DataProvider
 from .log_manager import LogManager
 

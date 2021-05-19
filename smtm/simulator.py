@@ -53,6 +53,7 @@ class Simulator:
             self.interval = float(self.interval)
 
     def create_command(self):
+        """명령어 생성"""
         self.command_list = [
             {
                 "guide": "h, help          print command info",
@@ -88,7 +89,7 @@ class Simulator:
                 "short": "q",
                 "need_value": True,
                 "value_guide": "input query target (ex. state, score, result) :",
-                "action": self._on_query_command,
+                "action_with_value": self._on_query_command,
             },
             {
                 "guide": "e, end           set simulation period end datetime",
@@ -96,7 +97,7 @@ class Simulator:
                 "short": "e",
                 "need_value": True,
                 "value_guide": "input simulation period end datetime(ex. 2020-12-20T18:00:00Z) :",
-                "action": self._set_end,
+                "action_with_value": self._set_end,
             },
             {
                 "guide": "c, count         set simulation count",
@@ -104,7 +105,7 @@ class Simulator:
                 "short": "c",
                 "need_value": True,
                 "value_guide": "input simulation count (ex. 100) :",
-                "action": self._set_count,
+                "action_with_value": self._set_count,
             },
             {
                 "guide": "int, interval    set simulation interval",
@@ -112,7 +113,7 @@ class Simulator:
                 "short": "int",
                 "need_value": True,
                 "value_guide": "input simulation interval in seconds (ex. 0.5) :",
-                "action": self._set_interval,
+                "action_with_value": self._set_interval,
             },
             {
                 "guide": "b, budget        set simulation budget",
@@ -120,23 +121,23 @@ class Simulator:
                 "short": "b",
                 "need_value": True,
                 "value_guide": "input starting budget (ex. 70000) :",
-                "action": self._set_budget,
+                "action_with_value": self._set_budget,
             },
             {
                 "guide": "st, strategy     set strategy",
                 "cmd": "strategy",
                 "short": "st",
                 "need_value": True,
-                "value_guide": "input strategy number 0: buy and hold, 1: simple moving average-0 :",
-                "action": self._set_strategy,
+                "value_guide": "input strategy number 0: buy and hold, 1: SMA-0 :",
+                "action_with_value": self._set_strategy,
             },
             {
                 "guide": "l, log           set stream log level",
                 "cmd": "log",
                 "short": "l",
                 "need_value": True,
-                "value_guide": "set stream log level (CRITICAL=50, ERROR=40, WARNING=30, INFO=20, DEBUG=10) :",
-                "action": self._set_log_level,
+                "value_guide": "set level (CRITICAL=50, ERROR=40, WARN=30, INFO=20, DEBUG=10) :",
+                "action_with_value": self._set_log_level,
             },
             {
                 "guide": "i, initialize    initialize simulation",
@@ -164,6 +165,7 @@ class Simulator:
                 break
 
     def run_single(self):
+        """단독으로 1회 실행"""
         self.initialize()
         self.start()
         while self.operator.state == "running":
@@ -193,7 +195,7 @@ class Simulator:
         for cmd in self.command_list:
             if cmd["cmd"] == command.lower() or cmd["short"] == command.lower():
                 if cmd["need_value"]:
-                    cmd["action"](value)
+                    cmd["action_with_value"](value)
                 else:
                     cmd["action"]()
                 return
@@ -233,12 +235,12 @@ class Simulator:
         elif value == "1":
             self.strategy = 1
 
-    def _set_log_level(self, value):
+    @staticmethod
+    def _set_log_level(value):
         LogManager.set_stream_level(int(value))
 
     def _get_score(self):
         def print_score_and_main_statement(score):
-            print("")
             print("current score ==========")
             print(score)
             print(self.MAIN_STATEMENT)
@@ -283,7 +285,7 @@ class Simulator:
             print("Not initialized")
             return
 
-        self.logger.info(f"Simulation start! ==================")
+        self.logger.info("Simulation start! ==================")
         self.logger.info(f"end: {self.end}, count: {self.count}")
 
         if self.operator.start() is not True:
@@ -291,7 +293,7 @@ class Simulator:
             return
 
     def stop(self, signum, frame):
-        """시뮬레이터 중지"""
+        """시뮬레이션 중지"""
         self._stop()
         self.__terminating = True
         print(f"Receive Signal {signum} {frame}")
@@ -302,6 +304,7 @@ class Simulator:
             self.operator.stop()
 
     def terminate(self):
+        """시뮬레이터 종료"""
         print("Terminating......")
         self._stop()
         self.__terminating = True

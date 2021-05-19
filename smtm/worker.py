@@ -20,6 +20,7 @@ class Worker:
         self.on_terminated = None
 
     def register_on_terminated(self, callback):
+        """종료 콜백 등록"""
         self.on_terminated = callback
 
     def post_task(self, task):

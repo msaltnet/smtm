@@ -2,9 +2,9 @@
 
 import copy
 import time
+from datetime import datetime
 import pandas as pd
 import numpy as np
-from datetime import datetime
 from .strategy import Strategy
 from .log_manager import LogManager
 
@@ -108,7 +108,8 @@ class StrategySma0(Strategy):
             if result["state"] == "requested":
                 self.waiting_requests[request["id"]] = result
                 return
-            elif result["state"] == "done" and request["id"] in self.waiting_requests:
+
+            if result["state"] == "done" and request["id"] in self.waiting_requests:
                 del self.waiting_requests[request["id"]]
 
             total = float(result["price"]) * float(result["amount"])
@@ -185,10 +186,10 @@ class StrategySma0(Strategy):
                             "date_time": now,
                         }
                     ]
-                return
+                return None
 
             if request is None:
-                return
+                return None
             request["amount"] = round(request["amount"], 4)
             request["date_time"] = now
             self.logger.info(f"[REQ] id: {request['id']} =====================")
@@ -236,7 +237,7 @@ class StrategySma0(Strategy):
                     "price": 0,
                     "amount": 0,
                 }
-            return
+            return None
 
         return {
             "id": str(round(time.time(), 3)),
@@ -262,7 +263,7 @@ class StrategySma0(Strategy):
                     "price": 0,
                     "amount": 0,
                 }
-            return
+            return None
 
         return {
             "id": str(round(time.time(), 3)),

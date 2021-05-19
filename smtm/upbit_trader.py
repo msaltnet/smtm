@@ -2,20 +2,19 @@
 
 import os
 import copy
-import jwt  # PyJWT
 import uuid
+from datetime import datetime
+import threading
 import hashlib
 from urllib.parse import urlencode
 import requests
-import threading
+import jwt  # PyJWT
 from dotenv import load_dotenv
-from datetime import datetime
-
-load_dotenv()
-
 from .log_manager import LogManager
 from .trader import Trader
 from .worker import Worker
+
+load_dotenv()
 
 
 class UpbitTrader(Trader):
@@ -48,10 +47,54 @@ class UpbitTrader(Trader):
         self.balance = budget
         self.name = "Upbit"
 
-    def send_request(self, requests, callback):
+    @staticmethod
+    def _create_limit_order_query(market, is_buy, price, volume):
+        query = {
+            "market": market,
+            "side": "bid" if is_buy is True else "ask",
+            "volume": str(volume),
+            "price": str(price),
+            "ord_type": "limit",
+        }
+        query_string = urlencode(query).encode()
+        return query_string
+
+    @staticmethod
+    def _create_success_result(request, request_uuid):
+        return {
+            "uuid": request_uuid,
+            "state": "requested",
+            "request": request,
+            "type": request["type"],
+            "price": request["price"],
+            "amount": request["amount"],
+            "msg": "success",
+        }
+
+    @staticmethod
+    def _create_market_price_order_query(market, price=None, volume=None):
+        query = {
+            "market": market,
+        }
+
+        if price is None and volume is not None:
+            query["side"] = "ask"
+            query["volume"] = str(volume)
+            query["ord_type"] = "market"
+        elif price is not None and volume is None:
+            query["side"] = "bid"
+            query["price"] = str(price)
+            query["ord_type"] = "price"
+        else:
+            return None
+
+        query_string = urlencode(query).encode()
+        return query_string
+
+    def send_request(self, request_list, callback):
         """거래 요청을 처리한다
 
-        requests: 한 개 이상의 거래 요청 정보 리스트
+        request_list: 한 개 이상의 거래 요청 정보 리스트
         [{
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy, cancel
@@ -70,7 +113,7 @@ class UpbitTrader(Trader):
             "date_time": 거래 체결 시간
         }
         """
-        for request in requests:
+        for request in request_list:
             self.worker.post_task(
                 {"runnable": self._execute_order, "request": request, "callback": callback}
             )
@@ -128,10 +171,11 @@ class UpbitTrader(Trader):
         체결되지 않고 대기중인 모든 거래 요청을 취소한다
         """
         orders = copy.deepcopy(self.order_map)
-        for request_id, request_info in orders.items():
+        for request_id in orders.keys():
             self.cancel_request(request_id)
 
     def get_trade_tick(self):
+        """최근 거래 정보 조회"""
         querystring = {"market": self.MARKET, "count": "1"}
         return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
 
@@ -145,13 +189,13 @@ class UpbitTrader(Trader):
             self.logger.warning("invalid price request. market price is not supported now")
             return
 
-        is_buy = True if request["type"] == "buy" else False
+        is_buy = request["type"] == "buy"
         if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
             self.logger.warning("invalid price request. balance is too small!")
             task["callback"]("error!")
             return
 
-        if is_buy == False and float(request["amount"]) > self.asset[1]:
+        if is_buy is False and float(request["amount"]) > self.asset[1]:
             self.logger.warning("invalid price request. rest asset amount is less than request!")
             task["callback"]("error!")
             return
@@ -171,17 +215,6 @@ class UpbitTrader(Trader):
         self.logger.debug(f"request inserted {self.order_map[request['id']]}")
         self._start_timer()
 
-    def _create_success_result(self, request, uuid):
-        return {
-            "uuid": uuid,
-            "state": "requested",
-            "request": request,
-            "type": request["type"],
-            "price": request["price"],
-            "amount": request["amount"],
-            "msg": "success",
-        }
-
     def _start_timer(self):
         if self.timer is not None:
             return
@@ -200,6 +233,7 @@ class UpbitTrader(Trader):
         self.timer = None
 
     def _query_order_result(self, task):
+        del task
         uuids = []
         for request_id, request_info in self.order_map.items():
             uuids.append(request_info["uuid"])
@@ -217,7 +251,7 @@ class UpbitTrader(Trader):
             is_done = False
             for order in results:
                 if order["uuid"] == request_info["uuid"]:
-                    self.logger.debug(f"Find done order! =====")
+                    self.logger.debug("Find done order! =====")
                     self.logger.debug(request_info)
                     self.logger.debug(order)
                     result = request_info["result"]
@@ -319,7 +353,7 @@ class UpbitTrader(Trader):
         else:
             # 잘못된 주문
             self.logger.error("Invalid order")
-            return
+            return None
 
         jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
         authorize_token = "Bearer {}".format(jwt_token)
@@ -333,13 +367,13 @@ class UpbitTrader(Trader):
             result = response.json()
         except ValueError:
             self.logger.error("Invalid data from server")
-            return
+            return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
-            return
+            return None
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
-            return
+            return None
 
         return result
 
@@ -355,36 +389,6 @@ class UpbitTrader(Trader):
             return latest[0]["trade_price"]
 
         return price
-
-    def _create_limit_order_query(self, market, is_buy, price, volume):
-        query = {
-            "market": market,
-            "side": "bid" if is_buy is True else "ask",
-            "volume": str(volume),
-            "price": str(price),
-            "ord_type": "limit",
-        }
-        query_string = urlencode(query).encode()
-        return query_string
-
-    def _create_market_price_order_query(self, market, price=None, volume=None):
-        query = {
-            "market": market,
-        }
-
-        if price is None and volume is not None:
-            query["side"] = "ask"
-            query["volume"] = str(volume)
-            query["ord_type"] = "market"
-        elif price is not None and volume is None:
-            query["side"] = "bid"
-            query["price"] = str(price)
-            query["ord_type"] = "price"
-        else:
-            return
-
-        query_string = urlencode(query).encode()
-        return query_string
 
     def _query_order_list(self, uuids, is_done_state):
         """
@@ -447,34 +451,35 @@ class UpbitTrader(Trader):
             result = response.json()
         except ValueError:
             self.logger.error("Invalid data from server")
-            return
+            return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
-            return
+            return None
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
-            return
+            return None
 
         return result
 
-    def _create_jwt_token(self, a_key, s_key, query_string=None):
+    @staticmethod
+    def _create_jwt_token(a_key, s_key, query_string=None):
         payload = {
             "access_key": a_key,
             "nonce": str(uuid.uuid4()),
         }
         if query_string is not None:
-            m = hashlib.sha512()
-            m.update(query_string)
-            query_hash = m.hexdigest()
+            msg = hashlib.sha512()
+            msg.update(query_string)
+            query_hash = msg.hexdigest()
             payload["query_hash"] = query_hash
             payload["query_hash_alg"] = "SHA512"
 
         return jwt.encode(payload, s_key)
 
-    def _cancel_order(self, uuid):
+    def _cancel_order(self, request_uuid):
         """
         request:
-            uuid: 취소할 주문의 UUID, String
+            request_uuid: 취소할 주문의 UUID, String
 
         response:
             uuid: 주문의 고유 아이디, String
@@ -494,10 +499,10 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
-        self.logger.info(f"CANCEL ORDER ##### {uuid}")
+        self.logger.info(f"CANCEL ORDER ##### {request_uuid}")
 
         query = {
-            "uuid": uuid,
+            "uuid": request_uuid,
         }
         query_string = urlencode(query).encode()
 
@@ -513,12 +518,12 @@ class UpbitTrader(Trader):
             result = response.json()
         except ValueError:
             self.logger.error("Invalid data from server")
-            return
+            return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
-            return
+            return None
         except requests.exceptions.RequestException as msg:
             self.logger.error(msg)
-            return
+            return None
 
         return result

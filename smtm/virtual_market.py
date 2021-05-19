@@ -1,7 +1,7 @@
 """업비트 정보를 이용한 가상 거래소"""
+from datetime import datetime
 import json
 import requests
-from datetime import datetime, timedelta
 from .log_manager import LogManager
 
 
@@ -80,18 +80,18 @@ class VirtualMarket:
             self.data = response.json()
             self.data.reverse()
             self.is_initialized = True
-        except AttributeError as msg:
-            self.logger.error(msg)
-            raise UserWarning("fail to get data from server")
-        except ValueError:
+        except AttributeError as err:
+            self.logger.error(err)
+            raise UserWarning("fail to get data from server") from err
+        except ValueError as err:
             self.logger.error("Invalid data from server")
-            raise UserWarning("fail to get data from server")
+            raise UserWarning("fail to get data from server") from err
         except requests.exceptions.HTTPError as err:
             self.logger.error(err)
-            raise UserWarning("fail to get data from server")
+            raise UserWarning("fail to get data from server") from err
         except requests.exceptions.RequestException as err:
             self.logger.error(err)
-            raise UserWarning("fail to get data from server")
+            raise UserWarning("fail to get data from server") from err
 
     def deposit(self, balance):
         """자산 입출금을 할 수 있다"""
@@ -133,7 +133,7 @@ class VirtualMarket:
         asset_info["date_time"] = self.data[self.turn_count]["candle_date_time_kst"]
         return asset_info
 
-    def send_request(self, request):
+    def handle_request(self, request):
         """
         거래 요청을 처리해서 결과를 반환
 

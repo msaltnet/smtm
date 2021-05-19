@@ -1,7 +1,6 @@
 """시뮬레이션을 위한 DataProvider 구현체"""
 
 import copy
-import json
 import requests
 from .data_provider import DataProvider
 from .log_manager import LogManager

@@ -98,14 +98,14 @@ class SimulatorTests(unittest.TestCase):
                 "short": "c",
                 "need_value": True,
                 "value_guide": "input simulation count (ex. 100) :",
-                "action": MagicMock(),
+                "action_with_value": MagicMock(),
             },
         ]
         simulator.execute_command("h", None)
         simulator.command_list[0]["action"].assert_called_once()
-        simulator.command_list[1]["action"].assert_not_called()
+        simulator.command_list[1]["action_with_value"].assert_not_called()
         simulator.execute_command("c", 77)
-        simulator.command_list[1]["action"].assert_called_once_with(77)
+        simulator.command_list[1]["action_with_value"].assert_called_once_with(77)
 
     @patch("builtins.print")
     def test_execute_command_just_print_error_message_when_invalid_command(self, mock_print):

@@ -35,6 +35,7 @@ class Controller:
             self.strategy = StrategyBuyAndHold()
 
     def create_command(self):
+        """명령어 정보를 생성한다"""
         self.command_list = [
             {
                 "guide": "{0:15}도움말 출력".format("h, help"),
@@ -70,7 +71,7 @@ class Controller:
                 "short": ["q"],
                 "need_value": True,
                 "value_guide": "무엇을 조회할까요? (ex. 1.state, 2.score, 3.result) :",
-                "action": self._on_query_command,
+                "action_with_value": self._on_query_command,
             },
         ]
 
@@ -117,7 +118,7 @@ class Controller:
                 if cmd["need_value"]:
                     value = input(cmd["value_guide"])
                     print(f"{cmd['cmd'][0].upper()} - {value.upper()} 명령어를 실행합니다.")
-                    cmd["action"](value)
+                    cmd["action_with_value"](value)
                 else:
                     print(f"{cmd['cmd'][0].upper()} 명령어를 실행합니다.")
                     cmd["action"]()
@@ -154,6 +155,7 @@ class Controller:
 
     def terminate(self, signum=None, frame=None):
         """프로그램 종료"""
+        del frame
         if signum is not None:
             print("강제 종료 신호 감지")
         print("프로그램 종료 중.....")

@@ -1,7 +1,5 @@
 """시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영"""
 
-import time
-from datetime import datetime
 from .log_manager import LogManager
 from .operator import Operator
 
@@ -68,7 +66,7 @@ class SimulationOperator(Operator):
         """
 
         if self.state != "running":
-            self.logger.debug(f"already terminated return last report")
+            self.logger.debug("already terminated return last report")
             callback(self.last_report["summary"])
             return
 

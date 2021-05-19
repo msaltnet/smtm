@@ -73,7 +73,7 @@ class ControllerTests(unittest.TestCase):
                 "short": "c",
                 "need_value": True,
                 "value_guide": "input simulation count (ex. 100) :",
-                "action": dummy_action,
+                "action_with_value": dummy_action,
             },
         ]
         mock_input.return_value = "mango"

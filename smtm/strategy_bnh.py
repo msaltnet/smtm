@@ -78,7 +78,8 @@ class StrategyBuyAndHold(Strategy):
             if result["state"] == "requested":
                 self.waiting_requests[request["id"]] = result
                 return
-            elif result["state"] == "done" and request["id"] in self.waiting_requests:
+
+            if result["state"] == "done" and request["id"] in self.waiting_requests:
                 del self.waiting_requests[request["id"]]
 
             total = float(result["price"]) * float(result["amount"])
@@ -125,7 +126,7 @@ class StrategyBuyAndHold(Strategy):
 
             target_budget = self.budget / 5
             if last_data is None:
-                self.logger.info(f"last data is None")
+                self.logger.info("last data is None")
                 return [
                     {
                         "id": str(round(time.time(), 3)),
@@ -162,7 +163,7 @@ class StrategyBuyAndHold(Strategy):
                             "date_time": now,
                         }
                     ]
-                return
+                return None
 
             self.logger.info(f"[REQ] id: {trading_request['id']} =====================")
             self.logger.info(f"type: {trading_request['type']}")

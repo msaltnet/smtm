@@ -61,10 +61,10 @@ Test with real trading market. Some integration tests are excuted via Jupyter no
 
 ```
 # run unittest directly
-python -m unittest tests.integration
+python -m unittest integration_tests
 
 # or
-python -m unittest tests.integration.simulation_ITG_test
+python -m unittest integration_tests.simulation_ITG_test
 ```
 
 #### Tip
