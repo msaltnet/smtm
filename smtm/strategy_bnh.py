@@ -138,10 +138,10 @@ class StrategyBuyAndHold(Strategy):
                 "amount": amount,
                 "date_time": now,
             }
-            total_value = round(float(last_closing_price) * float(amount))
+            total_value = round(float(last_closing_price) * amount)
 
-            if self.min_price > target_budget or total_value > self.balance:
-                raise UserWarning("target_budget or balance is too small")
+            if self.min_price > total_value or total_value > self.balance:
+                raise UserWarning("total_value or balance is too small")
 
             self.logger.info(f"[REQ] id: {trading_request['id']} =====================")
             self.logger.info(f"price: {last_closing_price}, amount: {amount}")
