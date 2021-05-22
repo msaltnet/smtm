@@ -18,8 +18,7 @@ class SimulationTraderTests(unittest.TestCase):
 
         trader.initialize_simulation("mango", 500, 5000)
 
-        trader.market.initialize.assert_called_once_with("mango", 500)
-        trader.market.deposit.assert_called_once_with(5000)
+        trader.market.initialize.assert_called_once_with("mango", 500, 5000)
         self.assertEqual(trader.is_initialized, True)
 
     def test_initialize_simulation_set_is_initialized_False_when_invalid_market(self):

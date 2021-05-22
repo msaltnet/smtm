@@ -23,8 +23,11 @@ class VirtualMarketInitializeTests(unittest.TestCase):
         dummy_response.json = MagicMock()
         dummy_response.raise_for_status = MagicMock()
         self.request_mock.return_value = dummy_response
-        market.initialize(None, None)
-        self.request_mock.assert_called_once_with(market.URL, params=market.QUERY_STRING)
+        market.initialize(None)
+        expected_query = market.QUERY_STRING
+        expected_query["count"] = 100
+        expected_query["to"] = "2020-04-30 00:00:00"
+        self.request_mock.assert_called_once_with(market.URL, params=expected_query)
 
     def test_intialize_should_not_download_again_after_initialized(self):
         market = VirtualMarket()
@@ -36,10 +39,13 @@ class VirtualMarketInitializeTests(unittest.TestCase):
         dummy_response.json = MagicMock()
         dummy_response.raise_for_status = MagicMock()
         self.request_mock.return_value = dummy_response
-        market.initialize(None, None)
-        market.initialize(None, None)
-        market.initialize(None, None)
-        self.request_mock.assert_called_once_with(market.URL, params=market.QUERY_STRING)
+        expected_query = market.QUERY_STRING
+        expected_query["count"] = 100
+        expected_query["to"] = "2020-04-30 00:00:00"
+        market.initialize(None)
+        market.initialize(None)
+        market.initialize(None)
+        self.request_mock.assert_called_once_with(market.URL, params=expected_query)
 
     def test_intialize_update_trading_data(self):
         market = VirtualMarket()
@@ -92,39 +98,15 @@ class VirtualMarketInitializeTests(unittest.TestCase):
         )
         dummy_response.raise_for_status = MagicMock()
         self.request_mock.return_value = dummy_response
+        expected_query = market.QUERY_STRING
+        expected_query["count"] = 100
+        expected_query["to"] = "2020-04-30 00:00:00"
 
-        market.initialize(None, None)
+        market.initialize(None)
         dummy_response.raise_for_status.assert_called_once()
-        self.request_mock.assert_called_once_with(market.URL, params=market.QUERY_STRING)
+        self.request_mock.assert_called_once_with(market.URL, params=expected_query)
         self.assertEqual(market.is_initialized, True)
         self.assertEqual(market.QUERY_STRING["to"], "2020-04-30 00:00:00")
-        self.assertEqual(market.QUERY_STRING["count"], 100)
-
-    def test_intialize_from_file_update_trading_data(self):
-        market = VirtualMarket()
-        market.initialize_from_file("banana_data", None, None)
-        self.assertEqual(market.data, None)
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        self.assertEqual(market.data[0]["market"], "mango")
-
-    def test_intialize_from_file_ignore_after_initialized(self):
-        market = VirtualMarket()
-        http = Mock()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.json = MagicMock(
-            return_value=[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]
-        )
-        dummy_response.raise_for_status = MagicMock()
-        self.request_mock.return_value = dummy_response
-        market.initialize(None, None)
-        self.assertEqual(market.data[0]["market"], "apple")
-
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        self.assertEqual(market.data[0]["market"], "apple")
 
 
 class VirtualMarketTests(unittest.TestCase):
@@ -145,18 +127,18 @@ class VirtualMarketTests(unittest.TestCase):
         market = VirtualMarket()
 
         dummy_request = {"id": "mango", "type": "orange", "price": 2000, "amount": 10}
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        self.assertEqual(market.data[0]["market"], "mango")
-
+        market.data = self.get_mango_data()
+        market.is_initialized = True
         result = market.handle_request(dummy_request)
         self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "orange")
 
     def test_handle_request_handle_buy_return_result_corresponding_next_data(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(2000)
-        market.set_commission_ratio(5)
+        market.data = self.get_mango_data()
+        market.is_initialized = True
+        market.balance = 2000
+        market.commission_ratio = 0.05
 
         for i in range(3):
             market.data[i]["opening_price"] = 2000.00000000
@@ -186,9 +168,10 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_handle_request_handle_buy_return_error_request_when_data_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data_invalid_key.json", None, None)
-        market.deposit(2000)
-        market.set_commission_ratio(5)
+        market.is_initialized = True
+        market.data = self.get_invalid_key_data()
+        market.balance = 2000
+        market.commission_ratio = 0.05
 
         for i in range(3):
             market.data[i]["pening_price"] = 2000.00000000
@@ -201,17 +184,18 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.handle_request(dummy_request)
         self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "buy")
-        self.assertEqual(result["price"], -1)
-        self.assertEqual(result["amount"], -1)
+        self.assertEqual(result["price"], 0)
+        self.assertEqual(result["amount"], 0)
         self.assertEqual(result["msg"], "internal error")
         self.assertEqual(result["balance"], 2000)
         self.assertEqual(result["state"], "done")
 
     def test_handle_request_handle_sell_return_result_corresponding_next_data(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(2000)
-        market.set_commission_ratio(5)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 2000
+        market.commission_ratio = 0.05
         dummy_datetime = [
             "2020-02-25T23:59:00",
             "2020-02-25T23:59:10",
@@ -276,8 +260,9 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_handle_request_handle_sell_return_error_request_when_data_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data_invalid_key.json", None, None)
-        market.deposit(2000)
+        market.is_initialized = True
+        market.data = self.get_invalid_key_data()
+        market.balance = 2000
         market.asset["mango"] = (2000, 1)
 
         for i in range(3):
@@ -291,29 +276,31 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.handle_request(dummy_request)
         self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "sell")
-        self.assertEqual(result["price"], -1)
-        self.assertEqual(result["amount"], -1)
+        self.assertEqual(result["price"], 0)
+        self.assertEqual(result["amount"], 0)
         self.assertEqual(result["msg"], "internal error")
         self.assertEqual(result["balance"], 2000)
         self.assertEqual(result["state"], "done")
 
     def test_handle_request_handle_return_error_when_invalid_type(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
 
         dummy_request = {"id": "mango", "type": "apple", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
         self.assertEqual(result["request"]["id"], "mango")
         self.assertEqual(result["type"], "apple")
-        self.assertEqual(result["price"], -1)
-        self.assertEqual(result["amount"], -1)
+        self.assertEqual(result["price"], 0)
+        self.assertEqual(result["amount"], 0)
         self.assertEqual(result["msg"], "invalid type")
         self.assertEqual(result["state"], "done")
 
     def test_handle_request_handle_sell_return_error_request_when_target_asset_empty(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(999)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 999
 
         dummy_request = {"id": "mango", "type": "sell", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
@@ -327,9 +314,10 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_handle_request_handle_buy_return_no_money_when_balance_is_NOT_enough(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(200)
-        market.set_commission_ratio(5)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 200
+        market.commission_ratio = 0.05
 
         for i in range(3):
             market.data[i]["opening_price"] = 2000.00000000
@@ -361,10 +349,10 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_handle_request_handle_update_balance_correctly(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(2000)
-        market.set_commission_ratio(5)
-        self.assertEqual(market.balance, 2000)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 2000
+        market.commission_ratio = 0.05
 
         for i in range(4):
             market.data[i]["opening_price"] = 2000.00000000
@@ -412,8 +400,9 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_handle_request_return_error_result_when_turn_is_overed(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(2000)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 2000
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         for i in range(len(market.data) - 2):
@@ -422,16 +411,16 @@ class VirtualMarketTests(unittest.TestCase):
             self.assertEqual(result["type"], "buy")
 
         result = market.handle_request(dummy_request)
-        self.assertEqual(result["price"], -1)
-        self.assertEqual(result["amount"], -1)
+        self.assertEqual(result["price"], 0)
+        self.assertEqual(result["amount"], 0)
         self.assertEqual(result["msg"], "game-over")
 
     def test_handle_request_handle_turn_over_with_zero_price(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(2000)
-        market.set_commission_ratio(5)
-        self.assertEqual(market.balance, 2000)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 2000
+        market.commission_ratio = 0.05
 
         for i in range(3):
             market.data[i]["opening_price"] = 2000.00000000
@@ -460,31 +449,12 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(market.balance, 1790)
         self.assertEqual(result["state"], "done")
 
-    def test_deposit_update_balance_correctly(self):
-        market = VirtualMarket()
-        self.assertEqual(market.balance, 0)
-        market.deposit(1000)
-        self.assertEqual(market.balance, 1000)
-        market.deposit(-500)
-        self.assertEqual(market.balance, 500)
-
-    def test_set_commission_ratio_update_commision_ratio_correctly(self):
-        market = VirtualMarket()
-        self.assertEqual(market.commission_ratio, 0.0005)
-        market.set_commission_ratio(0.01)
-        self.assertEqual(market.commission_ratio, 0.0001)
-        market.set_commission_ratio(5)
-        self.assertEqual(market.commission_ratio, 0.05)
-        market.set_commission_ratio(70)
-        self.assertEqual(market.commission_ratio, 0.7)
-        market.set_commission_ratio(0.00007)
-        self.assertEqual(market.commission_ratio, 0.0000007)
-
     def test_get_balance_return_balance_and_property_list(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(2000)
-        market.set_commission_ratio(5)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 2000
+        market.commission_ratio = 0.05
         info = market.get_balance()
         self.assertEqual(info["balance"], 2000)
         self.assertEqual(len(info["asset"]), 0)
@@ -504,19 +474,19 @@ class VirtualMarketTests(unittest.TestCase):
         market.data[2]["opening_price"] = 2020.00000000
         market.data[2]["high_price"] = 2100.00000000
         market.data[2]["low_price"] = 1900.00000000
-        market.data[2]["trade_price"] = 2050.00000000
+        market.data[2]["trade_price"] = 2020.00000000
         market.data[2]["candle_date_time_kst"] = "2020-02-27T00:00:59"
 
         market.data[3]["opening_price"] = 2030.00000000
         market.data[3]["high_price"] = 2100.00000000
         market.data[3]["low_price"] = 1900.00000000
-        market.data[3]["trade_price"] = 2050.00000000
+        market.data[3]["trade_price"] = 2030.00000000
         market.data[3]["candle_date_time_kst"] = "2020-02-27T00:00:59"
 
         market.data[4]["opening_price"] = 2040.00000000
         market.data[4]["high_price"] = 2100.00000000
         market.data[4]["low_price"] = 1900.00000000
-        market.data[4]["trade_price"] = 2050.00000000
+        market.data[4]["trade_price"] = 2040.00000000
         market.data[4]["candle_date_time_kst"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
@@ -527,7 +497,7 @@ class VirtualMarketTests(unittest.TestCase):
         self.assertEqual(len(info["asset"]), 1)
         self.assertEqual(info["asset"]["mango"][0], 2000)
         self.assertEqual(info["asset"]["mango"][1], 0.1)
-        self.assertEqual(info["quote"]["mango"], 2010)
+        self.assertEqual(info["quote"]["mango"], 2050)
 
         dummy_request2 = {"id": "orange", "type": "buy", "price": 1900, "amount": 0.5}
         result = market.handle_request(dummy_request2)
@@ -559,15 +529,170 @@ class VirtualMarketTests(unittest.TestCase):
 
     def test_get_balance_return_None_when_data_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data_invalid_key.json", None, None)
-        market.deposit(2000)
+        market.is_initialized = True
+        market.data = self.get_invalid_key_data()
+        market.balance = 2000
         info = market.get_balance()
         self.assertEqual(info, None)
 
     def test_get_balance_return_None_when_data_index_invalid(self):
         market = VirtualMarket()
-        market.initialize_from_file("./tests/data/mango_data.json", None, None)
-        market.deposit(2000)
+        market.is_initialized = True
+        market.data = self.get_mango_data()
+        market.balance = 2000
         market.turn_count = 5000
         info = market.get_balance()
         self.assertEqual(info, None)
+
+    @staticmethod
+    def get_mango_data():
+        return [
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2000.00000000,
+                "high_price": 2100.00000000,
+                "low_price": 1900.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+        ]
+
+    @staticmethod
+    def get_invalid_key_data():
+        return [
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "pening_price": 2000.00000000,
+                "igh_price": 2100.00000000,
+                "ow_price": 1900.00000000,
+                "rade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "pening_price": 2050.00000000,
+                "igh_price": 2200.00000000,
+                "ow_price": 2000.00000000,
+                "rade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+            {
+                "market": "mango",
+                "candle_date_time_utc": "2020-02-25T06:41:00",
+                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "opening_price": 2050.00000000,
+                "high_price": 2200.00000000,
+                "low_price": 2000.00000000,
+                "trade_price": 2050.00000000,
+                "timestamp": 1582612901489,
+                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_trade_volume": 1.48642105,
+                "unit": 1,
+            },
+        ]

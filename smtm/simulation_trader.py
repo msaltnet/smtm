@@ -23,8 +23,7 @@ class SimulationTrader(Trader):
 
     def initialize_simulation(self, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""
-        self.market.initialize(end, count)
-        self.market.deposit(budget)
+        self.market.initialize(end, count, budget)
         self.is_initialized = True
 
     def send_request(self, request_list, callback):

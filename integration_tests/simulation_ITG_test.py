@@ -79,9 +79,9 @@ class SimulationIntegrationBnhTests(unittest.TestCase):
 
         self.assertIsNotNone(report)
         self.assertEqual(report[0], 100000)
-        self.assertEqual(report[1], 97575)
-        self.assertEqual(report[2], -2.425)
-        self.assertEqual(report[3]["KRW-BTC"], -2.059)
+        self.assertEqual(report[1], 97126)
+        self.assertEqual(report[2], -2.874)
+        self.assertEqual(report[3]["KRW-BTC"], -2.693)
 
     def check_equal_results_list(self, a, b):
         self.assertEqual(len(a), len(b))
@@ -170,7 +170,7 @@ class SimulationIntegrationSma0Tests(unittest.TestCase):
         self.assertEqual(report[0], 100000)
         self.assertEqual(report[1], 98966)
         self.assertEqual(report[2], -1.034)
-        self.assertEqual(report[3]["KRW-BTC"], -2.059)
+        self.assertEqual(report[3]["KRW-BTC"], -2.693)
 
     def check_equal_results_list(self, a, b):
         self.assertEqual(len(a), len(b))

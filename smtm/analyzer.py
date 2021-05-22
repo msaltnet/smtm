@@ -17,11 +17,11 @@ class Analyzer:
     """거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스
 
     Attributes:
-        request: 거래 요청 데이터 목록
-        result: 거래 결과 데이터 목록
-        infos: 거래 데이터 목록
-        asset_record_list: 특정 시점에 기록된 자산 데이터 목록
-        score_record_list: 특정 시점에 기록된 수익률 데이터 목록
+        request_list: 거래 요청 데이터 목록
+        result_list: 거래 결과 데이터 목록
+        info_list: 거래 데이터 목록
+        asset_info_list: 특정 시점에 기록된 자산 데이터 목록
+        score_list: 특정 시점에 기록된 수익률 데이터 목록
         update_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
 
     """
@@ -32,11 +32,11 @@ class Analyzer:
     SMA = (5, 20)
 
     def __init__(self):
-        self.request = []
-        self.result = []
-        self.infos = []
-        self.asset_record_list = []
-        self.score_record_list = []
+        self.request_list = []
+        self.result_list = []
+        self.info_list = []
+        self.asset_info_list = []
+        self.score_list = []
         self.update_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
@@ -55,7 +55,7 @@ class Analyzer:
         """
         new = copy.deepcopy(info)
         new["kind"] = 0
-        self.infos.append(new)
+        self.info_list.append(new)
         self.make_periodic_record()
 
     def put_requests(self, requests):
@@ -86,7 +86,7 @@ class Analyzer:
                 new["price"] = float(new["price"])
                 new["amount"] = float(new["amount"])
             new["kind"] = 1
-            self.request.append(new)
+            self.request_list.append(new)
 
     def put_result(self, result):
         """거래 결과 정보를 저장한다
@@ -109,9 +109,6 @@ class Analyzer:
             3: 수익률 정보
         """
 
-        if self.update_info_func is None:
-            self.logger.warning("update_info_func is NOT set")
-            return
         try:
             if float(result["price"]) <= 0 or float(result["amount"]) <= 0:
                 return
@@ -123,19 +120,18 @@ class Analyzer:
         new["price"] = float(new["price"])
         new["amount"] = float(new["amount"])
         new["kind"] = 2
-        self.result.append(new)
-        self.put_asset_info(self.update_info_func())
+        self.result_list.append(new)
+        self.update_asset_info()
 
     def initialize(self, update_info_func):
         """콜백 함수를 입력받아 초기화한다
 
         Args:
             update_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
-
         """
         self.update_info_func = update_info_func
 
-    def put_asset_info(self, asset_info):
+    def update_asset_info(self):
         """자산 정보를 저장한다
 
         returns:
@@ -145,33 +141,36 @@ class Analyzer:
             quote: 종목별 현재 가격 딕셔너리
         }
         """
+        if self.update_info_func is None:
+            self.logger.warning("update_info_func is NOT set")
+            return
+
+        asset_info = self.update_info_func()
         new = copy.deepcopy(asset_info)
         new["balance"] = float(new["balance"])
-        if self.is_simulation is True and len(self.infos) > 0:
-            new["date_time"] = self.infos[-1]["date_time"]
-        self.asset_record_list.append(new)
+        if self.is_simulation is True and len(self.info_list) > 0:
+            new["date_time"] = self.info_list[-1]["date_time"]
+        self.asset_info_list.append(new)
         self.make_score_record(new)
 
     def make_start_point(self):
         """시작시점 거래정보를 기록한다"""
-        self.request = []
-        self.result = []
-        self.asset_record_list = []
-        if self.update_info_func is not None:
-            self.put_asset_info(self.update_info_func())
+        self.request_list = []
+        self.result_list = []
+        self.asset_info_list = []
+        self.update_asset_info()
 
     def make_periodic_record(self):
         """주기적으로 수익율을 기록한다"""
         now = datetime.now()
         if self.is_simulation:
-            now = datetime.strptime(self.infos[-1]["date_time"], self.ISO_DATEFORMAT)
-        if len(self.asset_record_list) < 2:
-            return
-        last = datetime.strptime(self.asset_record_list[-1]["date_time"], self.ISO_DATEFORMAT)
+            now = datetime.strptime(self.info_list[-1]["date_time"], self.ISO_DATEFORMAT)
+
+        last = datetime.strptime(self.asset_info_list[-1]["date_time"], self.ISO_DATEFORMAT)
         delta = now - last
 
-        if delta.total_seconds() > self.RECORD_INTERVAL and self.update_info_func is not None:
-            self.put_asset_info(self.update_info_func())
+        if delta.total_seconds() > self.RECORD_INTERVAL:
+            self.update_asset_info()
 
     def make_score_record(self, new_info):
         """수익률 기록을 생성한다
@@ -187,7 +186,7 @@ class Analyzer:
 
         try:
             start_total = self.__get_start_property_value()
-            start_quote = self.asset_record_list[0]["quote"]
+            start_quote = self.asset_info_list[0]["quote"]
             current_total = float(new_info["balance"])
             current_quote = new_info["quote"]
             cumulative_return = 0
@@ -198,18 +197,18 @@ class Analyzer:
             for name, item in new_info["asset"].items():
                 item_yield = 0
                 amount = float(item[1])
-                avg_buy = float(item[0])
+                buy_avg = float(item[0])
                 price = float(current_quote[name])
                 current_total += amount * price
-                item_price_diff = price - avg_buy
-                if item_price_diff != 0 and avg_buy != 0:
-                    item_yield = (price - avg_buy) / avg_buy * 100
+                item_price_diff = price - buy_avg
+                if item_price_diff != 0 and buy_avg != 0:
+                    item_yield = (price - buy_avg) / buy_avg * 100
                     item_yield = round(item_yield, 3)
 
                 self.logger.debug(
-                    f"yield record {name}, avg_buy: {avg_buy}, {price}, {amount}, {item_yield}"
+                    f"yield record {name}, buy_avg: {buy_avg}, {price}, {amount}, {item_yield}"
                 )
-                new_asset_list.append((name, avg_buy, price, amount, item_yield))
+                new_asset_list.append((name, buy_avg, price, amount, item_yield))
                 start_price = start_quote[name]
                 price_change_ratio[name] = 0
                 price_diff = price - start_price
@@ -228,7 +227,7 @@ class Analyzer:
                 f"cumulative_return {start_total} -> {current_total}, {cumulative_return}%"
             )
 
-            self.score_record_list.append(
+            self.score_list.append(
                 {
                     "balance": float(new_info["balance"]),
                     "cumulative_return": cumulative_return,
@@ -253,14 +252,14 @@ class Analyzer:
                 graph: 그래프 파일 패스
             )
         """
-        if self.update_info_func is not None:
-            self.put_asset_info(self.update_info_func())
+        self.update_asset_info()
+
         try:
             graph = None
             start_value = self.__get_start_property_value()
             last_value = self.__get_last_property_value()
-            last_return = self.score_record_list[-1]["cumulative_return"]
-            change_ratio = self.score_record_list[-1]["price_change_ratio"]
+            last_return = self.score_list[-1]["cumulative_return"]
+            change_ratio = self.score_list[-1]["price_change_ratio"]
             if graph_filename is not None:
                 graph = self.__draw_graph(graph_filename, is_fullpath=True)
 
@@ -278,7 +277,7 @@ class Analyzer:
 
     def get_trading_results(self):
         """거래 결과 목록을 반환한다"""
-        return self.result
+        return self.result_list
 
     def create_report(self, filename=None, tag=None):
         """수익률 보고서를 생성한다
@@ -316,7 +315,7 @@ class Analyzer:
                 self.logger.error("invalid return report")
                 return None
 
-            list_sum = self.request + self.infos + self.score_record_list + self.result
+            list_sum = self.request_list + self.info_list + self.score_list + self.result_list
             trading_table = sorted(
                 list_sum,
                 key=lambda x: (
@@ -393,13 +392,13 @@ class Analyzer:
 
         # 그래프를 그리기 위해 매매, 수익률 정보를 트레이딩 정보와 합쳐서 하나의 테이블로 생성
         self.logger.debug("report plot data ===================================")
-        for info in self.infos:
+        for info in self.info_list:
             new = info.copy()
             info_time = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
 
             # 매매 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 매매별 하나씩만 추가됨
-            while result_pos < len(self.result):
-                result = self.result[result_pos]
+            while result_pos < len(self.result_list):
+                result = self.result_list[result_pos]
                 result_time = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
                 if info_time < result_time:
                     break
@@ -411,8 +410,8 @@ class Analyzer:
                 result_pos += 1
 
             # 수익률 정보를 추가. 정보가 없는 경우 최근 정보로 채움
-            while score_pos < len(self.score_record_list):
-                score = self.score_record_list[score_pos]
+            while score_pos < len(self.score_list):
+                score = self.score_list[score_pos]
                 score_time = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
 
                 # keep last one only
@@ -482,8 +481,8 @@ class Analyzer:
         return round(self.__get_property_total_value(-1))
 
     def __get_property_total_value(self, index):
-        total = float(self.asset_record_list[index]["balance"])
-        quote = self.asset_record_list[index]["quote"]
-        for name, item in self.asset_record_list[index]["asset"].items():
+        total = float(self.asset_info_list[index]["balance"])
+        quote = self.asset_info_list[index]["quote"]
+        for name, item in self.asset_info_list[index]["asset"].items():
             total += float(item[1]) * float(quote[name])
         return total
