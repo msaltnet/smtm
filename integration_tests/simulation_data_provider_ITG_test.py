@@ -3,7 +3,7 @@ from smtm import SimulationDataProvider
 from unittest.mock import *
 
 
-class SimulationDataProviderTests(unittest.TestCase):
+class SimulationDataProviderIntegrationTests(unittest.TestCase):
     def setUp(self):
         pass
 

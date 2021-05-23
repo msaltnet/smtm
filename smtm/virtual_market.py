@@ -116,55 +116,45 @@ class VirtualMarket:
         now = self.data[self.turn_count]["candle_date_time_kst"]
         self.turn_count += 1
         next_index = self.turn_count
-        error = {
-            "request": request,
-            "type": request["type"],
-            "price": 0,
-            "amount": 0,
-            "balance": self.balance,
-            "date_time": now,
-            "state": "done",
-        }
 
         if next_index >= len(self.data) - 1:
-            error["msg"] = "game-over"
-            return error
+            return {
+                "request": request,
+                "type": request["type"],
+                "price": 0,
+                "amount": 0,
+                "balance": self.balance,
+                "msg": "game-over",
+                "date_time": now,
+                "state": "done",
+            }
 
         if request["price"] == 0 or request["amount"] == 0:
-            error["msg"] = "turn over"
-            return error
+            self.logger.warning("turn over")
+            return "error!"
 
         if request["type"] == "buy":
-            result = self.__handle_buy_request(request, next_index)
+            result = self.__handle_buy_request(request, next_index, now)
         elif request["type"] == "sell":
-            result = self.__handle_sell_request(request, next_index)
+            result = self.__handle_sell_request(request, next_index, now)
         else:
-            error["msg"] = "invalid type"
-            result = error
-        result["date_time"] = now
+            self.logger.warning("invalid type request")
+            result = "error!"
         return result
 
-    def __handle_buy_request(self, request, next_index):
+    def __handle_buy_request(self, request, next_index, dt):
         buy_value = request["price"] * request["amount"]
         buy_total_value = buy_value * (1 + self.commission_ratio)
         old_balance = self.balance
-        error = {
-            "request": request,
-            "type": request["type"],
-            "price": 0,
-            "amount": 0,
-            "balance": self.balance,
-            "state": "done",
-        }
 
         if buy_total_value > self.balance:
-            error["msg"] = "no money"
-            return error
+            self.logger.info("no money")
+            return "error!"
 
         try:
             if request["price"] < self.data[next_index]["low_price"]:
-                error["msg"] = "not matched"
-                return error
+                self.logger.info("not matched")
+                return "error!"
 
             name = self.data[next_index]["market"]
             if name in self.asset:
@@ -187,32 +177,23 @@ class VirtualMarket:
                 "msg": "success",
                 "balance": self.balance,
                 "state": "done",
+                "date_time": dt,
             }
         except KeyError as msg:
-            self.logger.error(f"invalid trading data {msg}")
-            error["msg"] = "internal error"
-            return error
+            self.logger.warning(f"internal error {msg}")
+            return "error!"
 
-    def __handle_sell_request(self, request, next_index):
+    def __handle_sell_request(self, request, next_index, dt):
         old_balance = self.balance
-        error = {
-            "request": request,
-            "type": request["type"],
-            "price": 0,
-            "amount": 0,
-            "balance": self.balance,
-            "state": "done",
-        }
-
         try:
             name = self.data[next_index]["market"]
             if name not in self.asset:
-                error["msg"] = "asset empty"
-                return error
+                self.logger.info("asset empty")
+                return "error!"
 
             if request["price"] >= self.data[next_index]["high_price"]:
-                error["msg"] = "not matched"
-                return error
+                self.logger.info("not matched")
+                return "error!"
 
             sell_amount = request["amount"]
             if request["amount"] > self.asset[name][1]:
@@ -241,11 +222,11 @@ class VirtualMarket:
                 "msg": "success",
                 "balance": self.balance,
                 "state": "done",
+                "date_time": dt,
             }
         except KeyError as msg:
             self.logger.error(f"invalid trading data {msg}")
-            error["msg"] = "internal error"
-            return error
+            return "error!"
 
     def __print_balance_info(self, trading_type, old, new, total_asset_value):
         self.logger.debug(f"[Balance] from {old}")

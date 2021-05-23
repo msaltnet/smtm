@@ -4,7 +4,7 @@ from unittest.mock import *
 import requests
 
 
-class BithumbDataProviderTests(unittest.TestCase):
+class BithumbDataProviderIntegrationTests(unittest.TestCase):
     def setUp(self):
         pass
 

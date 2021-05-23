@@ -4,7 +4,7 @@ from unittest.mock import *
 import requests
 
 
-class UpbitDataProviderTests(unittest.TestCase):
+class UpbitDataProviderIntegrationTests(unittest.TestCase):
     def setUp(self):
         pass
 
@@ -22,4 +22,3 @@ class UpbitDataProviderTests(unittest.TestCase):
         self.assertEqual("closing_price" in info, True)
         self.assertEqual("acc_price" in info, True)
         self.assertEqual("acc_volume" in info, True)
-        print(info)

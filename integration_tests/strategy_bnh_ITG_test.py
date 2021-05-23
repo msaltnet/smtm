@@ -3,14 +3,14 @@ from smtm import StrategyBuyAndHold
 from unittest.mock import *
 
 
-class StrategyBuyAndHoldTests(unittest.TestCase):
+class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    def test_ITG_get_request_after_update_info_and_result(self):
+    def test_ITG_strategy_buy_and_hold_full(self):
         strategy = StrategyBuyAndHold()
         self.assertEqual(strategy.get_request(), None)
         strategy.initialize(50000, 5000)
