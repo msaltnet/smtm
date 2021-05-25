@@ -166,7 +166,7 @@ class SimulationTraderIntegrationTests(unittest.TestCase):
         print(result)
         self.assertEqual(result, expected_result)
 
-        # 7 계좌 정보 요청 - 변함 없음 확인
+        # 7 계좌 정보 요청
         expected_account_info = {
             "balance": 49924,
             "asset": {},

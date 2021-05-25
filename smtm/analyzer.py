@@ -22,8 +22,7 @@ class Analyzer:
         info_list: 거래 데이터 목록
         asset_info_list: 특정 시점에 기록된 자산 데이터 목록
         score_list: 특정 시점에 기록된 수익률 데이터 목록
-        update_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
-
+        get_asset_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -37,12 +36,20 @@ class Analyzer:
         self.info_list = []
         self.asset_info_list = []
         self.score_list = []
-        self.update_info_func = None
+        self.get_asset_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
         if os.path.isdir("output") is False:
             print("create output folder")
             os.mkdir("output")
+
+    def initialize(self, get_asset_info_func):
+        """콜백 함수를 입력받아 초기화한다
+
+        Args:
+            get_asset_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
+        """
+        self.get_asset_info_func = get_asset_info_func
 
     def put_trading_info(self, info):
         """거래 정보를 저장한다
@@ -123,14 +130,6 @@ class Analyzer:
         self.result_list.append(new)
         self.update_asset_info()
 
-    def initialize(self, update_info_func):
-        """콜백 함수를 입력받아 초기화한다
-
-        Args:
-            update_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
-        """
-        self.update_info_func = update_info_func
-
     def update_asset_info(self):
         """자산 정보를 저장한다
 
@@ -141,11 +140,11 @@ class Analyzer:
             quote: 종목별 현재 가격 딕셔너리
         }
         """
-        if self.update_info_func is None:
-            self.logger.warning("update_info_func is NOT set")
+        if self.get_asset_info_func is None:
+            self.logger.warning("get_asset_info_func is NOT set")
             return
 
-        asset_info = self.update_info_func()
+        asset_info = self.get_asset_info_func()
         new = copy.deepcopy(asset_info)
         new["balance"] = float(new["balance"])
         if self.is_simulation is True and len(self.info_list) > 0:

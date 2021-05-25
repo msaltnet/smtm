@@ -102,14 +102,14 @@ class AnalyzerTests(unittest.TestCase):
         dummy_info1 = {"name": "mango", "date_time": last.strftime(ISO_DATEFORMAT)}
         dummy_info2 = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
         analyzer.update_asset_info = MagicMock()
-        analyzer.update_info_func = MagicMock(return_value="mango")
+        analyzer.get_asset_info_func = MagicMock(return_value="mango")
         analyzer.asset_info_list.append(dummy_info1)
         analyzer.asset_info_list.append(dummy_info2)
 
         analyzer.make_periodic_record()
 
         analyzer.update_asset_info.assert_not_called()
-        analyzer.update_info_func.assert_not_called()
+        analyzer.get_asset_info_func.assert_not_called()
 
     def test_put_result_append_only_success_result(self):
         analyzer = Analyzer()
@@ -165,7 +165,7 @@ class AnalyzerTests(unittest.TestCase):
     def test_initialize_keep_update_info_func(self):
         analyzer = Analyzer()
         analyzer.initialize("mango")
-        self.assertEqual(analyzer.update_info_func, "mango")
+        self.assertEqual(analyzer.get_asset_info_func, "mango")
 
     def test_update_asset_info_append_asset_info(self):
         analyzer = Analyzer()
@@ -175,7 +175,7 @@ class AnalyzerTests(unittest.TestCase):
             "asset": "apple",
             "quote": "apple_quote",
         }
-        analyzer.update_info_func = MagicMock(return_value=dummy_info)
+        analyzer.get_asset_info_func = MagicMock(return_value=dummy_info)
         analyzer.update_asset_info()
         self.assertEqual(analyzer.asset_info_list[-1], dummy_info)
 
@@ -187,7 +187,7 @@ class AnalyzerTests(unittest.TestCase):
             "asset": "apple",
             "quote": "apple_quote",
         }
-        analyzer.update_info_func = MagicMock(return_value=dummy_info)
+        analyzer.get_asset_info_func = MagicMock(return_value=dummy_info)
         analyzer.update_asset_info()
         self.assertEqual(analyzer.asset_info_list[-1], dummy_info)
         analyzer.make_score_record.assert_called_once_with(dummy_info)

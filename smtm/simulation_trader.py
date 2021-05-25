@@ -46,6 +46,7 @@ class SimulationTrader(Trader):
             "amount": 거래 수량
             "msg": 거래 결과 메세지 success, internal error
             "balance": 거래 후 계좌 현금 잔고
+            "state": 거래 상태 requested, done
             "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 request의 시간
         }
         """
