@@ -1,5 +1,13 @@
 import unittest
-from smtm import JptController
+from smtm import (
+    JptController,
+    Analyzer,
+    UpbitTrader,
+    UpbitDataProvider,
+    StrategyBuyAndHold,
+    StrategySma0,
+    Operator,
+)
 from unittest.mock import *
 
 
@@ -10,103 +18,87 @@ class JptControllerTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch("signal.signal")
-    @patch("builtins.input", side_effect=EOFError)
-    def test_main_call_signal_to_listen_sigterm(self, mock_input, mock_signal):
+    @patch("smtm.Operator.set_interval")
+    @patch("smtm.Operator.initialize")
+    def test_initialize_should_call_initialize_operator_correctly(
+        self, mock_initialize, mock_set_interval
+    ):
         controller = JptController()
-        controller.operator = MagicMock()
-        controller.main()
-        mock_signal.assert_called_with(ANY, controller.terminate)
+        self.assertEqual(controller.needInit, True)
+        controller.initialize(interval=7, strategy=0, budget=300)
+        self.assertEqual(controller.needInit, False)
+        mock_set_interval.assert_called_with(7)
+        mock_initialize.assert_called()
+        self.assertTrue(isinstance(mock_initialize.call_args_list[0][0][0], UpbitDataProvider))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[0][0][1], StrategyBuyAndHold))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[0][0][2], UpbitTrader))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[0][0][3], Analyzer))
+        self.assertEqual(mock_initialize.call_args_list[0][1]["budget"], 300)
 
-    def test_create_command_make_command_static_info(self):
-        controller = JptController()
-        controller.command_list = []
-        self.assertEqual(len(controller.command_list), 0)
-        controller.create_command()
-        self.assertEqual(len(controller.command_list), 5)
+        controller.initialize(interval=5, strategy=1, budget=700)
+        mock_set_interval.assert_called_with(5)
+        self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][0], UpbitDataProvider))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][1], StrategySma0))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][2], UpbitTrader))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][3], Analyzer))
+        self.assertEqual(mock_initialize.call_args_list[1][1]["budget"], 700)
 
-    @patch("builtins.print")
-    def test_print_help_print_guide_correctly(self, mock_print):
+    @patch("smtm.Operator.start")
+    def test_start_should_call_operator_start_after_initialized(self, mock_start):
         controller = JptController()
-        controller.command_list = [{"guide": "orange"}]
-        controller.print_help()
-        self.assertEqual(mock_print.call_args_list[0][0][0], "명령어 목록 =================")
-        self.assertEqual(mock_print.call_args_list[1][0][0], "orange")
+        controller.initialize(interval=5, strategy=1, budget=700)
+        controller.start()
+        mock_start.assert_called_once()
 
-    def test__on_command_call_exactly_when_need_value_is_False(self):
+    @patch("smtm.Operator.start")
+    def test_start_should_NOT_call_operator_start_before_initialized(self, mock_start):
         controller = JptController()
-        dummy_action = MagicMock()
-        controller.command_list = [
-            {
-                "guide": "h, help          print command info",
-                "cmd": "help",
-                "short": "h",
-                "need_value": False,
-                "action": dummy_action,
-            },
-        ]
-        controller._on_command("help")
-        dummy_action.assert_called()
+        controller.start()
+        mock_start.assert_not_called()
 
-    @patch("builtins.print")
-    def test__on_command_just_print_error_message_when_invalid_command(self, mock_print):
+    @patch("smtm.Operator.stop")
+    def test_stop_should_call_operator_stop_after_initialized(self, mock_stop):
         controller = JptController()
-        controller.command_list = [
-            {
-                "guide": "h, help          print command info",
-                "cmd": "help",
-                "short": "h",
-                "need_value": False,
-            },
-        ]
-        controller._on_command("hell")
-        mock_print.assert_called_once_with("잘못된 명령어가 입력되었습니다")
+        controller.initialize(interval=5, strategy=1, budget=700)
+        self.assertEqual(controller.needInit, False)
+        controller.stop()
+        mock_stop.assert_called_once()
+        self.assertEqual(controller.needInit, True)
 
-    @patch("builtins.input")
-    def test__on_command_call_with_value(self, mock_input):
+    @patch("smtm.Operator.stop")
+    def test_stop_should_NOT_call_operator_stop_before_initialized(self, mock_stop):
         controller = JptController()
-        dummy_action = MagicMock()
-        controller.command_list = [
-            {
-                "guide": "c, count         set simulation count",
-                "cmd": "count",
-                "short": "c",
-                "need_value": True,
-                "value_guide": "input simulation count (ex. 100) :",
-                "action_with_value": dummy_action,
-            },
-        ]
-        mock_input.return_value = "mango"
-        controller._on_command("c")
-        mock_input.assert_called_once_with("input simulation count (ex. 100) :")
-        dummy_action.assert_called_once_with("mango")
+        controller.start()
+        mock_stop.assert_not_called()
 
     @patch("builtins.print")
-    def test__on_query_command_should_handle_command(self, mock_print):
+    def test_get_state_print_state_with_upper_case(self, mock_print):
         controller = JptController()
         controller.operator = MagicMock()
         controller.operator.state = "mango"
-        controller._on_query_command("state")
-        mock_print.assert_called_once_with("현재 상태: MANGO")
-        controller._on_query_command("score")
-        controller.operator.get_score.assert_called_once_with(ANY)
-        controller._on_query_command("result")
+        controller.get_state()
+        mock_print.assert_called_once_with("현재 시스템 상태: MANGO")
+
+    def test_get_score_call_operator_get_score(self):
+        controller = JptController()
+        controller.operator = MagicMock()
+        controller.get_score()
+        controller.operator.get_score.assert_called_once()
+
+    @patch("builtins.print")
+    def test_get_trading_record_call_operator_get_trading_results(self, mock_print):
+        controller = JptController()
+        controller.operator = MagicMock()
+        controller.operator.get_trading_results.return_value = [
+            {"date_time": "today", "type": "buy", "price": 555, "amount": 0.000123}
+        ]
+        controller.get_trading_record()
         controller.operator.get_trading_results.assert_called_once()
+        self.assertEqual(mock_print.call_args_list[-2][0][0], "@today, buy")
+        self.assertEqual(mock_print.call_args_list[-1][0][0], "555 x 0.000123")
 
-    def test_start_call_operator_start(self):
+    @patch("smtm.LogManager.set_stream_level")
+    def test_set_log_level_should_call_Logmanager_set_stream_level(self, mock_log):
         controller = JptController()
-        controller.operator = MagicMock()
-        controller.start()
-        controller.operator.start.assert_called()
-
-    def test_stop_call_operator_stop(self):
-        controller = JptController()
-        controller.operator = MagicMock()
-        controller.stop()
-        controller.operator.stop.assert_called()
-
-    def test_terminate_call_operator_stop(self):
-        controller = JptController()
-        controller.operator = MagicMock()
-        controller.terminate()
-        controller.operator.stop.assert_called()
+        controller.set_log_level(72)
+        mock_log.assert_called_once_with(72)
