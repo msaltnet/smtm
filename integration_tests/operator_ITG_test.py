@@ -11,5 +11,5 @@ class OperatorIntegrationTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_ITG_get_info_return_correct_data(self):
+    def test_ITG_operator(self):
         pass
