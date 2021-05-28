@@ -4,7 +4,8 @@ import json
 import requests
 import copy
 
-class TddExercise():
+
+class TddExercise:
     URL = "https://api.upbit.com/v1/candles/minutes/1"
     QUERY_STRING = {"market": "KRW-BTC"}
 
