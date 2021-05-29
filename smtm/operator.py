@@ -187,53 +187,15 @@ class Operator:
             self.logger.warning(f"invalid state : {self.state}")
             return
 
-        def get_and_return_score(task):
+        def get_score_callback(task):
             graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}.jpg"
             try:
                 task["callback"](self.analyzer.get_return_report(graph_filename))
             except TypeError:
                 self.logger.error("invalid callback")
 
-        self.worker.post_task({"runnable": get_and_return_score, "callback": callback})
+        self.worker.post_task({"runnable": get_score_callback, "callback": callback})
 
     def get_trading_results(self):
-        """현재까지 거래 결과를 반환한다"""
+        """현재까지 거래 결과 기록을 반환한다"""
         return self.analyzer.get_trading_results()
-
-    def send_manual_trading_request(self, trading_type, price=0, amount=0, callback=None):
-        """수동 거래 요청"""
-        if price == 0 or amount == 0 or callback is None:
-            return
-
-        if self.state != "running":
-            self.logger.warning(f"invalid state : {self.state}")
-            return
-
-        now = datetime.now().strftime(self.ISO_DATEFORMAT)
-        request = {
-            "id": "M-" + str(round(time.time(), 3)),
-            "type": trading_type,
-            "price": price,
-            "amount": amount,
-            "date_time": now,
-        }
-
-        def send_trading_and_return_result(task):
-            def send_manual_request_callback(result):
-                self.logger.debug("send_manual_request_callback is called")
-                self.strategy.update_result(result)
-                self.analyzer.put_result(result)
-                try:
-                    task["callback"](result)
-                except TypeError:
-                    self.logger.error("invalid callback")
-
-            try:
-                self.trader.send_request(task["request"], send_manual_request_callback)
-                self.analyzer.put_requests(task["request"])
-            except KeyError:
-                self.logger.error("invalid task")
-
-        self.worker.post_task(
-            {"runnable": send_trading_and_return_result, "callback": callback, "request": request}
-        )

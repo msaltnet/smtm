@@ -22,6 +22,7 @@ class SimulationOperator(Operator):
         simulation_terminated 상태는 시뮬레이션에만 존재하는 상태로서 시뮬레이션이 끝났으나
         Operator는 중지되지 않은 상태. Operator의 시작과 중지는 외부부터 실행되어야 한다.
         """
+        del task
         self.logger.info(f"############# Simulation trading is started : {self.turn + 1}")
         self.is_timer_running = False
         try:
@@ -61,12 +62,13 @@ class SimulationOperator(Operator):
         시뮬레이션이 종료된 경우 마지막 수익률 전달한다
 
         Returns:
-        (
-            start_budget: 시작 자산
-            final_balance: 최종 자산
-            cumulative_return : 기준 시점부터 누적 수익률
-            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
-        )
+            (
+                start_budget: 시작 자산
+                final_balance: 최종 자산
+                cumulative_return : 기준 시점부터 누적 수익률
+                price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+                graph: 그래프 파일 패스
+            )
         """
 
         if self.state != "running":
@@ -74,10 +76,10 @@ class SimulationOperator(Operator):
             callback(self.last_report["summary"])
             return
 
-        def get_and_return_score(task):
+        def get_score_callback(task):
             try:
                 task["callback"](self.analyzer.get_return_report())
             except TypeError:
                 self.logger.error("invalid callback")
 
-        self.worker.post_task({"runnable": get_and_return_score, "callback": callback})
+        self.worker.post_task({"runnable": get_score_callback, "callback": callback})

@@ -297,64 +297,6 @@ class OperatorTests(unittest.TestCase):
         self.operator.get_score("dummy")
         self.operator.worker.post_task.assert_not_called()
 
-    def test_send_manual_trading_request_should_call_work_post_task_with_correct_task(self):
-        timer_mock = MagicMock()
-        self.threading_mock.return_value = timer_mock
-        self.operator.initialize(
-            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
-        )
-        self.operator.worker = MagicMock()
-        self.operator.state = "running"
-        self.operator.send_manual_trading_request("buy", amount=10, price=500, callback="dummy_cb")
-        self.operator.worker.post_task.assert_called_once_with(ANY)
-
-        callback = self.operator.worker.post_task.call_args[0][0]["callback"]
-        self.assertEqual(callback, "dummy_cb")
-        request = self.operator.worker.post_task.call_args[0][0]["request"]
-        self.assertEqual(request["type"], "buy")
-        self.assertEqual(request["price"], 500)
-        self.assertEqual(request["amount"], 10)
-
-        runnable = self.operator.worker.post_task.call_args[0][0]["runnable"]
-        task = {"runnable": MagicMock(), "callback": MagicMock(), "request": "dummy_request"}
-        runnable(task)
-        self.analyzer_mock.put_requests.assert_called_once_with("dummy_request")
-        self.trader_mock.send_request.assert_called_once_with("dummy_request", ANY)
-
-        trader_callback = self.trader_mock.send_request.call_args[0][1]
-        trader_callback("dummy_result")
-        self.strategy_mock.update_result.assert_called_once_with("dummy_result")
-        self.analyzer_mock.put_result.assert_called_once_with("dummy_result")
-        task["callback"].assert_called_once_with("dummy_result")
-
-    def test_send_manual_trading_request_should_not_call_work_post_task_when_invalid_request(self):
-        timer_mock = MagicMock()
-        self.threading_mock.return_value = timer_mock
-        self.operator.initialize(
-            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
-        )
-        self.operator.worker = MagicMock()
-        self.operator.state = "running"
-        self.operator.send_manual_trading_request("buy", amount=0, price=500, callback="dummy_cb")
-        self.operator.worker.post_task.assert_not_called()
-
-        self.operator.send_manual_trading_request("sell", amount=10, price=0, callback="dummy_cb")
-        self.operator.worker.post_task.assert_not_called()
-
-        self.operator.send_manual_trading_request("buy", amount=10, price=50, callback=None)
-        self.operator.worker.post_task.assert_not_called()
-
-    def test_send_manual_trading_request_should_not_call_work_post_task_when_invalid_state(self):
-        timer_mock = MagicMock()
-        self.threading_mock.return_value = timer_mock
-        self.operator.initialize(
-            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
-        )
-        self.operator.worker = MagicMock()
-        self.operator.state = "pear"
-        self.operator.send_manual_trading_request("buy", amount=10, price=500, callback="dummy_cb")
-        self.operator.worker.post_task.assert_not_called()
-
     def test_get_trading_results_return_result_of_analyzer_get_trading_results(self):
         operator = Operator()
         operator.analyzer = MagicMock()
