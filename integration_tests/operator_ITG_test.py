@@ -44,6 +44,7 @@ class OperatorIntegrationTests(unittest.TestCase):
         op.set_interval(1)
         op.start()
         time.sleep(2.5)
+        strategy.get_request.assert_called()
         strategy.update_trading_info.assert_called()
         analyzer.put_trading_info.assert_called()
         analyzer.put_requests.assert_called_with("mango")

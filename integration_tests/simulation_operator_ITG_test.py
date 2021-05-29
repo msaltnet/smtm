@@ -1,12 +1,14 @@
 import time
 import unittest
-from smtm import SimulationDataProvider
-from smtm import SimulationOperator
-from smtm import SimulationTrader
-from smtm import StrategyBuyAndHold
-from smtm import StrategySma0
-from smtm import Analyzer
-from smtm import LogManager
+from smtm import (
+    SimulationDataProvider,
+    SimulationOperator,
+    SimulationTrader,
+    StrategyBuyAndHold,
+    StrategySma0,
+    Analyzer,
+    LogManager,
+)
 from .data import simulation_data
 from unittest.mock import *
 
@@ -14,7 +16,6 @@ from unittest.mock import *
 class SimulationOperatorIntegrationBnhTests(unittest.TestCase):
     def setUp(self):
         LogManager.set_stream_level(20)
-        pass
 
     def tearDown(self):
         pass
@@ -103,7 +104,6 @@ class SimulationOperatorIntegrationBnhTests(unittest.TestCase):
 class SimulationOperatorIntegrationSma0Tests(unittest.TestCase):
     def setUp(self):
         LogManager.set_stream_level(20)
-        pass
 
     def tearDown(self):
         pass
