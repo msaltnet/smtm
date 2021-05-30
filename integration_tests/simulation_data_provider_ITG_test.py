@@ -31,7 +31,7 @@ class SimulationDataProviderIntegrationTests(unittest.TestCase):
 
     def test_ITG_get_info_use_server_data(self):
         dp = SimulationDataProvider()
-        end_date = "2020-04-30T07:30:00Z"
+        end_date = "2020-04-30T16:30:00"
         return_value = dp.initialize_simulation(end=end_date, count=50)
         if dp.is_initialized is not True:
             self.assertEqual(dp.get_info(), None)

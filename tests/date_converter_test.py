@@ -13,23 +13,23 @@ class DateConverterTests(unittest.TestCase):
 
     def test_to_end_min_return_correct_tuple(self):
         result = DateConverter.to_end_min("200220-200320")
-        expect = ("2020-03-20T00:00:00Z", 41760)
+        expect = ("2020-03-20T00:00:00", 41760)
         self.assertEqual(result, expect)
 
         result = DateConverter.to_end_min("200220.120015-200320")
-        expect = ("2020-03-20T00:00:00Z", 41040)
+        expect = ("2020-03-20T00:00:00", 41040)
         self.assertEqual(result, expect)
 
         result = DateConverter.to_end_min("200220-200320.120015")
-        expect = ("2020-03-20T12:00:15Z", 42480)
+        expect = ("2020-03-20T12:00:15", 42480)
         self.assertEqual(result, expect)
 
         result = DateConverter.to_end_min("200220.120015-200320.235510")
-        expect = ("2020-03-20T23:55:10Z", 42475)
+        expect = ("2020-03-20T23:55:10", 42475)
         self.assertEqual(result, expect)
 
         result = DateConverter.to_end_min("201220.170000-201220.180000")
-        expect = ("2020-12-20T18:00:00Z", 60)
+        expect = ("2020-12-20T18:00:00", 60)
         self.assertEqual(result, expect)
 
         result = DateConverter.to_end_min("200520-200320")
@@ -67,8 +67,8 @@ class DateConverterTests(unittest.TestCase):
         self.assertEqual(result, "1981-04-30T00:00:00")
 
     def test_to_ktc_iso_str_return_correct_string(self):
-        result = DateConverter.to_ktc_iso_str("2019-01-04T13:48:09+09:00")
-        self.assertEqual(result, "2019-01-04T22:48:09")
+        result = DateConverter.from_kst_to_utc_str("2019-01-04T13:48:09")
+        self.assertEqual(result, "2019-01-04T04:48:09")
 
-        result = DateConverter.to_ktc_iso_str("2019-01-04T23:48:09+09:00")
-        self.assertEqual(result, "2019-01-05T08:48:09")
+        result = DateConverter.from_kst_to_utc_str("2019-01-04T23:48:09")
+        self.assertEqual(result, "2019-01-04T14:48:09")

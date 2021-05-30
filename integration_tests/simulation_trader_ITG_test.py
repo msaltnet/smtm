@@ -12,7 +12,7 @@ class SimulationTraderIntegrationTests(unittest.TestCase):
 
     def test_ITG_simulation_trader_full(self):
         trader = SimulationTrader()
-        end_date = "2020-04-30T07:30:00Z"
+        end_date = "2020-04-30T16:30:00"
         trader.initialize_simulation(end=end_date, count=50, budget=50000)
 
         # 1 거래 요청 - buy

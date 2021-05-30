@@ -18,7 +18,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         dummy_response.json.return_value = [{"market": "apple"}, {"market": "banana"}]
         mock_get.return_value = dummy_response
 
-        dp.initialize_simulation("mango", 300)
+        dp.initialize_simulation("2020-12-20T18:00:00", 300)
         self.assertEqual(dp.is_initialized, True)
         self.assertEqual(len(dp.data), 2)
         # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
@@ -26,7 +26,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         self.assertEqual(dp.data[1]["market"], "apple")
 
         mock_get.assert_called_once_with(dp.URL, params=ANY)
-        self.assertEqual(mock_get.call_args[1]["params"]["to"], "mango")
+        self.assertEqual(mock_get.call_args[1]["params"]["to"], "2020-12-20T09:00:00Z")
         self.assertEqual(mock_get.call_args[1]["params"]["count"], 300)
 
     @patch("requests.get")
@@ -49,7 +49,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         mock_get.return_value = dummy_response
 
         with self.assertRaises(UserWarning):
-            dp.initialize_simulation("mango", 300)
+            dp.initialize_simulation("2020-12-20T18:00:00", 300)
         self.assertEqual(dp.is_initialized, False)
 
     @patch("requests.get")
@@ -63,7 +63,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         mock_get.return_value = dummy_response
 
         with self.assertRaises(UserWarning):
-            dp.initialize_simulation("mango", 300)
+            dp.initialize_simulation("2020-12-20T18:00:00", 300)
         self.assertEqual(dp.is_initialized, False)
 
     @patch("requests.get")
@@ -77,7 +77,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         mock_get.return_value = dummy_response
 
         with self.assertRaises(UserWarning):
-            dp.initialize_simulation("mango", 300)
+            dp.initialize_simulation("2020-12-20T18:00:00", 300)
         self.assertEqual(dp.is_initialized, False)
 
     def test_get_info_return_None_without_initialize(self):

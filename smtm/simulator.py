@@ -17,143 +17,115 @@ from . import (
 
 
 class Simulator:
-    """smtm 시뮬레이터"""
+    """smtm 시뮬레이터
+
+    command_list:
+        {
+            guide: 화면에 출력될 명령어와 안내문
+            cmd: 입력 받은 명령어와 매칭되는 문자열
+            action: 명령어가 입력되었을때 실행되는 객체
+        }
+
+    config_list:
+        {
+            guide: 화면에 출력될 설정값과 안내문
+            value: 출력될 현재값
+            action: 입력 받은 설정값을 처리해주는 객체
+        }
+    """
 
     MAIN_STATEMENT = "input command (h:help): "
 
-    def __init__(self, end=None, count=100, interval=2, strategy=0, from_dash_to=None):
+    def __init__(self, interval=2, strategy=0, from_dash_to="201220.170000-201220.180000"):
         self.logger = LogManager.get_logger("Simulator")
         self.__terminating = False
-        self.end = "2020-12-20T16:23:00Z"
-        self.count = 100
+        self.start_str = "200430.170000"
+        self.end_str = "200430.180000"
         self.interval = interval
         self.operator = None
-        self.strategy = int(strategy)
+        self.strategy = strategy
         self.budget = 50000
-        self.is_initialized = False
-        self.command_list = []
-        self.create_command()
+        self.needInit = True
 
-        if self.strategy != 0 and self.strategy != 1:
-            self.strategy = 0
-            print(f"invalid strategy: {self.strategy}, replaced with 0")
+        self.interval = float(self.interval)
 
-        if end is not None:
-            self.end = end.replace("T", " ")
+        start_end = from_dash_to.split("-")
+        self.start_str = start_end[0]
+        self.end_str = start_end[1]
 
-        if count is not None:
-            self.count = count
-
-        if from_dash_to is not None:
-            dt = DateConverter.to_end_min(from_dash_to)
-            self.end = dt[0]
-            self.count = dt[1]
-
-        if interval is not None:
-            self.interval = float(self.interval)
-
-    def create_command(self):
-        """명령어 생성"""
         self.command_list = [
             {
                 "guide": "h, help          print command info",
-                "cmd": "help",
-                "short": "h",
-                "need_value": False,
+                "cmd": ["help", "h"],
                 "action": self.print_help,
             },
             {
                 "guide": "r, run           start running simulation",
-                "cmd": "run",
-                "short": "r",
-                "need_value": False,
+                "cmd": ["run", "r"],
                 "action": self.start,
             },
             {
                 "guide": "s, stop          stop running simulation",
-                "cmd": "stop",
-                "short": "s",
-                "need_value": False,
+                "cmd": ["stop", "s"],
                 "action": self._stop,
             },
             {
                 "guide": "t, terminate     terminate simulator",
-                "cmd": "terminate",
-                "short": "t",
-                "need_value": False,
+                "cmd": ["terminate", "t"],
                 "action": self.terminate,
             },
             {
-                "guide": "q, query         query and print current state or return score",
-                "cmd": "query",
-                "short": "q",
-                "need_value": True,
-                "value_guide": "input query target (ex. state, score, result) :",
-                "action_with_value": self._on_query_command,
-            },
-            {
-                "guide": "e, end           set simulation period end datetime",
-                "cmd": "end",
-                "short": "e",
-                "need_value": True,
-                "value_guide": "input simulation period end datetime(ex. 2020-12-20T18:00:00Z) :",
-                "action_with_value": self._set_end,
-            },
-            {
-                "guide": "c, count         set simulation count",
-                "cmd": "count",
-                "short": "c",
-                "need_value": True,
-                "value_guide": "input simulation count (ex. 100) :",
-                "action_with_value": self._set_count,
-            },
-            {
-                "guide": "int, interval    set simulation interval",
-                "cmd": "interval",
-                "short": "int",
-                "need_value": True,
-                "value_guide": "input simulation interval in seconds (ex. 0.5) :",
-                "action_with_value": self._set_interval,
-            },
-            {
-                "guide": "b, budget        set simulation budget",
-                "cmd": "budget",
-                "short": "b",
-                "need_value": True,
-                "value_guide": "input starting budget (ex. 70000) :",
-                "action_with_value": self._set_budget,
-            },
-            {
-                "guide": "st, strategy     set strategy",
-                "cmd": "strategy",
-                "short": "st",
-                "need_value": True,
-                "value_guide": "input strategy number 0: buy and hold, 1: SMA-0 :",
-                "action_with_value": self._set_strategy,
-            },
-            {
-                "guide": "l, log           set stream log level",
-                "cmd": "log",
-                "short": "l",
-                "need_value": True,
-                "value_guide": "set level (CRITICAL=50, ERROR=40, WARN=30, INFO=20, DEBUG=10) :",
-                "action_with_value": self._set_log_level,
-            },
-            {
                 "guide": "i, initialize    initialize simulation",
-                "cmd": "initialize",
-                "short": "i",
-                "need_value": False,
-                "action": self.initialize,
+                "cmd": ["initialize", "i"],
+                "action": self.initialize_with_command,
+            },
+            {
+                "guide": "1, state         query operating state",
+                "cmd": ["1"],
+                "action": self._print_state,
+            },
+            {
+                "guide": "2, score         query current score",
+                "cmd": ["2"],
+                "action": self._print_score,
+            },
+            {
+                "guide": "3, result        query trading result",
+                "cmd": ["3"],
+                "action": self._print_trading_result,
+            },
+        ]
+
+        self.config_list = [
+            {
+                "guide": "년월일.시분초 형식으로 시작 시점 입력. 예. 201220.162300",
+                "value": self.start_str,
+                "action": self._set_start_str,
+            },
+            {
+                "guide": "년월일.시분초 형식으로 종료 시점 입력. 예. 201220.162300",
+                "value": self.end_str,
+                "action": self._set_end_str,
+            },
+            {
+                "guide": "거래 간격 입력. 예. 1",
+                "value": self.interval,
+                "action": self._set_interval,
+            },
+            {
+                "guide": "예산 입력. 예. 50000",
+                "value": self.budget,
+                "action": self._set_budget,
+            },
+            {
+                "guide": "전략 번호 입력. 0: Buy and Hold, 1: SMA-0",
+                "value": self.strategy,
+                "action": self._set_strategy,
             },
         ]
 
     def main(self):
         """main 함수"""
-
-        self.logger.info(f"end: {self.end}")
-        self.logger.info(f"count: {self.count}")
-        self.logger.info(f"interval: {self.interval}")
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
 
@@ -165,7 +137,7 @@ class Simulator:
                 break
 
     def run_single(self):
-        """단독으로 1회 실행"""
+        """인터렉션 없이 초기 설정 값으로 단독 1회 실행"""
         self.initialize()
         self.start()
         while self.operator.state == "running":
@@ -183,41 +155,27 @@ class Simulator:
         """커맨드 처리"""
         value = None
         for cmd in self.command_list:
-            if cmd["cmd"] == key.lower() or cmd["short"] == key.lower():
-                if cmd["need_value"]:
-                    value = input(cmd["value_guide"])
-                self.execute_command(key, value)
+            if key.lower() in cmd["cmd"]:
+                cmd["action"]()
                 return
         print("invalid command")
 
-    def execute_command(self, command, value):
-        """가이드 문구 출력"""
-        for cmd in self.command_list:
-            if cmd["cmd"] == command.lower() or cmd["short"] == command.lower():
-                if cmd["need_value"]:
-                    cmd["action_with_value"](value)
-                else:
-                    cmd["action"]()
-                return
-        print("invalid command")
+    def initialize_with_command(self):
+        """설정 값을 입력받아서 초기화 진행"""
+        for config in self.config_list:
+            print(config["guide"])
+            value = input(f"현재값: {config['value']} >> ")
+            value = config["value"] if value == "" else value
+            print(f"설정값: {value}")
+            config["action"](value)
 
-    def _on_query_command(self, value):
-        """가이드 문구 출력"""
-        key = value.lower()
-        if key in ["state", "1"]:
-            print(self.operator.state)
-        elif key in ["score", "2"]:
-            self._get_score()
-        elif key in ["result", "3"]:
-            print(self.operator.get_trading_results())
+        self.initialize()
 
-    def _set_end(self, value):
-        self.end = value.replace("T", " ")
+    def _set_start_str(self, value):
+        self.start_str = value
 
-    def _set_count(self, value):
-        next_value = int(value)
-        if next_value > 0:
-            self.count = next_value
+    def _set_end_str(self, value):
+        self.end_str = value
 
     def _set_interval(self, value):
         next_value = float(value)
@@ -230,16 +188,28 @@ class Simulator:
             self.budget = next_value
 
     def _set_strategy(self, value):
-        if value == "0":
+        next_value = str(value)
+        if next_value == "0":
             self.strategy = 0
-        elif value == "1":
+        elif next_value == "1":
             self.strategy = 1
+        else:
+            self.strategy = 0
+            print(f"Invalid strategy number! set to {self.strategy}")
 
-    @staticmethod
-    def _set_log_level(value):
-        LogManager.set_stream_level(int(value))
+    def _print_state(self):
+        if self.operator is None:
+            print("초기화가 필요합니다")
+            return
+        print(self.operator.state)
 
-    def _get_score(self):
+    def _print_configuration(self, strategy_name):
+        print("Simulation Configuration =====")
+        print(f"Simulation Period {self.start_str} ~ {self.end_str}")
+        print(f"Budget: {self.budget}, Interval: {self.interval}")
+        print(f"Strategy: {strategy_name}")
+
+    def _print_score(self):
         def print_score_and_main_statement(score):
             print("current score ==========")
             print(score)
@@ -247,26 +217,36 @@ class Simulator:
 
         self.operator.get_score(print_score_and_main_statement)
 
+    def _print_trading_result(self):
+        results = self.operator.get_trading_results()
+
+        if results is None or len(results) == 0:
+            print("거래 기록이 없습니다")
+            return
+
+        for result in results:
+            print(f"@{result['date_time']}, {result['type']}")
+            print(f"{result['price']} x {result['amount']}")
+
     def initialize(self):
         """시뮬레이션 초기화"""
+
+        dt = DateConverter.to_end_min(self.start_str + "-" + self.end_str)
+        end = dt[0]
+        count = dt[1]
+
         if self.strategy == 0:
             strategy = StrategyBuyAndHold()
         else:
             strategy = StrategySma0()
         strategy.is_simulation = True
         self.operator = SimulationOperator()
+        self._print_configuration(strategy.name)
 
-        print("##### simulation is intialized #####")
-        print(f"end: {self.end}")
-        print(f"count: {self.count}")
-        print(f"interval: {self.interval}")
-        print("====================================")
-
-        end_str = self.end.replace(" ", "T")
         data_provider = SimulationDataProvider()
-        data_provider.initialize_simulation(end=end_str, count=self.count)
+        data_provider.initialize_simulation(end=end, count=count)
         trader = SimulationTrader()
-        trader.initialize_simulation(end=end_str, count=self.count, budget=self.budget)
+        trader.initialize_simulation(end=end, count=count, budget=self.budget)
         analyzer = Analyzer()
         analyzer.is_simulation = True
         self.operator.initialize(
@@ -277,16 +257,15 @@ class Simulator:
             budget=self.budget,
         )
         self.operator.set_interval(self.interval)
-        self.is_initialized = True
+        self.needInit = False
 
     def start(self):
         """시뮬레이션 시작, 재시작"""
-        if self.is_initialized is not True:
-            print("Not initialized")
+        if self.operator is None or self.needInit:
+            print("초기화가 필요합니다")
             return
 
         self.logger.info("Simulation start! ==================")
-        self.logger.info(f"end: {self.end}, count: {self.count}")
 
         if self.operator.start() is not True:
             print("Fail operator start")
@@ -302,6 +281,8 @@ class Simulator:
     def _stop(self):
         if self.operator is not None:
             self.operator.stop()
+            self.needInit = True
+            print("프로그램을 재시작하려면 초기화하세요")
 
     def terminate(self):
         """시뮬레이터 종료"""

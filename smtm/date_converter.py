@@ -14,7 +14,7 @@ class DateConverter:
 
         Returns:
             (
-                datetime: %Y-%m-%dT%H:%M:%SZ 형태의 datetime 문자열
+                datetime: %Y-%m-%dT%H:%M:%S 형태의 datetime 문자열
                 count: 주어진 기간을 분으로 변환
             )
         to_end_min('200220-200320')
@@ -30,7 +30,7 @@ class DateConverter:
             return None
         delta = to_dt - from_dt
         count = round(delta.total_seconds() / 60.0)
-        return cls.to_iso_string(to_dt) + "Z", count
+        return cls.to_iso_string(to_dt), count
 
     @classmethod
     def num_2_datetime(cls, number_string):
@@ -54,9 +54,8 @@ class DateConverter:
         return dt.strftime(cls.ISO_DATEFORMAT)
 
     @classmethod
-    def to_ktc_iso_str(cls, datetime_str):
-        """%Y-%m-%dT%H:%M:%S+09:00 형태의 문자열에서 +09:00 빼고, 9시간 더한 문자열 반환"""
-        removed_timezone = datetime_str.replace("+09:00", "")
-        dt = datetime.strptime(removed_timezone, "%Y-%m-%dT%H:%M:%S")
-        dt = dt + timedelta(hours=9)
+    def from_kst_to_utc_str(cls, datetime_str):
+        """%Y-%m-%dT%H:%M:%S 형태의 문자열에서 9시간 뺀 문자열 반환"""
+        dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S")
+        dt = dt - timedelta(hours=9)
         return dt.strftime(cls.ISO_DATEFORMAT)
