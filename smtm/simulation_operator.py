@@ -14,7 +14,6 @@ class SimulationOperator(Operator):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.turn = 0
         self.budget = 0
-        self.last_report = None
 
     def _execute_trading(self, task):
         """자동 거래를 실행 후 타이머를 실행한다
