@@ -25,12 +25,11 @@ class SimulationOperatorIntegrationBnhTests(unittest.TestCase):
         operator = SimulationOperator()
         strategy = StrategyBuyAndHold()
         strategy.is_simulation = True
-        end_date = "2020-04-30T07:30:00Z"
         count = 100
         budget = 100000
         interval = 0.1
         time_limit = 15
-        end_str = end_date.replace(" ", "T")
+        end_str = "2020-04-30T16:30:00"
 
         data_provider = SimulationDataProvider()
         data_provider.initialize_simulation(end=end_str, count=count)
@@ -113,12 +112,11 @@ class SimulationOperatorIntegrationSma0Tests(unittest.TestCase):
         operator = SimulationOperator()
         strategy = StrategySma0()
         strategy.is_simulation = True
-        end_date = "2020-04-30T07:30:00Z"
         count = 100
         budget = 100000
         interval = 0.1
         time_limit = 15
-        end_str = end_date.replace(" ", "T")
+        end_str = "2020-04-30T16:30:00"
 
         data_provider = SimulationDataProvider()
         data_provider.initialize_simulation(end=end_str, count=count)

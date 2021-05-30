@@ -1,6 +1,7 @@
 """업비트 거래소의 과거 거래 정보를 이용한 가상 거래소"""
 import copy
 import requests
+from .date_converter import DateConverter
 from .log_manager import LogManager
 
 
@@ -41,7 +42,7 @@ class VirtualMarket:
 
         query_string = copy.deepcopy(self.QUERY_STRING)
         if end is not None:
-            query_string["to"] = end
+            query_string["to"] = DateConverter.from_kst_to_utc_str(end) + "Z"
 
         query_string["count"] = count
 

@@ -2,6 +2,7 @@
 
 import copy
 import requests
+from .date_converter import DateConverter
 from .data_provider import DataProvider
 from .log_manager import LogManager
 
@@ -29,11 +30,11 @@ class SimulationDataProvider(DataProvider):
         self.index = 0
         query_string = copy.deepcopy(self.QUERY_STRING)
 
-        if end is not None:
-            query_string["to"] = end
-
-        query_string["count"] = count
         try:
+            if end is not None:
+                query_string["to"] = DateConverter.from_kst_to_utc_str(end) + "Z"
+            query_string["count"] = count
+
             response = requests.get(self.URL, params=query_string)
             response.raise_for_status()
             self.data = response.json()
@@ -71,7 +72,7 @@ class SimulationDataProvider(DataProvider):
             return None
 
         self.index = now + 1
-        self.logger.info(f'[DATA] @ {self.data[now]["candle_date_time_utc"]}')
+        self.logger.info(f'[DATA] @ {self.data[now]["candle_date_time_kst"]}')
         return self.__create_candle_info(self.data[now])
 
     def __create_candle_info(self, data):
