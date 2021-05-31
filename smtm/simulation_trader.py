@@ -56,7 +56,8 @@ class SimulationTrader(Trader):
 
         try:
             result = self.market.handle_request(request_list[0])
-            callback(result)
+            if result is not None:
+                callback(result)
         except (TypeError, AttributeError) as msg:
             self.logger.error(f"invalid state {msg}")
             raise UserWarning("invalid state") from msg

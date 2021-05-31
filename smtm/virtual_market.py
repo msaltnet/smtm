@@ -131,8 +131,8 @@ class VirtualMarket:
             }
 
         if request["price"] == 0 or request["amount"] == 0:
-            self.logger.warning("turn over")
-            return "error!"
+            self.logger.info("turn over")
+            return None
 
         if request["type"] == "buy":
             result = self.__handle_buy_request(request, next_index, now)

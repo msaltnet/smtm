@@ -389,7 +389,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "buy", "price": 0, "amount": 0}
         result = market.handle_request(dummy_request)
-        self.assertEqual(result, "error!")
+        self.assertEqual(result, None)
 
         dummy_request2 = {"id": "orange", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request2)

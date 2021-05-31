@@ -42,6 +42,7 @@ class SimulationOperator(Operator):
                     self.last_report = self.analyzer.create_report(tag=self.tag)
                     self.state = "simulation_terminated"
                     return
+
                 self.strategy.update_result(result)
                 self.analyzer.put_result(result)
 
