@@ -1,5 +1,6 @@
 """시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영"""
 
+import time
 from .log_manager import LogManager
 from .operator import Operator
 
@@ -56,7 +57,7 @@ class SimulationOperator(Operator):
         self._start_timer()
         return True
 
-    def get_score(self, callback):
+    def get_score(self, callback, index=None, graph=False):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
         시뮬레이션이 종료된 경우 마지막 수익률 전달한다
 
@@ -76,8 +77,11 @@ class SimulationOperator(Operator):
             return
 
         def get_score_callback(task):
+            graph_filename = f"{self.OUTPUT_FOLDER}gs{round(time.time())}.jpg"
             try:
-                task["callback"](self.analyzer.get_return_report())
+                task["callback"](
+                    self.analyzer.get_return_report(graph_filename=graph_filename, index=index)
+                )
             except TypeError:
                 self.logger.error("invalid callback")
 

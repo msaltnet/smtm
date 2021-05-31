@@ -74,7 +74,7 @@ class JptController:
 
         print(f"현재 시스템 상태: {state}")
 
-    def get_score(self):
+    def get_score(self, index=None):
         """현재 수익률과 그래프 출력"""
 
         if self.operator is None:
@@ -87,7 +87,7 @@ class JptController:
             if len(score) > 4 and score[4] is not None:
                 display(Image(filename=score[4]))
 
-        self.operator.get_score(print_score_and_main_statement)
+        self.operator.get_score(print_score_and_main_statement, index)
 
     def get_trading_record(self):
         """현재까지 거래 기록 출력"""

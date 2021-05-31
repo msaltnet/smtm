@@ -426,6 +426,7 @@ class AnalyzerTests(unittest.TestCase):
         dummy_asset_info = {
             "balance": 23456,
             "asset": {},
+            "date_time": "2020-02-23T00:00:00",
             "quote": {"banana": 1700, "mango": 600, "apple": 500},
         }
         analyzer.asset_info_list.append(dummy_asset_info)
@@ -434,6 +435,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 5000,
             "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
             "quote": {"banana": 2000, "mango": 300, "apple": 750},
+            "date_time": "2020-02-23T00:01:00",
         }
         analyzer.asset_info_list.append(target_dummy_asset)
         analyzer.score_list.append(
@@ -496,6 +498,7 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 5000,
             "asset": {"mango": (600, 4.23), "apple": (500, 3.11)},
             "quote": {"banana": 3000, "mango": 200, "apple": 0.750},
+            "date_time": "2020-02-23T00:01:00",
         }
         analyzer.asset_info_list.append(target_dummy_asset2)
         analyzer.score_list.append(
@@ -551,6 +554,61 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[3]["apple"], -99.85)
 
         analyzer.update_asset_info.assert_called_once()
+
+    def test_get_return_report_return_correct_report_with_index(self):
+        """
+        {
+            cumulative_return: 기준 시점부터 누적 수익률
+            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+            asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
+            date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+            graph: 그래프 파일 패스
+        }
+        """
+        analyzer = Analyzer()
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
+        self.fill_test_data_for_report_10(analyzer)
+        analyzer.update_asset_info = MagicMock()
+        analyzer.MAX_PLOT_POINT = 3
+
+        report = analyzer.get_return_report(index=-3)
+
+        self.assertEqual(len(report), 5)
+        # 입금 자산
+        self.assertEqual(report[0], 100016)
+        # 최종 자산
+        self.assertEqual(report[1], 100093)
+        # 누적 수익률
+        self.assertEqual(report[2], 0.093)
+        # 가격 변동률
+        self.assertEqual(report[3]["KRW-BTC"], 0.236)
+
+        report = analyzer.get_return_report(index=2)
+
+        self.assertEqual(len(report), 5)
+        # 입금 자산
+        self.assertEqual(report[0], 100197)
+        # 최종 자산
+        self.assertEqual(report[1], 100197)
+        # 누적 수익률
+        self.assertEqual(report[2], 0.197)
+        # 가격 변동률
+        self.assertEqual(report[3]["KRW-BTC"], 0.396)
+
+        report = analyzer.get_return_report(index=-1)
+
+        self.assertEqual(len(report), 5)
+        # 입금 자산
+        self.assertEqual(report[0], 100197)
+        # 최종 자산
+        self.assertEqual(report[1], 100413)
+        # 누적 수익률
+        self.assertEqual(report[2], 0.413)
+        # 가격 변동률
+        self.assertEqual(report[3]["KRW-BTC"], 0.613)
+
+        analyzer.update_asset_info.assert_called()
 
     @patch("mplfinance.plot")
     def test_get_return_report_draw_graph_when_graph_filename_exist(self, mock_plot):
@@ -876,3 +934,348 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         analyzer.result_list = "mango"
         self.assertEqual(analyzer.get_trading_results(), "mango")
+
+    def fill_test_data_for_report_10(self, analyzer):
+        analyzer.info_list = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:50:00",
+                "opening_price": 10591000.0,
+                "high_price": 10605000.0,
+                "low_price": 10591000.0,
+                "closing_price": 10605000.0,
+                "acc_price": 116316536.37072,
+                "acc_volume": 10.97288124,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:51:00",
+                "opening_price": 10608000.0,
+                "high_price": 10611000.0,
+                "low_price": 10596000.0,
+                "closing_price": 10598000.0,
+                "acc_price": 132749879.7377,
+                "acc_volume": 12.52234496,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:52:00",
+                "opening_price": 10598000.0,
+                "high_price": 10611000.0,
+                "low_price": 10596000.0,
+                "closing_price": 10611000.0,
+                "acc_price": 59612254.02454,
+                "acc_volume": 5.6232814,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:53:00",
+                "opening_price": 10612000.0,
+                "high_price": 10622000.0,
+                "low_price": 10612000.0,
+                "closing_price": 10622000.0,
+                "acc_price": 50830798.21126,
+                "acc_volume": 4.78835739,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:54:00",
+                "opening_price": 10617000.0,
+                "high_price": 10630000.0,
+                "low_price": 10617000.0,
+                "closing_price": 10630000.0,
+                "acc_price": 82005173.84158,
+                "acc_volume": 7.71635194,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:55:00",
+                "opening_price": 10630000.0,
+                "high_price": 10650000.0,
+                "low_price": 10630000.0,
+                "closing_price": 10650000.0,
+                "acc_price": 99752483.10131,
+                "acc_volume": 9.37410465,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:56:00",
+                "opening_price": 10646000.0,
+                "high_price": 10657000.0,
+                "low_price": 10646000.0,
+                "closing_price": 10646000.0,
+                "acc_price": 328379382.72467,
+                "acc_volume": 30.83367158,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:57:00",
+                "opening_price": 10646000.0,
+                "high_price": 10650000.0,
+                "low_price": 10645000.0,
+                "closing_price": 10647000.0,
+                "acc_price": 51564466.13633,
+                "acc_volume": 4.84241397,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:58:00",
+                "opening_price": 10646000.0,
+                "high_price": 10669000.0,
+                "low_price": 10646000.0,
+                "closing_price": 10669000.0,
+                "acc_price": 197890470.89159,
+                "acc_volume": 18.56679051,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:59:00",
+                "opening_price": 10669000.0,
+                "high_price": 10671000.0,
+                "low_price": 10666000.0,
+                "closing_price": 10670000.0,
+                "acc_price": 106676249.34666,
+                "acc_volume": 9.99976792,
+                "kind": 0,
+            },
+        ]
+        analyzer.asset_info_list = [
+            {
+                "balance": 100000.0,
+                "asset": {},
+                "quote": {"KRW-BTC": 10605000.0},
+                "date_time": "2020-04-30T05:50:00",
+            },
+            {
+                "balance": 79840.0,
+                "asset": {"KRW-BTC": (10605000.0, 0.0019)},
+                "quote": {"KRW-BTC": 10598000.0},
+                "date_time": "2020-04-30T05:50:00",
+            },
+            {
+                "balance": 59694.0,
+                "asset": {"KRW-BTC": (10601500, 0.0038)},
+                "quote": {"KRW-BTC": 10611000.0},
+                "date_time": "2020-04-30T05:51:00",
+            },
+            {
+                "balance": 59694.0,
+                "asset": {"KRW-BTC": (10601500, 0.0038)},
+                "quote": {"KRW-BTC": 10622000.0},
+                "date_time": "2020-04-30T05:53:00",
+            },
+            {
+                "balance": 39502.0,
+                "asset": {"KRW-BTC": (10608333, 0.0057)},
+                "quote": {"KRW-BTC": 10630000.0},
+                "date_time": "2020-04-30T05:53:00",
+            },
+            {
+                "balance": 19295.0,
+                "asset": {"KRW-BTC": (10613750, 0.0076)},
+                "quote": {"KRW-BTC": 10650000.0},
+                "date_time": "2020-04-30T05:54:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10646000.0},
+                "date_time": "2020-04-30T05:55:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10647000.0},
+                "date_time": "2020-04-30T05:57:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10670000.0},
+                "date_time": "2020-04-30T05:59:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10576000.0},
+                "date_time": "2020-04-30T06:01:00",
+            },
+        ]
+        analyzer.score_list = [
+            {
+                "balance": 100000.0,
+                "cumulative_return": 0,
+                "price_change_ratio": {},
+                "asset": [],
+                "date_time": "2020-04-30T05:50:00",
+                "kind": 3,
+            },
+            {
+                "balance": 79840.0,
+                "cumulative_return": -0.024,
+                "price_change_ratio": {"KRW-BTC": -0.066},
+                "asset": [("KRW-BTC", 10605000.0, 10598000.0, 0.0019, -0.066)],
+                "date_time": "2020-04-30T05:50:00",
+                "kind": 3,
+            },
+            {
+                "balance": 59694.0,
+                "cumulative_return": 0.016,
+                "price_change_ratio": {"KRW-BTC": 0.057},
+                "asset": [("KRW-BTC", 10601500.0, 10611000.0, 0.0038, 0.09)],
+                "date_time": "2020-04-30T05:51:00",
+                "kind": 3,
+            },
+            {
+                "balance": 59694.0,
+                "cumulative_return": 0.058,
+                "price_change_ratio": {"KRW-BTC": 0.16},
+                "asset": [("KRW-BTC", 10601500.0, 10622000.0, 0.0038, 0.193)],
+                "date_time": "2020-04-30T05:53:00",
+                "kind": 3,
+            },
+            {
+                "balance": 39502.0,
+                "cumulative_return": 0.093,
+                "price_change_ratio": {"KRW-BTC": 0.236},
+                "asset": [("KRW-BTC", 10608333.0, 10630000.0, 0.0057, 0.204)],
+                "date_time": "2020-04-30T05:53:00",
+                "kind": 3,
+            },
+            {
+                "balance": 19295.0,
+                "cumulative_return": 0.235,
+                "price_change_ratio": {"KRW-BTC": 0.424},
+                "asset": [("KRW-BTC", 10613750.0, 10650000.0, 0.0076, 0.342)],
+                "date_time": "2020-04-30T05:54:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": 0.187,
+                "price_change_ratio": {"KRW-BTC": 0.387},
+                "asset": [("KRW-BTC", 10620691.0, 10646000.0, 0.0094, 0.238)],
+                "date_time": "2020-04-30T05:55:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": 0.197,
+                "price_change_ratio": {"KRW-BTC": 0.396},
+                "asset": [("KRW-BTC", 10620691.0, 10647000.0, 0.0094, 0.248)],
+                "date_time": "2020-04-30T05:57:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": 0.413,
+                "price_change_ratio": {"KRW-BTC": 0.613},
+                "asset": [("KRW-BTC", 10620691.0, 10670000.0, 0.0094, 0.464)],
+                "date_time": "2020-04-30T05:59:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": -0.471,
+                "price_change_ratio": {"KRW-BTC": -0.273},
+                "asset": [("KRW-BTC", 10620691.0, 10576000.0, 0.0094, -0.421)],
+                "date_time": "2020-04-30T06:01:00",
+                "kind": 3,
+            },
+        ]
+        analyzer.result_list = [
+            {
+                "request": {
+                    "id": "1622473847.721",
+                    "type": "buy",
+                    "price": 10605000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:50:00",
+                },
+                "type": "buy",
+                "price": 10605000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 79840,
+                "state": "done",
+                "date_time": "2020-04-30T05:50:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473848.262",
+                    "type": "buy",
+                    "price": 10598000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:51:00",
+                },
+                "type": "buy",
+                "price": 10598000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 59694,
+                "state": "done",
+                "date_time": "2020-04-30T05:51:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473849.316",
+                    "type": "buy",
+                    "price": 10622000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:53:00",
+                },
+                "type": "buy",
+                "price": 10622000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 39502,
+                "state": "done",
+                "date_time": "2020-04-30T05:53:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473849.851",
+                    "type": "buy",
+                    "price": 10630000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:54:00",
+                },
+                "type": "buy",
+                "price": 10630000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 19295,
+                "state": "done",
+                "date_time": "2020-04-30T05:54:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473850.386",
+                    "type": "buy",
+                    "price": 10650000.0,
+                    "amount": 0.0018,
+                    "date_time": "2020-04-30T05:55:00",
+                },
+                "type": "buy",
+                "price": 10650000.0,
+                "amount": 0.0018,
+                "msg": "success",
+                "balance": 115,
+                "state": "done",
+                "date_time": "2020-04-30T05:55:00",
+                "kind": 2,
+            },
+        ]

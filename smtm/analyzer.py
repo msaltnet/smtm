@@ -29,6 +29,7 @@ class Analyzer:
     OUTPUT_FOLDER = "output/"
     RECORD_INTERVAL = 60
     SMA = (5, 20)
+    MAX_PLOT_POINT = 480
 
     def __init__(self):
         self.request_list = []
@@ -239,7 +240,7 @@ class Analyzer:
         except (IndexError, AttributeError) as msg:
             self.logger.error(f"making score record fail {msg}")
 
-    def get_return_report(self, graph_filename=None):
+    def get_return_report(self, graph_filename=None, index=None):
         """현시점 기준 간단한 수익률 보고서를 제공한다
 
         Returns:
@@ -253,14 +254,64 @@ class Analyzer:
         """
         self.update_asset_info()
 
+        asset_info_list = self.asset_info_list
+        score_list = self.score_list
+        info_list = self.info_list
+        result_list = self.result_list
+
+        if index is not None:
+            interval_data = self.__make_interval_data(index)
+            asset_info_list = interval_data[0]
+            score_list = interval_data[1]
+            info_list = interval_data[2]
+            result_list = interval_data[3]
+
+        return self.__get_return_report(
+            asset_info_list, score_list, info_list, result_list, graph_filename=graph_filename
+        )
+
+    def __make_interval_data(self, index):
+        start = self.MAX_PLOT_POINT * index
+        end = start + self.MAX_PLOT_POINT if index != -1 else None
+        if abs(start) > len(self.info_list):
+            if start < 0:
+                info_list = self.info_list[: self.MAX_PLOT_POINT]
+            else:
+                info_list = self.info_list[-self.MAX_PLOT_POINT :]
+        else:
+            info_list = self.info_list[start:end]
+        start_dt = datetime.strptime(info_list[0]["date_time"], "%Y-%m-%dT%H:%M:%S")
+        end_dt = datetime.strptime(info_list[-1]["date_time"], "%Y-%m-%dT%H:%M:%S")
+
+        score_list = []
+        asset_info_list = []
+        result_list = []
+        self.__make_filtered_list(start_dt, end_dt, score_list, self.score_list)
+        self.__make_filtered_list(start_dt, end_dt, asset_info_list, self.asset_info_list)
+        self.__make_filtered_list(start_dt, end_dt, result_list, self.result_list)
+
+        return (asset_info_list, score_list, info_list, result_list)
+
+    @staticmethod
+    def __make_filtered_list(start_dt, end_dt, dest, source):
+        for target in source:
+            target_dt = datetime.strptime(target["date_time"], "%Y-%m-%dT%H:%M:%S")
+            if start_dt <= target_dt and target_dt <= end_dt:
+                dest.append(target)
+
+    def __get_return_report(
+        self, asset_info_list, score_list, info_list, result_list, graph_filename=None
+    ):
         try:
             graph = None
-            start_value = self.__get_start_property_value(self.asset_info_list)
-            last_value = self.__get_last_property_value(self.asset_info_list)
-            last_return = self.score_list[-1]["cumulative_return"]
-            change_ratio = self.score_list[-1]["price_change_ratio"]
+            start_value = Analyzer.__get_start_property_value(asset_info_list)
+            last_value = Analyzer.__get_last_property_value(asset_info_list)
+            last_return = score_list[-1]["cumulative_return"]
+            change_ratio = score_list[-1]["price_change_ratio"]
             if graph_filename is not None:
-                graph = self.__draw_graph(graph_filename, is_fullpath=True)
+                graph = self.__draw_graph(
+                    info_list, result_list, score_list, graph_filename, is_fullpath=True
+                )
 
             summary = (start_value, last_value, last_return, change_ratio, graph)
             self.logger.info("### Return Report ===============================")
@@ -323,7 +374,7 @@ class Analyzer:
                 ),
             )
             self.__create_report_file(final_filename, summary, trading_table)
-            self.__draw_graph(final_filename)
+            self.__draw_graph(self.info_list, self.result_list, self.score_list, final_filename)
             return {"summary": summary, "trading_table": trading_table}
         except (IndexError, AttributeError):
             self.logger.error("create report FAIL")
@@ -382,7 +433,7 @@ class Analyzer:
             report_file.write(f"Cumulative return                    {summary[2]:10} %\n")
             report_file.write(f"Price_change_ratio {summary[3]}\n")
 
-    def __create_plot_data(self):
+    def __create_plot_data(self, info_list, result_list, score_list):
         result_pos = 0
         score_pos = 0
         last_avr_price = None
@@ -391,13 +442,13 @@ class Analyzer:
 
         # 그래프를 그리기 위해 매매, 수익률 정보를 트레이딩 정보와 합쳐서 하나의 테이블로 생성
         self.logger.debug("report plot data ===================================")
-        for info in self.info_list:
+        for info in info_list:
             new = info.copy()
             info_time = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
 
             # 매매 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 매매별 하나씩만 추가됨
-            while result_pos < len(self.result_list):
-                result = self.result_list[result_pos]
+            while result_pos < len(result_list):
+                result = result_list[result_pos]
                 result_time = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
                 if info_time < result_time:
                     break
@@ -409,8 +460,8 @@ class Analyzer:
                 result_pos += 1
 
             # 수익률 정보를 추가. 정보가 없는 경우 최근 정보로 채움
-            while score_pos < len(self.score_list):
-                score = self.score_list[score_pos]
+            while score_pos < len(score_list):
+                score = score_list[score_pos]
                 score_time = datetime.strptime(score["date_time"], self.ISO_DATEFORMAT)
 
                 # keep last one only
@@ -433,8 +484,8 @@ class Analyzer:
             plot_data.append(new)
         return plot_data
 
-    def __draw_graph(self, filename, is_fullpath=False):
-        total = pd.DataFrame(self.__create_plot_data())
+    def __draw_graph(self, info_list, result_list, score_list, filename, is_fullpath=False):
+        total = pd.DataFrame(self.__create_plot_data(info_list, result_list, score_list))
         total = total.rename(
             columns={
                 "date_time": "Date",
