@@ -184,7 +184,7 @@ class Analyzer:
         """
 
         try:
-            start_total = self.__get_start_property_value()
+            start_total = self.__get_start_property_value(self.asset_info_list)
             start_quote = self.asset_info_list[0]["quote"]
             current_total = float(new_info["balance"])
             current_quote = new_info["quote"]
@@ -255,8 +255,8 @@ class Analyzer:
 
         try:
             graph = None
-            start_value = self.__get_start_property_value()
-            last_value = self.__get_last_property_value()
+            start_value = self.__get_start_property_value(self.asset_info_list)
+            last_value = self.__get_last_property_value(self.asset_info_list)
             last_return = self.score_list[-1]["cumulative_return"]
             change_ratio = self.score_list[-1]["price_change_ratio"]
             if graph_filename is not None:
@@ -473,15 +473,18 @@ class Analyzer:
         )
         return destination
 
-    def __get_start_property_value(self):
-        return round(self.__get_property_total_value(0))
+    @staticmethod
+    def __get_start_property_value(asset_info_list):
+        return round(Analyzer.__get_property_total_value(asset_info_list, 0))
 
-    def __get_last_property_value(self):
-        return round(self.__get_property_total_value(-1))
+    @staticmethod
+    def __get_last_property_value(asset_info_list):
+        return round(Analyzer.__get_property_total_value(asset_info_list, -1))
 
-    def __get_property_total_value(self, index):
-        total = float(self.asset_info_list[index]["balance"])
-        quote = self.asset_info_list[index]["quote"]
-        for name, item in self.asset_info_list[index]["asset"].items():
+    @staticmethod
+    def __get_property_total_value(asset_info_list, index):
+        total = float(asset_info_list[index]["balance"])
+        quote = asset_info_list[index]["quote"]
+        for name, item in asset_info_list[index]["asset"].items():
             total += float(item[1]) * float(quote[name])
         return total
