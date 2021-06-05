@@ -80,10 +80,13 @@ class SimulationOperator(Operator):
         def get_score_callback(task):
             graph_filename = f"{self.OUTPUT_FOLDER}gs{round(time.time())}.jpg"
             try:
+                index = task["index"]
                 task["callback"](
                     self.analyzer.get_return_report(graph_filename=graph_filename, index=index)
                 )
             except TypeError:
                 self.logger.error("invalid callback")
 
-        self.worker.post_task({"runnable": get_score_callback, "callback": callback})
+        self.worker.post_task(
+            {"runnable": get_score_callback, "callback": callback, "index": index}
+        )

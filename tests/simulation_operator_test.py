@@ -121,15 +121,15 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.initialize("banana", strategy, trader, analyzer)
         operator.worker = MagicMock()
         operator.state = "running"
-        operator.get_score("dummy")
-        operator.worker.post_task.assert_called_once_with({"runnable": ANY, "callback": "dummy"})
+        operator.get_score("dummy", index=7)
+        operator.worker.post_task.assert_called_once_with({"runnable": ANY, "callback": "dummy", "index": 7})
 
         operator.analyzer = MagicMock()
         operator.analyzer.get_return_report.return_value = "grape"
-        task = {"runnable": MagicMock(), "callback": MagicMock()}
+        task = {"runnable": MagicMock(), "callback": MagicMock(), "index": 10}
         runnable = operator.worker.post_task.call_args[0][0]["runnable"]
         runnable(task)
-        operator.analyzer.get_return_report.assert_called_once()
+        operator.analyzer.get_return_report.assert_called_once_with(graph_filename=ANY, index=10)
         task["callback"].assert_called_once_with("grape")
 
     def test_get_score_call_callback_with_last_report_when_state_is_NOT_running(self):

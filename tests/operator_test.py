@@ -276,14 +276,16 @@ class OperatorTests(unittest.TestCase):
         )
         self.operator.worker = MagicMock()
         self.operator.state = "running"
-        self.operator.get_score("dummy")
-        self.operator.worker.post_task.assert_called_once_with(ANY)
+        self.operator.get_score("dummy", index=7)
+        self.operator.worker.post_task.assert_called_once_with(
+            {"runnable": ANY, "callback": "dummy", "index": 7}
+        )
 
         self.analyzer_mock.get_return_report.return_value = "grape"
-        task = {"runnable": MagicMock(), "callback": MagicMock()}
+        task = {"runnable": MagicMock(), "callback": MagicMock(), "index": 5}
         runnable = self.operator.worker.post_task.call_args[0][0]["runnable"]
         runnable(task)
-        self.analyzer_mock.get_return_report.assert_called_once()
+        self.analyzer_mock.get_return_report.assert_called_once_with(graph_filename=ANY, index=5)
         task["callback"].assert_called_once_with("grape")
 
     def test_get_score_do_nothing_when_state_is_NOT_running(self):
