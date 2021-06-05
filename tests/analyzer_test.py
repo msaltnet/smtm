@@ -1279,3 +1279,58 @@ class AnalyzerTests(unittest.TestCase):
                 "kind": 2,
             },
         ]
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test__write_to_file_make_dumpfile_correctly(self, mock_file):
+        analyzer = Analyzer()
+        dummy_list = [{"mango": 500}, {"orange": 7.7}]
+        analyzer._write_to_file("mango_dump_file", dummy_list)
+        mock_file.assert_called_with("mango_dump_file", "w")
+        handle = mock_file()
+        expected = ["[\n", "{'mango': 500},\n", "{'orange': 7.7},\n", "]\n"]
+        for idx, val in enumerate(expected):
+            self.assertEqual(
+                handle.write.call_args_list[idx][0][0],
+                val,
+            )
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test__load_from_file_load_dumpfile_correctly(self, mock_file):
+        analyzer = Analyzer()
+        handle = mock_file()
+        handle.read.return_value = "[ {'mango': 500}, {'orange': 7.7},]"
+        dummy_list = analyzer._load_list_from_file("mango_dump_file")
+        mock_file.assert_called_with("mango_dump_file")
+        self.assertEqual(dummy_list, [{"mango": 500}, {"orange": 7.7}])
+
+    def test_dump_call_should_call__write_to_file_correctly(self):
+        analyzer = Analyzer()
+        analyzer._write_to_file = MagicMock()
+        analyzer.dump("mango")
+        called = analyzer._write_to_file.call_args_list
+        self.assertEqual(called[0][0][0], "mango.1")
+        self.assertEqual(called[1][0][0], "mango.2")
+        self.assertEqual(called[2][0][0], "mango.3")
+        self.assertEqual(called[3][0][0], "mango.4")
+        self.assertEqual(called[4][0][0], "mango.5")
+        self.assertEqual(called[0][0][1], analyzer.request_list)
+        self.assertEqual(called[1][0][1], analyzer.result_list)
+        self.assertEqual(called[2][0][1], analyzer.info_list)
+        self.assertEqual(called[3][0][1], analyzer.asset_info_list)
+        self.assertEqual(called[4][0][1], analyzer.score_list)
+
+    def test_load_dump_call_should_call__load_list_from_file_correctly(self):
+        analyzer = Analyzer()
+        analyzer._load_list_from_file = MagicMock(side_effect=["a", "b", "c", "d", "e"])
+        analyzer.load_dump("mango")
+        called = analyzer._load_list_from_file.call_args_list
+        self.assertEqual(called[0][0][0], "mango.1")
+        self.assertEqual(called[1][0][0], "mango.2")
+        self.assertEqual(called[2][0][0], "mango.3")
+        self.assertEqual(called[3][0][0], "mango.4")
+        self.assertEqual(called[4][0][0], "mango.5")
+        self.assertEqual(analyzer.request_list, "a")
+        self.assertEqual(analyzer.result_list, "b")
+        self.assertEqual(analyzer.info_list, "c")
+        self.assertEqual(analyzer.asset_info_list, "d")
+        self.assertEqual(analyzer.score_list, "e")

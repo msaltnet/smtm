@@ -5,6 +5,8 @@
 import copy
 import os
 from datetime import datetime
+import ast
+import json
 import matplotlib
 import pandas as pd
 import mplfinance as mpf
@@ -29,9 +31,9 @@ class Analyzer:
     OUTPUT_FOLDER = "output/"
     RECORD_INTERVAL = 60
     SMA = (5, 20)
-    MAX_PLOT_POINT = 480
+    MAX_PLOT_POINT = 240
 
-    def __init__(self):
+    def __init__(self, sma_s=None, sma_l=None):
         self.request_list = []
         self.result_list = []
         self.info_list = []
@@ -40,6 +42,9 @@ class Analyzer:
         self.get_asset_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
+        if sma_s is not None and sma_l is not None:
+            self.SMA = (sma_s, sma_l)
+
         if os.path.isdir("output") is False:
             print("create output folder")
             os.mkdir("output")
@@ -539,3 +544,32 @@ class Analyzer:
         for name, item in asset_info_list[index]["asset"].items():
             total += float(item[1]) * float(quote[name])
         return total
+
+    @staticmethod
+    def _write_to_file(filename, target_list):
+        with open(filename, "w") as dump_file:
+            dump_file.write("[\n")
+            for item in target_list:
+                dump_file.write(f"{item},\n")
+            dump_file.write("]\n")
+
+    @staticmethod
+    def _load_list_from_file(filename):
+        with open(filename) as dump_file:
+            data = dump_file.read()
+            target_list = ast.literal_eval(data)
+            return target_list
+
+    def dump(self, filename="dump"):
+        self._write_to_file(filename + ".1", self.request_list)
+        self._write_to_file(filename + ".2", self.result_list)
+        self._write_to_file(filename + ".3", self.info_list)
+        self._write_to_file(filename + ".4", self.asset_info_list)
+        self._write_to_file(filename + ".5", self.score_list)
+
+    def load_dump(self, filename="dump"):
+        self.request_list = self._load_list_from_file(filename + ".1")
+        self.result_list = self._load_list_from_file(filename + ".2")
+        self.info_list = self._load_list_from_file(filename + ".3")
+        self.asset_info_list = self._load_list_from_file(filename + ".4")
+        self.score_list = self._load_list_from_file(filename + ".5")
