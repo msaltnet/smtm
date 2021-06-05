@@ -12,3 +12,4 @@ from .simulation_data_provider_ITG_test import SimulationDataProviderIntegration
 from .simulation_trader_ITG_test import SimulationTraderIntegrationTests
 from .strategy_bnh_ITG_test import StrategyBuyAndHoldIntegrationTests
 from .upbit_data_provider_ITG_test import UpbitDataProviderIntegrationTests
+from .simulator_ITG_test import SimulatorIntegrationTests
