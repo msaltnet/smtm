@@ -5,13 +5,14 @@ mode:
     2 : controller for real trading
 Example) python -m smtm --mode 0
 Example) python -m smtm --mode 1
-Example) python -m smtm --from_dash_to 201220.170000-201220.180000 --term 1 --strategy 0
+Example) python -m smtm --budget 50000 --from_dash_to 201220.170000-201220.180000 --term 1 --strategy 0
 """
 import argparse
 from . import Simulator
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--budget", help="simulation budget", default="10000")
     parser.add_argument("--term", help="simulation tick interval (seconds)", default="1")
     parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0", default="0")
     parser.add_argument(
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     simulator = Simulator(
+        budget=args.budget,
         interval=args.term,
         strategy=args.strategy,
         from_dash_to=args.from_dash_to,

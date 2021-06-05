@@ -108,16 +108,14 @@ class SimulatorTests(unittest.TestCase):
     @patch("smtm.SimulationOperator.set_interval")
     @patch("smtm.SimulationOperator.initialize")
     def test_initialize_call_initialize(self, mock_initialize, mock_set_interval, mock_dp, mock_tr):
-        simulator = Simulator(from_dash_to="201220.170000-201220.180000")
+        simulator = Simulator(budget=7000, from_dash_to="201220.170000-201220.180000")
         simulator.interval = 0.1
         simulator.initialize()
         self.assertEqual(simulator.needInit, False)
         mock_initialize.assert_called_once()
         mock_set_interval.assert_called_once_with(0.1)
         mock_dp.assert_called_once_with(end="2020-12-20T18:00:00", count=60)
-        mock_tr.assert_called_once_with(
-            end="2020-12-20T18:00:00", count=60, budget=simulator.budget
-        )
+        mock_tr.assert_called_once_with(end="2020-12-20T18:00:00", count=60, budget=7000)
 
     def test_start_call_operator_start(self):
         simulator = Simulator()
