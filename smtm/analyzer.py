@@ -31,7 +31,7 @@ class Analyzer:
     OUTPUT_FOLDER = "output/"
     RECORD_INTERVAL = 60
     SMA = (5, 20)
-    MAX_PLOT_POINT = 240
+    MAX_PLOT_POINT = 180
 
     def __init__(self, sma_s=None, sma_l=None):
         self.request_list = []
@@ -255,6 +255,7 @@ class Analyzer:
                 cumulative_return : 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
                 graph: 그래프 파일 패스
+                period: 수익률 산출 구간
             )
         """
         self.update_asset_info()
@@ -318,7 +319,8 @@ class Analyzer:
                     info_list, result_list, score_list, graph_filename, is_fullpath=True
                 )
 
-            summary = (start_value, last_value, last_return, change_ratio, graph)
+            period = info_list[0]["date_time"] + " - " + info_list[-1]["date_time"]
+            summary = (start_value, last_value, last_return, change_ratio, graph, period)
             self.logger.info("### Return Report ===============================")
             self.logger.info(f"Property                 {start_value:10} -> {last_value:10}")
             self.logger.info(
@@ -326,6 +328,7 @@ class Analyzer:
             )
             self.logger.info(f"Cumulative return                    {last_return:10} %")
             self.logger.info(f"Price_change_ratio {change_ratio}")
+            self.logger.info(f"Period {period}")
             return summary
         except (IndexError, AttributeError):
             self.logger.error("get return report FAIL")

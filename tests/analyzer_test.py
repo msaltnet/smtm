@@ -542,7 +542,7 @@ class AnalyzerTests(unittest.TestCase):
 
         report = analyzer.get_return_report()
 
-        self.assertEqual(len(report), 5)
+        self.assertEqual(len(report), 6)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -552,6 +552,9 @@ class AnalyzerTests(unittest.TestCase):
         # 가격 변동률
         self.assertEqual(report[3]["mango"], -66.667)
         self.assertEqual(report[3]["apple"], -99.85)
+
+        self.assertEqual(report[4], None)
+        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
 
         analyzer.update_asset_info.assert_called_once()
 
@@ -574,7 +577,7 @@ class AnalyzerTests(unittest.TestCase):
 
         report = analyzer.get_return_report(index=-3)
 
-        self.assertEqual(len(report), 5)
+        self.assertEqual(len(report), 6)
         # 입금 자산
         self.assertEqual(report[0], 100016)
         # 최종 자산
@@ -583,10 +586,12 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[2], 0.093)
         # 가격 변동률
         self.assertEqual(report[3]["KRW-BTC"], 0.236)
+        self.assertEqual(report[4], None)
+        self.assertEqual(report[5], "2020-04-30T05:51:00 - 2020-04-30T05:53:00")
 
         report = analyzer.get_return_report(index=2)
 
-        self.assertEqual(len(report), 5)
+        self.assertEqual(len(report), 6)
         # 입금 자산
         self.assertEqual(report[0], 100197)
         # 최종 자산
@@ -595,10 +600,12 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[2], 0.197)
         # 가격 변동률
         self.assertEqual(report[3]["KRW-BTC"], 0.396)
+        self.assertEqual(report[4], None)
+        self.assertEqual(report[5], "2020-04-30T05:56:00 - 2020-04-30T05:58:00")
 
-        report = analyzer.get_return_report(index=-1)
+        report = analyzer.get_return_report(graph_filename="mango_graph.png", index=-1)
 
-        self.assertEqual(len(report), 5)
+        self.assertEqual(len(report), 6)
         # 입금 자산
         self.assertEqual(report[0], 100197)
         # 최종 자산
@@ -607,6 +614,8 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[2], 0.413)
         # 가격 변동률
         self.assertEqual(report[3]["KRW-BTC"], 0.613)
+        self.assertEqual(report[4], "mango_graph.png")
+        self.assertEqual(report[5], "2020-04-30T05:57:00 - 2020-04-30T05:59:00")
 
         analyzer.update_asset_info.assert_called()
 
@@ -628,7 +637,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_asset_info = MagicMock()
         report = analyzer.get_return_report("mango_graph.png")
 
-        self.assertEqual(len(report), 5)
+        self.assertEqual(len(report), 6)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -638,6 +647,9 @@ class AnalyzerTests(unittest.TestCase):
         # 가격 변동률
         self.assertEqual(report[3]["mango"], -66.667)
         self.assertEqual(report[3]["apple"], -99.85)
+
+        self.assertEqual(report[4], "mango_graph.png")
+        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
 
         analyzer.update_asset_info.assert_called_once()
         mock_plot.assert_called_once_with(
@@ -725,7 +737,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["trading_table"][8], expected_return2)
 
         # 입금 자산, 최종 자산, 누적 수익률, 가격 변동률을 포함한다
-        self.assertEqual(len(report["summary"]), 5)
+        self.assertEqual(len(report["summary"]), 6)
 
         # 입금 자산
         self.assertEqual(report["summary"][0], 23456)
@@ -740,7 +752,10 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][3]["mango"], -66.667)
         self.assertEqual(report["summary"][3]["apple"], -99.85)
 
-        analyzer.update_asset_info.assert_called_once()
+        self.assertEqual(report["summary"][3]["apple"], -99.85)
+
+        self.assertEqual(report["summary"][4], None)
+        self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
 
     @patch("mplfinance.plot")
     def test_create_report_call_update_info_func_with_asset_type_and_callback(self, mock_plot):
