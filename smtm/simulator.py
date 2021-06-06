@@ -47,7 +47,7 @@ class Simulator:
         self.operator = None
         self.strategy = strategy
         self.budget = int(budget)
-        self.needInit = True
+        self.need_init = True
 
         self.interval = float(self.interval)
 
@@ -155,11 +155,11 @@ class Simulator:
             budget=self.budget,
         )
         self.operator.set_interval(self.interval)
-        self.needInit = False
+        self.need_init = False
 
     def start(self):
         """시뮬레이션 시작, 재시작"""
-        if self.operator is None or self.needInit:
+        if self.operator is None or self.need_init:
             print("초기화가 필요합니다")
             return
 
@@ -179,7 +179,7 @@ class Simulator:
     def _stop(self):
         if self.operator is not None:
             self.operator.stop()
-            self.needInit = True
+            self.need_init = True
             print("프로그램을 재시작하려면 초기화하세요")
 
     def terminate(self):

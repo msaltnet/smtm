@@ -2,9 +2,6 @@
 
 Jupyter notebook에서 사용하기 좋게 만든 Operator를 사용해서 시스템을 컨트롤하는 모듈
 """
-import signal
-import time
-from IPython.display import clear_output
 from IPython.display import Image, display
 from . import (
     LogManager,
@@ -26,7 +23,7 @@ class JptController:
         self.strategy_num = strategy
         self.strategy = None
         self.operator = None
-        self.needInit = True
+        self.need_init = True
         self.logger = LogManager.get_logger("JptController")
 
     def initialize(self, interval=10, strategy=0, budget=50000):
@@ -44,13 +41,13 @@ class JptController:
             budget=self.budget,
         )
         self.operator.set_interval(self.interval)
-        self.needInit = False
+        self.need_init = False
         print("##### smtm is intialized #####")
         print(f"interval: {self.interval}, strategy: {self.strategy.name}, budget: {self.budget}")
 
     def start(self):
         """프로그램 시작, 재시작"""
-        if self.operator is None or self.needInit:
+        if self.operator is None or self.need_init:
             print("초기화가 필요합니다")
             return
 
@@ -63,7 +60,7 @@ class JptController:
         """프로그램 중지"""
         if self.operator is not None:
             self.operator.stop()
-            self.needInit = True
+            self.need_init = True
             print("프로그램을 재시작하려면 초기화하세요")
 
     def get_state(self):
@@ -105,7 +102,8 @@ class JptController:
             print(f"@{result['date_time']}, {result['type']}")
             print(f"{result['price']} x {result['amount']}")
 
-    def set_log_level(self, value):
+    @staticmethod
+    def set_log_level(value):
         """로그 레벨 설정
         (CRITICAL=50, ERROR=40, WARN=30, INFO=20, DEBUG=10)"""
 

@@ -24,9 +24,9 @@ class JptControllerTests(unittest.TestCase):
         self, mock_initialize, mock_set_interval
     ):
         controller = JptController()
-        self.assertEqual(controller.needInit, True)
+        self.assertEqual(controller.need_init, True)
         controller.initialize(interval=7, strategy=0, budget=300)
-        self.assertEqual(controller.needInit, False)
+        self.assertEqual(controller.need_init, False)
         mock_set_interval.assert_called_with(7)
         mock_initialize.assert_called()
         self.assertTrue(isinstance(mock_initialize.call_args_list[0][0][0], UpbitDataProvider))
@@ -60,10 +60,10 @@ class JptControllerTests(unittest.TestCase):
     def test_stop_should_call_operator_stop_after_initialized(self, mock_stop):
         controller = JptController()
         controller.initialize(interval=5, strategy=1, budget=700)
-        self.assertEqual(controller.needInit, False)
+        self.assertEqual(controller.need_init, False)
         controller.stop()
         mock_stop.assert_called_once()
-        self.assertEqual(controller.needInit, True)
+        self.assertEqual(controller.need_init, True)
 
     @patch("smtm.Operator.stop")
     def test_stop_should_NOT_call_operator_stop_before_initialized(self, mock_stop):
