@@ -32,19 +32,19 @@ class SimulatorIntegrationTests(unittest.TestCase):
     def test_ITG_run_simulation(self, mock_print, mock_input):
         simulator = Simulator()
         mock_input.side_effect = [
-            "i",
-            "200430.055000",
-            "200430.073000",
-            "0.1",
-            "1000000",
-            "1",
-            "r",
-            "1",
-            "s",
-            "3",
-            "1",
-            "2",
-            "t",
+            "i", # 초기화
+            "200430.055000", # 시뮬레이션 기간 시작점
+            "200430.073000", # 시뮬레이션 기간 종료점
+            "0.1", # interval
+            "1000000", # budget
+            "1", # 상태 출력
+            "r", # 시뮬레이션 시작
+            "1", # 상태 출력
+            "s", # 시뮬레이션 종료
+            "3", # 거래 내역 출력
+            "1", # 상태 출력
+            "2", # 수익률 출력
+            "t", # 시뮬레이터 종료
         ]
         simulator.main()
 

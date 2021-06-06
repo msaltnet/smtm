@@ -126,6 +126,78 @@ class Simulator:
             },
         ]
 
+    def initialize(self):
+        """시뮬레이션 초기화"""
+
+        dt = DateConverter.to_end_min(self.start_str + "-" + self.end_str)
+        end = dt[0]
+        count = dt[1]
+
+        if self.strategy == 0:
+            strategy = StrategyBuyAndHold()
+        else:
+            strategy = StrategySma0()
+        strategy.is_simulation = True
+        self.operator = SimulationOperator()
+        self._print_configuration(strategy.name)
+
+        data_provider = SimulationDataProvider()
+        data_provider.initialize_simulation(end=end, count=count)
+        trader = SimulationTrader()
+        trader.initialize_simulation(end=end, count=count, budget=self.budget)
+        analyzer = Analyzer()
+        analyzer.is_simulation = True
+        self.operator.initialize(
+            data_provider,
+            strategy,
+            trader,
+            analyzer,
+            budget=self.budget,
+        )
+        self.operator.set_interval(self.interval)
+        self.needInit = False
+
+    def start(self):
+        """시뮬레이션 시작, 재시작"""
+        if self.operator is None or self.needInit:
+            print("초기화가 필요합니다")
+            return
+
+        self.logger.info("Simulation start! ==================")
+
+        if self.operator.start() is not True:
+            print("Fail operator start")
+            return
+
+    def stop(self, signum, frame):
+        """시뮬레이션 중지"""
+        self._stop()
+        self.__terminating = True
+        print(f"Receive Signal {signum} {frame}")
+        print("Stop Singing")
+
+    def _stop(self):
+        if self.operator is not None:
+            self.operator.stop()
+            self.needInit = True
+            print("프로그램을 재시작하려면 초기화하세요")
+
+    def terminate(self):
+        """시뮬레이터 종료"""
+        print("Terminating......")
+        self._stop()
+        self.__terminating = True
+        print("Good Bye~")
+
+    def run_single(self):
+        """인터렉션 없이 초기 설정 값으로 단독 1회 실행"""
+        self.initialize()
+        self.start()
+        while self.operator.state == "running":
+            time.sleep(0.5)
+
+        self.terminate()
+
     def main(self):
         """main 함수"""
         signal.signal(signal.SIGINT, self.stop)
@@ -138,29 +210,19 @@ class Simulator:
             except EOFError:
                 break
 
-    def run_single(self):
-        """인터렉션 없이 초기 설정 값으로 단독 1회 실행"""
-        self.initialize()
-        self.start()
-        while self.operator.state == "running":
-            time.sleep(0.5)
-
-        self.terminate()
+    def on_command(self, key):
+        """커맨드 처리"""
+        for cmd in self.command_list:
+            if key.lower() in cmd["cmd"]:
+                cmd["action"]()
+                return
+        print("invalid command")
 
     def print_help(self):
         """가이드 문구 출력"""
         print("command list =================")
         for item in self.command_list:
             print(item["guide"])
-
-    def on_command(self, key):
-        """커맨드 처리"""
-        value = None
-        for cmd in self.command_list:
-            if key.lower() in cmd["cmd"]:
-                cmd["action"]()
-                return
-        print("invalid command")
 
     def initialize_with_command(self):
         """설정 값을 입력받아서 초기화 진행"""
@@ -229,66 +291,3 @@ class Simulator:
         for result in results:
             print(f"@{result['date_time']}, {result['type']}")
             print(f"{result['price']} x {result['amount']}")
-
-    def initialize(self):
-        """시뮬레이션 초기화"""
-
-        dt = DateConverter.to_end_min(self.start_str + "-" + self.end_str)
-        end = dt[0]
-        count = dt[1]
-
-        if self.strategy == 0:
-            strategy = StrategyBuyAndHold()
-        else:
-            strategy = StrategySma0()
-        strategy.is_simulation = True
-        self.operator = SimulationOperator()
-        self._print_configuration(strategy.name)
-
-        data_provider = SimulationDataProvider()
-        data_provider.initialize_simulation(end=end, count=count)
-        trader = SimulationTrader()
-        trader.initialize_simulation(end=end, count=count, budget=self.budget)
-        analyzer = Analyzer()
-        analyzer.is_simulation = True
-        self.operator.initialize(
-            data_provider,
-            strategy,
-            trader,
-            analyzer,
-            budget=self.budget,
-        )
-        self.operator.set_interval(self.interval)
-        self.needInit = False
-
-    def start(self):
-        """시뮬레이션 시작, 재시작"""
-        if self.operator is None or self.needInit:
-            print("초기화가 필요합니다")
-            return
-
-        self.logger.info("Simulation start! ==================")
-
-        if self.operator.start() is not True:
-            print("Fail operator start")
-            return
-
-    def stop(self, signum, frame):
-        """시뮬레이션 중지"""
-        self._stop()
-        self.__terminating = True
-        print(f"Receive Signal {signum} {frame}")
-        print("Stop Singing")
-
-    def _stop(self):
-        if self.operator is not None:
-            self.operator.stop()
-            self.needInit = True
-            print("프로그램을 재시작하려면 초기화하세요")
-
-    def terminate(self):
-        """시뮬레이터 종료"""
-        print("Terminating......")
-        self._stop()
-        self.__terminating = True
-        print("Good Bye~")
