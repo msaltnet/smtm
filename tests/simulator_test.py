@@ -111,7 +111,7 @@ class SimulatorTests(unittest.TestCase):
         simulator = Simulator(budget=7000, from_dash_to="201220.170000-201220.180000")
         simulator.interval = 0.1
         simulator.initialize()
-        self.assertEqual(simulator.needInit, False)
+        self.assertEqual(simulator.need_init, False)
         mock_initialize.assert_called_once()
         mock_set_interval.assert_called_once_with(0.1)
         mock_dp.assert_called_once_with(end="2020-12-20T18:00:00", count=60)
@@ -120,11 +120,11 @@ class SimulatorTests(unittest.TestCase):
     def test_start_call_operator_start(self):
         simulator = Simulator()
         simulator.operator = MagicMock()
-        simulator.needInit = True
+        simulator.need_init = True
         simulator.start()
         simulator.operator.start.assert_not_called()
 
-        simulator.needInit = False
+        simulator.need_init = False
         simulator.start()
         simulator.operator.start.assert_called()
 
@@ -133,7 +133,7 @@ class SimulatorTests(unittest.TestCase):
         simulator.operator = MagicMock()
         simulator.stop(None, None)
         simulator.operator.stop.assert_called()
-        self.assertEqual(simulator.needInit, True)
+        self.assertEqual(simulator.need_init, True)
 
     def test_terminate_call_operator_stop(self):
         simulator = Simulator()
