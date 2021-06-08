@@ -36,7 +36,7 @@ class JptController:
         self.operator.initialize(
             UpbitDataProvider(),
             self.strategy,
-            UpbitTrader(),
+            UpbitTrader(budget=self.budget),
             Analyzer(),
             budget=self.budget,
         )
