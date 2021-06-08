@@ -312,7 +312,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.process_unit = (4000, 0)
         requests = sma.get_request()
         self.assertEqual(requests[0]["price"], 20000000)
-        self.assertEqual(requests[0]["amount"], 0.0002)
+        self.assertEqual(requests[0]["amount"], 0.0001)
         self.assertEqual(requests[0]["type"], "buy")
 
         dummy_info = {}
@@ -320,7 +320,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         requests = sma.get_request()
         self.assertEqual(requests[0]["price"], 10000000)
-        self.assertEqual(requests[0]["amount"], 0.0004)
+        self.assertEqual(requests[0]["amount"], 0.0003)
         self.assertEqual(requests[0]["type"], "buy")
 
         dummy_info = {}
@@ -329,7 +329,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.balance = 2000
         requests = sma.get_request()
         self.assertEqual(requests[0]["price"], 100)
-        self.assertEqual(requests[0]["amount"], 19.99)
+        self.assertEqual(requests[0]["amount"], 19.9899)
         self.assertEqual(requests[0]["type"], "buy")
 
     def test_get_request_return_correct_request_at_sell_process(self):
@@ -405,7 +405,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.process_unit = (4000, 0)
         requests = sma.get_request()
         self.assertEqual(requests[0]["price"], 20000000)
-        self.assertEqual(requests[0]["amount"], 0.0002)
+        self.assertEqual(requests[0]["amount"], 0.0001)
         self.assertEqual(requests[0]["type"], "buy")
 
         sma.update_trading_info(None)

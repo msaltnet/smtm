@@ -558,7 +558,8 @@ class AnalyzerTests(unittest.TestCase):
 
         analyzer.update_asset_info.assert_called_once()
 
-    def test_get_return_report_return_correct_report_with_index(self):
+    @patch("mplfinance.plot")
+    def test_get_return_report_return_correct_report_with_index(self, mock_plot):
         """
         {
             cumulative_return: 기준 시점부터 누적 수익률
