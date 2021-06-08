@@ -1,7 +1,8 @@
 import unittest
+import os.path
 from smtm import Analyzer
 from unittest.mock import *
-import requests
+from .data import analyzer_data
 
 
 class AnalyzerIntegrationTests(unittest.TestCase):
@@ -290,3 +291,25 @@ class AnalyzerIntegrationTests(unittest.TestCase):
                 "2020-12-21T01:13:00 - 2020-12-21T01:17:00",
             ),
         )
+
+    def test_ITG_analyze_create_report(self):
+        analyzer = Analyzer()
+
+        # fill info list with dummy data
+        analyzer.request_list = analyzer_data.get_data("request_list")
+        analyzer.result_list = analyzer_data.get_data("result_list")
+        analyzer.info_list = analyzer_data.get_data("info_list")
+        analyzer.asset_info_list = analyzer_data.get_data("asset_info_list")
+        analyzer.score_list = analyzer_data.get_data("score_list")
+
+        if os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"):
+            os.remove(analyzer.OUTPUT_FOLDER + "test_report.jpg")
+        self.assertFalse(os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"))
+        analyzer.create_report("test_report", "test_tag")
+
+        with open(analyzer.OUTPUT_FOLDER + "test_report.txt", "r") as file1:
+            with open("integration_tests/data/test_report.txt", "r") as file2:
+                diff = set(file1).difference(file2)
+
+        self.assertEqual(len(diff), 0)
+        self.assertTrue(os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"))

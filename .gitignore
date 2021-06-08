@@ -11,3 +11,4 @@ report.txt
 /output/
 .env
 temp.ipynb
+dump.*
