@@ -41,6 +41,16 @@ class OperatorInitializeTests(unittest.TestCase):
         self.assertEqual(self.operator.trader, None)
         self.assertEqual(self.operator.analyzer, None)
 
+    def test_initialize_should_update_tag_correctly(self):
+        self.trader_mock.name = "mango_tr"
+        self.strategy_mock.name = "super_st"
+        expected_tag = "-mango_tr-super_st"
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+
+        self.assertEqual(self.operator.tag[-len(expected_tag) :], expected_tag)
+
     def test_setup_set_interval_correctly(self):
         self.operator.set_interval(10)
         self.assertEqual(self.operator.interval, 10)
@@ -138,22 +148,6 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         self.analyzer_mock.put_requests.assert_not_called()
         self.trader_mock.send_request.assert_not_called()
         self.analyzer_mock.put_result.assert_not_called()
-
-    def test_start_should_update_tag_correctly(self):
-        self.dp_mock.get_info = MagicMock(return_value="mango")
-        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
-        self.strategy_mock.get_request = MagicMock(return_value=dummy_request)
-        self.trader_mock.send_request = MagicMock()
-        self.trader_mock.name = "mango_tr"
-        self.trader_mock.MARKET = "mango_market"
-        self.strategy_mock.name = "super_st"
-        expected_tag = "-mango_tr-super_st-mango_market"
-        self.operator.initialize(
-            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
-        )
-        self.operator.start()
-
-        self.assertEqual(self.operator.tag[-len(expected_tag) :], expected_tag)
 
 
 class OperatorStopTests(unittest.TestCase):

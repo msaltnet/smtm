@@ -60,6 +60,11 @@ class Operator:
         self.state = "ready"
         self.strategy.initialize(budget)
         self.analyzer.initialize(trader.get_account_info)
+        self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
+        try:
+            self.tag += "-" + self.trader.name + "-" + self.strategy.name
+        except AttributeError:
+            self.logger.warning("can't get additional info form strategy and trader")
 
     def set_interval(self, interval):
         """자동 거래 시간 간격을 설정한다.
@@ -84,11 +89,6 @@ class Operator:
         self.analyzer.make_start_point()
         self.worker.start()
         self.worker.post_task({"runnable": self._execute_trading})
-        self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
-        try:
-            self.tag += "-" + self.trader.name + "-" + self.strategy.name + "-" + self.trader.MARKET
-        except AttributeError:
-            self.logger.warning("can't get additional info form strategy and trader")
         return True
 
     def _start_timer(self):
