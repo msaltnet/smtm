@@ -337,10 +337,10 @@ class Analyzer:
         """거래 결과 목록을 반환한다"""
         return self.result_list
 
-    def create_report(self, filename=None, tag=None):
+    def create_report(self, tag="untitled-report"):
         """수익률 보고서를 생성한다
 
-        수익률 보고서를 생성하고, 그래프를 화면에 출력한다.
+        수익률 보고서를 생성하고, 그래프를 파일로 저장한다.
         Args:
             filename: 생성할 리포트 파일명
         Returns:
@@ -351,6 +351,7 @@ class Analyzer:
                     cumulative_return : 기준 시점부터 누적 수익률
                     price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
                     graph: 그래프 파일 패스
+                    period: 수익률 산출 구간
                 ),
                 "trading_table" : [
                     {
@@ -360,13 +361,6 @@ class Analyzer:
                 ]
             }
         """
-        final_filename = "untitled-report"
-        if tag is not None:
-            final_filename = tag
-
-        if filename is not None:
-            final_filename = filename
-
         try:
             summary = self.get_return_report()
             if summary is None:
@@ -381,8 +375,8 @@ class Analyzer:
                     x["kind"],
                 ),
             )
-            self.__create_report_file(final_filename, summary, trading_table)
-            self.__draw_graph(self.info_list, self.result_list, self.score_list, final_filename)
+            self.__create_report_file(tag, summary, trading_table)
+            self.__draw_graph(self.info_list, self.result_list, self.score_list, tag)
             return {"summary": summary, "trading_table": trading_table}
         except (IndexError, AttributeError):
             self.logger.error("create report FAIL")

@@ -811,9 +811,6 @@ class AnalyzerTests(unittest.TestCase):
         report = analyzer.create_report(tag=tag)
         mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + tag + ".txt", "w")
 
-        report = analyzer.create_report(tag=tag, filename=filename)
-        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + filename + ".txt", "w")
-
         analyzer.update_asset_info.assert_called()
 
     @patch("mplfinance.make_addplot")

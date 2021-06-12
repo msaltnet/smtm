@@ -305,7 +305,7 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         if os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"):
             os.remove(analyzer.OUTPUT_FOLDER + "test_report.jpg")
         self.assertFalse(os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"))
-        analyzer.create_report("test_report", "test_tag")
+        analyzer.create_report("test_report")
 
         with open(analyzer.OUTPUT_FOLDER + "test_report.txt", "r") as file1:
             with open("integration_tests/data/test_report.txt", "r") as file2:
