@@ -13,7 +13,7 @@ class StrategySma0(Strategy):
     """
     이동 평균선을 이용한 기본 전략
 
-    isInitialized: 최초 잔고는 초기화 할 때만 갱신 된다
+    is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
     result: 거래 요청 결과 리스트
     request: 마지막 거래 요청
@@ -137,7 +137,7 @@ class StrategySma0(Strategy):
     def get_request(self):
         """이동 평균선을 이용한 기본 전략
 
-        장기 이동 평균선과 단기 이동 평균선이 교차할 때부터 3회에 걸쳐 매매 주문 요청
+        장기 이동 평균선과 단기 이동 평균선이 교차할 때부터 n회에 걸쳐 매매 주문 요청
         교차 지점과 거래 단위는 update_trading_info에서 결정
         사전에 결정된 정보를 바탕으로 매매 요청 생성
         Returns: 배열에 한 개 이상의 요청 정보를 전달

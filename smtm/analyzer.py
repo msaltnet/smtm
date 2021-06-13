@@ -443,7 +443,6 @@ class Analyzer:
         plot_data = []
 
         # 그래프를 그리기 위해 매매, 수익률 정보를 트레이딩 정보와 합쳐서 하나의 테이블로 생성
-        self.logger.debug("report plot data ===================================")
         for info in info_list:
             new = info.copy()
             info_time = datetime.strptime(info["date_time"], self.ISO_DATEFORMAT)
