@@ -114,7 +114,7 @@ class StrategySma0Tests(unittest.TestCase):
             장기 이동평균 값이 단기 이동평균 값보다 작은 상황을 만들기 위함
             """
 
-            def rolling(self, window인자에):
+            def rolling(self, window):
                 class DummyRolling:
                     def __init__(self, value):
                         self.return_value = value * -1
@@ -127,7 +127,7 @@ class StrategySma0Tests(unittest.TestCase):
                         meanlist.values = [self.return_value]
                         return meanlist
 
-                return DummyRolling(window인자에)
+                return DummyRolling(window)
 
         mock_series.return_value = DummySeriesInverse()
         mock_np.return_value = False
