@@ -31,7 +31,6 @@ class Analyzer:
     OUTPUT_FOLDER = "output/"
     RECORD_INTERVAL = 60
     SMA = (5, 20)
-    MAX_PLOT_POINT = 180
 
     def __init__(self, sma_s=None, sma_l=None):
         self.request_list = []
@@ -245,7 +244,7 @@ class Analyzer:
         except (IndexError, AttributeError) as msg:
             self.logger.error(f"making score record fail {msg}")
 
-    def get_return_report(self, graph_filename=None, index=None):
+    def get_return_report(self, graph_filename=None, index_info=None):
         """현시점 기준 간단한 수익률 보고서를 제공한다
 
         Returns:
@@ -265,8 +264,8 @@ class Analyzer:
         info_list = self.info_list
         result_list = self.result_list
 
-        if index is not None:
-            interval_data = self.__make_interval_data(index)
+        if index_info is not None:
+            interval_data = self.__make_interval_data(index_info)
             asset_info_list = interval_data[0]
             score_list = interval_data[1]
             info_list = interval_data[2]
@@ -276,14 +275,17 @@ class Analyzer:
             asset_info_list, score_list, info_list, result_list, graph_filename=graph_filename
         )
 
-    def __make_interval_data(self, index):
-        start = self.MAX_PLOT_POINT * index
-        end = start + self.MAX_PLOT_POINT if index != -1 else None
+    def __make_interval_data(self, index_info):
+        period = index_info[0]
+        index = index_info[1]
+        start = period * index
+        end = start + period if index != -1 else None
         if abs(start) > len(self.info_list):
             if start < 0:
-                info_list = self.info_list[: self.MAX_PLOT_POINT]
+                info_list = self.info_list[:period]
             else:
-                info_list = self.info_list[-self.MAX_PLOT_POINT :]
+                last = period * -1
+                info_list = self.info_list[last:]
         else:
             info_list = self.info_list[start:end]
         start_dt = datetime.strptime(info_list[0]["date_time"], "%Y-%m-%dT%H:%M:%S")

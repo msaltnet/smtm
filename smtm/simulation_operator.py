@@ -58,7 +58,7 @@ class SimulationOperator(Operator):
         self._start_timer()
         return True
 
-    def get_score(self, callback, index=None, graph=False):
+    def get_score(self, callback, index_info=None, graph=False):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
         시뮬레이션이 종료된 경우 마지막 수익률 전달한다
 
@@ -80,13 +80,15 @@ class SimulationOperator(Operator):
         def get_score_callback(task):
             graph_filename = f"{self.OUTPUT_FOLDER}gs{round(time.time())}.jpg"
             try:
-                index = task["index"]
+                index_info = task["index_info"]
                 task["callback"](
-                    self.analyzer.get_return_report(graph_filename=graph_filename, index=index)
+                    self.analyzer.get_return_report(
+                        graph_filename=graph_filename, index_info=index_info
+                    )
                 )
             except TypeError:
                 self.logger.error("invalid callback")
 
         self.worker.post_task(
-            {"runnable": get_score_callback, "callback": callback, "index": index}
+            {"runnable": get_score_callback, "callback": callback, "index_info": index_info}
         )

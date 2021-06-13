@@ -574,9 +574,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.is_simulation = True
         self.fill_test_data_for_report_10(analyzer)
         analyzer.update_asset_info = MagicMock()
-        analyzer.MAX_PLOT_POINT = 3
-
-        report = analyzer.get_return_report(index=-3)
+        report = analyzer.get_return_report(index_info=(3, -3))
 
         self.assertEqual(len(report), 6)
         # 입금 자산
@@ -590,7 +588,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[4], None)
         self.assertEqual(report[5], "2020-04-30T05:51:00 - 2020-04-30T05:53:00")
 
-        report = analyzer.get_return_report(index=2)
+        report = analyzer.get_return_report(index_info=(3, 2))
 
         self.assertEqual(len(report), 6)
         # 입금 자산
@@ -604,7 +602,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[4], None)
         self.assertEqual(report[5], "2020-04-30T05:56:00 - 2020-04-30T05:58:00")
 
-        report = analyzer.get_return_report(graph_filename="mango_graph.png", index=-1)
+        report = analyzer.get_return_report(graph_filename="mango_graph.png", index_info=(3, -1))
 
         self.assertEqual(len(report), 6)
         # 입금 자산

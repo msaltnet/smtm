@@ -170,7 +170,7 @@ class Operator:
         self.worker.register_on_terminated(on_terminated)
         self.worker.stop()
 
-    def get_score(self, callback, index=None):
+    def get_score(self, callback, index_info=None):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
 
         Returns:
@@ -190,15 +190,17 @@ class Operator:
         def get_score_callback(task):
             graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}.jpg"
             try:
-                index = task["index"]
+                index_info = task["index_info"]
                 task["callback"](
-                    self.analyzer.get_return_report(graph_filename=graph_filename, index=index)
+                    self.analyzer.get_return_report(
+                        graph_filename=graph_filename, index_info=index_info
+                    )
                 )
             except TypeError:
                 self.logger.error("invalid callback")
 
         self.worker.post_task(
-            {"runnable": get_score_callback, "callback": callback, "index": index}
+            {"runnable": get_score_callback, "callback": callback, "index_info": index_info}
         )
 
     def get_trading_results(self):
