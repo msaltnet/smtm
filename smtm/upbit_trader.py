@@ -33,7 +33,7 @@ class UpbitTrader(Trader):
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     COMMISSION_RATIO = 0.0005
 
-    def __init__(self, budget=50000):
+    def __init__(self, budget=50000, opt_mode=True):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.worker = Worker("UpbitTrader-Worker")
         self.worker.start()
@@ -42,7 +42,7 @@ class UpbitTrader(Trader):
         self.ACCESS_KEY = os.environ.get("UPBIT_OPEN_API_ACCESS_KEY", "upbit_access_key")
         self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key")
         self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "upbit_server_url")
-        self.is_opt_mode = True
+        self.is_opt_mode = opt_mode
         self.asset = (0, 0)  # avr_price, amount
         self.balance = budget
         self.name = "Upbit"
@@ -152,7 +152,8 @@ class UpbitTrader(Trader):
         response = self._cancel_order(order["uuid"])
 
         if response is None:
-            response = self._query_order_list([order["uuid"]], True)
+            # 이미 체결된 경우, 취소가 안되므로 주문 정보를 조회
+            response = self._query_order_list([order["uuid"]])
             if len(response) > 0:
                 response = response[0]
             else:
@@ -220,7 +221,7 @@ class UpbitTrader(Trader):
             return
 
         def post_query_result_task():
-            self.worker.post_task({"runnable": self._query_order_result})
+            self.worker.post_task({"runnable": self._update_order_result})
 
         self.timer = threading.Timer(self.RESULT_CHECKING_INTERVAL, post_query_result_task)
         self.timer.start()
@@ -232,7 +233,7 @@ class UpbitTrader(Trader):
         self.timer.cancel()
         self.timer = None
 
-    def _query_order_result(self, task):
+    def _update_order_result(self, task):
         del task
         uuids = []
         for request_id, request_info in self.order_map.items():
@@ -241,7 +242,7 @@ class UpbitTrader(Trader):
         if len(uuids) == 0:
             return
 
-        results = self._query_order_list(uuids, True)
+        results = self._query_order_list(uuids)
         if results is None:
             return
 
@@ -301,6 +302,8 @@ class UpbitTrader(Trader):
 
     def _send_order(self, market, is_buy, price=None, volume=None):
         """
+        Upbit에 거래 주문 전송
+
         request:
             market *: 마켓 ID (필수)
             side *: 주문 종류 (필수)
@@ -390,8 +393,11 @@ class UpbitTrader(Trader):
 
         return price
 
-    def _query_order_list(self, uuids, is_done_state):
+    def _query_order_list(self, uuids, is_done_state=True):
         """
+        Upbit에 주문 리스트 요청
+        전달 받은 uuid 리스트에 대한 주문 상태를 조회한다
+
         response:
             uuid: 주문의 고유 아이디, String
             side: 주문 종류, String
@@ -427,6 +433,8 @@ class UpbitTrader(Trader):
 
     def _query_account(self):
         """
+        Upbit에 계좌 정보 요청
+
         response:
             currency: 화폐를 의미하는 영문 대문자 코드, String
             balance: 주문가능 금액/수량, NumberString
@@ -478,6 +486,8 @@ class UpbitTrader(Trader):
 
     def _cancel_order(self, request_uuid):
         """
+        Upbit에 취소 주문 전송
+
         request:
             request_uuid: 취소할 주문의 UUID, String
 

@@ -130,7 +130,7 @@ class UpditTraderTests(unittest.TestCase):
         mock_timer.assert_called_once_with(trader.RESULT_CHECKING_INTERVAL, ANY)
         callback = mock_timer.call_args[0][1]
         callback()
-        trader.worker.post_task.assert_called_once_with({"runnable": trader._query_order_result})
+        trader.worker.post_task.assert_called_once_with({"runnable": trader._update_order_result})
 
     def test_stop_timer_should_call_cancel(self):
         trader = UpbitTrader()
@@ -142,7 +142,7 @@ class UpditTraderTests(unittest.TestCase):
         timer_mock.cancel.assert_called_once()
         self.assertEqual(trader.timer, None)
 
-    def test__query_order_result_should_call__call_callback_and_keep_waiting_request(self):
+    def test__update_order_result_should_call__call_callback_and_keep_waiting_request(self):
         dummy_result = [
             {
                 "uuid": "mango",
@@ -186,7 +186,7 @@ class UpditTraderTests(unittest.TestCase):
         trader.order_map["banana"] = dummy_request_banana
         trader.order_map["apple"] = dummy_request_apple
 
-        trader._query_order_result(None)
+        trader._update_order_result(None)
 
         mango_result = trader._call_callback.call_args_list[0][0][1]
         self.assertEqual(mango_result["date_time"], "today")
@@ -214,9 +214,9 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(trader.order_map["banana"]["request"]["id"], "banana_id")
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_called_once()
-        trader._query_order_list.assert_called_once_with(["mango", "banana", "apple"], True)
+        trader._query_order_list.assert_called_once_with(["mango", "banana", "apple"])
 
-    def test__query_order_result_should_NOT_start_timer_when_no_request_remains(self):
+    def test__update_order_result_should_NOT_start_timer_when_no_request_remains(self):
         dummy_result = [
             {
                 "uuid": "mango",
@@ -255,7 +255,7 @@ class UpditTraderTests(unittest.TestCase):
         trader.order_map["mango"] = dummy_request_mango
         trader.order_map["orange"] = dummy_request_orange
 
-        trader._query_order_result(None)
+        trader._update_order_result(None)
 
         mango_result = trader._call_callback.call_args_list[0][0][1]
         self.assertEqual(mango_result["date_time"], "today")
@@ -282,7 +282,7 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(len(trader.order_map), 0)
         trader._stop_timer.assert_called_once()
         trader._start_timer.assert_not_called()
-        trader._query_order_list.assert_called_once_with(["mango", "orange"], True)
+        trader._query_order_list.assert_called_once_with(["mango", "orange"])
 
     def test__create_limit_order_query_return_correct_query(self):
         expected_query = {
@@ -347,7 +347,7 @@ class UpditTraderTests(unittest.TestCase):
         trader = UpbitTrader()
         trader._create_jwt_token = MagicMock(return_value="mango_token")
 
-        response = trader._query_order_list(uuids, True)
+        response = trader._query_order_list(uuids)
 
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()
