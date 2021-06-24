@@ -251,7 +251,11 @@ good-names=i,
            ex,
            Run,
            _,
-           id
+           id,
+           dt,
+           ACCESS_KEY,
+           SECRET_KEY,
+           SERVER_URL,
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted

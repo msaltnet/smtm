@@ -13,12 +13,14 @@ class LogManager:
     """
 
     file_formatter = logging.Formatter(
-        fmt="%(asctime)s %(levelname)s - %(name)s:%(lineno)05d - %(message)s"
+        fmt="%(asctime)s %(levelname)5.5s %(name)20.20s %(lineno)5d - %(message)s"
     )
     file_handler = RotatingFileHandler(filename="smtm.log", maxBytes=1000000, backupCount=10)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
-    stream_formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s - %(name)s - %(message)s")
+    stream_formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)5.5s %(name)20.20s - %(message)s"
+    )
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.DEBUG)
     stream_handler.setFormatter(stream_formatter)

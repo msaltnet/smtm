@@ -5,186 +5,176 @@ import requests
 import threading
 
 
-class OperatorTests(unittest.TestCase):
+class OperatorInitializeTests(unittest.TestCase):
+    def setUp(self):
+        self.operator = Operator()
+        self.strategy_mock = MagicMock()
+        self.trader_mock = MagicMock()
+        self.analyzer_mock = MagicMock()
+
+    def tearDown(self):
+        pass
+
+    def test_initialize_keep_object_correctly(self):
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+        self.assertEqual(self.operator.data_provider, "mango")
+        self.assertEqual(self.operator.strategy, self.strategy_mock)
+        self.assertEqual(self.operator.trader, self.trader_mock)
+        self.assertEqual(self.operator.analyzer, self.analyzer_mock)
+        self.strategy_mock.initialize.assert_called_once_with("banana")
+
+    def test_initialize_should_call_analyzer_initialize_with_trader(self):
+        self.trader_mock.get_account_info = "orange"
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+        self.analyzer_mock.initialize.assert_called_once_with("orange")
+        self.strategy_mock.initialize.assert_called_once_with("banana")
+
+    def test_initialize_do_nothing_when_state_is_NOT_None(self):
+        self.operator.state = "mango"
+        self.operator.initialize("mango", self.strategy_mock, "orange", "grape", "banana")
+        self.assertEqual(self.operator.data_provider, None)
+        self.assertEqual(self.operator.strategy, None)
+        self.assertEqual(self.operator.trader, None)
+        self.assertEqual(self.operator.analyzer, None)
+
+    def test_initialize_should_update_tag_correctly(self):
+        self.trader_mock.name = "mango_tr"
+        self.strategy_mock.name = "super_st"
+        expected_tag = "-mango_tr-super_st"
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+
+        self.assertEqual(self.operator.tag[-len(expected_tag) :], expected_tag)
+
+    def test_setup_set_interval_correctly(self):
+        self.operator.set_interval(10)
+        self.assertEqual(self.operator.interval, 10)
+
+        self.operator.set_interval(39)
+        self.assertEqual(self.operator.interval, 39)
+
+    def test_start_return_false_without_initialization(self):
+        self.assertEqual(self.operator.start(), False)
+
+    def test_start_should_call_worker_start_and_post_task(self):
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+        self.operator.worker = MagicMock()
+        self.operator.start()
+        self.operator.worker.start.assert_called_once()
+        self.operator.worker.post_task.assert_called_once_with(ANY)
+        called_task = self.operator.worker.post_task.call_args[0][0]
+        self.assertEqual(called_task["runnable"], self.operator._execute_trading)
+
+    def test_start_should_call_analyzer_make_start_point(self):
+        self.operator.initialize(
+            "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
+        )
+        self.operator.worker = MagicMock()
+        self.operator.start()
+        self.analyzer_mock.make_start_point.assert_called_once()
+
+
+class OperatorExecuteTradingTests(unittest.TestCase):
+    def setUp(self):
+        self.patcher = patch("threading.Timer")
+        self.threading_mock = self.patcher.start()
+        self.timer_mock = Mock()
+        self.threading_mock.return_value = self.timer_mock
+        self.operator = Operator()
+        self.analyzer_mock = MagicMock()
+        self.strategy_mock = MagicMock()
+        self.trader_mock = MagicMock()
+        self.dp_mock = MagicMock()
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_execute_trading_should_call_get_info_and_set_timer(self):
+        self.dp_mock.get_info = MagicMock(return_value="mango")
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
+        self.strategy_mock.get_request = MagicMock(return_value=dummy_request)
+        self.trader_mock.send_request = MagicMock()
+
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
+        )
+        self.operator.set_interval(27)
+        self.operator.state = "running"
+        self.operator._execute_trading(None)
+
+        self.threading_mock.assert_called_once_with(27, ANY)
+        self.timer_mock.start.assert_called_once()
+        self.dp_mock.get_info.assert_called_once()
+        self.analyzer_mock.put_trading_info.assert_called_once_with("mango")
+
+    def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(self):
+        self.dp_mock.get_info = MagicMock(return_value="mango")
+        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
+        self.strategy_mock.update_result = MagicMock()
+        self.strategy_mock.get_request = MagicMock(return_value=dummy_request)
+
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
+        )
+        self.operator.set_interval(27)
+        self.operator.state = "running"
+        self.operator._execute_trading(None)
+
+        self.analyzer_mock.put_requests.assert_called_once_with(dummy_request)
+        self.strategy_mock.update_trading_info.assert_called_once_with(ANY)
+        self.trader_mock.send_request.assert_called_once_with(ANY, ANY)
+        self.trader_mock.send_request.call_args[0][1]({"id": "mango", "state": "done"})
+        self.trader_mock.send_request.call_args[0][1]({"id": "orange", "state": "requested"})
+        self.strategy_mock.update_result.assert_called()
+        self.analyzer_mock.put_result.assert_called_once_with({"id": "mango", "state": "done"})
+
+    def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
+        self.strategy_mock.get_request = MagicMock(return_value=None)
+
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
+        )
+        self.operator.set_interval(27)
+        self.operator.state = "running"
+        self.operator._execute_trading(None)
+
+        self.analyzer_mock.put_requests.assert_not_called()
+        self.trader_mock.send_request.assert_not_called()
+        self.analyzer_mock.put_result.assert_not_called()
+
+
+class OperatorStopTests(unittest.TestCase):
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    def test_initialize_keep_object_correctly(self):
-        operator = Operator()
-        operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
-        self.assertEqual(operator.http, "apple")
-        self.assertEqual(operator.threading, "kiwi")
-        self.assertEqual(operator.data_provider, "mango")
-        self.assertEqual(operator.strategy, "banana")
-        self.assertEqual(operator.trader, "orange")
-        self.assertEqual(operator.analyzer, "grape")
-
-    def test_initialize_do_nothing_when_state_is_NOT_None(self):
-        operator = Operator()
-        operator.state = "mango"
-        operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
-        self.assertEqual(operator.http, None)
-        self.assertEqual(operator.threading, None)
-        self.assertEqual(operator.data_provider, None)
-        self.assertEqual(operator.strategy, None)
-        self.assertEqual(operator.trader, None)
-        self.assertEqual(operator.analyzer, None)
-
-    def test_setup_set_interval_correctly(self):
-        operator = Operator()
-        operator.set_interval(10)
-        self.assertEqual(operator.interval, 10)
-
-        operator.set_interval(39)
-        self.assertEqual(operator.interval, 39)
-
-    def test_start_return_false_without_initialization(self):
-        operator = Operator()
-        self.assertEqual(operator.start(), False)
-
-    def test_start_should_call_worker_start_and_post_task(self):
-        operator = Operator()
-        operator.initialize("apple", "kiwi", "mango", "banana", "orange", "grape")
-        operator.worker = MagicMock()
-        operator.start()
-        operator.worker.start.assert_called_once()
-        operator.worker.post_task.assert_called_once_with(ANY)
-        called_task = operator.worker.post_task.call_args[0][0]
-        self.assertEqual(called_task["runnable"], operator._excute_trading)
-
-    def test_excute_trading_should_call_get_info_and_set_timer(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
-        operator = Operator()
-        dp_mock = Mock()
-        dp_mock.initialize = MagicMock(return_value="")
-        dp_mock.get_info = MagicMock(return_value="mango")
-
-        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
-        strategy_mock = Mock()
-        strategy_mock.update_trading_info = MagicMock(return_value="orange")
-        strategy_mock.get_request = MagicMock(return_value=dummy_request)
-        analyzer_mock = Mock()
-        analyzer_mock.put_trading_info = MagicMock()
-        trader_mock = Mock()
-        trader_mock.send_request = MagicMock()
-        operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
-        operator.set_interval(27)
-        operator.state = "running"
-        operator._excute_trading(None)
-
-        threading_mock.Timer.assert_called_once_with(27, ANY)
-        timer_mock.start.assert_called_once()
-        dp_mock.get_info.assert_called_once()
-        analyzer_mock.put_trading_info.assert_called_once_with("mango")
-
-    def test_excute_trading_should_call_trader_send_request_and_strategy_update_result(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-        analyzer_mock = Mock()
-        analyzer_mock.put_request = MagicMock()
-        analyzer_mock.put_result = MagicMock()
-        operator = Operator()
-        dp_mock = Mock()
-        dp_mock.initialize = MagicMock(return_value="")
-        dp_mock.get_info = MagicMock(return_value="mango")
-
-        dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
-        strategy_mock = Mock()
-        strategy_mock.update_trading_info = MagicMock(return_value="orange")
-        strategy_mock.update_result = MagicMock()
-        strategy_mock.get_request = MagicMock(return_value=dummy_request)
-        trader_mock = Mock()
-        trader_mock.send_request = MagicMock()
-        operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
-        operator.set_interval(27)
-        operator.state = "running"
-        operator._excute_trading(None)
-        analyzer_mock.put_request.assert_called_once_with(dummy_request)
-        strategy_mock.update_trading_info.assert_called_once_with(ANY)
-        trader_mock.send_request.assert_called_once_with(ANY, ANY)
-        trader_mock.send_request.call_args[0][1]("mango")
-        strategy_mock.update_result.assert_called_once_with("mango")
-        analyzer_mock.put_result.assert_called_once_with("mango")
-
-    def test_excute_trading_should_NOT_call_trader_send_request_when_request_is_invalid(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-        analyzer_mock = Mock()
-        analyzer_mock.put_request = MagicMock()
-        analyzer_mock.put_result = MagicMock()
-        operator = Operator()
-        dp_mock = Mock()
-        dp_mock.initialize = MagicMock(return_value="")
-        dp_mock.get_info = MagicMock(return_value="mango")
-
-        dummy_request = {"id": "mango", "type": "orange", "price": 0, "amount": 10}
-        strategy_mock = Mock()
-        strategy_mock.update_trading_info = MagicMock(return_value="orange")
-        strategy_mock.get_request = MagicMock(return_value=dummy_request)
-        trader_mock = Mock()
-        trader_mock.send_request = MagicMock()
-        operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
-        operator.set_interval(27)
-        operator.state = "running"
-        operator._excute_trading(None)
-
-        analyzer_mock.put_request.assert_not_called()
-        trader_mock.send_request.assert_not_called()
-        analyzer_mock.put_result.assert_not_called()
-
-    def test_excute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-        analyzer_mock = Mock()
-        analyzer_mock.put_request = MagicMock()
-        analyzer_mock.put_result = MagicMock()
-        operator = Operator()
-        dp_mock = Mock()
-        dp_mock.initialize = MagicMock(return_value="")
-        dp_mock.get_info = MagicMock(return_value="mango")
-        strategy_mock = Mock()
-        strategy_mock.update_trading_info = MagicMock(return_value="orange")
-        strategy_mock.get_request = MagicMock(return_value=None)
-        trader_mock = Mock()
-        trader_mock.send_request = MagicMock()
-        operator.initialize(
-            "apple", threading_mock, dp_mock, strategy_mock, trader_mock, analyzer_mock
-        )
-        operator.set_interval(27)
-        operator.state = "running"
-        operator._excute_trading(None)
-
-        analyzer_mock.put_request.assert_not_called()
-        trader_mock.send_request.assert_not_called()
-        analyzer_mock.put_result.assert_not_called()
-
     def test_stop_should_cancel_timer_and_set_variable_correctly(self):
         operator = Operator()
+        operator.analyzer = MagicMock()
+        operator.trader = MagicMock()
         operator.state = "running"
         operator.timer = MagicMock()
+        operator.data_provider = MagicMock()
         operator.is_timer_running = True
         operator.stop()
         self.assertFalse(operator.is_timer_running)
         self.assertEqual(operator.state, "terminating")
         operator.timer.cancel.assert_called_once()
+        operator.analyzer.create_report.assert_called_once_with(tag=operator.tag)
+        operator.trader.cancel_all_requests.assert_called_once()
 
     def test_stop_do_nothing_when_state_is_not_running(self):
         operator = Operator()
+        operator.analyzer = MagicMock()
         operator.state = "ready"
         operator.is_timer_running = True
         operator.stop()
@@ -196,164 +186,114 @@ class OperatorTests(unittest.TestCase):
         operator.state = "running"
         operator.timer = MagicMock()
         operator.worker = MagicMock()
+        operator.analyzer = MagicMock()
+        operator.trader = MagicMock()
+        operator.data_provider = MagicMock()
+        operator.data_provider.get_info.return_value = "mango"
         operator.stop()
         operator.worker.stop.assert_called_once()
         operator.worker.register_on_terminated.assert_called_once_with(ANY)
+        operator.data_provider.get_info.assert_called_once_with()
         callback = operator.worker.register_on_terminated.call_args[0][0]
         self.assertEqual(operator.state, "terminating")
         callback()
         self.assertEqual(operator.state, "ready")
+        operator.trader.cancel_all_requests.assert_called_once()
+        operator.analyzer.put_trading_info.assert_called_once_with("mango")
 
-    def test_start_timer_should_make_and_start_Timer(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
 
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
+class OperatorTests(unittest.TestCase):
+    def setUp(self):
+        self.patcher = patch("threading.Timer")
+        self.threading_mock = self.patcher.start()
+        self.timer_mock = Mock()
+        self.threading_mock.return_value = self.timer_mock
+        self.operator = Operator()
+        self.analyzer_mock = MagicMock()
+        self.strategy_mock = MagicMock()
+        self.trader_mock = MagicMock()
+        self.dp_mock = MagicMock()
 
-        operator.set_interval(27)
-        operator.state = "running"
-        operator._start_timer()
+    def tearDown(self):
+        self.patcher.stop()
 
-        threading_mock.Timer.assert_called_once_with(27, ANY)
-        timer_mock.start.assert_called_once()
-        timer_callback = threading_mock.Timer.call_args[0][1]
-        operator.worker = MagicMock()
-        timer_callback()
-        operator.worker.post_task.assert_called_once_with(ANY)
-        self.assertEqual(
-            operator.worker.post_task.call_args[0][0]["runnable"], operator._excute_trading
+    def test_start_timer_should_start_Timer(self):
+        timer_mock = MagicMock()
+        self.threading_mock.return_value = timer_mock
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
         )
 
-    def test_start_timer_should_NOT_call_Timer_and_start_when_state_is_NOT_running(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
+        self.operator.worker = MagicMock()
+        self.operator.set_interval(27)
+        self.operator.state = "running"
+        self.operator._start_timer()
 
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
-        operator.set_interval(27)
-        operator.state = "ready"
-        operator._start_timer()
+        self.threading_mock.assert_called_once_with(27, ANY)
+        timer_mock.start.assert_called_once()
+        timer_callback = self.threading_mock.call_args[0][1]
+        timer_callback()
+        self.operator.worker.post_task.assert_called_once_with(ANY)
+        self.assertEqual(
+            self.operator.worker.post_task.call_args[0][0]["runnable"],
+            self.operator._execute_trading,
+        )
 
-        threading_mock.Timer.assert_not_called()
+    def test_start_timer_should_NOT_start_Timer_when_state_is_NOT_running(self):
+        timer_mock = MagicMock()
+        self.threading_mock.return_value = timer_mock
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
+        )
+        self.operator.set_interval(27)
+        self.operator.state = "ready"
+        self.operator._start_timer()
+
+        self.threading_mock.assert_not_called()
         timer_mock.start.assert_not_called()
 
     def test_start_timer_should_set_is_timer_running_true(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
-        operator.state = "running"
-        operator._start_timer()
-        self.assertEqual(operator.is_timer_running, True)
+        timer_mock = MagicMock()
+        self.threading_mock.return_value = timer_mock
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
+        )
+        self.operator.state = "running"
+        self.operator._start_timer()
+        self.assertEqual(self.operator.is_timer_running, True)
 
     def test_get_score_should_call_work_post_task_with_correct_task(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
+        timer_mock = MagicMock()
+        self.threading_mock.return_value = timer_mock
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
+        )
+        self.operator.worker = MagicMock()
+        self.operator.state = "running"
+        self.operator.get_score("dummy", index_info=7)
+        self.operator.worker.post_task.assert_called_once_with(
+            {"runnable": ANY, "callback": "dummy", "index_info": 7}
+        )
 
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
-        operator.worker = MagicMock()
-        operator.state = "running"
-        operator.get_score("dummy")
-        operator.worker.post_task.assert_called_once_with(ANY)
-
-        operator.analyzer = MagicMock()
-        operator.analyzer.get_return_report.return_value = "grape"
-        task = {"runnable": MagicMock(), "callback": MagicMock()}
-        runnable = operator.worker.post_task.call_args[0][0]["runnable"]
+        self.analyzer_mock.get_return_report.return_value = "grape"
+        task = {"runnable": MagicMock(), "callback": MagicMock(), "index_info": 5}
+        runnable = self.operator.worker.post_task.call_args[0][0]["runnable"]
         runnable(task)
-        operator.analyzer.get_return_report.assert_called_once()
+        self.analyzer_mock.get_return_report.assert_called_once_with(
+            graph_filename=ANY, index_info=5
+        )
         task["callback"].assert_called_once_with("grape")
 
     def test_get_score_do_nothing_when_state_is_NOT_running(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
-        operator.worker = MagicMock()
-        operator.state = "pear"
-        operator.get_score("dummy")
-        operator.worker.post_task.assert_not_called()
-
-    def test_send_manual_trading_request_should_call_work_post_task_with_correct_task(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
-        operator.worker = MagicMock()
-        operator.state = "running"
-        operator.send_manual_trading_request("buy", amount=10, price=500, callback="dummy_cb")
-        operator.worker.post_task.assert_called_once_with(ANY)
-
-        callback = operator.worker.post_task.call_args[0][0]["callback"]
-        self.assertEqual(callback, "dummy_cb")
-        request = operator.worker.post_task.call_args[0][0]["request"]
-        self.assertEqual(request["type"], "buy")
-        self.assertEqual(request["price"], 500)
-        self.assertEqual(request["amount"], 10)
-
-        operator.strategy = MagicMock()
-        operator.analyzer = MagicMock()
-        operator.trader = MagicMock()
-        runnable = operator.worker.post_task.call_args[0][0]["runnable"]
-        task = {"runnable": MagicMock(), "callback": MagicMock(), "request": "dummy_request"}
-        runnable(task)
-        operator.analyzer.put_request.assert_called_once_with("dummy_request")
-        operator.trader.send_request.assert_called_once_with("dummy_request", ANY)
-
-        trader_callback = operator.trader.send_request.call_args[0][1]
-        trader_callback("dummy_result")
-        operator.strategy.update_result.assert_called_once_with("dummy_result")
-        operator.analyzer.put_result.assert_called_once_with("dummy_result")
-        task["callback"].assert_called_once_with("dummy_result")
-
-    def test_send_manual_trading_request_should_not_call_work_post_task_when_invalid_request(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
-        operator.worker = MagicMock()
-        operator.state = "running"
-        operator.send_manual_trading_request("buy", amount=0, price=500, callback="dummy_cb")
-        operator.worker.post_task.assert_not_called()
-
-        operator.send_manual_trading_request("sell", amount=10, price=0, callback="dummy_cb")
-        operator.worker.post_task.assert_not_called()
-
-        operator.send_manual_trading_request("buy", amount=10, price=50, callback=None)
-        operator.worker.post_task.assert_not_called()
-
-    def test_send_manual_trading_request_should_not_call_work_post_task_when_invalid_state(self):
-        timer_mock = Mock()
-        threading_mock = Mock()
-        threading_mock.Timer = MagicMock(return_value=timer_mock)
-
-        operator = Operator()
-        operator.initialize("apple", threading_mock, "banana", "kiwi", "orange", "mango")
-        operator.worker = MagicMock()
-        operator.state = "pear"
-        operator.send_manual_trading_request("buy", amount=10, price=500, callback="dummy_cb")
-        operator.worker.post_task.assert_not_called()
-
-    def test_is_running_return_boolean_value(self):
-        operator = Operator()
-        operator.state = "mango"
-        self.assertEqual(operator.is_running(), False)
-
-        operator.state = "running"
-        self.assertEqual(operator.is_running(), True)
+        timer_mock = MagicMock()
+        self.threading_mock.return_value = timer_mock
+        self.operator.initialize(
+            self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
+        )
+        self.operator.worker = MagicMock()
+        self.operator.state = "pear"
+        self.operator.get_score("dummy")
+        self.operator.worker.post_task.assert_not_called()
 
     def test_get_trading_results_return_result_of_analyzer_get_trading_results(self):
         operator = Operator()

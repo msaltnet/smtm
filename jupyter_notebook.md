@@ -13,3 +13,8 @@ How to convert `.ipynb` to `.py`:
 ```
 jupyter nbconvert --to script [YOUR_NOTEBOOK].ipynb
 ```
+
+How to run with https
+```
+jupyter notebook --certfile=mycert.pem --keyfile mykey.key --no-browser
+```

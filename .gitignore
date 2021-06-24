@@ -9,4 +9,10 @@ smtm.log*
 .coverage
 report.txt
 /output/
+<<<<<<< HEAD
 .env
+=======
+.env
+temp.ipynb
+dump.*
+>>>>>>> master

@@ -3,6 +3,7 @@ import copy
 import unittest
 from smtm import Analyzer
 from unittest.mock import *
+from datetime import datetime, timedelta
 
 
 class AnalyzerTests(unittest.TestCase):
@@ -12,136 +13,237 @@ class AnalyzerTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_put_request_append_request(self):
+    def test_put_requests_append_request(self):
         analyzer = Analyzer()
-        dummy_request = {"id": "orange", "price": 5000, "amount": 1}
-        analyzer.put_request(dummy_request)
+        dummy_requests = [
+            {"id": "orange", "type": "buy", "price": 5000, "amount": 1},
+            {"id": "mango", "type": "cancel"},
+        ]
+        analyzer.put_requests(dummy_requests)
         self.assertEqual(
-            analyzer.request[-1], {"id": "orange", "price": 5000, "amount": 1, "kind": 1}
+            analyzer.request_list[-2],
+            {"id": "orange", "type": "buy", "price": 5000.0, "amount": 1.0, "kind": 1},
+        )
+        self.assertEqual(
+            analyzer.request_list[-1],
+            {"id": "mango", "type": "cancel", "price": 0, "amount": 0, "kind": 1},
         )
 
-        dummy_request = {"id": "banana", "price": 0, "amount": 1}
-        analyzer.put_request(dummy_request)
-        self.assertNotEqual(analyzer.request[-1], dummy_request)
-        self.assertEqual(analyzer.request[-1]["id"], "orange")
+        dummy_requests = [
+            {"id": "banana", "type": "buy", "price": 0, "amount": 1},
+            {"id": "apple", "type": "cancel"},
+        ]
+        analyzer.put_requests(dummy_requests)
+        self.assertEqual(analyzer.request_list[-2]["id"], "mango")
+        self.assertEqual(analyzer.request_list[-1]["id"], "apple")
+        self.assertEqual(analyzer.request_list[-1]["type"], "cancel")
 
-        dummy_request = {"id": "apple", "price": 500, "amount": 0}
-        analyzer.put_request(dummy_request)
-        self.assertNotEqual(analyzer.request[-1], dummy_request)
-        self.assertEqual(analyzer.request[-1]["id"], "orange")
+        dummy_requests = [
+            {"id": "pineapple", "type": "buy", "price": 500, "amount": 0},
+        ]
+        analyzer.put_requests(dummy_requests)
+        self.assertNotEqual(analyzer.request_list[-1], dummy_requests[0])
+        self.assertEqual(analyzer.request_list[-1]["id"], "apple")
 
-        dummy_request = {"id": "kiwi", "price": 500, "amount": 0.0000000000000000000000001}
-        analyzer.put_request(dummy_request)
-        self.assertEqual(analyzer.request[-1]["id"], "kiwi")
-        self.assertEqual(analyzer.request[-1]["price"], 500)
-        self.assertEqual(analyzer.request[-1]["amount"], 0.0000000000000000000000001)
-        self.assertEqual(analyzer.request[-1]["kind"], 1)
+        dummy_requests = [
+            {"id": "papaya", "type": "sell", "price": 5000, "amount": 0.0007},
+            {"id": "orange", "type": "cancel", "price": 500, "amount": 0.0001},
+            {"id": "pear", "type": "buy", "price": 500, "amount": 0.0000000000000000000000001},
+        ]
+        analyzer.put_requests(dummy_requests)
+        self.assertEqual(analyzer.request_list[-1]["id"], "pear")
+        self.assertEqual(analyzer.request_list[-1]["type"], "buy")
+        self.assertEqual(analyzer.request_list[-1]["price"], 500.0)
+        self.assertEqual(analyzer.request_list[-1]["amount"], 0.0000000000000000000000001)
+        self.assertEqual(analyzer.request_list[-1]["kind"], 1)
+
+        self.assertEqual(analyzer.request_list[-2]["id"], "orange")
+        self.assertEqual(analyzer.request_list[-2]["type"], "cancel")
+        self.assertEqual(analyzer.request_list[-2]["price"], 0)
+        self.assertEqual(analyzer.request_list[-2]["amount"], 0)
+        self.assertEqual(analyzer.request_list[-2]["kind"], 1)
+
+        self.assertEqual(analyzer.request_list[-3]["id"], "papaya")
+        self.assertEqual(analyzer.request_list[-3]["type"], "sell")
+        self.assertEqual(analyzer.request_list[-3]["price"], 5000.0)
+        self.assertEqual(analyzer.request_list[-3]["amount"], 0.0007)
+        self.assertEqual(analyzer.request_list[-3]["kind"], 1)
 
     def test_put_trading_info_append_trading_info(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_info = {"name": "orange"}
         analyzer.put_trading_info(dummy_info)
-        self.assertEqual(analyzer.infos[-1], {"name": "orange", "kind": 0})
+        self.assertEqual(analyzer.info_list[-1], {"name": "orange", "kind": 0})
+        analyzer.make_periodic_record.assert_called_once()
+
+    def test_make_periodic_record_should_call_update_asset_info_after_60s_from_last_asset_info(
+        self,
+    ):
+        analyzer = Analyzer()
+        ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+        last = datetime.now() - timedelta(seconds=61)
+        dummy_info1 = {"name": "mango", "date_time": last.strftime(ISO_DATEFORMAT)}
+        dummy_info2 = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
+        analyzer.update_asset_info = MagicMock()
+        analyzer.asset_info_list.append(dummy_info1)
+        analyzer.asset_info_list.append(dummy_info2)
+
+        analyzer.make_periodic_record()
+
+        analyzer.update_asset_info.assert_called_once()
+
+    def test_make_periodic_record_should_NOT_call_update_asset_info_in_60s_from_last_asset_info(
+        self,
+    ):
+        analyzer = Analyzer()
+        ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+        last = datetime.now() - timedelta(seconds=55)
+        dummy_info1 = {"name": "mango", "date_time": last.strftime(ISO_DATEFORMAT)}
+        dummy_info2 = {"name": "orange", "date_time": last.strftime(ISO_DATEFORMAT)}
+        analyzer.update_asset_info = MagicMock()
+        analyzer.get_asset_info_func = MagicMock(return_value="mango")
+        analyzer.asset_info_list.append(dummy_info1)
+        analyzer.asset_info_list.append(dummy_info2)
+
+        analyzer.make_periodic_record()
+
+        analyzer.update_asset_info.assert_not_called()
+        analyzer.get_asset_info_func.assert_not_called()
 
     def test_put_result_append_only_success_result(self):
         analyzer = Analyzer()
         analyzer.initialize("mango")
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_asset_info = MagicMock()
 
-        dummy_result = {"request_id": "orange", "price": 5000, "amount": 1}
+        dummy_result = {"request": {"id": "orange"}, "price": 5000, "amount": 1}
         analyzer.put_result(dummy_result)
         self.assertEqual(
-            analyzer.result[-1], {"request_id": "orange", "price": 5000, "amount": 1, "kind": 2}
+            analyzer.result_list[-1],
+            {"request": {"id": "orange"}, "price": 5000, "amount": 1, "kind": 2},
         )
 
-        dummy_result = {"request_id": "banana", "price": 0, "amount": 1}
+        dummy_result = {"request": {"id": "banana"}, "price": 0, "amount": 1}
         analyzer.put_result(dummy_result)
         self.assertNotEqual(
-            analyzer.result[-1], {"request_id": "banana", "price": 0, "amount": 1, "kind": 2}
+            analyzer.result_list[-1],
+            {"request": {"id": "banana"}, "price": 0, "amount": 1, "kind": 2},
         )
-        self.assertEqual(analyzer.result[-1]["request_id"], "orange")
+        self.assertEqual(analyzer.result_list[-1]["request"]["id"], "orange")
 
-        dummy_result = {"request_id": "apple", "price": 500, "amount": 0}
+        dummy_result = {"request": {"id": "apple"}, "price": 500, "amount": 0}
         analyzer.put_result(dummy_result)
-        self.assertNotEqual(analyzer.result[-1]["request_id"], "apple")
-        self.assertNotEqual(analyzer.result[-1]["price"], 500)
-        self.assertEqual(analyzer.result[-1]["request_id"], "orange")
-        self.assertEqual(analyzer.result[-1]["kind"], 2)
+        self.assertNotEqual(analyzer.result_list[-1]["request"]["id"], "apple")
+        self.assertNotEqual(analyzer.result_list[-1]["price"], 500)
+        self.assertEqual(analyzer.result_list[-1]["request"]["id"], "orange")
+        self.assertEqual(analyzer.result_list[-1]["kind"], 2)
 
-        dummy_result = {"request_id": "kiwi", "price": 500, "amount": 0.0000000000000000000000001}
+        dummy_result = {
+            "request": {"id": "kiwi"},
+            "price": 500,
+            "amount": 0.0000000000000000000000001,
+        }
         analyzer.put_result(dummy_result)
-        self.assertEqual(analyzer.result[-1]["request_id"], "kiwi")
-        self.assertEqual(analyzer.result[-1]["price"], 500)
-        self.assertEqual(analyzer.result[-1]["amount"], 0.0000000000000000000000001)
-        self.assertEqual(analyzer.result[-1]["kind"], 2)
+        self.assertEqual(analyzer.result_list[-1]["request"]["id"], "kiwi")
+        self.assertEqual(analyzer.result_list[-1]["price"], 500)
+        self.assertEqual(analyzer.result_list[-1]["amount"], 0.0000000000000000000000001)
+        self.assertEqual(analyzer.result_list[-1]["kind"], 2)
+        analyzer.update_asset_info.assert_called()
 
-    def test_put_result_call_update_info_func_with_asset_type_and_callback(self):
+    def test_put_result_call_update_asset_info_func(self):
         analyzer = Analyzer()
         analyzer.initialize("mango")
-        analyzer.update_info_func = MagicMock()
-        dummy_result = {"request_id": "banana", "price": 500, "amount": 0.0000000000000000000000001}
+        analyzer.update_asset_info = MagicMock()
+        dummy_result = {
+            "request": {"id": "banana"},
+            "price": 500,
+            "amount": 0.0000000000000000000000001,
+        }
         analyzer.put_result(dummy_result)
-        analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
+        analyzer.update_asset_info.assert_called_once()
 
     def test_initialize_keep_update_info_func(self):
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
-        self.assertEqual(analyzer.update_info_func, "mango")
-        self.assertEqual(analyzer.is_simulation, True)
+        analyzer.initialize("mango")
+        self.assertEqual(analyzer.get_asset_info_func, "mango")
 
-    def test_put_asset_info_append_asset_info(self):
+    def test_update_asset_info_append_asset_info(self):
         analyzer = Analyzer()
         analyzer.make_score_record = MagicMock()
-        analyzer.put_asset_info("apple")
-        self.assertEqual(analyzer.asset_record_list[-1], "apple")
+        dummy_info = {
+            "balance": 5000,
+            "asset": "apple",
+            "quote": "apple_quote",
+        }
+        analyzer.get_asset_info_func = MagicMock(return_value=dummy_info)
+        analyzer.update_asset_info()
+        self.assertEqual(analyzer.asset_info_list[-1], dummy_info)
 
-    def test_put_asset_info_should_call_make_score_record(self):
+    def test_update_asset_info_should_call_make_score_record(self):
         analyzer = Analyzer()
         analyzer.make_score_record = MagicMock()
-        analyzer.put_asset_info("apple")
-        self.assertEqual(analyzer.asset_record_list[-1], "apple")
-        analyzer.make_score_record.assert_called_once_with("apple")
+        dummy_info = {
+            "balance": 5000,
+            "asset": "apple",
+            "quote": "apple_quote",
+        }
+        analyzer.get_asset_info_func = MagicMock(return_value=dummy_info)
+        analyzer.update_asset_info()
+        self.assertEqual(analyzer.asset_info_list[-1], dummy_info)
+        analyzer.make_score_record.assert_called_once_with(dummy_info)
 
-    def test_make_start_point_call_update_info_func_with_asset_type_and_callback(self):
+    def test_make_start_point_call_update_info_func(self):
         analyzer = Analyzer()
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_asset_info = MagicMock()
         analyzer.make_start_point()
-        analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
+        analyzer.update_asset_info.assert_called_once()
 
     def test_make_start_point_clear_asset_info_and_request_result(self):
         analyzer = Analyzer()
-        analyzer.update_info_func = MagicMock()
-        analyzer.request.append("mango")
-        analyzer.result.append("banana")
-        analyzer.asset_record_list.append("apple")
+        analyzer.update_asset_info = MagicMock()
+        analyzer.request_list.append("mango")
+        analyzer.result_list.append("banana")
+        analyzer.asset_info_list.append("apple")
         analyzer.make_start_point()
-        self.assertEqual(len(analyzer.request), 0)
-        self.assertEqual(len(analyzer.result), 0)
-        self.assertEqual(len(analyzer.asset_record_list), 0)
+        self.assertEqual(len(analyzer.request_list), 0)
+        self.assertEqual(len(analyzer.result_list), 0)
+        self.assertEqual(len(analyzer.asset_info_list), 0)
+        analyzer.update_asset_info.assert_called_once()
 
     def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
             "balance": 50000,
             "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
-            "quote": {"banana": 1700, "mango": 700, "apple": 500},
+            "quote": {"banana": 1700, "mango": 700, "apple": 500, "pineapple": 300, "kiwi": 77000},
+            "date_time": "2020-02-27T23:59:59",
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset_info)
-        analyzer.initialize(MagicMock(), True)
+        analyzer.asset_info_list.append(dummy_asset_info)
+        analyzer.initialize(MagicMock())
+        analyzer.is_simulation = True
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
+        # 유효하지 않은 정보 무시
         target_dummy_asset = {
             "balance": 50000,
-            "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
-            "quote": {"banana": 2000, "mango": 1050, "apple": 400},
+            "asset": {
+                "banana": (1500, 10),
+                "mango": (1000, 4.5),
+                "apple": (250, 2),
+                "pineapple": (0, 2),
+                "kiwi": (77700, 0),
+            },
+            "quote": {"banana": 2000, "mango": 1050, "apple": 400, "pineapple": 300, "kiwi": 77000},
+            "date_time": "2020-02-27T23:59:59",
         }
         analyzer.make_score_record(target_dummy_asset)
-        self.assertEqual(len(analyzer.score_record_list), 1)
+        self.assertEqual(len(analyzer.score_list), 1)
 
-        score_record = analyzer.score_record_list[0]
+        score_record = analyzer.score_list[0]
         self.assertEqual(score_record["balance"], 50000)
-        self.assertEqual(score_record["cumulative_return"], 6.149)
+        self.assertEqual(score_record["cumulative_return"], 6.992)
 
         self.assertEqual(score_record["asset"][0][0], "banana")
         self.assertEqual(score_record["asset"][0][1], 1500)
@@ -166,27 +268,31 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record["price_change_ratio"]["apple"], -20)
         self.assertEqual(score_record["date_time"], "2020-02-27T23:59:59")
         self.assertEqual(score_record["kind"], 3)
+        analyzer.make_periodic_record.assert_called_once()
 
     def test_make_score_record_create_correct_score_record_when_asset_is_changed(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
             "balance": 50000,
             "asset": {"banana": (1500, 10), "apple": (250, 2)},
             "quote": {"banana": 1700, "mango": 500, "apple": 500},
+            "date_time": "2020-02-27T23:59:59",
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset_info)
+        analyzer.asset_info_list.append(dummy_asset_info)
         target_dummy_asset = {
             "balance": 10000,
             "asset": {"mango": (1000, 7.5), "apple": (250, 10.7)},
             "quote": {"banana": 2000, "mango": 500, "apple": 800},
+            "date_time": "2020-02-27T23:59:59",
         }
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
-        self.assertEqual(len(analyzer.score_record_list), 1)
+        self.assertEqual(len(analyzer.score_list), 1)
 
-        score_record = analyzer.score_record_list[0]
+        score_record = analyzer.score_list[0]
         self.assertEqual(score_record["balance"], 10000)
         self.assertEqual(score_record["cumulative_return"], -67.191)
 
@@ -204,28 +310,32 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(score_record["price_change_ratio"]["mango"], 0)
         self.assertEqual(score_record["price_change_ratio"]["apple"], 60)
+        analyzer.make_periodic_record.assert_called_once()
 
     def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
         analyzer = Analyzer()
+        analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
             "balance": 23456,
             "asset": {},
             "quote": {"banana": 1700, "mango": 300, "apple": 500},
+            "date_time": "2020-02-27T23:59:59",
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset_info)
+        analyzer.asset_info_list.append(dummy_asset_info)
 
         target_dummy_asset = {
             "balance": 5000,
             "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
             "quote": {"banana": 2000, "mango": 300, "apple": 750},
+            "date_time": "2020-02-27T23:59:59",
         }
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
-        self.assertEqual(len(analyzer.score_record_list), 1)
+        self.assertEqual(len(analyzer.score_list), 1)
 
-        score_record = analyzer.score_record_list[0]
+        score_record = analyzer.score_list[0]
         self.assertEqual(score_record["balance"], 5000)
         self.assertEqual(score_record["cumulative_return"], -65.248)
 
@@ -243,27 +353,40 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(score_record["price_change_ratio"]["mango"], 0)
         self.assertEqual(score_record["price_change_ratio"]["apple"], 50)
+        analyzer.make_periodic_record.assert_called_once()
 
     def test_make_score_record_create_correct_score_record_when_asset_and_balance_is_NOT_changed(
         self,
     ):
         analyzer = Analyzer()
-        dummy_asset_info = {"balance": 1000, "asset": {}, "quote": {"apple": 500}}
+        dummy_asset_info = {
+            "balance": 1000,
+            "asset": {},
+            "quote": {"apple": 500},
+            "date_time": "2020-02-27T23:59:59",
+        }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
-        analyzer.asset_record_list.append(dummy_asset_info)
+        analyzer.asset_info_list.append(dummy_asset_info)
 
-        target_dummy_asset = {"balance": 1000, "asset": {}, "quote": {"apple": 750}}
+        target_dummy_asset = {
+            "balance": 1000,
+            "asset": {},
+            "quote": {"apple": 750},
+            "date_time": "2020-02-27T23:59:59",
+        }
+        analyzer.make_periodic_record = MagicMock()
         analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
         analyzer.make_score_record(target_dummy_asset)
-        self.assertEqual(len(analyzer.score_record_list), 1)
+        self.assertEqual(len(analyzer.score_list), 1)
 
-        score_record = analyzer.score_record_list[0]
+        score_record = analyzer.score_list[0]
         self.assertEqual(score_record["balance"], 1000)
         self.assertEqual(score_record["cumulative_return"], 0)
 
         self.assertEqual(len(score_record["asset"]), 0)
         self.assertEqual(len(score_record["price_change_ratio"].keys()), 0)
+        analyzer.make_periodic_record.assert_called_once()
 
     def fill_test_data_for_report(self, analyzer):
         dummy_info = {
@@ -275,8 +398,9 @@ class AnalyzerTests(unittest.TestCase):
             "closing_price": 5500,
             "acc_price": 1500000000,
             "acc_volume": 1500,
+            "kind": 0,
         }
-        analyzer.put_trading_info(dummy_info)
+        analyzer.info_list.append(dummy_info)
 
         dummy_request = {
             "id": "1607862457.560075",
@@ -284,33 +408,46 @@ class AnalyzerTests(unittest.TestCase):
             "price": 5000,
             "amount": 1,
             "date_time": "2020-02-23T00:00:00",
+            "kind": 1,
         }
-        analyzer.put_request(dummy_request)
+        analyzer.request_list.append(dummy_request)
 
         dummy_result = {
-            "request_id": "1607862457.560075",
+            "request": {"id": "1607862457.560075"},
             "type": "buy",
             "price": 5000,
-            "amount": 1,
+            "amount": 0.5,
             "msg": "success",
-            "balance": 30000,
             "date_time": "2020-02-23T00:00:00",
+            "kind": 2,
         }
-        analyzer.put_result(dummy_result)
+        analyzer.result_list.append(dummy_result)
 
         dummy_asset_info = {
             "balance": 23456,
             "asset": {},
+            "date_time": "2020-02-23T00:00:00",
             "quote": {"banana": 1700, "mango": 600, "apple": 500},
         }
-        analyzer.asset_record_list.append(dummy_asset_info)
+        analyzer.asset_info_list.append(dummy_asset_info)
 
         target_dummy_asset = {
             "balance": 5000,
             "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
             "quote": {"banana": 2000, "mango": 300, "apple": 750},
+            "date_time": "2020-02-23T00:01:00",
         }
-        analyzer.put_asset_info(target_dummy_asset)
+        analyzer.asset_info_list.append(target_dummy_asset)
+        analyzer.score_list.append(
+            {
+                "balance": 5000,
+                "cumulative_return": -65.248,
+                "price_change_ratio": {"mango": -50.0, "apple": 50.0},
+                "asset": [("mango", 500, 300, 5.23, -40.0), ("apple", 250, 750, 2.11, 200.0)],
+                "date_time": "2020-02-23T00:00:00",
+                "kind": 3,
+            }
+        )
 
         dummy_info2 = {
             "market": "orange",
@@ -321,8 +458,9 @@ class AnalyzerTests(unittest.TestCase):
             "closing_price": 8000,
             "acc_price": 15000000,
             "acc_volume": 15000,
+            "kind": 0,
         }
-        analyzer.put_trading_info(dummy_info2)
+        analyzer.info_list.append(dummy_info2)
 
         dummy_request2 = {
             "id": "1607862457.560075",
@@ -330,26 +468,50 @@ class AnalyzerTests(unittest.TestCase):
             "price": 6000,
             "amount": 0.5,
             "date_time": "2020-02-23T00:01:00",
+            "kind": 1,
         }
-        analyzer.put_request(dummy_request2)
+        analyzer.request_list.append(dummy_request2)
 
         dummy_result2 = {
-            "request_id": "1607862457.560075",
-            "type": "sell",
-            "price": 6000,
+            "request": {"id": "1607862457.560075"},
+            "type": "buy",
+            "price": 5000,
             "amount": 0.5,
             "msg": "success",
-            "balance": 33000,
-            "date_time": "2020-02-23T00:01:00",
+            "date_time": "2020-02-23T00:00:05",
+            "kind": 2,
         }
-        analyzer.put_result(dummy_result2)
+        analyzer.result_list.append(dummy_result2)
+
+        dummy_result3 = {
+            "request": {"id": "1607862457.560075"},
+            "type": "sell",
+            "price": 6000,
+            "amount": 0.2,
+            "msg": "success",
+            "date_time": "2020-02-23T00:01:00",
+            "kind": 2,
+        }
+        analyzer.result_list.append(dummy_result3)
 
         target_dummy_asset2 = {
             "balance": 5000,
             "asset": {"mango": (600, 4.23), "apple": (500, 3.11)},
             "quote": {"banana": 3000, "mango": 200, "apple": 0.750},
+            "date_time": "2020-02-23T00:01:00",
         }
-        analyzer.put_asset_info(target_dummy_asset2)
+        analyzer.asset_info_list.append(target_dummy_asset2)
+        analyzer.score_list.append(
+            {
+                "balance": 5000,
+                "cumulative_return": -75.067,
+                "price_change_ratio": {"mango": -66.667, "apple": -99.85},
+                "asset": [("mango", 600, 200, 4.23, -66.667), ("apple", 500, 0.75, 3.11, -99.85)],
+                "date_time": "2020-02-23T00:01:00",
+                "kind": 3,
+            }
+        )
+
         return (
             dummy_info,
             dummy_request,
@@ -359,6 +521,7 @@ class AnalyzerTests(unittest.TestCase):
             dummy_request2,
             dummy_result2,
             target_dummy_asset2,
+            dummy_result3,
         )
 
     def test_get_return_report_return_correct_report(self):
@@ -368,16 +531,18 @@ class AnalyzerTests(unittest.TestCase):
             price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
             asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
             date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+            graph: 그래프 파일 패스
         }
         """
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
-
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
         self.fill_test_data_for_report(analyzer)
+        analyzer.update_asset_info = MagicMock()
+
         report = analyzer.get_return_report()
 
-        self.assertEqual(len(report), 4)
+        self.assertEqual(len(report), 6)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -387,6 +552,114 @@ class AnalyzerTests(unittest.TestCase):
         # 가격 변동률
         self.assertEqual(report[3]["mango"], -66.667)
         self.assertEqual(report[3]["apple"], -99.85)
+
+        self.assertEqual(report[4], None)
+        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+
+        analyzer.update_asset_info.assert_called_once()
+
+    @patch("mplfinance.plot")
+    def test_get_return_report_return_correct_report_with_index(self, mock_plot):
+        """
+        {
+            cumulative_return: 기준 시점부터 누적 수익률
+            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+            asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
+            date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+            graph: 그래프 파일 패스
+        }
+        """
+        analyzer = Analyzer()
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
+        self.fill_test_data_for_report_10(analyzer)
+        analyzer.update_asset_info = MagicMock()
+        report = analyzer.get_return_report(index_info=(3, -3))
+
+        self.assertEqual(len(report), 6)
+        # 입금 자산
+        self.assertEqual(report[0], 100016)
+        # 최종 자산
+        self.assertEqual(report[1], 100093)
+        # 누적 수익률
+        self.assertEqual(report[2], 0.093)
+        # 가격 변동률
+        self.assertEqual(report[3]["KRW-BTC"], 0.236)
+        self.assertEqual(report[4], None)
+        self.assertEqual(report[5], "2020-04-30T05:51:00 - 2020-04-30T05:53:00")
+
+        report = analyzer.get_return_report(index_info=(3, 2))
+
+        self.assertEqual(len(report), 6)
+        # 입금 자산
+        self.assertEqual(report[0], 100197)
+        # 최종 자산
+        self.assertEqual(report[1], 100197)
+        # 누적 수익률
+        self.assertEqual(report[2], 0.197)
+        # 가격 변동률
+        self.assertEqual(report[3]["KRW-BTC"], 0.396)
+        self.assertEqual(report[4], None)
+        self.assertEqual(report[5], "2020-04-30T05:56:00 - 2020-04-30T05:58:00")
+
+        report = analyzer.get_return_report(graph_filename="mango_graph.png", index_info=(3, -1))
+
+        self.assertEqual(len(report), 6)
+        # 입금 자산
+        self.assertEqual(report[0], 100197)
+        # 최종 자산
+        self.assertEqual(report[1], 100413)
+        # 누적 수익률
+        self.assertEqual(report[2], 0.413)
+        # 가격 변동률
+        self.assertEqual(report[3]["KRW-BTC"], 0.613)
+        self.assertEqual(report[4], "mango_graph.png")
+        self.assertEqual(report[5], "2020-04-30T05:57:00 - 2020-04-30T05:59:00")
+
+        analyzer.update_asset_info.assert_called()
+
+    @patch("mplfinance.plot")
+    def test_get_return_report_draw_graph_when_graph_filename_exist(self, mock_plot):
+        """
+        {
+            cumulative_return: 기준 시점부터 누적 수익률
+            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+            asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
+            date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간 +3초
+            graph: 그래프 파일 패스
+        }
+        """
+        analyzer = Analyzer()
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
+        self.fill_test_data_for_report(analyzer)
+        analyzer.update_asset_info = MagicMock()
+        report = analyzer.get_return_report("mango_graph.png")
+
+        self.assertEqual(len(report), 6)
+        # 입금 자산
+        self.assertEqual(report[0], 23456)
+        # 최종 자산
+        self.assertEqual(report[1], 5848)
+        # 누적 수익률
+        self.assertEqual(report[2], -75.067)
+        # 가격 변동률
+        self.assertEqual(report[3]["mango"], -66.667)
+        self.assertEqual(report[3]["apple"], -99.85)
+
+        self.assertEqual(report[4], "mango_graph.png")
+        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+
+        analyzer.update_asset_info.assert_called_once()
+        mock_plot.assert_called_once_with(
+            ANY,
+            type="candle",
+            volume=True,
+            addplot=ANY,
+            mav=analyzer.SMA,
+            style="starsandstripes",
+            savefig=dict(fname="mango_graph.png", dpi=100, pad_inches=0.25),
+        )
 
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
@@ -398,10 +671,11 @@ class AnalyzerTests(unittest.TestCase):
         """
         {
             "summary": (
-                cumulative_return: 기준 시점부터 누적 수익률
+                start_budget: 시작 자산
+                final_balance: 최종 자산
+                cumulative_return : 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
-                asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
-                date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
+                graph: 그래프 파일 패스
             ),
             "trading_table" : [
                 {
@@ -412,8 +686,9 @@ class AnalyzerTests(unittest.TestCase):
         }
         """
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
+        analyzer.initialize("mango")
+        analyzer.is_simulation = True
+        analyzer.update_asset_info = MagicMock()
 
         dummy_data = self.fill_test_data_for_report(analyzer)
 
@@ -430,19 +705,38 @@ class AnalyzerTests(unittest.TestCase):
         expected_request2["kind"] = 1
         expected_result2 = copy.deepcopy(dummy_data[6])
         expected_result2["kind"] = 2
+        expected_result3 = copy.deepcopy(dummy_data[8])
+        expected_result3["kind"] = 2
+        expected_return1 = {
+            "balance": 5000,
+            "cumulative_return": -65.248,
+            "price_change_ratio": {"mango": -50.0, "apple": 50.0},
+            "asset": [("mango", 500, 300, 5.23, -40.0), ("apple", 250, 750, 2.11, 200.0)],
+            "date_time": "2020-02-23T00:00:00",
+            "kind": 3,
+        }
+        expected_return2 = {
+            "balance": 5000,
+            "cumulative_return": -75.067,
+            "price_change_ratio": {"mango": -66.667, "apple": -99.85},
+            "asset": [("mango", 600, 200, 4.23, -66.667), ("apple", 500, 0.75, 3.11, -99.85)],
+            "date_time": "2020-02-23T00:01:00",
+            "kind": 3,
+        }
 
-        self.assertEqual(len(report["trading_table"]), 8)
+        self.assertEqual(len(report["trading_table"]), 9)
         self.assertEqual(report["trading_table"][0], expected_info)
         self.assertEqual(report["trading_table"][1], expected_request)
         self.assertEqual(report["trading_table"][2], expected_result)
-        self.assertEqual(report["trading_table"][3], ANY)
-        self.assertEqual(report["trading_table"][4], expected_info2)
-        self.assertEqual(report["trading_table"][5], expected_request2)
-        self.assertEqual(report["trading_table"][6], expected_result2)
-        self.assertEqual(report["trading_table"][7], ANY)
+        self.assertEqual(report["trading_table"][3], expected_return1)
+        self.assertEqual(report["trading_table"][4], expected_result2)
+        self.assertEqual(report["trading_table"][5], expected_info2)
+        self.assertEqual(report["trading_table"][6], expected_request2)
+        self.assertEqual(report["trading_table"][7], expected_result3)
+        self.assertEqual(report["trading_table"][8], expected_return2)
 
         # 입금 자산, 최종 자산, 누적 수익률, 가격 변동률을 포함한다
-        self.assertEqual(len(report["summary"]), 4)
+        self.assertEqual(len(report["summary"]), 6)
 
         # 입금 자산
         self.assertEqual(report["summary"][0], 23456)
@@ -457,13 +751,18 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][3]["mango"], -66.667)
         self.assertEqual(report["summary"][3]["apple"], -99.85)
 
+        self.assertEqual(report["summary"][3]["apple"], -99.85)
+
+        self.assertEqual(report["summary"][4], None)
+        self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+
     @patch("mplfinance.plot")
     def test_create_report_call_update_info_func_with_asset_type_and_callback(self, mock_plot):
         analyzer = Analyzer()
         analyzer.initialize("mango")
-        analyzer.update_info_func = MagicMock()
+        analyzer.update_asset_info = MagicMock()
         analyzer.create_report()
-        analyzer.update_info_func.assert_called_once_with("asset", analyzer.put_asset_info)
+        analyzer.update_asset_info.assert_called_once()
 
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
@@ -473,25 +772,26 @@ class AnalyzerTests(unittest.TestCase):
         self, mock_file, mock_plot, mock_DataFrame, mock_to_datetime
     ):
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
+        analyzer.initialize("mango")
+        analyzer.update_asset_info = MagicMock()
 
         self.fill_test_data_for_report(analyzer)
 
         tag = "orange"
         filename = "mango"
         report = analyzer.create_report()
-        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + "simulation-report.txt", "w")
+        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + "untitled-report.txt", "w")
         handle = mock_file()
         expected = [
             "### TRADING TABLE =================================\n",
             "2020-02-23T00:00:00, 5000, 15000, 4500, 5500, 1500000000, 1500\n",
             "2020-02-23T00:00:00, [->] 1607862457.560075, buy, 5000, 1\n",
-            "2020-02-23T00:00:00, [<-] 1607862457.560075, buy, 5000, 1, success, 30000\n",
+            "2020-02-23T00:00:00, [<-] 1607862457.560075, buy, 5000, 0.5, success\n",
             "2020-02-23T00:00:00, [#] 5000, -65.248, {'mango': -50.0, 'apple': 50.0}, [('mango', 500, 300, 5.23, -40.0), ('apple', 250, 750, 2.11, 200.0)]\n",
+            "2020-02-23T00:00:05, [<-] 1607862457.560075, buy, 5000, 0.5, success\n",
             "2020-02-23T00:01:00, 5500, 19000, 4900, 8000, 15000000, 15000\n",
             "2020-02-23T00:01:00, [->] 1607862457.560075, sell, 6000, 0.5\n",
-            "2020-02-23T00:01:00, [<-] 1607862457.560075, sell, 6000, 0.5, success, 33000\n",
+            "2020-02-23T00:01:00, [<-] 1607862457.560075, sell, 6000, 0.2, success\n",
             "2020-02-23T00:01:00, [#] 5000, -75.067, {'mango': -66.667, 'apple': -99.85}, [('mango', 600, 200, 4.23, -66.667), ('apple', 500, 0.75, 3.11, -99.85)]\n",
             "### SUMMARY =======================================\n",
             "Property                      23456 ->       5848\n",
@@ -509,8 +809,7 @@ class AnalyzerTests(unittest.TestCase):
         report = analyzer.create_report(tag=tag)
         mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + tag + ".txt", "w")
 
-        report = analyzer.create_report(tag=tag, filename=filename)
-        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + filename + ".txt", "w")
+        analyzer.update_asset_info.assert_called()
 
     @patch("mplfinance.make_addplot")
     @patch("pandas.to_datetime")
@@ -538,8 +837,8 @@ class AnalyzerTests(unittest.TestCase):
         dummyDataFrame = DummyDataFrame()
         mock_DataFrame.return_value = dummyDataFrame
         analyzer = Analyzer()
-        analyzer.initialize("mango", True)
-        analyzer.update_info_func = MagicMock()
+        analyzer.initialize("mango")
+        analyzer.update_asset_info = MagicMock()
         filename = "apple"
 
         dummy_data = self.fill_test_data_for_report(analyzer)
@@ -571,12 +870,14 @@ class AnalyzerTests(unittest.TestCase):
                     "acc_price": 15000000,
                     "acc_volume": 15000,
                     "kind": 0,
+                    "buy": 5000,
                     "sell": 6000,
                     "return": -75.067,
                     "avr_price": 600,
                 },
             ]
         )
+
         dummyDataFrame.rename.assert_called_once_with(
             columns={
                 "date_time": "Date",
@@ -632,13 +933,415 @@ class AnalyzerTests(unittest.TestCase):
             type="candle",
             volume=True,
             addplot=ANY,
+            mav=analyzer.SMA,
             style="starsandstripes",
             savefig=dict(
                 fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25
             ),
         )
+        analyzer.update_asset_info.assert_called_once()
 
     def test_get_trading_results_return_result(self):
         analyzer = Analyzer()
-        analyzer.result = "mango"
+        analyzer.result_list = "mango"
         self.assertEqual(analyzer.get_trading_results(), "mango")
+
+    def fill_test_data_for_report_10(self, analyzer):
+        analyzer.info_list = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:50:00",
+                "opening_price": 10591000.0,
+                "high_price": 10605000.0,
+                "low_price": 10591000.0,
+                "closing_price": 10605000.0,
+                "acc_price": 116316536.37072,
+                "acc_volume": 10.97288124,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:51:00",
+                "opening_price": 10608000.0,
+                "high_price": 10611000.0,
+                "low_price": 10596000.0,
+                "closing_price": 10598000.0,
+                "acc_price": 132749879.7377,
+                "acc_volume": 12.52234496,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:52:00",
+                "opening_price": 10598000.0,
+                "high_price": 10611000.0,
+                "low_price": 10596000.0,
+                "closing_price": 10611000.0,
+                "acc_price": 59612254.02454,
+                "acc_volume": 5.6232814,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:53:00",
+                "opening_price": 10612000.0,
+                "high_price": 10622000.0,
+                "low_price": 10612000.0,
+                "closing_price": 10622000.0,
+                "acc_price": 50830798.21126,
+                "acc_volume": 4.78835739,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:54:00",
+                "opening_price": 10617000.0,
+                "high_price": 10630000.0,
+                "low_price": 10617000.0,
+                "closing_price": 10630000.0,
+                "acc_price": 82005173.84158,
+                "acc_volume": 7.71635194,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:55:00",
+                "opening_price": 10630000.0,
+                "high_price": 10650000.0,
+                "low_price": 10630000.0,
+                "closing_price": 10650000.0,
+                "acc_price": 99752483.10131,
+                "acc_volume": 9.37410465,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:56:00",
+                "opening_price": 10646000.0,
+                "high_price": 10657000.0,
+                "low_price": 10646000.0,
+                "closing_price": 10646000.0,
+                "acc_price": 328379382.72467,
+                "acc_volume": 30.83367158,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:57:00",
+                "opening_price": 10646000.0,
+                "high_price": 10650000.0,
+                "low_price": 10645000.0,
+                "closing_price": 10647000.0,
+                "acc_price": 51564466.13633,
+                "acc_volume": 4.84241397,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:58:00",
+                "opening_price": 10646000.0,
+                "high_price": 10669000.0,
+                "low_price": 10646000.0,
+                "closing_price": 10669000.0,
+                "acc_price": 197890470.89159,
+                "acc_volume": 18.56679051,
+                "kind": 0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-04-30T05:59:00",
+                "opening_price": 10669000.0,
+                "high_price": 10671000.0,
+                "low_price": 10666000.0,
+                "closing_price": 10670000.0,
+                "acc_price": 106676249.34666,
+                "acc_volume": 9.99976792,
+                "kind": 0,
+            },
+        ]
+        analyzer.asset_info_list = [
+            {
+                "balance": 100000.0,
+                "asset": {},
+                "quote": {"KRW-BTC": 10605000.0},
+                "date_time": "2020-04-30T05:50:00",
+            },
+            {
+                "balance": 79840.0,
+                "asset": {"KRW-BTC": (10605000.0, 0.0019)},
+                "quote": {"KRW-BTC": 10598000.0},
+                "date_time": "2020-04-30T05:50:00",
+            },
+            {
+                "balance": 59694.0,
+                "asset": {"KRW-BTC": (10601500, 0.0038)},
+                "quote": {"KRW-BTC": 10611000.0},
+                "date_time": "2020-04-30T05:51:00",
+            },
+            {
+                "balance": 59694.0,
+                "asset": {"KRW-BTC": (10601500, 0.0038)},
+                "quote": {"KRW-BTC": 10622000.0},
+                "date_time": "2020-04-30T05:53:00",
+            },
+            {
+                "balance": 39502.0,
+                "asset": {"KRW-BTC": (10608333, 0.0057)},
+                "quote": {"KRW-BTC": 10630000.0},
+                "date_time": "2020-04-30T05:53:00",
+            },
+            {
+                "balance": 19295.0,
+                "asset": {"KRW-BTC": (10613750, 0.0076)},
+                "quote": {"KRW-BTC": 10650000.0},
+                "date_time": "2020-04-30T05:54:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10646000.0},
+                "date_time": "2020-04-30T05:55:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10647000.0},
+                "date_time": "2020-04-30T05:57:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10670000.0},
+                "date_time": "2020-04-30T05:59:00",
+            },
+            {
+                "balance": 115.0,
+                "asset": {"KRW-BTC": (10620691, 0.0094)},
+                "quote": {"KRW-BTC": 10576000.0},
+                "date_time": "2020-04-30T06:01:00",
+            },
+        ]
+        analyzer.score_list = [
+            {
+                "balance": 100000.0,
+                "cumulative_return": 0,
+                "price_change_ratio": {},
+                "asset": [],
+                "date_time": "2020-04-30T05:50:00",
+                "kind": 3,
+            },
+            {
+                "balance": 79840.0,
+                "cumulative_return": -0.024,
+                "price_change_ratio": {"KRW-BTC": -0.066},
+                "asset": [("KRW-BTC", 10605000.0, 10598000.0, 0.0019, -0.066)],
+                "date_time": "2020-04-30T05:50:00",
+                "kind": 3,
+            },
+            {
+                "balance": 59694.0,
+                "cumulative_return": 0.016,
+                "price_change_ratio": {"KRW-BTC": 0.057},
+                "asset": [("KRW-BTC", 10601500.0, 10611000.0, 0.0038, 0.09)],
+                "date_time": "2020-04-30T05:51:00",
+                "kind": 3,
+            },
+            {
+                "balance": 59694.0,
+                "cumulative_return": 0.058,
+                "price_change_ratio": {"KRW-BTC": 0.16},
+                "asset": [("KRW-BTC", 10601500.0, 10622000.0, 0.0038, 0.193)],
+                "date_time": "2020-04-30T05:53:00",
+                "kind": 3,
+            },
+            {
+                "balance": 39502.0,
+                "cumulative_return": 0.093,
+                "price_change_ratio": {"KRW-BTC": 0.236},
+                "asset": [("KRW-BTC", 10608333.0, 10630000.0, 0.0057, 0.204)],
+                "date_time": "2020-04-30T05:53:00",
+                "kind": 3,
+            },
+            {
+                "balance": 19295.0,
+                "cumulative_return": 0.235,
+                "price_change_ratio": {"KRW-BTC": 0.424},
+                "asset": [("KRW-BTC", 10613750.0, 10650000.0, 0.0076, 0.342)],
+                "date_time": "2020-04-30T05:54:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": 0.187,
+                "price_change_ratio": {"KRW-BTC": 0.387},
+                "asset": [("KRW-BTC", 10620691.0, 10646000.0, 0.0094, 0.238)],
+                "date_time": "2020-04-30T05:55:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": 0.197,
+                "price_change_ratio": {"KRW-BTC": 0.396},
+                "asset": [("KRW-BTC", 10620691.0, 10647000.0, 0.0094, 0.248)],
+                "date_time": "2020-04-30T05:57:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": 0.413,
+                "price_change_ratio": {"KRW-BTC": 0.613},
+                "asset": [("KRW-BTC", 10620691.0, 10670000.0, 0.0094, 0.464)],
+                "date_time": "2020-04-30T05:59:00",
+                "kind": 3,
+            },
+            {
+                "balance": 115.0,
+                "cumulative_return": -0.471,
+                "price_change_ratio": {"KRW-BTC": -0.273},
+                "asset": [("KRW-BTC", 10620691.0, 10576000.0, 0.0094, -0.421)],
+                "date_time": "2020-04-30T06:01:00",
+                "kind": 3,
+            },
+        ]
+        analyzer.result_list = [
+            {
+                "request": {
+                    "id": "1622473847.721",
+                    "type": "buy",
+                    "price": 10605000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:50:00",
+                },
+                "type": "buy",
+                "price": 10605000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 79840,
+                "state": "done",
+                "date_time": "2020-04-30T05:50:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473848.262",
+                    "type": "buy",
+                    "price": 10598000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:51:00",
+                },
+                "type": "buy",
+                "price": 10598000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 59694,
+                "state": "done",
+                "date_time": "2020-04-30T05:51:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473849.316",
+                    "type": "buy",
+                    "price": 10622000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:53:00",
+                },
+                "type": "buy",
+                "price": 10622000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 39502,
+                "state": "done",
+                "date_time": "2020-04-30T05:53:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473849.851",
+                    "type": "buy",
+                    "price": 10630000.0,
+                    "amount": 0.0019,
+                    "date_time": "2020-04-30T05:54:00",
+                },
+                "type": "buy",
+                "price": 10630000.0,
+                "amount": 0.0019,
+                "msg": "success",
+                "balance": 19295,
+                "state": "done",
+                "date_time": "2020-04-30T05:54:00",
+                "kind": 2,
+            },
+            {
+                "request": {
+                    "id": "1622473850.386",
+                    "type": "buy",
+                    "price": 10650000.0,
+                    "amount": 0.0018,
+                    "date_time": "2020-04-30T05:55:00",
+                },
+                "type": "buy",
+                "price": 10650000.0,
+                "amount": 0.0018,
+                "msg": "success",
+                "balance": 115,
+                "state": "done",
+                "date_time": "2020-04-30T05:55:00",
+                "kind": 2,
+            },
+        ]
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test__write_to_file_make_dumpfile_correctly(self, mock_file):
+        analyzer = Analyzer()
+        dummy_list = [{"mango": 500}, {"orange": 7.7}]
+        analyzer._write_to_file("mango_dump_file", dummy_list)
+        mock_file.assert_called_with("mango_dump_file", "w")
+        handle = mock_file()
+        expected = ["[\n", "{'mango': 500},\n", "{'orange': 7.7},\n", "]\n"]
+        for idx, val in enumerate(expected):
+            self.assertEqual(
+                handle.write.call_args_list[idx][0][0],
+                val,
+            )
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test__load_from_file_load_dumpfile_correctly(self, mock_file):
+        analyzer = Analyzer()
+        handle = mock_file()
+        handle.read.return_value = "[ {'mango': 500}, {'orange': 7.7},]"
+        dummy_list = analyzer._load_list_from_file("mango_dump_file")
+        mock_file.assert_called_with("mango_dump_file")
+        self.assertEqual(dummy_list, [{"mango": 500}, {"orange": 7.7}])
+
+    def test_dump_call_should_call__write_to_file_correctly(self):
+        analyzer = Analyzer()
+        analyzer._write_to_file = MagicMock()
+        analyzer.dump("mango")
+        called = analyzer._write_to_file.call_args_list
+        self.assertEqual(called[0][0][0], "mango.1")
+        self.assertEqual(called[1][0][0], "mango.2")
+        self.assertEqual(called[2][0][0], "mango.3")
+        self.assertEqual(called[3][0][0], "mango.4")
+        self.assertEqual(called[4][0][0], "mango.5")
+        self.assertEqual(called[0][0][1], analyzer.request_list)
+        self.assertEqual(called[1][0][1], analyzer.result_list)
+        self.assertEqual(called[2][0][1], analyzer.info_list)
+        self.assertEqual(called[3][0][1], analyzer.asset_info_list)
+        self.assertEqual(called[4][0][1], analyzer.score_list)
+
+    def test_load_dump_call_should_call__load_list_from_file_correctly(self):
+        analyzer = Analyzer()
+        analyzer._load_list_from_file = MagicMock(side_effect=["a", "b", "c", "d", "e"])
+        analyzer.load_dump("mango")
+        called = analyzer._load_list_from_file.call_args_list
+        self.assertEqual(called[0][0][0], "mango.1")
+        self.assertEqual(called[1][0][0], "mango.2")
+        self.assertEqual(called[2][0][0], "mango.3")
+        self.assertEqual(called[3][0][0], "mango.4")
+        self.assertEqual(called[4][0][0], "mango.5")
+        self.assertEqual(analyzer.request_list, "a")
+        self.assertEqual(analyzer.result_list, "b")
+        self.assertEqual(analyzer.info_list, "c")
+        self.assertEqual(analyzer.asset_info_list, "d")
+        self.assertEqual(analyzer.score_list, "e")
