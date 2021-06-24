@@ -63,7 +63,7 @@ class SimulationTrader(Trader):
             raise UserWarning("invalid state") from msg
 
     def get_account_info(self):
-        """계좌 요청 정보를 요청한다
+        """계좌 정보를 요청한다
         현금을 포함한 모든 자산 정보를 제공한다
 
         returns:

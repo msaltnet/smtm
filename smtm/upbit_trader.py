@@ -119,7 +119,7 @@ class UpbitTrader(Trader):
             )
 
     def get_account_info(self):
-        """계좌 요청 정보를 요청한다
+        """계좌 정보를 요청한다
         Returns:
             {
                 balance: 계좌 현금 잔고
