@@ -60,9 +60,8 @@ class UpbitTrader(Trader):
         return query_string
 
     @staticmethod
-    def _create_success_result(request, request_uuid):
+    def _create_success_result(request):
         return {
-            "uuid": request_uuid,
             "state": "requested",
             "request": request,
             "type": request["type"],
@@ -206,7 +205,7 @@ class UpbitTrader(Trader):
             task["callback"]("error!")
             return
 
-        result = self._create_success_result(request, response["uuid"])
+        result = self._create_success_result(request)
         self.order_map[request["id"]] = {
             "uuid": response["uuid"],
             "callback": task["callback"],
@@ -236,8 +235,8 @@ class UpbitTrader(Trader):
     def _update_order_result(self, task):
         del task
         uuids = []
-        for request_id, request_info in self.order_map.items():
-            uuids.append(request_info["uuid"])
+        for request_id, order in self.order_map.items():
+            uuids.append(order["uuid"])
 
         if len(uuids) == 0:
             return
@@ -248,25 +247,27 @@ class UpbitTrader(Trader):
 
         waiting_request = {}
         self.logger.debug(f"waiting order count {len(self.order_map)}")
-        for request_id, request_info in self.order_map.items():
+        for request_id, order in self.order_map.items():
             is_done = False
-            for order in results:
-                if order["uuid"] == request_info["uuid"]:
+            for query_result in results:
+                if order["uuid"] == query_result["uuid"]:
                     self.logger.debug("Find done order! =====")
-                    self.logger.debug(request_info)
                     self.logger.debug(order)
-                    result = request_info["result"]
-                    result["date_time"] = order["created_at"].replace("+09:00", "")
+                    self.logger.debug(query_result)
+                    result = order["result"]
+                    result["date_time"] = query_result["created_at"].replace("+09:00", "")
                     # 최종 체결 가격, 수량으로 업데이트
-                    result["price"] = float(order["price"]) if order["price"] is not None else 0
-                    result["amount"] = float(order["executed_volume"])
+                    result["price"] = (
+                        float(query_result["price"]) if query_result["price"] is not None else 0
+                    )
+                    result["amount"] = float(query_result["executed_volume"])
                     result["state"] = "done"
-                    self._call_callback(request_info["callback"], result)
+                    self._call_callback(order["callback"], result)
                     is_done = True
 
             if is_done is False:
-                self.logger.debug(f"waiting order {request_info}")
-                waiting_request[request_id] = request_info
+                self.logger.debug(f"waiting order {order}")
+                waiting_request[request_id] = order
         self.order_map = waiting_request
         self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
 
@@ -342,9 +343,10 @@ class UpbitTrader(Trader):
         self.logger.info(f"{market}, price: {price}, volume: {volume}")
         if price is not None and volume is not None:
             # 지정가 주문
+            final_price = price
             if self.is_opt_mode:
-                price = self._optimize_price(price, is_buy)
-            query_string = self._create_limit_order_query(market, is_buy, price, volume)
+                final_price = self._optimize_price(price, is_buy)
+            query_string = self._create_limit_order_query(market, is_buy, final_price, volume)
         elif volume is not None and is_buy is False:
             # 시장가 매도
             self.logger.warning("### Marker price order is submitted ###")
@@ -385,11 +387,11 @@ class UpbitTrader(Trader):
         if latest is None:
             return price
 
-        if (is_buy is True and latest[0]["trade_price"] < price) or (
-            is_buy is False and latest[0]["trade_price"] > price
-        ):
-            self.logger.info(f"price optimized! ##### {price} -> {latest[0]['trade_price']}")
-            return latest[0]["trade_price"]
+        latest_price = latest[0]["trade_price"]
+
+        if (is_buy is True and latest_price < price) or (is_buy is False and latest_price > price):
+            self.logger.info(f"price optimized! ##### {price} -> {latest_price}")
+            return latest_price
 
         return price
 

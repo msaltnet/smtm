@@ -26,7 +26,7 @@ class UpditTraderTests(unittest.TestCase):
         trader._execute_order(dummy_task)
 
         trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
-        trader._create_success_result.assert_called_once_with(dummy_task["request"], "mango")
+        trader._create_success_result.assert_called_once_with(dummy_task["request"])
         trader._start_timer.assert_called_once()
         self.assertEqual(trader.order_map["apple"]["uuid"], "mango")
         self.assertEqual(trader.order_map["apple"]["callback"], dummy_task["callback"])
@@ -110,7 +110,7 @@ class UpditTraderTests(unittest.TestCase):
     def test__create_success_result_return_correct_result(self):
         dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}
         trader = UpbitTrader()
-        success_result = trader._create_success_result(dummy_request, "mango_uuid")
+        success_result = trader._create_success_result(dummy_request)
 
         self.assertEqual(success_result["request"]["id"], dummy_request["id"])
         self.assertEqual(success_result["type"], dummy_request["type"])
@@ -118,7 +118,6 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(success_result["amount"], dummy_request["amount"])
         self.assertEqual(success_result["msg"], "success")
         self.assertEqual(success_result["state"], "requested")
-        self.assertEqual(success_result["uuid"], "mango_uuid")
 
     @patch("threading.Timer")
     def test_start_timer_should_start_Timer(self, mock_timer):
