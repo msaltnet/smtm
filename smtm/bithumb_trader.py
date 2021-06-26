@@ -39,7 +39,7 @@ class BithumbTrader(Trader):
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.worker = Worker("BithumbTrader-Worker")
+        self.worker = Worker("BTR-Worker")
         self.worker.start()
         self.timer = None
         self.request_map = {}
@@ -51,29 +51,29 @@ class BithumbTrader(Trader):
     def send_request(self, request_list, callback):
         """거래 요청을 처리한다
 
-        요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
-        request_list: 거래 요청 정보
-        {
+        request_list: 한 개 이상의 거래 요청 정보 리스트
+        [{
             "id": 요청 정보 id "1607862457.560075"
             "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
-            "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 생성 시간
-        }
+            "date_time": 요청 데이터 생성 시간
+        }]
         callback(result):
         {
-            "request": 요청 정보 전체
+            "request": 요청 정보
             "type": 거래 유형 sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
-            "msg": 거래 결과 메세지 success, internal error
-            "balance": 거래 후 계좌 현금 잔고
-            "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 request의 시간
+            "state": 거래 상태 requested, done
+            "msg": 거래 결과 메세지
+            "date_time": 거래 체결 시간
         }
         """
-        self.worker.post_task(
-            {"runnable": self._execute_order, "request": request_list, "callback": callback}
-        )
+        for request in request_list:
+            self.worker.post_task(
+                {"runnable": self._execute_order, "request": request, "callback": callback}
+            )
 
     def get_account_info(self):
         """계좌 정보를 요청한다
