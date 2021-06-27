@@ -58,7 +58,7 @@ class SimulationOperator(Operator):
         self._start_timer()
         return True
 
-    def get_score(self, callback, index_info=None, graph=False):
+    def get_score(self, callback, index_info=None):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
         시뮬레이션이 종료된 경우 마지막 수익률 전달한다
 

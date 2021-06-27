@@ -5,7 +5,7 @@ mode:
     2 : controller for real trading
 Example) python -m smtm --mode 0
 Example) python -m smtm --mode 1
-Example) python -m smtm --budget 50000 --from_dash_to 201220.170000-201220.180000 --term 1 --strategy 0
+Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy 0
 """
 import argparse
 from . import Simulator

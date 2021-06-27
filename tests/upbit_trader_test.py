@@ -996,7 +996,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
                 "msg": "success",
             },
         }
-        trader.order_map["mango_request_5678"] = dummy_request
+        trader.order_map["mango_request_5678"] = dummy_request2
         trader.cancel_request = MagicMock()
 
         trader.cancel_all_requests()

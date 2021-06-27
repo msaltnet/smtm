@@ -256,6 +256,7 @@ good-names=i,
            ACCESS_KEY,
            SECRET_KEY,
            SERVER_URL,
+           SMA,
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted

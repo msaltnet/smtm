@@ -6,7 +6,6 @@ import copy
 import os
 from datetime import datetime
 import ast
-import json
 import matplotlib
 import pandas as pd
 import mplfinance as mpf
@@ -304,7 +303,7 @@ class Analyzer:
     def __make_filtered_list(start_dt, end_dt, dest, source):
         for target in source:
             target_dt = datetime.strptime(target["date_time"], "%Y-%m-%dT%H:%M:%S")
-            if start_dt <= target_dt and target_dt <= end_dt:
+            if start_dt <= target_dt <= end_dt:
                 dest.append(target)
 
     def __get_return_report(
@@ -559,6 +558,7 @@ class Analyzer:
             return target_list
 
     def dump(self, filename="dump"):
+        """주요 데이터를 파일로 저장한다"""
         self._write_to_file(filename + ".1", self.request_list)
         self._write_to_file(filename + ".2", self.result_list)
         self._write_to_file(filename + ".3", self.info_list)
@@ -566,6 +566,7 @@ class Analyzer:
         self._write_to_file(filename + ".5", self.score_list)
 
     def load_dump(self, filename="dump"):
+        """주요 데이터를 파일로부터 읽어온다"""
         self.request_list = self._load_list_from_file(filename + ".1")
         self.result_list = self._load_list_from_file(filename + ".2")
         self.info_list = self._load_list_from_file(filename + ".3")
