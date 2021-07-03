@@ -8,6 +8,8 @@ from . import (
     Analyzer,
     UpbitTrader,
     UpbitDataProvider,
+    BithumbTrader,
+    BithumbDataProvider,
     StrategyBuyAndHold,
     StrategySma0,
     Operator,
@@ -19,15 +21,16 @@ class Controller:
 
     MAIN_STATEMENT = "명령어를 입력하세요. (h: 도움말): "
 
-    def __init__(self, interval=10, strategy=0, budget=50000):
+    def __init__(self, interval=10, strategy=0, budget=50000, is_bithumb=False):
         self.logger = LogManager.get_logger("Controller")
         self.terminating = False
-        self.interval = interval
+        self.interval = float(interval)
         self.operator = Operator()
-        self.budget = budget
+        self.budget = int(budget)
         self.is_initialized = False
         self.command_list = []
         self.create_command()
+        self.is_bithumb = is_bithumb
         self.strategy = StrategySma0()
         LogManager.set_stream_level(30)
 
@@ -78,17 +81,24 @@ class Controller:
     def main(self):
         """main 함수"""
 
+        if self.is_bithumb:
+            data_provider = BithumbDataProvider()
+            trader = BithumbTrader(budget=self.budget)
+        else:
+            data_provider = UpbitDataProvider()
+            trader = UpbitTrader(budget=self.budget)
+
         self.operator.initialize(
-            UpbitDataProvider(),
+            data_provider,
             self.strategy,
-            UpbitTrader(),
+            trader,
             Analyzer(),
             budget=self.budget,
         )
 
         self.operator.set_interval(self.interval)
         print("##### smtm is intialized #####")
-        print(f"interval: {self.interval}, strategy: {self.strategy.name}")
+        print(f"interval: {self.interval}, strategy: {self.strategy.name} , trader: {trader.name}")
         print("==============================")
 
         self.logger.info(f"interval: {self.interval}")

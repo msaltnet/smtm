@@ -131,11 +131,12 @@ class BithumbTrader(Trader):
         del self.order_map[request_id]
         result = order["result"]
         response = self._cancel_order(order["order_id"])
+        self.logger.debug(f"cancel {response}")
 
         if response is None or response["status"] != "0000":
             # 이미 체결된 경우, 취소가 안되므로 주문 정보를 조회
             response = self._query_order(order["order_id"])
-            print(response)
+            self.logger.debug(f"cancel query: {response}")
             if response["data"]["order_status"] == "Completed":
                 result = order["result"]
                 result["amount"] = float(response["data"]["order_qty"])
@@ -212,6 +213,7 @@ class BithumbTrader(Trader):
             "payment_currency": "KRW",
             "order_id": order_id,
         }
+        self.logger.debug(f"cancel order_id: {order_id}")
         return self.bithumb_api_call("/trade/cancel", query)
 
     def _start_timer(self):
@@ -237,12 +239,14 @@ class BithumbTrader(Trader):
         self.logger.debug(f"waiting order count {len(self.order_map)}")
         for request_id, order in self.order_map.items():
             try:
+                self.logger.debug(f"try to find order {order}")
                 response = self._query_order(order["order_id"])
+                self.logger.debug(f"response {response}")
                 if response["data"]["order_status"] == "Completed":
                     result = order["result"]
                     result["amount"] = float(response["data"]["order_qty"])
                     result["date_time"] = self._convert_timestamp(
-                        int(response["data"]["transaction_date"])
+                        int(response["data"]["contract"][0]["transaction_date"])
                     )
                     if "price" not in result or result["price"] is None:
                         result["price"] = float(response["data"]["order_price"])
@@ -303,6 +307,7 @@ class BithumbTrader(Trader):
         if self.is_opt_mode:
             final_price = self._optimize_price(price, is_buy)
 
+        final_price = math.floor(final_price)
         self.logger.info(f"ORDER ##### {'BUY' if is_buy else 'SELL'}")
         self.logger.info(f"{self.MARKET},price: {price}, volume: {final_volume}")
 
@@ -314,6 +319,7 @@ class BithumbTrader(Trader):
             "price": str(final_price),
         }
 
+        self.logger.debug(f"query :{query}")
         return self.bithumb_api_call("/trade/place", query)
 
     def _optimize_price(self, price, is_buy):

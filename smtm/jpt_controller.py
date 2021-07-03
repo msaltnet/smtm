@@ -8,6 +8,8 @@ from . import (
     Analyzer,
     UpbitTrader,
     UpbitDataProvider,
+    BithumbTrader,
+    BithumbDataProvider,
     StrategyBuyAndHold,
     StrategySma0,
     Operator,
@@ -26,17 +28,24 @@ class JptController:
         self.need_init = True
         self.logger = LogManager.get_logger("JptController")
 
-    def initialize(self, interval=10, strategy=0, budget=50000):
+    def initialize(self, interval=10, strategy=0, budget=50000, is_bithumb=False):
         """설정 값으로 초기화"""
         self.interval = interval
         self.strategy_num = strategy
         self.budget = budget
         self.strategy = StrategyBuyAndHold() if self.strategy_num == 0 else StrategySma0()
         self.operator = Operator()
+        if is_bithumb:
+            data_provider = BithumbDataProvider()
+            trader = BithumbTrader(budget=self.budget)
+        else:
+            data_provider = UpbitDataProvider()
+            trader = UpbitTrader(budget=self.budget)
+
         self.operator.initialize(
-            UpbitDataProvider(),
+            data_provider,
             self.strategy,
-            UpbitTrader(budget=self.budget),
+            trader,
             Analyzer(),
             budget=self.budget,
         )

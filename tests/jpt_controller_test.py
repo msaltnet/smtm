@@ -4,6 +4,8 @@ from smtm import (
     Analyzer,
     UpbitTrader,
     UpbitDataProvider,
+    BithumbTrader,
+    BithumbDataProvider,
     StrategyBuyAndHold,
     StrategySma0,
     Operator,
@@ -42,6 +44,14 @@ class JptControllerTests(unittest.TestCase):
         self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][2], UpbitTrader))
         self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][3], Analyzer))
         self.assertEqual(mock_initialize.call_args_list[1][1]["budget"], 700)
+
+        controller.initialize(interval=5, strategy=1, budget=888, is_bithumb=True)
+        mock_set_interval.assert_called_with(5)
+        self.assertTrue(isinstance(mock_initialize.call_args_list[2][0][0], BithumbDataProvider))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[2][0][1], StrategySma0))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[2][0][2], BithumbTrader))
+        self.assertTrue(isinstance(mock_initialize.call_args_list[2][0][3], Analyzer))
+        self.assertEqual(mock_initialize.call_args_list[2][1]["budget"], 888)
 
     @patch("smtm.Operator.start")
     def test_start_should_call_operator_start_after_initialized(self, mock_start):
