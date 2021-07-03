@@ -13,8 +13,8 @@ from . import Simulator, Controller
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--budget", help="simulation budget", type=int, default=10000)
-    parser.add_argument("--term", help="simulation tick interval (seconds)", type=int, default="60")
+    parser.add_argument("--budget", help="budget", type=int, default=10000)
+    parser.add_argument("--term", help="trading tick interval (seconds)", type=int, default="60")
     parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0", default="0")
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
     parser.add_argument(
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--from_dash_to",
-        help="use %Y[-2:]%m%d.%H%M%S format ex) 201220.170000-201220.180000",
+        help="simulation period ex) 201220.170000-201220.180000",
         default="201220.170000-201220.180000",
     )
     args = parser.parse_args()

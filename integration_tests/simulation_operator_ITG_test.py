@@ -115,7 +115,7 @@ class SimulationOperatorIntegrationSma0Tests(unittest.TestCase):
         count = 100
         budget = 100000
         interval = 0.1
-        time_limit = 15
+        time_limit = 20
         end_str = "2020-04-30T16:30:00"
 
         data_provider = SimulationDataProvider()

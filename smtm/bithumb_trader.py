@@ -31,6 +31,7 @@ class BithumbTrader(Trader):
 
     RESULT_CHECKING_INTERVAL = 5
     MARKET = "BTC"
+    CURRENCY = "KRW"
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     COMMISSION_RATIO = 0.0005
 
@@ -63,6 +64,7 @@ class BithumbTrader(Trader):
             "price": request["price"],
             "amount": request["amount"],
             "msg": "success",
+            "date_time": datetime.now().strftime(BithumbTrader.ISO_DATEFORMAT),
         }
 
     @staticmethod
@@ -117,6 +119,8 @@ class BithumbTrader(Trader):
         }
         if trade_info is not None and trade_info["status"] == "0000":
             result["quote"][self.MARKET] = float(trade_info["data"][0]["price"])
+        else:
+            self.logger.error("fail query quote")
         self.logger.debug(f"account info {result}")
         return result
 
@@ -125,10 +129,10 @@ class BithumbTrader(Trader):
         request_id: 취소하고자 하는 request의 id
         """
         if request_id not in self.order_map:
+            self.logger.debug(f"already canceled: {request_id}")
             return
 
         order = self.order_map[request_id]
-        del self.order_map[request_id]
         result = order["result"]
         response = self._cancel_order(order["order_id"])
         self.logger.debug(f"cancel {response}")
@@ -137,18 +141,21 @@ class BithumbTrader(Trader):
             # 이미 체결된 경우, 취소가 안되므로 주문 정보를 조회
             response = self._query_order(order["order_id"])
             self.logger.debug(f"cancel query: {response}")
-            if response["data"]["order_status"] == "Completed":
-                result = order["result"]
-                result["amount"] = float(response["data"]["order_qty"])
-                result["date_time"] = self._convert_timestamp(
-                    int(response["data"]["transaction_date"])
-                )
-                if "price" not in result or result["price"] is None:
-                    result["price"] = float(response["data"]["order_price"])
-                result["state"] = "done"
-                self._call_callback(order["callback"], result)
+            if response["data"]["order_status"] != "Completed":
+                self.logger.warning(f"can't cancel and query {request_id}, {order['order_id']}")
+                return
 
+            result["amount"] = float(response["data"]["order_qty"])
+            result["date_time"] = self._convert_timestamp(
+                int(response["data"]["transaction_date"])
+            )
+            if "price" not in result or result["price"] is None:
+                result["price"] = float(response["data"]["order_price"])
+
+        result["state"] = "done"
+        del self.order_map[request_id]
         self.logger.debug(f"canceled order {response}")
+        self._call_callback(order["callback"], result)
 
     def cancel_all_requests(self):
         """모든 거래 요청을 취소한다
@@ -210,7 +217,7 @@ class BithumbTrader(Trader):
         """
         query = {
             "order_currency": self.MARKET,
-            "payment_currency": "KRW",
+            "payment_currency": self.CURRENCY,
             "order_id": order_id,
         }
         self.logger.debug(f"cancel order_id: {order_id}")
@@ -287,6 +294,7 @@ class BithumbTrader(Trader):
             self.asset = (old_avr_price, new_amount)
             self.balance += round(result_value - fee)
 
+        self.logger.debug(f"callback called {result}")
         callback(result)
 
     def _send_limit_order(self, is_buy, price=None, volume=0.0001):
@@ -313,7 +321,7 @@ class BithumbTrader(Trader):
 
         query = {
             "order_currency": self.MARKET,
-            "payment_currency": "KRW",
+            "payment_currency": self.CURRENCY,
             "type": "bid" if is_buy is True else "ask",
             "units": str(final_volume),
             "price": str(final_price),
@@ -358,7 +366,7 @@ class BithumbTrader(Trader):
             units_remaining: 주문 체결 잔액, Number (String)
             price: 1Currency당 주문 가격, Number (String)
         """
-        query = {"order_currency": self.MARKET, "payment_currency": "KRW", "order_id": order_id}
+        query = {"order_currency": self.MARKET, "payment_currency": self.CURRENCY, "order_id": order_id}
         if order_id is None:
             return None
 
@@ -375,7 +383,7 @@ class BithumbTrader(Trader):
             available_{currency}: 주문 가능 가상자산 수량, Number (String)
             available_krw: 주문 가능 원화(KRW) 금액, Number (String)
         """
-        query = {"order_currency": market, "payment_currency": "KRW"}
+        query = {"order_currency": market, "payment_currency": self.CURRENCY}
         return self.bithumb_api_call("/info/balance", query)
 
     def get_trade_tick(self):
@@ -392,7 +400,7 @@ class BithumbTrader(Trader):
 
         try:
             response = requests.get(
-                self.SERVER_URL + f"/public/transaction_history/{self.MARKET}", params=querystring
+                self.SERVER_URL + f"/public/transaction_history/{self.MARKET}_{self.CURRENCY}", params=querystring
             )
             response.raise_for_status()
             result = response.json()
@@ -438,6 +446,7 @@ class BithumbTrader(Trader):
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
+        self.logger.debug(f"url: {url}, headers: {headers}, str_data: {str_data}")
         try:
             response = requests.post(url, headers=headers, data=str_data)
             response.raise_for_status()

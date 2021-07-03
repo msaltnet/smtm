@@ -594,7 +594,7 @@ class BithumbTraderBasicTests(unittest.TestCase):
     @patch("requests.get")
     def test_get_trade_tick_should_send_http_request_correctly(self, mock_get):
         trader = BithumbTrader()
-        expected_url = trader.SERVER_URL + "/public/transaction_history/" + trader.MARKET
+        expected_url = trader.SERVER_URL + f"/public/transaction_history/{trader.MARKET}_{trader.CURRENCY}"
 
         trader.get_trade_tick()
         mock_get.assert_called_once_with(expected_url, params={"count": "1"})

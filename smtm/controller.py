@@ -142,7 +142,7 @@ class Controller:
         elif key in ["score", "2"]:
             self._get_score()
         elif key in ["result", "3"]:
-            print(self.operator.get_trading_results())
+            self._get_trading_record()
 
     def _get_score(self):
         def print_score_and_main_statement(score):
@@ -150,6 +150,22 @@ class Controller:
             print(score)
 
         self.operator.get_score(print_score_and_main_statement)
+
+    def _get_trading_record(self):
+        """현재까지 거래 기록 출력"""
+
+        if self.operator is None:
+            print("초기화가 필요합니다")
+            return
+
+        results = self.operator.get_trading_results()
+        if results is None or len(results) == 0:
+            print("거래 기록이 없습니다")
+            return
+
+        for result in results:
+            print(f"@{result['date_time']}, {result['type']}")
+            print(f"{result['price']} x {result['amount']}")
 
     def start(self):
         """프로그램 시작, 재시작"""
