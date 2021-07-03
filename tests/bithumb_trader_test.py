@@ -406,6 +406,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
                     "transaction_date": "1572497603668315",
                     "order_price": 500,
                     "order_qty": 0.007,
+                    "contract": [{
+                        "transaction_date": "1572497603668315",
+                    }]
                 },
             },
             {
@@ -416,6 +419,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
                     "transaction_date": "1572498603668315",
                     "order_price": 1500,
                     "order_qty": 0.54321,
+                    "contract": [{
+                        "transaction_date": "1572498603668315",
+                    }]
                 },
             },
             {
@@ -426,6 +432,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
                     "transaction_date": "1572498603668315",
                     "order_price": 1500,
                     "order_qty": 0.54321,
+                    "contract": [{
+                        "transaction_date": "1572498603668315",
+                    }]
                 },
             },
         ]
