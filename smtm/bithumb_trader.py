@@ -64,7 +64,6 @@ class BithumbTrader(Trader):
             "price": request["price"],
             "amount": request["amount"],
             "msg": "success",
-            "date_time": datetime.now().strftime(BithumbTrader.ISO_DATEFORMAT),
         }
 
     @staticmethod
@@ -133,15 +132,19 @@ class BithumbTrader(Trader):
             return
 
         order = self.order_map[request_id]
-        result = order["result"]
+        result = copy.deepcopy(order["result"])
         response = self._cancel_order(order["order_id"])
         self.logger.debug(f"cancel {response}")
+
+        result["state"] = "done"
+        result["date_time"] = datetime.now().strftime(BithumbTrader.ISO_DATEFORMAT)
+        result["amount"] = 0
 
         if response is None or response["status"] != "0000":
             # 이미 체결된 경우, 취소가 안되므로 주문 정보를 조회
             response = self._query_order(order["order_id"])
             self.logger.debug(f"cancel query: {response}")
-            if response["data"]["order_status"] != "Completed":
+            if response is None or response["data"]["order_status"] != "Completed":
                 self.logger.warning(f"can't cancel and query {request_id}, {order['order_id']}")
                 return
 
@@ -152,7 +155,6 @@ class BithumbTrader(Trader):
             if "price" not in result or result["price"] is None:
                 result["price"] = float(response["data"]["order_price"])
 
-        result["state"] = "done"
         del self.order_map[request_id]
         self.logger.debug(f"canceled order {response}")
         self._call_callback(order["callback"], result)
