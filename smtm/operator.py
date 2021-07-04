@@ -38,7 +38,7 @@ class Operator:
         self.state = None
         self.is_trading_activated = False
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
-        self.timer_expired_time = datetime.now()
+        self.timer_expired_time = None
         self.last_report = None
 
     def initialize(self, data_provider, strategy, trader, analyzer, budget=500):
@@ -104,7 +104,7 @@ class Operator:
             self.worker.post_task({"runnable": self._execute_trading})
 
         adjusted_interval = self.interval
-        if self.interval > 1:
+        if self.interval > 1 and self.timer_expired_time is not None:
             time_delta = datetime.now() - self.timer_expired_time
             adjusted_interval = self.interval - round(time_delta.total_seconds(), 1)
 

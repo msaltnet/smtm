@@ -75,15 +75,12 @@ class StrategyBuyAndHold(Strategy):
 
         try:
             request = result["request"]
-            self.logger.debug(f"result: {result}")
             if result["state"] == "requested":
                 self.waiting_requests[request["id"]] = result
-                self.logger.debug("self.waiting_requests")
                 return
 
             if result["state"] == "done" and request["id"] in self.waiting_requests:
                 del self.waiting_requests[request["id"]]
-                self.logger.debug("self.waiting_requests deleted!")
 
             total = float(result["price"]) * float(result["amount"])
             fee = total * self.COMMISSION_RATIO

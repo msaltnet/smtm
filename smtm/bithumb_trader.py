@@ -120,7 +120,7 @@ class BithumbTrader(Trader):
             result["quote"][self.MARKET] = float(trade_info["data"][0]["price"])
         else:
             self.logger.error("fail query quote")
-        self.logger.debug(f"account info {result}")
+        self.logger.debug(f"account {result['balance']}, {result['asset']}, {result['quote']}")
         return result
 
     def cancel_request(self, request_id):
@@ -134,7 +134,6 @@ class BithumbTrader(Trader):
         order = self.order_map[request_id]
         result = copy.deepcopy(order["result"])
         response = self._cancel_order(order["order_id"])
-        self.logger.debug(f"cancel {response}")
 
         result["state"] = "done"
         result["date_time"] = datetime.now().strftime(BithumbTrader.ISO_DATEFORMAT)
@@ -156,7 +155,7 @@ class BithumbTrader(Trader):
                 result["price"] = float(response["data"]["order_price"])
 
         del self.order_map[request_id]
-        self.logger.debug(f"canceled order {response}")
+        self.logger.debug(f"canceled: {request_id}")
         self._call_callback(order["callback"], result)
 
     def cancel_all_requests(self):
@@ -222,7 +221,6 @@ class BithumbTrader(Trader):
             "payment_currency": self.CURRENCY,
             "order_id": order_id,
         }
-        self.logger.debug(f"cancel order_id: {order_id}")
         return self.bithumb_api_call("/trade/cancel", query)
 
     def _start_timer(self):
@@ -248,9 +246,8 @@ class BithumbTrader(Trader):
         self.logger.debug(f"waiting order count {len(self.order_map)}")
         for request_id, order in self.order_map.items():
             try:
-                self.logger.debug(f"try to find order {order}")
                 response = self._query_order(order["order_id"])
-                self.logger.debug(f"response {response}")
+                self.logger.debug(f"try to find order {order} : response {response}")
                 if response["data"]["order_status"] == "Completed":
                     result = order["result"]
                     result["amount"] = float(response["data"]["order_qty"])
@@ -296,7 +293,6 @@ class BithumbTrader(Trader):
             self.asset = (old_avr_price, new_amount)
             self.balance += round(result_value - fee)
 
-        self.logger.debug(f"callback called {result}")
         callback(result)
 
     def _send_limit_order(self, is_buy, price=None, volume=0.0001):
@@ -448,7 +444,6 @@ class BithumbTrader(Trader):
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        self.logger.debug(f"url: {url}, headers: {headers}, str_data: {str_data}")
         try:
             response = requests.post(url, headers=headers, data=str_data)
             response.raise_for_status()
