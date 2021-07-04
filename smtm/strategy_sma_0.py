@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from .strategy import Strategy
 from .log_manager import LogManager
-
+from .date_converter import DateConverter
 
 class StrategySma0(Strategy):
     """
@@ -163,7 +163,7 @@ class StrategySma0(Strategy):
             if last_data is None:
                 return [
                     {
-                        "id": str(round(time.time(), 3)),
+                        "id": DateConverter.timestamp_id(),
                         "type": "buy",
                         "price": 0,
                         "amount": 0,
@@ -179,7 +179,7 @@ class StrategySma0(Strategy):
                 if self.is_simulation:
                     return [
                         {
-                            "id": str(round(time.time(), 3)),
+                            "id": DateConverter.timestamp_id(),
                             "type": "buy",
                             "price": 0,
                             "amount": 0,
@@ -232,7 +232,7 @@ class StrategySma0(Strategy):
             self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
             if self.is_simulation:
                 return {
-                    "id": str(round(time.time(), 3)),
+                    "id": DateConverter.timestamp_id(),
                     "type": "buy",
                     "price": 0,
                     "amount": 0,
@@ -240,7 +240,7 @@ class StrategySma0(Strategy):
             return None
 
         return {
-            "id": str(round(time.time(), 3)),
+            "id": DateConverter.timestamp_id(),
             "type": "buy",
             "price": price,
             "amount": amount,
@@ -258,7 +258,7 @@ class StrategySma0(Strategy):
             self.logger.info(f"asset is too small or invalid unit {self.process_unit}")
             if self.is_simulation:
                 return {
-                    "id": str(round(time.time(), 3)),
+                    "id": DateConverter.timestamp_id(),
                     "type": "sell",
                     "price": 0,
                     "amount": 0,
@@ -266,7 +266,7 @@ class StrategySma0(Strategy):
             return None
 
         return {
-            "id": str(round(time.time(), 3)),
+            "id": DateConverter.timestamp_id(),
             "type": "sell",
             "price": price,
             "amount": amount,

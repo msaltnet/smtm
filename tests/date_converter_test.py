@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import unittest
 from smtm import DateConverter
 from unittest.mock import *
@@ -72,3 +72,9 @@ class DateConverterTests(unittest.TestCase):
 
         result = DateConverter.from_kst_to_utc_str("2019-01-04T23:48:09")
         self.assertEqual(result, "2019-01-04T14:48:09")
+
+    def test_timestamp_id_should_return_correct_string(self):
+        now = datetime.now()
+        now_time = now.strftime('%H%M%S')
+        result = DateConverter.timestamp_id()
+        self.assertEqual(result[-6:], now_time)

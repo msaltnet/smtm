@@ -1,4 +1,5 @@
 """Datetime 포맷을 변경해주는 기능을 제공"""
+import time
 from datetime import datetime
 from datetime import timedelta
 
@@ -59,3 +60,11 @@ class DateConverter:
         dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S")
         dt = dt - timedelta(hours=9)
         return dt.strftime(cls.ISO_DATEFORMAT)
+
+    @classmethod
+    def timestamp_id(cls):
+        """unixtime(sec) + %M%S 형태의 문자열 반환"""
+        time_prefix = round(time.time()*1000)
+        now = datetime.now()
+        now_time = now.strftime('%H%M%S')
+        return f"{time_prefix}.{now_time}"

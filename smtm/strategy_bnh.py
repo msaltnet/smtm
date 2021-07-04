@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 from .strategy import Strategy
 from .log_manager import LogManager
-
+from .date_converter import DateConverter
 
 class StrategyBuyAndHold(Strategy):
     """
@@ -75,12 +75,15 @@ class StrategyBuyAndHold(Strategy):
 
         try:
             request = result["request"]
+            self.logger.debug(f"result: {result}")
             if result["state"] == "requested":
                 self.waiting_requests[request["id"]] = result
+                self.logger.debug("self.waiting_requests")
                 return
 
             if result["state"] == "done" and request["id"] in self.waiting_requests:
                 del self.waiting_requests[request["id"]]
+                self.logger.debug("self.waiting_requests deleted!")
 
             total = float(result["price"]) * float(result["amount"])
             fee = total * self.COMMISSION_RATIO
@@ -132,7 +135,7 @@ class StrategyBuyAndHold(Strategy):
 
             amount = round(target_budget / last_closing_price, 4)
             trading_request = {
-                "id": str(round(time.time(), 3)),
+                "id": DateConverter.timestamp_id(),
                 "type": "buy",
                 "price": last_closing_price,
                 "amount": amount,
@@ -172,7 +175,7 @@ class StrategyBuyAndHold(Strategy):
             if self.is_simulation:
                 return [
                     {
-                        "id": str(round(time.time(), 3)),
+                        "id": DateConverter.timestamp_id(),
                         "type": "buy",
                         "price": 0,
                         "amount": 0,
