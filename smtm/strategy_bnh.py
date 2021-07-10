@@ -1,11 +1,11 @@
 """분할 매수 후 홀딩 하는 간단한 전략"""
 
 import copy
-import time
 from datetime import datetime
 from .strategy import Strategy
 from .log_manager import LogManager
 from .date_converter import DateConverter
+
 
 class StrategyBuyAndHold(Strategy):
     """

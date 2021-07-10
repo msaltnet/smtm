@@ -1,13 +1,13 @@
 """이동 평균선을 이용한 기본 전략"""
 
 import copy
-import time
 from datetime import datetime
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
 from .log_manager import LogManager
 from .date_converter import DateConverter
+
 
 class StrategySma0(Strategy):
     """

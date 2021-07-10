@@ -148,9 +148,7 @@ class BithumbTrader(Trader):
                 return
 
             result["amount"] = float(response["data"]["order_qty"])
-            result["date_time"] = self._convert_timestamp(
-                int(response["data"]["transaction_date"])
-            )
+            result["date_time"] = self._convert_timestamp(int(response["data"]["transaction_date"]))
             if "price" not in result or result["price"] is None:
                 result["price"] = float(response["data"]["order_price"])
 
@@ -364,7 +362,11 @@ class BithumbTrader(Trader):
             units_remaining: 주문 체결 잔액, Number (String)
             price: 1Currency당 주문 가격, Number (String)
         """
-        query = {"order_currency": self.MARKET, "payment_currency": self.CURRENCY, "order_id": order_id}
+        query = {
+            "order_currency": self.MARKET,
+            "payment_currency": self.CURRENCY,
+            "order_id": order_id,
+        }
         if order_id is None:
             return None
 
@@ -398,7 +400,8 @@ class BithumbTrader(Trader):
 
         try:
             response = requests.get(
-                self.SERVER_URL + f"/public/transaction_history/{self.MARKET}_{self.CURRENCY}", params=querystring
+                f"{self.SERVER_URL}/public/transaction_history/{self.MARKET}_{self.CURRENCY}",
+                params=querystring,
             )
             response.raise_for_status()
             result = response.json()
