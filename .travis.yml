@@ -13,6 +13,7 @@ python:
   - 3.6
 
 before_install:
+  - export TZ=Asia/Seoul
   - python --version
   - pip install -U pip
   - pip install codecov  

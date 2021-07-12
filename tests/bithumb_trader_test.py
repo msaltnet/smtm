@@ -406,9 +406,11 @@ class BithumbTraderBasicTests(unittest.TestCase):
                     "transaction_date": "1572497603668315",
                     "order_price": 500,
                     "order_qty": 0.007,
-                    "contract": [{
-                        "transaction_date": "1572497603668315",
-                    }]
+                    "contract": [
+                        {
+                            "transaction_date": "1572497603668315",
+                        }
+                    ],
                 },
             },
             {
@@ -419,9 +421,11 @@ class BithumbTraderBasicTests(unittest.TestCase):
                     "transaction_date": "1572498603668315",
                     "order_price": 1500,
                     "order_qty": 0.54321,
-                    "contract": [{
-                        "transaction_date": "1572498603668315",
-                    }]
+                    "contract": [
+                        {
+                            "transaction_date": "1572498603668315",
+                        }
+                    ],
                 },
             },
             {
@@ -432,9 +436,11 @@ class BithumbTraderBasicTests(unittest.TestCase):
                     "transaction_date": "1572498603668315",
                     "order_price": 1500,
                     "order_qty": 0.54321,
-                    "contract": [{
-                        "transaction_date": "1572498603668315",
-                    }]
+                    "contract": [
+                        {
+                            "transaction_date": "1572498603668315",
+                        }
+                    ],
                 },
             },
         ]
@@ -594,7 +600,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
     @patch("requests.get")
     def test_get_trade_tick_should_send_http_request_correctly(self, mock_get):
         trader = BithumbTrader()
-        expected_url = trader.SERVER_URL + f"/public/transaction_history/{trader.MARKET}_{trader.CURRENCY}"
+        expected_url = (
+            trader.SERVER_URL + f"/public/transaction_history/{trader.MARKET}_{trader.CURRENCY}"
+        )
 
         trader.get_trade_tick()
         mock_get.assert_called_once_with(expected_url, params={"count": "1"})
