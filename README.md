@@ -1,5 +1,5 @@
 # smtm
-[![Travis](https://travis-ci.com/msaltnet/smtm.svg?branch=master&style=flat-square&colorB=green)](https://travis-ci.org/msaltnet/smtm)
+[![Travis](https://travis-ci.com/msaltnet/smtm.svg?branch=master&style=flat-square&colorB=green)](https://travis-ci.com/msaltnet/smtm)
 [![license](https://img.shields.io/github/license/msaltnet/smtm.svg?style=flat-square)](https://github.com/msaltnet/smtm/blob/master/LICENSE)
 ![language](https://img.shields.io/github/languages/top/msaltnet/smtm.svg?style=flat-square&colorB=green)
 [![codecov](https://codecov.io/gh/msaltnet/smtm/branch/master/graph/badge.svg?token=USXTX7MG70)](https://codecov.io/gh/msaltnet/smtm)
