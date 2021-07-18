@@ -52,9 +52,9 @@ class BithumbDataProvider(DataProvider):
                     self.ISO_DATEFORMAT
                 ),
                 "opening_price": float(data[1]),
-                "high_price": float(data[2]),
-                "low_price": float(data[3]),
-                "closing_price": float(data[4]),
+                "high_price": float(data[3]),
+                "low_price": float(data[4]),
+                "closing_price": float(data[2]),
                 "acc_price": 0,  # not supported
                 "acc_volume": float(data[5]),
             }
