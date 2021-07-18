@@ -62,47 +62,54 @@ class ControllerTests(unittest.TestCase):
         controller._on_command("hell")
         mock_print.assert_called_once_with("잘못된 명령어가 입력되었습니다")
 
-    @patch("builtins.input")
-    def test__on_command_call_with_value(self, mock_input):
-        controller = Controller()
-        dummy_action = MagicMock()
-        controller.command_list = [
-            {
-                "guide": "c, count         set simulation count",
-                "cmd": "count",
-                "short": "c",
-                "need_value": True,
-                "value_guide": "input simulation count (ex. 100) :",
-                "action_with_value": dummy_action,
-            },
-        ]
-        mock_input.return_value = "mango"
-        controller._on_command("c")
-        mock_input.assert_called_once_with("input simulation count (ex. 100) :")
-        dummy_action.assert_called_once_with("mango")
-
+    @patch("builtins.input", side_effect=["1"])
     @patch("builtins.print")
-    def test__on_query_command_should_handle_command(self, mock_print):
+    def test__on_query_command_should_handle_command_1(self, mock_print, mock_input):
         controller = Controller()
         controller.operator = MagicMock()
         controller.operator.state = "mango"
-        controller._on_query_command("state")
+        controller._on_query_command()
         mock_print.assert_called_once_with("현재 상태: MANGO")
-        controller._on_query_command("score")
+
+    @patch("builtins.input", side_effect=["state"])
+    @patch("builtins.print")
+    def test__on_query_command_should_handle_command_state(self, mock_print, mock_input):
+        controller = Controller()
+        controller.operator = MagicMock()
+        controller.operator.state = "mango"
+        controller._on_query_command()
+        mock_print.assert_called_once_with("현재 상태: MANGO")
+
+    @patch("builtins.input", side_effect=["2"])
+    @patch("builtins.print")
+    def test__on_query_command_should_handle_command_2(self, mock_print, mock_input):
+        controller = Controller()
+        controller.operator = MagicMock()
+        controller._on_query_command()
         controller.operator.get_score.assert_called_once_with(ANY)
-        controller._on_query_command("result")
+
+    @patch("builtins.input", side_effect=["score"])
+    @patch("builtins.print")
+    def test__on_query_command_should_handle_command_score(self, mock_print, mock_input):
+        controller = Controller()
+        controller.operator = MagicMock()
+        controller._on_query_command()
+        controller.operator.get_score.assert_called_once_with(ANY)
+
+    @patch("builtins.input", side_effect=["3"])
+    @patch("builtins.print")
+    def test__on_query_command_should_handle_command_3(self, mock_print, mock_input):
+        controller = Controller()
+        controller.operator = MagicMock()
+        controller._on_query_command()
         controller.operator.get_trading_results.assert_called_once()
 
+    @patch("builtins.input", side_effect=["result"])
     @patch("builtins.print")
-    def test__on_query_command_should_handle_command_by_number(self, mock_print):
+    def test__on_query_command_should_handle_command_result(self, mock_print, mock_input):
         controller = Controller()
         controller.operator = MagicMock()
-        controller.operator.state = "mango"
-        controller._on_query_command("1")
-        mock_print.assert_called_once_with("현재 상태: MANGO")
-        controller._on_query_command("2")
-        controller.operator.get_score.assert_called_once_with(ANY)
-        controller._on_query_command("3")
+        controller._on_query_command()
         controller.operator.get_trading_results.assert_called_once()
 
     def test_start_call_operator_start(self):
