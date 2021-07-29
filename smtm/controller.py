@@ -90,7 +90,9 @@ class Controller:
         print(f"interval: {self.interval}, strategy: {self.strategy.name} , trader: {trader.name}")
         print("==============================")
 
-        self.logger.info(f"interval: {self.interval}")
+        self.logger.info(
+            f"interval: {self.interval}, strategy: {self.strategy.name} , trader: {trader.name}"
+        )
         signal.signal(signal.SIGINT, self.terminate)
         signal.signal(signal.SIGTERM, self.terminate)
 
