@@ -26,15 +26,43 @@ class TelegramControllerTests(unittest.TestCase):
         self.assertEqual(tcb.terminating, True)
         tcb.post_worker.stop.assert_called_once()
 
-    def test__execute_command_should_call_send_method_correctly(self):
+    def test__create_command_should_fill_command_list_correctly(self):
         tcb = TelegramController()
-        tcb._send_text_message = MagicMock()
-        tcb._send_image_message = MagicMock()
-        tcb._execute_command(["mango", "banana", "photo"])
+        tcb.command_list = []
+        tcb._create_command()
+        self.assertEqual(len(tcb.command_list), 5)
 
-        self.assertEqual(tcb._send_text_message.call_args_list[0][0][0], "mango")
-        self.assertEqual(tcb._send_text_message.call_args_list[1][0][0], "banana")
-        tcb._send_image_message.assert_called_once_with(tcb.TEST_FILE)
+    def test__execute_command_should_call_action_correctly(self):
+        tcb = TelegramController()
+        dummy_command_list = [
+            {
+                "guide": "{0:15}자동 거래 시작".format("1. 시작"),
+                "cmd": ["시작", "1", "1. 시작"],
+                "action": MagicMock(),
+            },
+            {
+                "guide": "{0:15}자동 거래 중지".format("2. 중지"),
+                "cmd": ["중지", "2", "2. 중지"],
+                "action": MagicMock(),
+            },
+        ]
+        tcb.command_list = dummy_command_list
+        tcb._execute_command("1")
+        dummy_command_list[0]["action"].assert_called_with("1")
+
+        tcb._execute_command("시작")
+        dummy_command_list[0]["action"].assert_called_with("시작")
+
+        tcb._execute_command("2")
+        dummy_command_list[1]["action"].assert_called_with("2")
+
+        tcb._execute_command("중지")
+        dummy_command_list[1]["action"].assert_called_with("중지")
+
+        dummy_in_progress = MagicMock()
+        tcb.in_progress = dummy_in_progress
+        tcb._execute_command("2. 중지")
+        dummy_in_progress.assert_called_once_with("2. 중지")
 
     @patch("threading.Thread")
     def test__start_get_updates_loop_start_thread_correctly(self, mock_thread):
@@ -107,7 +135,8 @@ class TelegramControllerTests(unittest.TestCase):
         )
         tcb._handle_message()
 
-        tcb._execute_command.assert_called_once_with(["3", "5"])
+        self.assertEqual(tcb._execute_command.call_args_list[0][0][0], "3")
+        self.assertEqual(tcb._execute_command.call_args_list[1][0][0], "5")
         self.assertEqual(tcb.last_update_id, 402107590)
 
     def test__send_image_message_shoul_call_sendMessage_api_correctly(self):
@@ -224,3 +253,13 @@ class TelegramControllerTests(unittest.TestCase):
 
         updates = tcb._send_http("test_url")
         self.assertEqual(updates, None)
+
+    def test__query_state_should_call__send_text_message_with_correct_message(self):
+        tcb = TelegramController()
+        tcb._send_text_message = MagicMock()
+        tcb._query_state("state")
+        tcb._send_text_message.assert_called_with("자동 거래 시작 전입니다.")
+
+        tcb.operator = "mango"
+        tcb._query_state("state")
+        tcb._send_text_message.assert_called_with("자동 거래 운영 중입니다.")

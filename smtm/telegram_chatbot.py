@@ -68,25 +68,22 @@ class TelegramChatbot:
         updates = self._get_updates()
         try:
             if updates is not None and updates["ok"]:
-                commands = []
                 for result in updates["result"]:
                     self.logger.debug(f'result: {result["message"]["chat"]["id"]} : {self.CHAT_ID}')
                     if result["message"]["chat"]["id"] != self.CHAT_ID:
                         continue
                     if "text" in result["message"]:
-                        commands.append(result["message"]["text"])
+                        self._execute_command(result["message"]["text"])
                     self.last_update_id = result["update_id"]
-                self._execute_command(commands)
         except (ValueError, KeyError):
             self.logger.error("Invalid data from server")
 
-    def _execute_command(self, commands):
-        for command in commands:
-            self.logger.debug(f"_execute_command: {command}")
-            if command == "photo":
-                self._send_image_message(self.TEST_FILE)
-            else:
-                self._send_text_message(command)
+    def _execute_command(self, command):
+        self.logger.debug(f"_execute_command: {command}")
+        if command == "photo":
+            self._send_image_message(self.TEST_FILE)
+        else:
+            self._send_text_message(command)
 
     def _send_text_message(self, text):
         reply_markup = {

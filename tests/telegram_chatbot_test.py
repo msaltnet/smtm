@@ -30,10 +30,13 @@ class TelegramChatbotTests(unittest.TestCase):
         tcb = TelegramChatbot()
         tcb._send_text_message = MagicMock()
         tcb._send_image_message = MagicMock()
-        tcb._execute_command(["mango", "banana", "photo"])
+        tcb._execute_command("mango")
+        self.assertEqual(tcb._send_text_message.call_args[0][0], "mango")
 
-        self.assertEqual(tcb._send_text_message.call_args_list[0][0][0], "mango")
-        self.assertEqual(tcb._send_text_message.call_args_list[1][0][0], "banana")
+        tcb._execute_command("banana")
+        self.assertEqual(tcb._send_text_message.call_args[0][0], "banana")
+
+        tcb._execute_command("photo")
         tcb._send_image_message.assert_called_once_with(tcb.TEST_FILE)
 
     @patch("threading.Thread")
@@ -107,7 +110,8 @@ class TelegramChatbotTests(unittest.TestCase):
         )
         tcb._handle_message()
 
-        tcb._execute_command.assert_called_once_with(["3", "5"])
+        self.assertEqual(tcb._execute_command.call_args_list[0][0][0], "3")
+        self.assertEqual(tcb._execute_command.call_args_list[1][0][0], "5")
         self.assertEqual(tcb.last_update_id, 402107590)
 
     def test__send_image_message_shoul_call_sendMessage_api_correctly(self):

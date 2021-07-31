@@ -41,49 +41,44 @@ class TelegramController:
         self.terminating = False
         self.get_updates_thread = None
         self.last_update_id = 0
+        self.in_progress = None
         # smtm variable
         self.operator = None
         self.interval = None
         self.budget = None
         self.strategy_num = None
         self.strategy = None
-        self.need_init = True
         self.command_list = []
-        self.create_command()
+        self._create_command()
         LogManager.set_stream_level(30)
 
-    def create_command(self):
+    def _create_command(self):
         """명령어 정보를 생성한다"""
         self.command_list = [
             {
-                "guide": "{0:15}챗봇 상태 조회".format("0. 상태"),
-                "cmd": ["상태", "0"],
-                "action": None,
+                "guide": "{0:15}자동 거래 시작".format("1. 시작"),
+                "cmd": ["시작", "1", "1. 시작"],
+                "action": self._start_trading,
             },
             {
-                "guide": "{0:15}자동 거래 초기화".format("1. 초기화"),
-                "cmd": ["초기화", "1"],
-                "action": None,
+                "guide": "{0:15}자동 거래 중지".format("2. 중지"),
+                "cmd": ["중지", "2", "2. 중지"],
+                "action": self._stop_trading,
             },
             {
-                "guide": "{0:15}자동 거래 시작".format("2. 시작"),
-                "cmd": ["시작", "2"],
-                "action": None,
+                "guide": "{0:15}운영 상태 조회".format("3. 상태 조회"),
+                "cmd": ["상태", "3", "3. 상태 조회", "상태 조회"],
+                "action": self._query_state,
             },
             {
-                "guide": "{0:15}자동 거래 중지".format("3. 중지"),
-                "cmd": ["중지", "3"],
-                "action": None,
+                "guide": "{0:15}수익률 조회".format("4. 수익률 조회"),
+                "cmd": ["수익", "4", "수익률 조회", "4. 수익률 조회"],
+                "action": self._query_score,
             },
             {
-                "guide": "{0:15}수익률 조회".format("4. 수익"),
-                "cmd": ["수익", "4"],
-                "action": None,
-            },
-            {
-                "guide": "{0:15}거래내역 조회".format("5. 거래"),
-                "cmd": ["거래", "5"],
-                "action": None,
+                "guide": "{0:15}거래내역 조회".format("5. 거래내역 조회"),
+                "cmd": ["거래", "5", "거래내역 조회", "5. 거래내역 조회"],
+                "action": self._query_trading_records,
             },
         ]
 
@@ -101,30 +96,6 @@ class TelegramController:
             except EOFError:
                 break
 
-    def _initialize_operator(self, budget, interval=60):
-        """오퍼레이터 초기화"""
-        pass
-
-    def _start_trading(self):
-        """자동 거래 시작"""
-        pass
-
-    def _stop_trading(self):
-        """자동 거래 중지"""
-        pass
-
-    def get_state(self):
-        """현재 상태 출력 출력"""
-        pass
-
-    def get_score(self, index=None):
-        """현재 수익률과 그래프 출력"""
-        pass
-
-    def get_trading_record(self, count=-1):
-        """현재까지 거래 기록 출력"""
-        pass
-
     def _start_get_updates_loop(self):
         """반복적 텔레그램 메세지를 확인하는 쓰레드 관리"""
 
@@ -141,25 +112,25 @@ class TelegramController:
         updates = self._get_updates()
         try:
             if updates is not None and updates["ok"]:
-                commands = []
                 for result in updates["result"]:
                     self.logger.debug(f'result: {result["message"]["chat"]["id"]} : {self.CHAT_ID}')
                     if result["message"]["chat"]["id"] != self.CHAT_ID:
                         continue
                     if "text" in result["message"]:
-                        commands.append(result["message"]["text"])
+                        self._execute_command(result["message"]["text"])
                     self.last_update_id = result["update_id"]
-                self._execute_command(commands)
         except (ValueError, KeyError):
             self.logger.error("Invalid data from server")
 
-    def _execute_command(self, commands):
-        for command in commands:
-            self.logger.debug(f"_execute_command: {command}")
-            if command == "photo":
-                self._send_image_message(self.TEST_FILE)
-            else:
-                self._send_text_message(command)
+    def _execute_command(self, command):
+        self.logger.debug(f"_execute_command: {command}")
+        if self.in_progress is not None:
+            self.in_progress(command)
+            return
+
+        for item in self.command_list:
+            if command in item["cmd"]:
+                item["action"](command)
 
     def _send_text_message(self, text):
         encoded_text = parse.quote(text)
@@ -208,6 +179,38 @@ class TelegramController:
             return None
 
         return result
+
+    def _initialize_operator(self, budget, interval=60):
+        """오퍼레이터 초기화"""
+        pass
+
+    def _start_trading(self, command):
+        """자동 거래 시작"""
+        pass
+
+    def _stop_trading(self, command):
+        """자동 거래 중지"""
+        pass
+
+    def _query_state(self, command):
+        """현재 상태를 메세지로 전송"""
+        if self.operator is None:
+            message = "자동 거래 시작 전입니다."
+        else:
+            message = "자동 거래 운영 중입니다."
+        self._send_text_message(message)
+
+    def _query_score(self, command):
+        """구간 수익률과 그래프를 메세지로 전송"""
+
+        def print_score_and_main_statement(score):
+            print("current score ==========")
+            print(score)
+
+        self.operator.get_score(print_score_and_main_statement)
+
+    def _query_trading_records(self, command):
+        """현재까지 거래 기록을 메세지로 전송"""
 
     def _terminate(self, signum=None, frame=None):
         """프로그램 종료"""
