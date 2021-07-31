@@ -9,6 +9,7 @@ import os
 import signal
 import time
 import threading
+from urllib import parse
 import requests
 from dotenv import load_dotenv
 from . import (
@@ -25,6 +26,7 @@ class TelegramChatbot:
     def __init__(self):
         self.API_HOST = "https://api.telegram.org/"
         self.TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
+        self.CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id")
         self.logger = LogManager.get_logger("TelegramChatbot")
         self.post_worker = Worker("Chatbot-Post-Worker")
         self.terminating = False
@@ -63,7 +65,10 @@ class TelegramChatbot:
             if updates is not None and updates["ok"]:
                 commands = []
                 for result in updates["result"]:
+                    if result["message"]["chat"]["id"] != self.CHAT_ID:
+                        continue
                     commands.append(result["message"]["text"])
+                    self.last_update_id = result["update_id"]
                 self._execute_command(commands)
         except ValueError:
             self.logger.error("Invalid data from server")
@@ -73,15 +78,22 @@ class TelegramChatbot:
             if command != "photo":
                 print("photo")
             else:
-                print(command)
+                self._send_text_message(command)
+
+    def _send_text_message(self, text):
+        encoded_text = parse.quote(text)
+        return self._get_url(
+            f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
+        )
 
     def _get_updates(self):
         """getUpdates API로 새로운 메세지를 가져오기"""
         offset = self.last_update_id + 1
+        return self._get_url(f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout=10")
+
+    def _get_url(self, url):
         try:
-            response = requests.get(
-                f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout=10"
-            )
+            response = requests.get(url)
             response.raise_for_status()
             result = response.json()
         except ValueError:

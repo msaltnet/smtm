@@ -34,6 +34,7 @@ class TelegramChatbotTests(unittest.TestCase):
 
     def test__handle_message_call__execute_command_with_correct_commands(self):
         tcb = TelegramChatbot()
+        tcb.CHAT_ID = 1234567890
         tcb._execute_command = MagicMock()
         tcb._get_updates = MagicMock(
             return_value={
@@ -44,12 +45,12 @@ class TelegramChatbotTests(unittest.TestCase):
                         "message": {
                             "message_id": 11,
                             "from": {
-                                "id": 1819645704,
+                                "id": 1234567890,
                                 "is_bot": False,
                                 "first_name": "msaltnet",
                                 "language_code": "ko",
                             },
-                            "chat": {"id": 1819645704, "first_name": "msaltnet", "type": "private"},
+                            "chat": {"id": 1234567890, "first_name": "msaltnet", "type": "private"},
                             "date": 1627694419,
                             "text": "3",
                         },
@@ -59,12 +60,12 @@ class TelegramChatbotTests(unittest.TestCase):
                         "message": {
                             "message_id": 12,
                             "from": {
-                                "id": 1819645704,
+                                "id": 1234567891,
                                 "is_bot": False,
                                 "first_name": "msaltnet",
                                 "language_code": "ko",
                             },
-                            "chat": {"id": 1819645704, "first_name": "msaltnet", "type": "private"},
+                            "chat": {"id": 1234567891, "first_name": "msaltnet", "type": "private"},
                             "date": 1627694420,
                             "text": "4",
                         },
@@ -74,12 +75,12 @@ class TelegramChatbotTests(unittest.TestCase):
                         "message": {
                             "message_id": 13,
                             "from": {
-                                "id": 1819645704,
+                                "id": 1234567890,
                                 "is_bot": False,
                                 "first_name": "msaltnet",
                                 "language_code": "ko",
                             },
-                            "chat": {"id": 1819645704, "first_name": "msaltnet", "type": "private"},
+                            "chat": {"id": 1234567890, "first_name": "msaltnet", "type": "private"},
                             "date": 1627694420,
                             "text": "5",
                         },
@@ -89,70 +90,75 @@ class TelegramChatbotTests(unittest.TestCase):
         )
         tcb._handle_message()
 
-        tcb._execute_command.assert_called_once_with(["3", "4", "5"])
+        tcb._execute_command.assert_called_once_with(["3", "5"])
+        self.assertEqual(tcb.last_update_id, 402107590)
+
+    def test__send_text_message_shoul_call_sendMessage_api_correctly(self):
+        tcb = TelegramChatbot()
+        tcb.TOKEN = "banana"
+        tcb.CHAT_ID = "to_banana"
+        expected_response = "banana_result"
+        tcb._get_url = MagicMock(return_value=expected_response)
+        result = tcb._send_text_message("hello~ banana")
+        self.assertEqual(result, expected_response)
+        tcb._get_url.assert_called_once_with(
+            "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%7E%20banana"
+        )
+
+    def test__get_updates_call_getUpdates_api_correctly(self):
+        tcb = TelegramChatbot()
+        tcb.TOKEN = "banana"
+        expected_response = "banana_result"
+        tcb._get_url = MagicMock(return_value=expected_response)
+        updates = tcb._get_updates()
+        self.assertEqual(updates, expected_response)
+        tcb._get_url.assert_called_once_with(
+            "https://api.telegram.org/banana/getUpdates?offset=1&timeout=10"
+        )
 
     @patch("requests.get")
-    def test__get_updates_call_getUpdates_api_correctly(self, mock_get):
+    def test__get_url_should_call_requests_get_and_return_result(self, mock_get):
         tcb = TelegramChatbot()
-        expected_response = {
-            "ok": True,
-            "result": [
-                {
-                    "update_id": 402107581,
-                    "message": {
-                        "message_id": 3,
-                        "from": {
-                            "id": 1819645704,
-                            "is_bot": False,
-                            "first_name": "msaltnet",
-                            "language_code": "ko",
-                        },
-                        "chat": {"id": 1819645704, "first_name": "msaltnet", "type": "private"},
-                        "date": 1627616560,
-                        "text": "hello~",
-                    },
-                }
-            ],
-        }
+        expected_response = {"dummy"}
         dummy_response = MagicMock()
         dummy_response.json.return_value = expected_response
         mock_get.return_value = dummy_response
-        updates = tcb._get_updates()
+        updates = tcb._get_url("test_url")
         self.assertEqual(updates, expected_response)
-        self.assertEqual(mock_get.call_args[0][0].find("https://api.telegram.org/"), 0)
+        self.assertEqual(mock_get.call_args[0][0].find("test_url"), 0)
 
     @patch("requests.get")
-    def test__get_updates_return_None_when_receive_invalid_data(self, mock_get):
+    def test__get_url_should_return_None_when_receive_invalid_data(self, mock_get):
         tcb = TelegramChatbot()
         dummy_response = MagicMock()
         dummy_response.json.side_effect = ValueError()
         mock_get.return_value = dummy_response
 
-        updates = tcb._get_updates()
+        updates = tcb._get_url("test_url")
         self.assertEqual(updates, None)
 
     @patch("requests.get")
-    def test__get_updates_return_None_when_receive_response_error(self, mock_get):
+    def test__get_url_should_return_None_when_receive_response_error(self, mock_get):
         tcb = TelegramChatbot()
         dummy_response = MagicMock()
-        dummy_response.json.return_value = [{"market": "apple"}, {"market": "banana"}]
+        dummy_response.json.return_value = "dummy_result"
         dummy_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
             "HTTPError dummy exception"
         )
         mock_get.return_value = dummy_response
 
-        updates = tcb._get_updates()
+        updates = tcb._get_url("test_url")
         self.assertEqual(updates, None)
 
     @patch("requests.get")
-    def test__get_updates_return_None_when_connection_fail(self, mock_get):
+    def test__get_url_should_return_None_when_connection_fail(self, mock_get):
         tcb = TelegramChatbot()
         dummy_response = MagicMock()
-        dummy_response.json.return_value = [{"market": "apple"}, {"market": "banana"}]
+        dummy_response.json.return_value = "dummy_result"
         dummy_response.raise_for_status.side_effect = requests.exceptions.RequestException(
             "RequestException dummy exception"
         )
         mock_get.return_value = dummy_response
 
-        updates = tcb._get_updates()
+        updates = tcb._get_url("test_url")
         self.assertEqual(updates, None)
