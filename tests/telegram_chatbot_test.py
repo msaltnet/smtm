@@ -95,12 +95,15 @@ class TelegramChatbotTests(unittest.TestCase):
 
     def test__send_text_message_shoul_call_sendMessage_api_correctly(self):
         tcb = TelegramChatbot()
+        tcb.post_worker = MagicMock()
         tcb.TOKEN = "banana"
         tcb.CHAT_ID = "to_banana"
-        expected_response = "banana_result"
-        tcb._get_url = MagicMock(return_value=expected_response)
-        result = tcb._send_text_message("hello~ banana")
-        self.assertEqual(result, expected_response)
+        tcb._get_url = MagicMock()
+        tcb._send_text_message("hello~ banana")
+        tcb.post_worker.post_task.assert_called_once_with(ANY)
+        task = tcb.post_worker.post_task.call_args[0][0]
+        tcb.post_worker.post_task.call_args[0][0]["runnable"](task)
+
         tcb._get_url.assert_called_once_with(
             "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%7E%20banana"
         )

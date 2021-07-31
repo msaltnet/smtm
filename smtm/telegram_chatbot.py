@@ -82,9 +82,11 @@ class TelegramChatbot:
 
     def _send_text_message(self, text):
         encoded_text = parse.quote(text)
-        return self._get_url(
-            f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
-        )
+        url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
+        def send_message(task):
+            self._get_url(task["url"])
+
+        self.post_worker.post_task({"runnable":send_message, "url": url})
 
     def _get_updates(self):
         """getUpdates API로 새로운 메세지를 가져오기"""
