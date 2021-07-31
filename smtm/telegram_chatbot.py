@@ -1,9 +1,9 @@
 """실습용으로 만든 간단한 텔래그램 챗봇
 
-1. 주기적으로 메세지를 읽어오기
+1. 반복적으로 메세지를 읽어오기
 2. 메세지를 분석해서 명령어를 추출하기
 3. 명령어를 그대로 텍스트 메세지로 전송하기
-4. '사진' 명령어를 수신할 경우 이미지 전송하기
+4. 'photo' 명령어를 수신할 경우 이미지 전송하기
 """
 import os
 import signal
@@ -26,12 +26,10 @@ class TelegramChatbot:
         self.API_HOST = "https://api.telegram.org/"
         self.TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
         self.logger = LogManager.get_logger("TelegramChatbot")
-        self.get_worker = Worker("Chatbot-Get-Worker")
         self.post_worker = Worker("Chatbot-Post-Worker")
         self.terminating = False
-        self.last_checking_time = 0
-        self.polling_period = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 5]
-        self.polling_idx = 0
+        self.get_updates_thread = None
+        self.last_update_id = 0
 
     def main(self):
         """main 함수"""
@@ -40,27 +38,50 @@ class TelegramChatbot:
         signal.signal(signal.SIGINT, self._terminate)
         signal.signal(signal.SIGTERM, self._terminate)
 
-        self._start_timer(self.polling_period[self.polling_idx])
-        self.polling_idx += 1
+        self._start_get_updates_loop()
         while not self.terminating:
             try:
                 time.sleep(1)
             except EOFError:
                 break
 
-    def _handle_message(self, task):
-        """주기적으로 텔레그램 메세지를 확인해서 명령어를 처리 후 타이머를 시작"""
-        del task
+    def _start_get_updates_loop(self):
+        """반복적 텔레그램 메세지를 확인하는 쓰레드 관리"""
+
+        def looper():
+            self.logger.debug(f"start get updates thread: {threading.get_ident()}")
+            while not self.terminating:
+                self._handle_message()
+
+        self.get_updates_thread = threading.Thread(target=looper, name="get updates", daemon=True)
+        self.get_updates_thread.start()
+
+    def _handle_message(self):
+        """텔레그램 메세지를 확인해서 명령어를 처리"""
         updates = self._get_updates()
-        self.polling_idx += 1
-        if self.polling_idx >= len(self.polling_period):
-            self.polling_idx = len(self.polling_period) - 1
-        self._start_timer(self.polling_period[self.polling_idx])
+        try:
+            if updates is not None and updates["ok"]:
+                commands = []
+                for result in updates["result"]:
+                    commands.append(result["message"]["text"])
+                self._execute_command(commands)
+        except ValueError:
+            self.logger.error("Invalid data from server")
+
+    def _execute_command(self, commands):
+        for command in commands:
+            if command != "photo":
+                print("photo")
+            else:
+                print(command)
 
     def _get_updates(self):
         """getUpdates API로 새로운 메세지를 가져오기"""
+        offset = self.last_update_id + 1
         try:
-            response = requests.get(f"{self.API_HOST}{self.TOKEN}/getUpdates")
+            response = requests.get(
+                f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout=10"
+            )
             response.raise_for_status()
             result = response.json()
         except ValueError:
@@ -75,20 +96,6 @@ class TelegramChatbot:
 
         return result
 
-    def _start_timer(self, time):
-        """메신저 확인 타이머 시작"""
-        self.logger.debug(f"start timer {time}, {threading.get_ident()}")
-
-        def on_timer_expired():
-            self.get_worker.post_task({"runnable": self._handle_message})
-
-        self.timer = threading.Timer(time, on_timer_expired)
-        self.timer.start()
-
-    def _stop_timer(self):
-        """메신저 확인 타이머 중지"""
-        pass
-
     def _initialize_operator(self, budget, interval=60):
         """오퍼레이터 초기화"""
         pass
@@ -96,6 +103,7 @@ class TelegramChatbot:
     def _terminate(self, signum=None, frame=None):
         """프로그램 종료"""
         del frame
+        self.get_updates_thread.join()
         if signum is not None:
             print("강제 종료 신호 감지")
         print("프로그램 종료 중.....")
