@@ -71,10 +71,11 @@ class TelegramChatbot:
                     self.logger.debug(f'result: {result["message"]["chat"]["id"]} : {self.CHAT_ID}')
                     if result["message"]["chat"]["id"] != self.CHAT_ID:
                         continue
-                    commands.append(result["message"]["text"])
+                    if "text" in result["message"]:
+                        commands.append(result["message"]["text"])
                     self.last_update_id = result["update_id"]
                 self._execute_command(commands)
-        except ValueError:
+        except (ValueError, KeyError):
             self.logger.error("Invalid data from server")
 
     def _execute_command(self, commands):
