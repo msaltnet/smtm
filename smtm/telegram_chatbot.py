@@ -3,7 +3,7 @@
 1. 반복적으로 메세지를 읽어오기
 2. 메세지를 분석해서 명령어를 추출하기
 3. 명령어를 그대로 텍스트 메세지로 전송하기
-4. 'photo' 명령어를 수신할 경우 이미지 전송하기
+4. 'image' 명령어를 수신할 경우 이미지 전송하기
 """
 import os
 import signal
@@ -25,6 +25,7 @@ class TelegramChatbot:
 
     def __init__(self):
         self.API_HOST = "https://api.telegram.org/"
+        self.TEST_FILE = "data/_send_image_message.jpg"
         self.TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
         self.CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id")
         self.logger = LogManager.get_logger("TelegramChatbot")
@@ -75,27 +76,43 @@ class TelegramChatbot:
 
     def _execute_command(self, commands):
         for command in commands:
-            if command != "photo":
-                print("photo")
+            if command == "photo":
+                self._send_image_message(self.TEST_FILE)
             else:
                 self._send_text_message(command)
 
     def _send_text_message(self, text):
         encoded_text = parse.quote(text)
         url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
-        def send_message(task):
-            self._get_url(task["url"])
 
-        self.post_worker.post_task({"runnable":send_message, "url": url})
+        def send_message(task):
+            self._send_http(task["url"])
+
+        self.post_worker.post_task({"runnable": send_message, "url": url})
+
+    def _send_image_message(self, file):
+        url = f"{self.API_HOST}{self.TOKEN}/sendPhoto?chat_id={self.CHAT_ID}"
+
+        def send_image(task):
+            self._send_http(task["url"], True, task["file"])
+
+        self.post_worker.post_task({"runnable": send_image, "url": url, "file": file})
 
     def _get_updates(self):
         """getUpdates API로 새로운 메세지를 가져오기"""
         offset = self.last_update_id + 1
-        return self._get_url(f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout=10")
+        return self._send_http(f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout=10")
 
-    def _get_url(self, url):
+    def _send_http(self, url, is_post=False, file=None):
         try:
-            response = requests.get(url)
+            if is_post:
+                if file is not None:
+                    with open(file, "rb") as image_file:
+                        response = requests.post(url, files={"photo": image_file})
+                else:
+                    response = requests.post(url)
+            else:
+                response = requests.get(url)
             response.raise_for_status()
             result = response.json()
         except ValueError:
