@@ -4,11 +4,13 @@
 2. 메세지를 분석해서 명령어를 추출하기
 3. 명령어를 그대로 텍스트 메세지로 전송하기
 4. 'image' 명령어를 수신할 경우 이미지 전송하기
+5. 명령어 버튼 키보드로 응답하기
 """
 import os
 import signal
 import time
 import threading
+import json
 from urllib import parse
 import requests
 from dotenv import load_dotenv
@@ -87,8 +89,16 @@ class TelegramChatbot:
                 self._send_text_message(command)
 
     def _send_text_message(self, text):
+        reply_markup = {
+            "keyboard": [
+                [{"text": "a. test"}],
+                [{"text": "c. test"}, {"text": "d. test"}, {"text": "e. test"}],
+            ]
+        }
+        reply_markup = json.dumps(reply_markup)
+        reply_markup = parse.quote(reply_markup)
         encoded_text = parse.quote(text)
-        url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
+        url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}&reply_markup={reply_markup}"
 
         def send_message(task):
             self._send_http(task["url"])
