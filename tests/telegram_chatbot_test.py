@@ -19,6 +19,13 @@ class TelegramChatbotTests(unittest.TestCase):
 
         tcb._start_get_updates_loop.assert_called_once()
 
+    def test__terminate_should_set_terminating_flag_True(self):
+        tcb = TelegramChatbot()
+        tcb.post_worker = MagicMock()
+        tcb._terminate()
+        self.assertEqual(tcb.terminating, True)
+        tcb.post_worker.stop.assert_called_once()
+
     def test__execute_command_should_call_send_method_correctly(self):
         tcb = TelegramChatbot()
         tcb._send_text_message = MagicMock()
@@ -38,7 +45,7 @@ class TelegramChatbotTests(unittest.TestCase):
         tcb.terminating = True  # for Test
         tcb._start_get_updates_loop()
 
-        dummy_thread.start.assert_called_once()
+        dummy_thread.start.assert_called()
         self.assertEqual(mock_thread.call_args[1]["name"], "get updates")
         self.assertEqual(mock_thread.call_args[1]["daemon"], True)
 

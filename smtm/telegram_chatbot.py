@@ -12,7 +12,7 @@ import threading
 from urllib import parse
 import requests
 from dotenv import load_dotenv
-from . import (
+from smtm import (
     LogManager,
     Worker,
 )
@@ -25,11 +25,13 @@ class TelegramChatbot:
 
     def __init__(self):
         self.API_HOST = "https://api.telegram.org/"
-        self.TEST_FILE = "data/_send_image_message.jpg"
+        self.TEST_FILE = "data/telegram_chatbot.jpg"
         self.TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
-        self.CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id")
+        self.CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id"))
+        self.POLLING_TIMEOUT = 10
         self.logger = LogManager.get_logger("TelegramChatbot")
         self.post_worker = Worker("Chatbot-Post-Worker")
+        self.post_worker.start()
         self.terminating = False
         self.get_updates_thread = None
         self.last_update_id = 0
@@ -44,7 +46,7 @@ class TelegramChatbot:
         self._start_get_updates_loop()
         while not self.terminating:
             try:
-                time.sleep(1)
+                time.sleep(0.5)
             except EOFError:
                 break
 
@@ -66,6 +68,7 @@ class TelegramChatbot:
             if updates is not None and updates["ok"]:
                 commands = []
                 for result in updates["result"]:
+                    self.logger.debug(f'result: {result["message"]["chat"]["id"]} : {self.CHAT_ID}')
                     if result["message"]["chat"]["id"] != self.CHAT_ID:
                         continue
                     commands.append(result["message"]["text"])
@@ -76,6 +79,7 @@ class TelegramChatbot:
 
     def _execute_command(self, commands):
         for command in commands:
+            self.logger.debug(f"_execute_command: {command}")
             if command == "photo":
                 self._send_image_message(self.TEST_FILE)
             else:
@@ -101,7 +105,9 @@ class TelegramChatbot:
     def _get_updates(self):
         """getUpdates API로 새로운 메세지를 가져오기"""
         offset = self.last_update_id + 1
-        return self._send_http(f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout=10")
+        return self._send_http(
+            f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout={self.POLLING_TIMEOUT}"
+        )
 
     def _send_http(self, url, is_post=False, file=None):
         try:
@@ -127,14 +133,11 @@ class TelegramChatbot:
 
         return result
 
-    def _initialize_operator(self, budget, interval=60):
-        """오퍼레이터 초기화"""
-        pass
-
     def _terminate(self, signum=None, frame=None):
         """프로그램 종료"""
         del frame
-        self.get_updates_thread.join()
+        self.terminating = True
+        self.post_worker.stop()
         if signum is not None:
             print("강제 종료 신호 감지")
         print("프로그램 종료 중.....")
