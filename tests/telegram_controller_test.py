@@ -430,3 +430,58 @@ class TelegramControllerTests(unittest.TestCase):
         self.assertIsNone(tcb.operator)
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
+
+    def test__query_score_should_call_send_error_message_when_not_running(self):
+        tcb = TelegramController()
+        tcb._send_text_message = MagicMock()
+        tcb._query_score("1")
+
+        tcb._send_text_message.assert_called_once_with("자동 거래 운영중이 아닙니다", tcb.main_keyboard)
+        self.assertEqual(tcb.in_progress, None)
+        self.assertEqual(tcb.in_progress_step, 0)
+
+    def test__query_score_should_call_next_setup_message_correctly_when_step_0(self):
+        tcb = TelegramController()
+        tcb.in_progress_step = 0
+        tcb.operator = MagicMock()
+        tcb._send_text_message = MagicMock()
+        tcb._query_score("1")
+
+        tcb._send_text_message.assert_called_once_with(
+            tcb.score_query_list[0]["guide"], tcb.score_query_list[0]["keyboard"]
+        )
+        self.assertEqual(tcb.in_progress, tcb._query_score)
+        self.assertEqual(tcb.in_progress_step, 1)
+
+    def test__query_score_should_call_next_setup_message_correctly_when_step_1(self):
+        tcb = TelegramController()
+        tcb.in_progress_step = 1
+        tcb.operator = MagicMock()
+        tcb._send_text_message = MagicMock()
+        tcb._send_image_message = MagicMock()
+        tcb._query_score("1")
+
+        tcb.operator.get_score.assert_called_once()
+        tcb._send_text_message.assert_called_once_with("조회중입니다", tcb.main_keyboard)
+        self.assertEqual(tcb.in_progress, None)
+        self.assertEqual(tcb.in_progress_step, 0)
+        self.assertEqual(tcb.operator.get_score.call_args[0][1], (60 * 6, -1))
+        callback = tcb.operator.get_score.call_args[0][0]
+        callback(None)
+        tcb._send_text_message.assert_called_with("수익률 조회중 문제가 발생하였습니다.", tcb.main_keyboard)
+        callback((100, 200, 0.5, 0.9, "test.jpg"))
+        tcb._send_text_message.assert_called_with(
+            "자산 100 -> 200\n누적수익률 0.5\n비교수익률 0.9\n", tcb.main_keyboard
+        )
+        tcb._send_image_message.assert_called_with("test.jpg")
+
+    def test__query_score_should_reset_with_wrong_input_when_step_1(self):
+        tcb = TelegramController()
+        tcb.in_progress_step = 1
+        tcb.operator = MagicMock()
+        tcb._send_text_message = MagicMock()
+        tcb._query_score("7")
+        wrong_message = "다시 시작해 주세요"
+        tcb._send_text_message.assert_called_once_with(wrong_message, tcb.main_keyboard)
+        self.assertEqual(tcb.in_progress, None)
+        self.assertEqual(tcb.in_progress_step, 0)

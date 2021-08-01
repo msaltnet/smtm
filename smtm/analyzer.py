@@ -5,6 +5,7 @@
 import copy
 import os
 from datetime import datetime
+from datetime import timedelta
 import ast
 import matplotlib
 import pandas as pd
@@ -290,6 +291,10 @@ class Analyzer:
         start_dt = datetime.strptime(info_list[0]["date_time"], "%Y-%m-%dT%H:%M:%S")
         end_dt = datetime.strptime(info_list[-1]["date_time"], "%Y-%m-%dT%H:%M:%S")
 
+        # w/a for short term query
+        if start_dt == end_dt:
+            end_dt = end_dt + timedelta(minutes=2)
+
         score_list = []
         asset_info_list = []
         result_list = []
@@ -319,7 +324,6 @@ class Analyzer:
                 graph = self.__draw_graph(
                     info_list, result_list, score_list, graph_filename, is_fullpath=True
                 )
-
             period = info_list[0]["date_time"] + " - " + info_list[-1]["date_time"]
             summary = (start_value, last_value, last_return, change_ratio, graph, period)
             self.logger.info("### Return Report ===============================")

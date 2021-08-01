@@ -30,6 +30,7 @@ class TelegramController:
     """smtm 탤래그램 챗봇 컨트롤러"""
 
     def __init__(self):
+        LogManager.set_stream_level(30)
         self.API_HOST = "https://api.telegram.org/"
         self.TEST_FILE = "data/telegram_chatbot.jpg"
         self.TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
@@ -45,6 +46,8 @@ class TelegramController:
         self.in_progress = None
         self.in_progress_step = 0
         self.main_keyboard = None
+        self.setup_list = []
+        self.score_query_list = []
         # smtm variable
         self.operator = None
         self.interval = 60
@@ -58,7 +61,6 @@ class TelegramController:
             "ready": "자동 거래 시작 전입니다.\n명령어를 입력해주세요",
             "running": "자동 거래 운영 중입니다.\n명령어를 입력해주세요",
         }
-        LogManager.set_stream_level(30)
 
     def _create_command(self):
         """명령어 정보를 생성한다"""
@@ -104,6 +106,19 @@ class TelegramController:
             {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
         ]
         self._convert_keyboard_markup(self.setup_list)
+        self.score_query_list = [
+            {
+                "guide": "조회할 기간을 정해주세요",
+                "keyboard": [
+                    "1. 최근 6시간",
+                    "2. 최근 12시간",
+                    "3. 최근 24시간",
+                    "4. 24시간 전부터 12시간",
+                    "5. 48시간 전부터 24시간",
+                ],
+            },
+        ]
+        self._convert_keyboard_markup(self.score_query_list)
 
     @staticmethod
     def _convert_keyboard_markup(setup_list):
@@ -332,16 +347,84 @@ class TelegramController:
         self._send_text_message(message)
 
     def _query_score(self, command):
-        """구간 수익률과 그래프를 메세지로 전송"""
+        """구간 수익률과 그래프를 메세지로 전송
+        "1. 최근 6시간"
+        "2. 최근 12시간"
+        "3. 최근 24시간"
+        "4. 24시간 전부터 12시간"
+        "5. 48시간 전부터 24시간"
+        """
+        query_list = {
+            "1. 최근 6시간": (60 * 6, -1),
+            "2. 최근 12시간": (60 * 12, -1),
+            "3. 최근 24시간": (60 * 24, -1),
+            "4. 24시간 전부터 12시간": (60 * 12, -2),
+            "5. 48시간 전부터 24시간": (60 * 24, -2),
+            "1": (60 * 6, -1),
+            "2": (60 * 12, -1),
+            "3": (60 * 24, -1),
+            "4": (60 * 12, -2),
+            "5": (60 * 24, -2),
+        }
+        not_ok = True
+        if self.operator is None:
+            self._send_text_message("자동 거래 운영중이 아닙니다", self.main_keyboard)
+            return
 
-        def print_score_and_main_statement(score):
-            print("current score ==========")
-            print(score)
+        message = ""
+        if self.in_progress_step == 1:
+            if command in query_list.keys():
 
-        self.operator.get_score(print_score_and_main_statement)
+                def print_score_and_main_statement(score):
+                    if score is None:
+                        self._send_text_message("수익률 조회중 문제가 발생하였습니다.", self.main_keyboard)
+                        return
+
+                    score_message = [
+                        f"자산 {score[0]} -> {score[1]}\n",
+                        f"누적수익률 {score[2]}\n",
+                        f"비교수익률 {score[3]}\n",
+                    ]
+
+                    self._send_text_message("".join(score_message), self.main_keyboard)
+                    if len(score) > 4 and score[4] is not None:
+                        self._send_image_message(score[4])
+
+                self.operator.get_score(print_score_and_main_statement, query_list[command])
+                not_ok = False
+
+        if self.in_progress_step >= len(self.score_query_list):
+            self.in_progress = None
+            self.in_progress_step = 0
+            if not_ok:
+                self._send_text_message("다시 시작해 주세요", self.main_keyboard)
+            else:
+                self._send_text_message("조회중입니다", self.main_keyboard)
+            return
+
+        message += self.score_query_list[self.in_progress_step]["guide"]
+        keyboard = self.score_query_list[self.in_progress_step]["keyboard"]
+        self._send_text_message(message, keyboard)
+        self.in_progress = self._query_score
+        self.in_progress_step += 1
 
     def _query_trading_records(self, command):
         """현재까지 거래 기록을 메세지로 전송"""
+        if self.operator is None:
+            self._send_text_message("자동 거래 운영중이 아닙니다", self.main_keyboard)
+            return
+
+        results = self.operator.get_trading_results()
+        if results is None or len(results) == 0:
+            self._send_text_message("거래 기록이 없습니다", self.main_keyboard)
+            return
+
+        message = []
+        for result in results:
+            message.append(f"@{result['date_time']}, {result['type']}\n")
+            message.append(f"{result['price']} x {result['amount']}\n")
+        message.append(f"총 {len(results)}건의 거래")
+        self._send_text_message("".join(message), self.main_keyboard)
 
     def _terminate(self, signum=None, frame=None):
         """프로그램 종료"""
