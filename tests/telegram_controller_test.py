@@ -34,6 +34,8 @@ class TelegramControllerTests(unittest.TestCase):
 
     def test__execute_command_should_call_action_correctly(self):
         tcb = TelegramController()
+        tcb._send_text_message = MagicMock()
+        tcb.main_keyboard = "mango keyboard"
         dummy_command_list = [
             {
                 "guide": "{0:15}자동 거래 시작".format("1. 시작"),
@@ -47,6 +49,11 @@ class TelegramControllerTests(unittest.TestCase):
             },
         ]
         tcb.command_list = dummy_command_list
+        tcb._execute_command("안녕~")
+        tcb._send_text_message.assert_called_once_with(
+            "자동 거래 시작 전입니다.\n명령어를 입력해주세요.", "mango keyboard"
+        )
+
         tcb._execute_command("1")
         dummy_command_list[0]["action"].assert_called_with("1")
 
@@ -167,6 +174,21 @@ class TelegramControllerTests(unittest.TestCase):
 
         tcb._send_http.assert_called_once_with(
             "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%7E%20banana"
+        )
+
+    def test__send_text_message_shoul_call_sendMessage_api_correctly_with_keyboard(self):
+        tcb = TelegramController()
+        tcb.post_worker = MagicMock()
+        tcb.TOKEN = "banana"
+        tcb.CHAT_ID = "to_banana"
+        tcb._send_http = MagicMock()
+        tcb._send_text_message("hello~ banana", "banana_keyboard_markup")
+        tcb.post_worker.post_task.assert_called_once_with(ANY)
+        task = tcb.post_worker.post_task.call_args[0][0]
+        tcb.post_worker.post_task.call_args[0][0]["runnable"](task)
+
+        tcb._send_http.assert_called_once_with(
+            "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%7E%20banana&reply_markup=banana_keyboard_markup"
         )
 
     def test__get_updates_call_getUpdates_api_correctly(self):

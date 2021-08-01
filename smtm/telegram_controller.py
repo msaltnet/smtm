@@ -6,6 +6,7 @@ import os
 import signal
 import time
 import threading
+import json
 from urllib import parse
 import requests
 from dotenv import load_dotenv
@@ -42,6 +43,7 @@ class TelegramController:
         self.get_updates_thread = None
         self.last_update_id = 0
         self.in_progress = None
+        self.main_keyboard = None
         # smtm variable
         self.operator = None
         self.interval = None
@@ -50,6 +52,10 @@ class TelegramController:
         self.strategy = None
         self.command_list = []
         self._create_command()
+        self.main_guide = {
+            "ready": "자동 거래 시작 전입니다.\n명령어를 입력해주세요.",
+            "running": "자동 거래 운영 중입니다.\n명령어를 입력해주세요."
+        }
         LogManager.set_stream_level(30)
 
     def _create_command(self):
@@ -81,6 +87,14 @@ class TelegramController:
                 "action": self._query_trading_records,
             },
         ]
+        main_keyboard = {
+            "keyboard": [
+                [{"text": "1. 시작"}, {"text": "2. 중지"}],
+                [{"text": "3. 상태 조회"}, {"text": "4. 수익률 조회"}, {"text": "5. 거래내역 조회"}],
+            ]
+        }
+        main_keyboard = json.dumps(main_keyboard)
+        self.main_keyboard = parse.quote(main_keyboard)
 
     def main(self):
         """main 함수"""
@@ -124,17 +138,32 @@ class TelegramController:
 
     def _execute_command(self, command):
         self.logger.debug(f"_execute_command: {command}")
-        if self.in_progress is not None:
-            self.in_progress(command)
-            return
+        found = False
+        try:
+            if self.in_progress is not None:
+                self.in_progress(command)
+                return
+        except TypeError:
+            self.logger.debug("invalid in_progress")
 
         for item in self.command_list:
             if command in item["cmd"]:
+                found = True
                 item["action"](command)
 
-    def _send_text_message(self, text):
+        if not found:
+            if self.operator is None:
+                message = self.main_guide["ready"]
+            else:
+                message = self.main_guide["running"]
+            self._send_text_message(message, self.main_keyboard)
+
+    def _send_text_message(self, text, keyboard=None):
         encoded_text = parse.quote(text)
-        url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
+        if keyboard is not None:
+            url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}&reply_markup={keyboard}"
+        else:
+            url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
 
         def send_message(task):
             self._send_http(task["url"])

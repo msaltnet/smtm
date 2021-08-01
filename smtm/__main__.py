@@ -3,13 +3,15 @@ mode:
     0 : simulator with interative mode
     1 : execute single simulation
     2 : controller for real trading
+    3 : telegram chatbot controller
 Example) python -m smtm --mode 0
 Example) python -m smtm --mode 1
 Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy 0
 Example) python -m smtm --mode 2
+Example) python -m smtm --mode 3
 """
 import argparse
-from . import Simulator, Controller
+from . import Simulator, Controller, TelegramController
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -20,7 +22,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         help="0: interactive simulator, 1: single simulation, 2: real trading",
-        default="1",
+        type=int,
+        default=1,
     )
     parser.add_argument(
         "--from_dash_to",
@@ -29,7 +32,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.mode != "2":
+    if args.mode < 2:
         simulator = Simulator(
             budget=args.budget,
             interval=args.term,
@@ -37,11 +40,11 @@ if __name__ == "__main__":
             from_dash_to=args.from_dash_to,
         )
 
-    if args.mode == "0":
+    if args.mode == 0:
         simulator.main()
-    elif args.mode == "1":
+    elif args.mode == 1:
         simulator.run_single()
-    elif args.mode == "2":
+    elif args.mode == 2:
         controller = Controller(
             budget=args.budget,
             interval=args.term,
@@ -49,3 +52,6 @@ if __name__ == "__main__":
             is_bithumb=args.trader == "1",
         )
         controller.main()
+    elif args.mode == 3:
+        tcb = TelegramController()
+        tcb.main()
