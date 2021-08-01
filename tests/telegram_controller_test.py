@@ -290,26 +290,16 @@ class TelegramControllerTests(unittest.TestCase):
         setup_list = [
             {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000"]},
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
-            {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average"]},
-            {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
         ]
         TelegramController._convert_keyboard_markup(setup_list)
 
         self.assertEqual(
             setup_list[0]["keyboard"],
-            "%5B%5B%7B%22text%22%3A%20%2250000%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%22100000%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%22500000%22%7D%5D%5D",
+            "%7B%22keyboard%22%3A%20%5B%5B%7B%22text%22%3A%20%2250000%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%22100000%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%22500000%22%7D%5D%5D%7D",
         )
         self.assertEqual(
             setup_list[1]["keyboard"],
-            "%5B%5B%7B%22text%22%3A%20%221.%20Upbit%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%222.%20Bithumb%22%7D%5D%5D",
-        )
-        self.assertEqual(
-            setup_list[2]["keyboard"],
-            "%5B%5B%7B%22text%22%3A%20%221.%20Buy%20and%20Hold%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%222.%20Simple%20Moving%20Average%22%7D%5D%5D",
-        )
-        self.assertEqual(
-            setup_list[3]["keyboard"],
-            "%5B%5B%7B%22text%22%3A%20%221.%20Yes%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%222.%20No%22%7D%5D%5D",
+            "%7B%22keyboard%22%3A%20%5B%5B%7B%22text%22%3A%20%221.%20Upbit%22%7D%5D%2C%20%5B%7B%22text%22%3A%20%222.%20Bithumb%22%7D%5D%5D%7D",
         )
 
     def test__stop_trading_should_reset_all_variable_related_operating(self):

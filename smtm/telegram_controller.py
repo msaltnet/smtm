@@ -98,7 +98,7 @@ class TelegramController:
         main_keyboard = json.dumps(main_keyboard)
         self.main_keyboard = parse.quote(main_keyboard)
         self.setup_list = [
-            {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000"]},
+            {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000", "1000000"]},
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
             {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average"]},
             {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
@@ -108,11 +108,11 @@ class TelegramController:
     @staticmethod
     def _convert_keyboard_markup(setup_list):
         for item in setup_list:
-            keyboard_list = []
+            markup = {"keyboard": []}
             for key in item["keyboard"]:
-                keyboard_list.append([{"text": key}])
-            keyboard_list = json.dumps(keyboard_list)
-            item["keyboard"] = parse.quote(keyboard_list)
+                markup["keyboard"].append([{"text": key}])
+            markup = json.dumps(markup)
+            item["keyboard"] = parse.quote(markup)
 
     def main(self):
         """main 함수"""
@@ -276,10 +276,10 @@ class TelegramController:
                 self.operator.set_interval(self.interval)
                 if self.operator.start():
                     start_message = [
-                        "자동거래가 시작되었습니다!\n",
+                        "자동 거래가 시작되었습니다!\n",
                         f"전략: {self.strategy.name}\n",
                         f"거래소: {self.trader.name}\n",
-                        f"예산: {self.budget}",
+                        f"예산: {self.budget}\n",
                         f"거래 간격: {self.interval}",
                     ]
                     self._send_text_message("".join(start_message), self.main_keyboard)
