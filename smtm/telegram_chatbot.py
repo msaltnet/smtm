@@ -3,7 +3,7 @@
 1. 반복적으로 메세지를 읽어오기
 2. 메세지를 분석해서 명령어를 추출하기
 3. 명령어를 그대로 텍스트 메세지로 전송하기
-4. 'image' 명령어를 수신할 경우 이미지 전송하기
+4. 'photo' 명령어를 수신할 경우 이미지 전송하기
 5. 명령어 버튼 키보드로 응답하기
 """
 import os
@@ -47,10 +47,7 @@ class TelegramChatbot:
 
         self._start_get_updates_loop()
         while not self.terminating:
-            try:
-                time.sleep(0.5)
-            except EOFError:
-                break
+            time.sleep(0.5)
 
     def _start_get_updates_loop(self):
         """반복적 텔레그램 메세지를 확인하는 쓰레드 관리"""
