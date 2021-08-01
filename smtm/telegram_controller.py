@@ -43,18 +43,20 @@ class TelegramController:
         self.get_updates_thread = None
         self.last_update_id = 0
         self.in_progress = None
+        self.in_progress_step = 0
         self.main_keyboard = None
         # smtm variable
         self.operator = None
-        self.interval = None
+        self.interval = 60
         self.budget = None
-        self.strategy_num = None
         self.strategy = None
+        self.data_provider = None
+        self.trader = None
         self.command_list = []
         self._create_command()
         self.main_guide = {
-            "ready": "자동 거래 시작 전입니다.\n명령어를 입력해주세요.",
-            "running": "자동 거래 운영 중입니다.\n명령어를 입력해주세요."
+            "ready": "자동 거래 시작 전입니다.\n명령어를 입력해주세요",
+            "running": "자동 거래 운영 중입니다.\n명령어를 입력해주세요",
         }
         LogManager.set_stream_level(30)
 
@@ -95,6 +97,22 @@ class TelegramController:
         }
         main_keyboard = json.dumps(main_keyboard)
         self.main_keyboard = parse.quote(main_keyboard)
+        self.setup_list = [
+            {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000"]},
+            {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
+            {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average"]},
+            {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
+        ]
+        self._convert_keyboard_markup(self.setup_list)
+
+    @staticmethod
+    def _convert_keyboard_markup(setup_list):
+        for item in setup_list:
+            keyboard_list = []
+            for key in item["keyboard"]:
+                keyboard_list.append([{"text": key}])
+            keyboard_list = json.dumps(keyboard_list)
+            item["keyboard"] = parse.quote(keyboard_list)
 
     def main(self):
         """main 함수"""
@@ -214,19 +232,103 @@ class TelegramController:
         pass
 
     def _start_trading(self, command):
-        """자동 거래 시작"""
-        pass
+        """초기화 후 자동 거래 시작"""
+        message = ""
+        if self.in_progress_step == 1:
+            try:
+                self.budget = int(command)
+            except ValueError:
+                self._terminate_start_in_progress()
+                return
+        elif self.in_progress_step == 2:
+            if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
+                self.data_provider = UpbitDataProvider()
+                self.trader = UpbitTrader(budget=self.budget)
+            elif command.upper() in ["2. BITHUMB", "2", "BITHUMB"]:
+                self.data_provider = BithumbDataProvider()
+                self.trader = BithumbTrader(budget=self.budget)
+            else:
+                self._terminate_start_in_progress()
+                return
+        elif self.in_progress_step == 3:
+            if command.upper() in ["1. BUY AND HOLD", "1", "BUY AND HOLD", "BNH"]:
+                self.strategy = StrategyBuyAndHold()
+            elif command.upper() in [
+                "2. SIMPLE MOVING AVERAGE",
+                "2",
+                "SIMPLE MOVING AVERAGE",
+                "SMA",
+            ]:
+                self.strategy = StrategySma0()
+            else:
+                self._terminate_start_in_progress()
+                return
+        elif self.in_progress_step == 4:
+            if command.upper() in ["1. YES", "1", "Y", "YES"]:
+                self.operator = Operator()
+                self.operator.initialize(
+                    self.data_provider,
+                    self.strategy,
+                    self.trader,
+                    Analyzer(),
+                    budget=self.budget,
+                )
+                self.operator.set_interval(self.interval)
+                if self.operator.start():
+                    start_message = [
+                        "자동거래가 시작되었습니다!\n",
+                        f"전략: {self.strategy.name}\n",
+                        f"거래소: {self.trader.name}\n",
+                        f"예산: {self.budget}",
+                        f"거래 간격: {self.interval}",
+                    ]
+                    self._send_text_message("".join(start_message), self.main_keyboard)
+                    self.logger.info(
+                        f"## START! strategy: {self.strategy.name} , trader: {self.trader.name}"
+                    )
+                    self.in_progress = None
+                    self.in_progress_step = 0
+                    return
+
+        if self.in_progress_step >= len(self.setup_list):
+            self._terminate_start_in_progress()
+            return
+
+        message += self.setup_list[self.in_progress_step]["guide"]
+        keyboard = self.setup_list[self.in_progress_step]["keyboard"]
+        self._send_text_message(message, keyboard)
+        self.in_progress = self._start_trading
+        self.in_progress_step += 1
+
+    def _terminate_start_in_progress(self):
+        self.in_progress = None
+        self.in_progress_step = 0
+        self.operator = None
+        self.budget = None
+        self.strategy = None
+        self.data_provider = None
+        self.trader = None
+        self._send_text_message("자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요", self.main_keyboard)
 
     def _stop_trading(self, command):
         """자동 거래 중지"""
-        pass
+        if self.operator is not None:
+            self.operator.stop()
+        self.in_progress = None
+        self.in_progress_step = 0
+        self.operator = None
+        self.budget = None
+        self.strategy = None
+        self.data_provider = None
+        self.trader = None
+        self._send_text_message("자동 거래가 중지되었습니다", self.main_keyboard)
 
     def _query_state(self, command):
         """현재 상태를 메세지로 전송"""
         if self.operator is None:
-            message = "자동 거래 시작 전입니다."
+            message = "자동 거래 시작 전입니다"
         else:
-            message = "자동 거래 운영 중입니다."
+            message = "자동 거래 운영 중입니다"
         self._send_text_message(message)
 
     def _query_score(self, command):
