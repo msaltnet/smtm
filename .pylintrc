@@ -257,6 +257,11 @@ good-names=i,
            SECRET_KEY,
            SERVER_URL,
            SMA,
+           API_HOST,
+           TEST_FILE,
+           TOKEN,
+           CHAT_ID,
+           POLLING_TIMEOUT
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted

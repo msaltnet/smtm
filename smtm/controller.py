@@ -112,7 +112,6 @@ class Controller:
 
     def _on_command(self, key):
         """커맨드 처리를 담당"""
-        value = None
         for cmd in self.command_list:
             if key.lower() in cmd["cmd"]:
                 print(f"{cmd['cmd'][0].upper()} 명령어를 실행합니다.")

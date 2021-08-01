@@ -29,19 +29,22 @@ load_dotenv()
 class TelegramController:
     """smtm 탤래그램 챗봇 컨트롤러"""
 
+    API_HOST = "https://api.telegram.org/"
+    TEST_FILE = "data/telegram_chatbot.jpg"
+    TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
+    CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id"))
+    POLLING_TIMEOUT = 10
+    INTERVAL = 60
+    GUIDE_READY = "자동 거래 시작 전입니다.\n명령어를 입력해주세요"
+    GUIDE_RUNNING = "자동 거래 운영 중입니다.\n명령어를 입력해주세요"
+
     def __init__(self):
         LogManager.set_stream_level(30)
-        self.API_HOST = "https://api.telegram.org/"
-        self.TEST_FILE = "data/telegram_chatbot.jpg"
-        self.TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
-        self.CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id"))
-        self.POLLING_TIMEOUT = 10
         self.logger = LogManager.get_logger("TelegramController")
         self.post_worker = Worker("Chatbot-Post-Worker")
         self.post_worker.start()
         # chatbot variable
         self.terminating = False
-        self.get_updates_thread = None
         self.last_update_id = 0
         self.in_progress = None
         self.in_progress_step = 0
@@ -50,17 +53,12 @@ class TelegramController:
         self.score_query_list = []
         # smtm variable
         self.operator = None
-        self.interval = 60
         self.budget = None
         self.strategy = None
         self.data_provider = None
         self.trader = None
         self.command_list = []
         self._create_command()
-        self.main_guide = {
-            "ready": "자동 거래 시작 전입니다.\n명령어를 입력해주세요",
-            "running": "자동 거래 운영 중입니다.\n명령어를 입력해주세요",
-        }
 
     def _create_command(self):
         """명령어 정보를 생성한다"""
@@ -151,8 +149,8 @@ class TelegramController:
             while not self.terminating:
                 self._handle_message()
 
-        self.get_updates_thread = threading.Thread(target=looper, name="get updates", daemon=True)
-        self.get_updates_thread.start()
+        get_updates_thread = threading.Thread(target=looper, name="get updates", daemon=True)
+        get_updates_thread.start()
 
     def _handle_message(self):
         """텔레그램 메세지를 확인해서 명령어를 처리"""
@@ -186,9 +184,9 @@ class TelegramController:
 
         if not found:
             if self.operator is None:
-                message = self.main_guide["ready"]
+                message = self.GUIDE_READY
             else:
-                message = self.main_guide["running"]
+                message = self.GUIDE_RUNNING
             self._send_text_message(message, self.main_keyboard)
 
     def _send_text_message(self, text, keyboard=None):
@@ -242,32 +240,31 @@ class TelegramController:
 
         return result
 
-    def _initialize_operator(self, budget, interval=60):
-        """오퍼레이터 초기화"""
-        pass
-
     def _start_trading(self, command):
         """초기화 후 자동 거래 시작"""
+        not_ok = True
         message = ""
-        if self.in_progress_step == 1:
+        if self.in_progress_step == 0:
+            not_ok = False
+        elif self.in_progress_step == 1:
             try:
                 self.budget = int(command)
+                not_ok = False
             except ValueError:
-                self._terminate_start_in_progress()
-                return
+                self.logger.info(f"invalid budget {command}")
         elif self.in_progress_step == 2:
             if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
                 self.data_provider = UpbitDataProvider()
                 self.trader = UpbitTrader(budget=self.budget)
+                not_ok = False
             elif command.upper() in ["2. BITHUMB", "2", "BITHUMB"]:
                 self.data_provider = BithumbDataProvider()
                 self.trader = BithumbTrader(budget=self.budget)
-            else:
-                self._terminate_start_in_progress()
-                return
+                not_ok = False
         elif self.in_progress_step == 3:
             if command.upper() in ["1. BUY AND HOLD", "1", "BUY AND HOLD", "BNH"]:
                 self.strategy = StrategyBuyAndHold()
+                not_ok = False
             elif command.upper() in [
                 "2. SIMPLE MOVING AVERAGE",
                 "2",
@@ -275,37 +272,34 @@ class TelegramController:
                 "SMA",
             ]:
                 self.strategy = StrategySma0()
-            else:
-                self._terminate_start_in_progress()
-                return
-        elif self.in_progress_step == 4:
-            if command.upper() in ["1. YES", "1", "Y", "YES"]:
-                self.operator = Operator()
-                self.operator.initialize(
-                    self.data_provider,
-                    self.strategy,
-                    self.trader,
-                    Analyzer(),
-                    budget=self.budget,
+                not_ok = False
+        elif self.in_progress_step == 4 and command.upper() in ["1. YES", "1", "Y", "YES"]:
+            self.operator = Operator()
+            self.operator.initialize(
+                self.data_provider,
+                self.strategy,
+                self.trader,
+                Analyzer(),
+                budget=self.budget,
+            )
+            self.operator.set_interval(self.INTERVAL)
+            if self.operator.start():
+                start_message = [
+                    "자동 거래가 시작되었습니다!\n",
+                    f"전략: {self.strategy.name}\n",
+                    f"거래소: {self.trader.name}\n",
+                    f"예산: {self.budget}\n",
+                    f"거래 간격: {self.INTERVAL}",
+                ]
+                self._send_text_message("".join(start_message), self.main_keyboard)
+                self.logger.info(
+                    f"## START! strategy: {self.strategy.name} , trader: {self.trader.name}"
                 )
-                self.operator.set_interval(self.interval)
-                if self.operator.start():
-                    start_message = [
-                        "자동 거래가 시작되었습니다!\n",
-                        f"전략: {self.strategy.name}\n",
-                        f"거래소: {self.trader.name}\n",
-                        f"예산: {self.budget}\n",
-                        f"거래 간격: {self.interval}",
-                    ]
-                    self._send_text_message("".join(start_message), self.main_keyboard)
-                    self.logger.info(
-                        f"## START! strategy: {self.strategy.name} , trader: {self.trader.name}"
-                    )
-                    self.in_progress = None
-                    self.in_progress_step = 0
-                    return
+                self.in_progress = None
+                self.in_progress_step = 0
+                return
 
-        if self.in_progress_step >= len(self.setup_list):
+        if not_ok or self.in_progress_step >= len(self.setup_list):
             self._terminate_start_in_progress()
             return
 
@@ -327,6 +321,7 @@ class TelegramController:
 
     def _stop_trading(self, command):
         """자동 거래 중지"""
+        del command
         if self.operator is not None:
             self.operator.stop()
         self.in_progress = None
@@ -340,6 +335,7 @@ class TelegramController:
 
     def _query_state(self, command):
         """현재 상태를 메세지로 전송"""
+        del command
         if self.operator is None:
             message = "자동 거래 시작 전입니다"
         else:
@@ -410,6 +406,7 @@ class TelegramController:
 
     def _query_trading_records(self, command):
         """현재까지 거래 기록을 메세지로 전송"""
+        del command
         if self.operator is None:
             self._send_text_message("자동 거래 운영중이 아닙니다", self.main_keyboard)
             return
