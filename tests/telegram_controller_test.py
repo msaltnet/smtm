@@ -51,7 +51,8 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.command_list = dummy_command_list
         tcb._execute_command("안녕~")
         tcb._send_text_message.assert_called_once_with(
-            "자동 거래 시작 전입니다.\n명령어를 입력해주세요", "mango keyboard"
+            "자동 거래 시작 전입니다.\n명령어를 입력해주세요.\n\n1. 시작          자동 거래 시작\n2. 중지          자동 거래 중지\n",
+            "mango keyboard",
         )
 
         tcb._execute_command("1")
@@ -383,10 +384,15 @@ class TelegramControllerTests(unittest.TestCase):
         tcb = TelegramController()
         tcb.in_progress_step = 3
         tcb._send_text_message = MagicMock()
+        tcb.trader = MagicMock()
+        tcb.trader.name = "mango trader"
+        tcb.strategy = MagicMock()
+        tcb.strategy.name = "mango strategy"
+        tcb.budget = 500
         tcb._start_trading("SMA")
 
         tcb._send_text_message.assert_called_once_with(
-            tcb.setup_list[3]["guide"], tcb.setup_list[3]["keyboard"]
+            '전략: SMA0\n거래소: mango trader\n예산: 500\n자동 거래를 시작할까요?', tcb.setup_list[3]["keyboard"]
         )
         self.assertIsNotNone(tcb.strategy)
         self.assertEqual(tcb.in_progress, tcb._start_trading)

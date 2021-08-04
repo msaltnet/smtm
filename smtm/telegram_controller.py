@@ -35,8 +35,8 @@ class TelegramController:
     CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id"))
     POLLING_TIMEOUT = 10
     INTERVAL = 60
-    GUIDE_READY = "자동 거래 시작 전입니다.\n명령어를 입력해주세요"
-    GUIDE_RUNNING = "자동 거래 운영 중입니다.\n명령어를 입력해주세요"
+    GUIDE_READY = "자동 거래 시작 전입니다.\n명령어를 입력해주세요.\n\n"
+    GUIDE_RUNNING = "자동 거래 운영 중입니다.\n명령어를 입력해주세요.\n\n"
 
     def __init__(self):
         LogManager.set_stream_level(30)
@@ -64,27 +64,27 @@ class TelegramController:
         """명령어 정보를 생성한다"""
         self.command_list = [
             {
-                "guide": "{0:15}자동 거래 시작".format("1. 시작"),
+                "guide": "1. 시작 - 자동 거래 시작",
                 "cmd": ["시작", "1", "1. 시작"],
                 "action": self._start_trading,
             },
             {
-                "guide": "{0:15}자동 거래 중지".format("2. 중지"),
+                "guide": "2. 중지 - 자동 거래 중지",
                 "cmd": ["중지", "2", "2. 중지"],
                 "action": self._stop_trading,
             },
             {
-                "guide": "{0:15}운영 상태 조회".format("3. 상태 조회"),
+                "guide": "3. 상태 조회 - 운영 상태 조회",
                 "cmd": ["상태", "3", "3. 상태 조회", "상태 조회"],
                 "action": self._query_state,
             },
             {
-                "guide": "{0:15}수익률 조회".format("4. 수익률 조회"),
+                "guide": "4. 수익률 조회 - 기간별 수익률 조회",
                 "cmd": ["수익", "4", "수익률 조회", "4. 수익률 조회"],
                 "action": self._query_score,
             },
             {
-                "guide": "{0:15}거래내역 조회".format("5. 거래내역 조회"),
+                "guide": "5. 거래내역 조회 - 모든 거래내역 조회",
                 "cmd": ["거래", "5", "거래내역 조회", "5. 거래내역 조회"],
                 "action": self._query_trading_records,
             },
@@ -187,6 +187,8 @@ class TelegramController:
                 message = self.GUIDE_READY
             else:
                 message = self.GUIDE_RUNNING
+            for item in self.command_list:
+                message += item["guide"] + "\n"
             self._send_text_message(message, self.main_keyboard)
 
     def _send_text_message(self, text, keyboard=None):
@@ -273,6 +275,14 @@ class TelegramController:
             ]:
                 self.strategy = StrategySma0()
                 not_ok = False
+            if not not_ok:
+                message = "".join(
+                    [
+                        f"전략: {self.strategy.name}\n",
+                        f"거래소: {self.trader.name}\n",
+                        f"예산: {self.budget}\n",
+                    ]
+                )
         elif self.in_progress_step == 4 and command.upper() in ["1. YES", "1", "Y", "YES"]:
             self.operator = Operator()
             self.operator.initialize(
