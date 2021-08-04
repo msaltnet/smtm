@@ -247,6 +247,11 @@ class Analyzer:
     def get_return_report(self, graph_filename=None, index_info=None):
         """현시점 기준 간단한 수익률 보고서를 제공한다
 
+        index_info: 수익률 구간 정보
+            (
+                interval: 구간의 길이로 turn의 갯수 예) 180: interval이 60인 경우 180분
+                index: 구간의 인덱스 예) -1: 최근 180분, 0: 첫 180분
+            )
         Returns:
             (
                 start_budget: 시작 자산
