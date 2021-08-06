@@ -35,6 +35,42 @@ class DateConverterTests(unittest.TestCase):
         result = DateConverter.to_end_min("200520-200320")
         self.assertEqual(result, None)
 
+    def test_to_end_min_return_correct_tuple_with_start_end(self):
+        start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        result = DateConverter.to_end_min(start=start, end=end)
+        expect = ("2020-03-20T00:00:00", 41760)
+        self.assertEqual(result, expect)
+
+        start = datetime.strptime("2020-02-20T12:00:15", "%Y-%m-%dT%H:%M:%S")
+        end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        result = DateConverter.to_end_min(start=start, end=end)
+        expect = ("2020-03-20T00:00:00", 41040)
+        self.assertEqual(result, expect)
+
+        start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        end = datetime.strptime("2020-03-20T12:00:15", "%Y-%m-%dT%H:%M:%S")
+        result = DateConverter.to_end_min(start=start, end=end)
+        expect = ("2020-03-20T12:00:15", 42480)
+        self.assertEqual(result, expect)
+
+        start = datetime.strptime("2020-02-20T12:00:15", "%Y-%m-%dT%H:%M:%S")
+        end = datetime.strptime("2020-03-20T23:55:10", "%Y-%m-%dT%H:%M:%S")
+        result = DateConverter.to_end_min(start=start, end=end)
+        expect = ("2020-03-20T23:55:10", 42475)
+        self.assertEqual(result, expect)
+
+        start = datetime.strptime("2020-12-20T17:00:00", "%Y-%m-%dT%H:%M:%S")
+        end = datetime.strptime("2020-12-20T18:00:00", "%Y-%m-%dT%H:%M:%S")
+        result = DateConverter.to_end_min(start=start, end=end)
+        expect = ("2020-12-20T18:00:00", 60)
+        self.assertEqual(result, expect)
+
+        start = datetime.strptime("2020-05-20T17:00:00", "%Y-%m-%dT%H:%M:%S")
+        end = datetime.strptime("2020-03-20T18:00:00", "%Y-%m-%dT%H:%M:%S")
+        result = DateConverter.to_end_min(start=start, end=end)
+        self.assertEqual(result, None)
+
     def test_num_2_datetime_return_correct_datetime(self):
         result = DateConverter.num_2_datetime(200220)
         expect = "2020-02-20T00:00:00"
@@ -75,6 +111,6 @@ class DateConverterTests(unittest.TestCase):
 
     def test_timestamp_id_should_return_correct_string(self):
         now = datetime.now()
-        now_time = now.strftime('%H%M%S')
+        now_time = now.strftime("%H%M%S")
         result = DateConverter.timestamp_id()
         self.assertEqual(result[-6:], now_time)

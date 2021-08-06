@@ -21,6 +21,7 @@ from .controller import Controller
 from .jpt_controller import JptController
 from .telegram_chatbot import TelegramChatbot
 from .telegram_controller import TelegramController
+from .data_repository import DataRepository
 
 __all__ = [
     "Operator",
