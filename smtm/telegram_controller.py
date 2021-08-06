@@ -32,7 +32,7 @@ class TelegramController:
     API_HOST = "https://api.telegram.org/"
     TEST_FILE = "data/telegram_chatbot.jpg"
     TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
-    CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "telegram_chat_id"))
+    CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "123456"))
     POLLING_TIMEOUT = 10
     INTERVAL = 60
     GUIDE_READY = "자동 거래 시작 전입니다.\n명령어를 입력해주세요.\n\n"
