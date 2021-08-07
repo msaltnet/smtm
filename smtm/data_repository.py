@@ -28,17 +28,21 @@ class DataRepository:
         1회 조회시 갯수 제한이 있기 때문에 여러번 조회해서 합쳐야함
         업비트는 현재 공식적으로 최대 200개까지 조회 가능
         """
+        total_data = []
+        dt_list = DateConverter.to_end_min(start=start, end=end, max_count=200)
+        for dt in dt_list:
+            total_data += self._fetch_from_upbit_up_to_200(dt[0], dt[1], market)
+        return total_data
 
-    def _fetch_from_upbit_up_to_200(self, start, end, market):
+    def _fetch_from_upbit_up_to_200(self, end, count, market):
         """업비트 서버에서 최대 200개까지 데이터 조회해서 반환
         1, 3, 5, 15, 10, 30, 60, 240분 가능
         https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
         """
 
         URL = f"https://api.upbit.com/v1/candles/minutes/1"
-        date_info = DateConverter.to_end_min(start=start, end=end)
-        to = DateConverter.from_kst_to_utc_str(date_info[0]) + "Z"
-        query_string = {"market": market, "to": to, "count": date_info[1]}
+        to = DateConverter.from_kst_to_utc_str(end) + "Z"
+        query_string = {"market": market, "to": to, "count": count}
 
         try:
             response = requests.get(URL, params=query_string)

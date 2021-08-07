@@ -46,10 +46,9 @@ class DataRepositoryTests(unittest.TestCase):
         dummy_response.json.return_value = expected_value
         mock_get.return_value = dummy_response
 
-        start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
-        end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        end = "2020-03-20T00:00:00"
         repo = DataRepository()
-        data = repo._fetch_from_upbit_up_to_200(start, end, "mango")
+        data = repo._fetch_from_upbit_up_to_200(end, 41760, "mango")
         mock_get.assert_called_once_with(
             "https://api.upbit.com/v1/candles/minutes/1",
             params={"market": "mango", "to": "2020-03-19T15:00:00Z", "count": 41760},
@@ -68,23 +67,21 @@ class DataRepositoryTests(unittest.TestCase):
     def test__fetch_from_upbit_up_to_200_NOT_throw_UserWarning_when_receive_invalid_data(
         self, mock_get
     ):
-        start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
-        end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        end = "2020-03-20T00:00:00"
         repo = DataRepository()
         dummy_response = MagicMock()
         dummy_response.json.side_effect = ValueError()
         mock_get.return_value = dummy_response
 
         with self.assertRaises(UserWarning):
-            data = repo._fetch_from_upbit_up_to_200(start, end, "mango")
+            data = repo._fetch_from_upbit_up_to_200(end, 200, "mango")
             self.assertIsNone(data)
 
     @patch("requests.get")
     def test__fetch_from_upbit_up_to_200_NOT_throw_UserWarning_when_receive_response_error(
         self, mock_get
     ):
-        start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
-        end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        end = "2020-03-20T00:00:00"
         repo = DataRepository()
         dummy_response = MagicMock()
         dummy_response.json.return_value = [{"market": "apple"}, {"market": "banana"}]
@@ -94,5 +91,21 @@ class DataRepositoryTests(unittest.TestCase):
         mock_get.return_value = dummy_response
 
         with self.assertRaises(UserWarning):
-            data = repo._fetch_from_upbit_up_to_200(start, end, "mango")
+            data = repo._fetch_from_upbit_up_to_200(end, 200, "mango")
             self.assertIsNone(data)
+
+    @patch("smtm.DateConverter.to_end_min")
+    def test__fetch_from_upbit_should_call__fetch_from_upbit_up_to_200(self, mock_to_end_min):
+        start = "2020-03-20T00:00:00"
+        end = "2020-03-21T00:00:00"
+        repo = DataRepository()
+        repo._fetch_from_upbit_up_to_200 = MagicMock(side_effect=[["a", "b"], ["c", "d"], ["e"]])
+        mock_to_end_min.return_value = [
+            ("2020-03-20T00:00:00", 200),
+            ("2020-03-20T00:00:00", 200),
+            ("2020-03-20T00:00:00", 110),
+        ]
+        result = repo._fetch_from_upbit(start, end, "mango")
+
+        mock_to_end_min.assert_called_once_with(start=start, end=end, max_count=200)
+        self.assertEqual(result, ["a", "b", "c", "d", "e"])

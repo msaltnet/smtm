@@ -10,8 +10,8 @@ class DateConverter:
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     @classmethod
-    def to_end_min(cls, from_dash_to=None, start=None, end=None):
-        """숫자로 주어진 기간을 분으로 계산해서 마지막 날짜와 분을 반환
+    def to_end_min(cls, from_dash_to=None, start=None, end=None, max_count=200):
+        """숫자로 주어진 기간을 분으로 계산해서 마지막 날짜와 분의 배열로 반환
 
         Returns:
             (
@@ -33,39 +33,22 @@ class DateConverter:
             to_dt = cls.num_2_datetime(from_to[1])
         if to_dt <= from_dt:
             return None
-        delta = to_dt - from_dt
-        count = round(delta.total_seconds() / 60.0)
-        return cls.to_iso_string(to_dt), count
 
-    @classmethod
-    def split_to_end(cls, from_dash_to=None, start=None, end=None, count=200):
-        """숫자로 주어진 기간을 분으로 계산해서 마지막 날짜와 분의 배열로 반환
-
-        Returns:
-        [
-            (
-                datetime: %Y-%m-%dT%H:%M:%S 형태의 datetime 문자열
-                count: 주어진 기간을 분으로 변환
-            )
-        ]
-        split_to_end('200220-200320')
-        to_end_min('200220.120015-200320')
-        to_end_min('200220-200320.120015')
-        to_end_min('200220.120015-200320.235510')
-        """
-        count = -1
-        if from_dash_to is None and start is not None and end is not None:
-            from_dt = start
-            to_dt = end
-        else:
-            from_to = from_dash_to.split("-")
-            from_dt = cls.num_2_datetime(from_to[0])
-            to_dt = cls.num_2_datetime(from_to[1])
-        if to_dt <= from_dt:
-            return None
+        result_list = []
         delta = to_dt - from_dt
-        count = round(delta.total_seconds() / 60.0)
-        return cls.to_iso_string(to_dt), count
+        while delta.total_seconds() > 0:
+            count = round(delta.total_seconds() / 60.0)
+            if count <= max_count:
+                from_dt = to_dt
+                result = (cls.to_iso_string(to_dt), count)
+            else:
+                from_dt = from_dt + timedelta(minutes=max_count)
+                result = (cls.to_iso_string(from_dt), max_count)
+
+            delta = to_dt - from_dt
+            result_list.append(result)
+
+        return result_list
 
     @classmethod
     def num_2_datetime(cls, number_string):
