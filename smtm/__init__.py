@@ -19,7 +19,6 @@ from .upbit_data_provider import UpbitDataProvider
 from .bithumb_data_provider import BithumbDataProvider
 from .controller import Controller
 from .jpt_controller import JptController
-from .telegram_chatbot import TelegramChatbot
 from .telegram_controller import TelegramController
 from .data_repository import DataRepository
 
