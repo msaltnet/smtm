@@ -143,3 +143,64 @@ class SimulatorTests(unittest.TestCase):
         simulator.operator = MagicMock()
         simulator.terminate()
         simulator.operator.stop.assert_called()
+
+    def test__set_start_str_should_set_value(self):
+        simulator = Simulator()
+        simulator._set_start_str("mango")
+        self.assertEqual(simulator.start_str, "mango")
+
+    def test__set_end_str_should_set_value(self):
+        simulator = Simulator()
+        simulator._set_end_str("banana")
+        self.assertEqual(simulator.end_str, "banana")
+
+    def test__set_interval_should_set_value(self):
+        simulator = Simulator()
+        simulator._set_interval("1000.7")
+        self.assertEqual(type(simulator.interval), float)
+
+    def test__set_budget_should_set_value(self):
+        simulator = Simulator()
+        simulator._set_budget("1000000000")
+        self.assertEqual(simulator.budget, 1000000000)
+        self.assertEqual(type(simulator.budget), int)
+
+        simulator._set_budget("-500")
+        self.assertEqual(simulator.budget, 1000000000)
+
+    def test__set_strategy_should_set_value(self):
+        simulator = Simulator()
+        simulator._set_strategy("2")
+        self.assertEqual(simulator.strategy, 2)
+        self.assertEqual(type(simulator.budget), int)
+
+    def test__print_score_should_call_operator_get_score(self):
+        simulator = Simulator()
+        simulator.operator = MagicMock()
+        simulator._print_score()
+        simulator.operator.get_score.assert_called_once()
+
+    @patch("builtins.print")
+    def test__print_trading_result_should_print_result_correctly(self, mock_print):
+        simulator = Simulator()
+        simulator.operator = MagicMock()
+        simulator.operator.get_trading_results.return_value = [
+            {
+                "date_time": "today",
+                "type": "buy",
+                "price": 5000,
+                "amount": 3,
+            }
+        ]
+        simulator._print_trading_result()
+        simulator.operator.get_trading_results.assert_called_once()
+        self.assertEqual(mock_print.call_args_list[0][0][0], "@today, buy")
+        self.assertEqual(mock_print.call_args_list[1][0][0], "5000 x 3")
+
+    @patch("builtins.print")
+    def test__print_trading_result_should_not_print_when_empty_result(self, mock_print):
+        simulator = Simulator()
+        simulator.operator = MagicMock()
+        simulator.operator.get_trading_results.return_value = []
+        simulator._print_trading_result()
+        simulator.operator.get_score.assert_not_called()

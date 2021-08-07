@@ -257,14 +257,7 @@ class Simulator:
             self.budget = next_value
 
     def _set_strategy(self, value):
-        next_value = str(value)
-        if next_value == "0":
-            self.strategy = 0
-        elif next_value == "1":
-            self.strategy = 1
-        else:
-            self.strategy = 0
-            print(f"Invalid strategy number! set to {self.strategy}")
+        self.strategy = int(value)
 
     def _print_state(self):
         if self.operator is None:
