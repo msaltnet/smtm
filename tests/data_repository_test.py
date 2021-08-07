@@ -49,7 +49,7 @@ class DataRepositoryTests(unittest.TestCase):
         start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
         repo = DataRepository()
-        data = repo._fetch_from_upbit_up_to_200(start, end, 60, "mango")
+        data = repo._fetch_from_upbit_up_to_200(start, end, "mango")
         mock_get.assert_called_once_with(
             "https://api.upbit.com/v1/candles/minutes/1",
             params={"market": "mango", "to": "2020-03-19T15:00:00Z", "count": 41760},
@@ -76,7 +76,7 @@ class DataRepositoryTests(unittest.TestCase):
         mock_get.return_value = dummy_response
 
         with self.assertRaises(UserWarning):
-            data = repo._fetch_from_upbit_up_to_200(start, end, 60, "mango")
+            data = repo._fetch_from_upbit_up_to_200(start, end, "mango")
             self.assertIsNone(data)
 
     @patch("requests.get")
@@ -94,5 +94,5 @@ class DataRepositoryTests(unittest.TestCase):
         mock_get.return_value = dummy_response
 
         with self.assertRaises(UserWarning):
-            data = repo._fetch_from_upbit_up_to_200(start, end, 60, "mango")
+            data = repo._fetch_from_upbit_up_to_200(start, end, "mango")
             self.assertIsNone(data)
