@@ -5,17 +5,21 @@ from datetime import datetime, timezone, timedelta
 import requests
 from .log_manager import LogManager
 from .date_converter import DateConverter
+from .database import Database
 
 
 class DataRepository:
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
+        self.database = Database()
 
     def get_data(self, start, end, market="BTC"):
         """거래 데이터를 제공"""
 
     def _query(self, start, end, market):
         """데이터베이스에서 데이터 조회"""
+        count_info = DateConverter.to_end_min(start, end)
+        db_data = self.database.query(start, end, market)
 
     def _update(self, data):
         """데이터베이스 데이터 업데이트"""
