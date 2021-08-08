@@ -17,7 +17,7 @@ class DatabaseTests(unittest.TestCase):
         db.cursor = MagicMock()
         db.create_table()
         db.cursor.execute.assert_called_once_with(
-            "CREATE TABLE IF NOT EXISTS upbit (id TEXT, period INT, market TEXT, date_time DATETIME, opening_price FLOAT, high_price FLOAT, low_price FLOAT, closing_price FLOAT, acc_price FLOAT, acc_volume FLOAT)"
+            "CREATE TABLE IF NOT EXISTS upbit (id TEXT PRIMARY KEY, period INT, market TEXT, date_time DATETIME, opening_price FLOAT, high_price FLOAT, low_price FLOAT, closing_price FLOAT, acc_price FLOAT, acc_volume FLOAT)"
         )
         db.cursor.commit.asser_called_once()
 
@@ -26,7 +26,7 @@ class DatabaseTests(unittest.TestCase):
         db.cursor = MagicMock()
         db.query("start_date", "end_date", "mango_market")
         db.cursor.execute.assert_called_once_with(
-            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time <= ?",
+            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time < ?",
             ("mango_market", 60, "start_date", "end_date"),
         )
         db.cursor.commit.asser_called_once()
@@ -68,8 +68,31 @@ class DatabaseTests(unittest.TestCase):
 
         db.cursor = MagicMock()
         db.update(dummy_data)
-        db.cursor.execute.assert_called_with(
-            "INSERT INTO upbit (id, period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE period=?, market=?, date_time=?, opening_price=?, high_price=?, low_price=?, closing_price=?, acc_price=?, acc_volume=?",
+        expected_tuple_list = [
+            (
+                "60S-2020-03-10T22:52:00",
+                60,
+                "mango",
+                "2020-03-10T22:52:00",
+                9777000.0,
+                9778000.0,
+                9763000.0,
+                9778000.0,
+                11277224.71063,
+                1.15377852,
+            ),
+            (
+                "60S-2020-03-10T22:53:00",
+                60,
+                "mango",
+                "2020-03-10T22:53:00",
+                8777000.0,
+                8778000.0,
+                8763000.0,
+                8778000.0,
+                11277224.71063,
+                1.15377852,
+            ),
             (
                 "60S-2020-03-10T22:53:00",
                 60,
@@ -81,63 +104,11 @@ class DatabaseTests(unittest.TestCase):
                 7778000.0,
                 11277224.71063,
                 1.15377852,
-                60,
-                "mango",
-                "2020-03-10T22:53:00",
-                7777000.0,
-                7778000.0,
-                7763000.0,
-                7778000.0,
-                11277224.71063,
-                1.15377852,
             ),
-        )
-        db.cursor.execute.assert_called_with(
-            "INSERT INTO upbit (id, period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE period=?, market=?, date_time=?, opening_price=?, high_price=?, low_price=?, closing_price=?, acc_price=?, acc_volume=?",
-            (
-                "60S-2020-03-10T22:53:00",
-                60,
-                "mango",
-                "2020-03-10T22:53:00",
-                7777000.0,
-                7778000.0,
-                7763000.0,
-                7778000.0,
-                11277224.71063,
-                1.15377852,
-                60,
-                "mango",
-                "2020-03-10T22:53:00",
-                7777000.0,
-                7778000.0,
-                7763000.0,
-                7778000.0,
-                11277224.71063,
-                1.15377852,
-            ),
-        )
-        db.cursor.execute.assert_called_with(
-            "INSERT INTO upbit (id, period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE period=?, market=?, date_time=?, opening_price=?, high_price=?, low_price=?, closing_price=?, acc_price=?, acc_volume=?",
-            (
-                "60S-2020-03-10T22:53:00",
-                60,
-                "mango",
-                "2020-03-10T22:53:00",
-                7777000.0,
-                7778000.0,
-                7763000.0,
-                7778000.0,
-                11277224.71063,
-                1.15377852,
-                60,
-                "mango",
-                "2020-03-10T22:53:00",
-                7777000.0,
-                7778000.0,
-                7763000.0,
-                7778000.0,
-                11277224.71063,
-                1.15377852,
-            ),
+        ]
+
+        db.cursor.executemany.assert_called_once_with(
+            "REPLACE INTO upbit(id, period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            expected_tuple_list,
         )
         db.cursor.commit.asser_called_once()

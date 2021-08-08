@@ -87,37 +87,37 @@ class DateConverterTests(unittest.TestCase):
     def test_to_end_min_return_correct_tuple_with_start_end(self):
         start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
-        result = DateConverter.to_end_min(start=start, end=end, max_count=50000)
+        result = DateConverter.to_end_min(start_dt=start, end_dt=end, max_count=50000)
         expect = ("2020-03-20T00:00:00", 41760)
         self.assertEqual(result[0], expect)
 
         start = datetime.strptime("2020-02-20T12:00:15", "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime("2020-03-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
-        result = DateConverter.to_end_min(start=start, end=end, max_count=50000)
+        result = DateConverter.to_end_min(start_dt=start, end_dt=end, max_count=50000)
         expect = ("2020-03-20T00:00:00", 41040)
         self.assertEqual(result[0], expect)
 
         start = datetime.strptime("2020-02-20T00:00:00", "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime("2020-03-20T12:00:15", "%Y-%m-%dT%H:%M:%S")
-        result = DateConverter.to_end_min(start=start, end=end, max_count=50000)
+        result = DateConverter.to_end_min(start_dt=start, end_dt=end, max_count=50000)
         expect = ("2020-03-20T12:00:15", 42480)
         self.assertEqual(result[0], expect)
 
         start = datetime.strptime("2020-02-20T12:00:15", "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime("2020-03-20T23:55:10", "%Y-%m-%dT%H:%M:%S")
-        result = DateConverter.to_end_min(start=start, end=end, max_count=50000)
+        result = DateConverter.to_end_min(start_dt=start, end_dt=end, max_count=50000)
         expect = ("2020-03-20T23:55:10", 42475)
         self.assertEqual(result[0], expect)
 
         start = datetime.strptime("2020-12-20T17:00:00", "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime("2020-12-20T18:00:00", "%Y-%m-%dT%H:%M:%S")
-        result = DateConverter.to_end_min(start=start, end=end, max_count=50000)
+        result = DateConverter.to_end_min(start_dt=start, end_dt=end, max_count=50000)
         expect = ("2020-12-20T18:00:00", 60)
         self.assertEqual(result[0], expect)
 
         start = datetime.strptime("2020-05-20T17:00:00", "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime("2020-03-20T18:00:00", "%Y-%m-%dT%H:%M:%S")
-        result = DateConverter.to_end_min(start=start, end=end, max_count=50000)
+        result = DateConverter.to_end_min(start_dt=start, end_dt=end, max_count=50000)
         self.assertEqual(result, None)
 
     def test_num_2_datetime_return_correct_datetime(self):

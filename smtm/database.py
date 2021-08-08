@@ -8,6 +8,15 @@ class Database:
         self.logger = LogManager.get_logger(__class__.__name__)
         self.firstTime = not (path.exists("smtm.db"))
         self.conn = sqlite3.connect("smtm.db", check_same_thread=False)
+
+        def dict_factory(cursor, row):
+            d = {}
+            for idx, col in enumerate(cursor.description):
+                d[col[0]] = row[idx]
+            return d
+
+        self.conn.row_factory = dict_factory
+
         self.cursor = self.conn.cursor()
         self.create_table()
 
@@ -28,7 +37,7 @@ class Database:
         acc_volume FLOAT 단위 시간내 누적 거래 양
         """
         self.cursor.execute(
-            """CREATE TABLE IF NOT EXISTS upbit (id TEXT, period INT, market TEXT, date_time DATETIME, opening_price FLOAT, high_price FLOAT, low_price FLOAT, closing_price FLOAT, acc_price FLOAT, acc_volume FLOAT)"""
+            """CREATE TABLE IF NOT EXISTS upbit (id TEXT PRIMARY KEY, period INT, market TEXT, date_time DATETIME, opening_price FLOAT, high_price FLOAT, low_price FLOAT, closing_price FLOAT, acc_price FLOAT, acc_volume FLOAT)"""
         )
         self.conn.commit()
 
@@ -36,16 +45,16 @@ class Database:
         """데이터 조회"""
 
         self.cursor.execute(
-            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time <= ?",
+            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time < ?",
             (market, period, start, end),
         )
-        self.conn.commit()
+        return self.cursor.fetchall()
 
     def update(self, data, period=60):
         """데이터베이스 데이터 추가 또는 업데이트"""
+        tuple_list = []
         for item in data:
-            self.cursor.execute(
-                "INSERT INTO upbit (id, period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE period=?, market=?, date_time=?, opening_price=?, high_price=?, low_price=?, closing_price=?, acc_price=?, acc_volume=?",
+            tuple_list.append(
                 (
                     f"{period}S-{item['date_time']}",
                     period,
@@ -57,15 +66,12 @@ class Database:
                     item["closing_price"],
                     item["acc_price"],
                     item["acc_volume"],
-                    period,
-                    item["market"],
-                    item["date_time"],
-                    item["opening_price"],
-                    item["high_price"],
-                    item["low_price"],
-                    item["closing_price"],
-                    item["acc_price"],
-                    item["acc_volume"],
-                ),
+                )
             )
+
+        self.logger.info(f"Updated: {len(tuple_list)}")
+        self.cursor.executemany(
+            "REPLACE INTO upbit(id, period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            tuple_list,
+        )
         self.conn.commit()

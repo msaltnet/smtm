@@ -10,7 +10,7 @@ class DateConverter:
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     @classmethod
-    def to_end_min(cls, from_dash_to=None, start=None, end=None, max_count=200):
+    def to_end_min(cls, from_dash_to=None, start_dt=None, end_dt=None, max_count=200):
         """숫자로 주어진 기간을 분으로 계산해서 마지막 날짜와 분의 배열로 반환
 
         Returns:
@@ -24,9 +24,9 @@ class DateConverter:
         to_end_min('200220.120015-200320.235510')
         """
         count = -1
-        if from_dash_to is None and start is not None and end is not None:
-            from_dt = start
-            to_dt = end
+        if from_dash_to is None and start_dt is not None and end_dt is not None:
+            from_dt = start_dt
+            to_dt = end_dt
         else:
             from_to = from_dash_to.split("-")
             from_dt = cls.num_2_datetime(from_to[0])
