@@ -130,8 +130,8 @@ class Simulator:
         """시뮬레이션 초기화"""
 
         dt = DateConverter.to_end_min(self.start_str + "-" + self.end_str)
-        end = dt[0][0]
-        count = dt[0][1]
+        end = dt[0][1]
+        count = dt[0][2]
 
         if self.strategy == 0:
             strategy = StrategyBuyAndHold()

@@ -11,11 +11,12 @@ class DateConverter:
 
     @classmethod
     def to_end_min(cls, from_dash_to=None, start_dt=None, end_dt=None, max_count=200):
-        """숫자로 주어진 기간을 분으로 계산해서 마지막 날짜와 분의 배열로 반환
+        """숫자로 주어진 기간을 분으로 계산해서 시작, 끝, 분의 배열로 반환
 
         Returns:
             (
-                datetime: %Y-%m-%dT%H:%M:%S 형태의 datetime 문자열
+                start: %Y-%m-%dT%H:%M:%S 형태의 datetime 문자열
+                end: %Y-%m-%dT%H:%M:%S 형태의 datetime 문자열
                 count: 주어진 기간을 분으로 변환
             )
         to_end_min('200220-200320')
@@ -38,12 +39,13 @@ class DateConverter:
         delta = to_dt - from_dt
         while delta.total_seconds() > 0:
             count = round(delta.total_seconds() / 60.0)
+            start_str = cls.to_iso_string(from_dt)
             if count <= max_count:
                 from_dt = to_dt
-                result = (cls.to_iso_string(to_dt), count)
+                result = (start_str, cls.to_iso_string(to_dt), count)
             else:
                 from_dt = from_dt + timedelta(minutes=max_count)
-                result = (cls.to_iso_string(from_dt), max_count)
+                result = (start_str, cls.to_iso_string(from_dt), max_count)
 
             delta = to_dt - from_dt
             result_list.append(result)

@@ -25,14 +25,16 @@ class DataRepository:
         count_info = DateConverter.to_end_min(
             start_dt=start_dt, end_dt=end_dt, max_count=10000000000
         )
+        total_count = count_info[0][2]
         start_datetime = start.replace("T", " ")
         end_datetime = end.replace("T", " ")
         db_data = self.database.query(start_datetime, end_datetime, market)
-        self.logger.info(f"total vs database: {count_info[0][1]} vs {len(db_data)}")
-        if count_info[0][1] == len(db_data):
-            self.logger.info(f"from database: {count_info[0][1]}")
+
+        self.logger.info(f"total vs database: {total_count} vs {len(db_data)}")
+        if total_count == len(db_data):
+            self.logger.info(f"from database: {total_count}")
             return self._convert_to_upbit_datetime_string(db_data)
-        elif len(db_data) > count_info[0][1]:
+        elif len(db_data) > total_count:
             self.logger.error("Something wrong in DB")
 
         server_data = self._fetch_from_upbit(start, end, market)
@@ -59,7 +61,7 @@ class DataRepository:
         end_dt = datetime.strptime(end, self.UPBIT_FORMAT)
         dt_list = DateConverter.to_end_min(start_dt=start_dt, end_dt=end_dt, max_count=200)
         for dt in dt_list:
-            total_data += self._fetch_from_upbit_up_to_200(dt[0], dt[1], market)
+            total_data += self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
         return total_data
 
     def _fetch_from_upbit_up_to_200(self, end, count, market):

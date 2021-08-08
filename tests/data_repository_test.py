@@ -101,9 +101,9 @@ class DataRepositoryTests(unittest.TestCase):
         repo = DataRepository()
         repo._fetch_from_upbit_up_to_200 = MagicMock(side_effect=[["a", "b"], ["c", "d"], ["e"]])
         mock_to_end_min.return_value = [
-            ("2020-03-20T00:00:00", 200),
-            ("2020-03-20T00:00:00", 200),
-            ("2020-03-20T00:00:00", 110),
+            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 200),
+            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 200),
+            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 110),
         ]
         result = repo._fetch_from_upbit(start, end, "mango")
 
@@ -115,7 +115,9 @@ class DataRepositoryTests(unittest.TestCase):
     @patch("smtm.DateConverter.to_end_min")
     def test_get_data_should_return_data_when_database_return_data(self, mock_to_end_min):
         repo = DataRepository()
-        mock_to_end_min.return_value = [("mango_date", 2)]
+        mock_to_end_min.return_value = [
+            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 2),
+        ]
         repo.database = MagicMock()
         repo.database.query.return_value = ["mango", "banana"]
         repo._convert_to_upbit_datetime_string = MagicMock(return_value=["mango", "banana"])
@@ -135,7 +137,9 @@ class DataRepositoryTests(unittest.TestCase):
     @patch("smtm.DateConverter.to_end_min")
     def test_get_data_should_return_data_when_database_data_return_empty(self, mock_to_end_min):
         repo = DataRepository()
-        mock_to_end_min.return_value = [("mango_date", 10)]
+        mock_to_end_min.return_value = [
+            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 10),
+        ]
         repo.database = MagicMock()
         repo.database.query.return_value = []
         repo._convert_to_upbit_datetime_string = MagicMock()
