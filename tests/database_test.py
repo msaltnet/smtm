@@ -26,7 +26,7 @@ class DatabaseTests(unittest.TestCase):
         db.cursor = MagicMock()
         db.query("start_date", "end_date", "mango_market")
         db.cursor.execute.assert_called_once_with(
-            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time < ?",
+            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time < ? ORDER BY datetime(date_time) ASC",
             ("mango_market", 60, "start_date", "end_date"),
         )
         db.cursor.commit.asser_called_once()

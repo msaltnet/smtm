@@ -1,6 +1,7 @@
 """거래 데이터를 클라우드에서 가져오고, 저장해서 제공
 현재는 업비트의 1분단위 거래 내역만 사용 가능
 """
+import copy
 from datetime import datetime
 import requests
 from .log_manager import LogManager
@@ -9,47 +10,62 @@ from .database import Database
 
 
 class DataRepository:
-    UPBIT_FORMAT = "%Y-%m-%dT%H:%M:%S"
-
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.database = Database()
+        self.verify_mode = True
 
     def get_data(self, start, end, market="BTC"):
         """거래 데이터를 제공
         데이터베이스에서 데이터 조회해서 결과를 반환하거나
         서버에서 데이터를 가져와서 반환
         """
-        start_dt = datetime.strptime(start, self.UPBIT_FORMAT)
-        end_dt = datetime.strptime(end, self.UPBIT_FORMAT)
-        count_info = DateConverter.to_end_min(
-            start_dt=start_dt, end_dt=end_dt, max_count=10000000000
-        )
+        count_info = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=100000000)
         total_count = count_info[0][2]
-        start_datetime = start.replace("T", " ")
-        end_datetime = end.replace("T", " ")
-        db_data = self.database.query(start_datetime, end_datetime, market)
+        db_data = self._query(start, end, market)
 
         self.logger.info(f"total vs database: {total_count} vs {len(db_data)}")
         if total_count == len(db_data):
             self.logger.info(f"from database: {total_count}")
             return self._convert_to_upbit_datetime_string(db_data)
         elif len(db_data) > total_count:
-            self.logger.error("Something wrong in DB")
+            raise UserWarning("Something wrong in DB")
 
         server_data = self._fetch_from_upbit(start, end, market)
-        self._convert_to_datetime(server_data)
-        self.database.update(server_data)
-        self.logger.info(f"update database: {len(server_data)}")
         return server_data
 
-    def _convert_to_upbit_datetime_string(self, data_list):
+    @staticmethod
+    def _convert_to_upbit_datetime_string(data_list):
         for data in data_list:
             data["date_time"] = data["date_time"].replace(" ", "T")
 
-    def _convert_to_datetime(self, data_list):
+    @staticmethod
+    def _convert_to_datetime(data_list):
         for data in data_list:
             data["date_time"] = data["date_time"].replace("T", " ")
+
+    @staticmethod
+    def _is_equal(db_data, fetch_data):
+        if len(db_data) != len(fetch_data):
+            print(f"### _is_equal: False, size")
+            return False
+
+        for data in db_data:
+            del data["period"]
+
+        DataRepository._convert_to_upbit_datetime_string(db_data)
+        print(f"### _is_equal: {db_data == fetch_data}")
+        return db_data == fetch_data
+
+    def _query(self, start, end, market):
+        start_datetime = start.replace("T", " ")
+        end_datetime = end.replace("T", " ")
+        return self.database.query(start_datetime, end_datetime, market)
+
+    def _update(self, data):
+        self._convert_to_datetime(data)
+        self.database.update(data)
+        self.logger.info(f"update database: {len(data)}")
 
     def _fetch_from_upbit(self, start, end, market):
         """업비트 서버에서 n번 데이터 조회해서 최종 결과를 반환
@@ -57,11 +73,22 @@ class DataRepository:
         업비트는 현재 공식적으로 최대 200개까지 조회 가능
         """
         total_data = []
-        start_dt = datetime.strptime(start, self.UPBIT_FORMAT)
-        end_dt = datetime.strptime(end, self.UPBIT_FORMAT)
-        dt_list = DateConverter.to_end_min(start_dt=start_dt, end_dt=end_dt, max_count=200)
+        dt_list = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=200)
         for dt in dt_list:
-            total_data += self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
+            self.logger.info(f"fetch from {dt[0]} to {dt[1]}")
+            query_data = self._query(dt[0], dt[1], market)
+            if len(query_data) >= dt[2]:
+                if self.verify_mode:
+                    fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
+                    self._is_equal(query_data, fetch_data)
+                else:
+                    fetch_data = query_data
+            else:
+                fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
+                new_data = copy.deepcopy(fetch_data)
+                self._update(new_data)
+
+            total_data += fetch_data
         return total_data
 
     def _fetch_from_upbit_up_to_200(self, end, count, market):

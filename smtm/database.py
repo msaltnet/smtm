@@ -45,7 +45,7 @@ class Database:
         """데이터 조회"""
 
         self.cursor.execute(
-            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time < ?",
+            "SELECT period, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time < ? ORDER BY datetime(date_time) ASC",
             (market, period, start, end),
         )
         return self.cursor.fetchall()

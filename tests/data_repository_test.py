@@ -99,18 +99,72 @@ class DataRepositoryTests(unittest.TestCase):
         start = "2020-03-20T00:00:00"
         end = "2020-03-21T00:00:00"
         repo = DataRepository()
-        repo._fetch_from_upbit_up_to_200 = MagicMock(side_effect=[["a", "b"], ["c", "d"], ["e"]])
+        repo._query = MagicMock(side_effect=[["mango"], ["apple"], ["orange"]])
+        repo._is_equal = MagicMock()
+        repo._update = MagicMock()
+        repo.verify_mode = False
+        repo._fetch_from_upbit_up_to_200 = MagicMock(side_effect=[["kiwi"]])
         mock_to_end_min.return_value = [
-            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 200),
-            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 200),
-            ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 110),
+            ("2020-03-20T00:00:00", "2020-03-21T00:10:00", 1),
+            ("2020-03-20T00:10:00", "2020-03-21T00:20:00", 1),
+            ("2020-03-20T00:20:00", "2020-03-21T00:30:00", 2),
         ]
-        result = repo._fetch_from_upbit(start, end, "mango")
+        result = repo._fetch_from_upbit(start, end, "mango_market")
 
-        mock_to_end_min.assert_called_once_with(start_dt=ANY, end_dt=ANY, max_count=200)
-        self.assertEqual(result, ["a", "b", "c", "d", "e"])
-        self.assertTrue(isinstance(mock_to_end_min.call_args[1]["start_dt"], datetime))
-        self.assertTrue(isinstance(mock_to_end_min.call_args[1]["end_dt"], datetime))
+        mock_to_end_min.assert_called_once_with(start_iso=start, end_iso=end, max_count=200)
+        self.assertEqual(repo._query.call_args_list[0][0][0], "2020-03-20T00:00:00")
+        self.assertEqual(repo._query.call_args_list[1][0][0], "2020-03-20T00:10:00")
+        self.assertEqual(repo._query.call_args_list[2][0][0], "2020-03-20T00:20:00")
+        self.assertEqual(repo._query.call_args_list[0][0][1], "2020-03-21T00:10:00")
+        self.assertEqual(repo._query.call_args_list[1][0][1], "2020-03-21T00:20:00")
+        self.assertEqual(repo._query.call_args_list[2][0][1], "2020-03-21T00:30:00")
+        repo._fetch_from_upbit_up_to_200.assert_called_once_with(
+            "2020-03-21T00:30:00", 2, "mango_market"
+        )
+        repo._update.assert_called_once_with(["kiwi"])
+        self.assertEqual(result, ["mango", "apple", "kiwi"])
+
+    @patch("smtm.DateConverter.to_end_min")
+    def test__fetch_from_upbit_should_call__fetch_from_upbit_up_to_200_always_in_verify_mode(
+        self, mock_to_end_min
+    ):
+        start = "2020-03-20T00:00:00"
+        end = "2020-03-21T00:00:00"
+        repo = DataRepository()
+        repo._query = MagicMock(side_effect=[["mango"], ["apple"], ["orange"]])
+        repo._is_equal = MagicMock()
+        repo._update = MagicMock()
+        repo.verify_mode = True
+        repo._fetch_from_upbit_up_to_200 = MagicMock(side_effect=[["kiwi"], ["pear"], ["melon"]])
+        mock_to_end_min.return_value = [
+            ("2020-03-20T00:00:00", "2020-03-21T00:10:00", 1),
+            ("2020-03-20T00:10:00", "2020-03-21T00:20:00", 1),
+            ("2020-03-20T00:20:00", "2020-03-21T00:30:00", 2),
+        ]
+        result = repo._fetch_from_upbit(start, end, "mango_market")
+
+        mock_to_end_min.assert_called_once_with(start_iso=start, end_iso=end, max_count=200)
+        self.assertEqual(
+            repo._fetch_from_upbit_up_to_200.call_args_list[0][0][0], "2020-03-21T00:10:00"
+        )
+        self.assertEqual(
+            repo._fetch_from_upbit_up_to_200.call_args_list[1][0][0], "2020-03-21T00:20:00"
+        )
+        self.assertEqual(
+            repo._fetch_from_upbit_up_to_200.call_args_list[2][0][0], "2020-03-21T00:30:00"
+        )
+        self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[0][0][1], 1)
+        self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[1][0][1], 1)
+        self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[2][0][1], 2)
+        self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[0][0][2], "mango_market")
+        self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[1][0][2], "mango_market")
+        self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[2][0][2], "mango_market")
+        repo._update.assert_called_once_with(["melon"])
+        self.assertEqual(result, ["kiwi", "pear", "melon"])
+        self.assertEqual(repo._is_equal.call_args_list[0][0][0], ["mango"])
+        self.assertEqual(repo._is_equal.call_args_list[1][0][0], ["apple"])
+        self.assertEqual(repo._is_equal.call_args_list[0][0][1], ["kiwi"])
+        self.assertEqual(repo._is_equal.call_args_list[1][0][1], ["pear"])
 
     @patch("smtm.DateConverter.to_end_min")
     def test_get_data_should_return_data_when_database_return_data(self, mock_to_end_min):
@@ -120,22 +174,22 @@ class DataRepositoryTests(unittest.TestCase):
         ]
         repo.database = MagicMock()
         repo.database.query.return_value = ["mango", "banana"]
-        repo._convert_to_upbit_datetime_string = MagicMock(return_value=["mango", "banana"])
+        repo._convert_to_upbit_datetime_string = MagicMock(return_value=["mango2", "banana2"])
         repo._convert_to_datetime = MagicMock()
         repo._fetch_from_upbit = MagicMock()
         result = repo.get_data("2020-02-20T17:00:15", "2020-02-20T22:00:15", "mango")
 
-        self.assertEqual(result, ["mango", "banana"])
+        self.assertEqual(result, ["mango2", "banana2"])
         repo._fetch_from_upbit.assert_not_called()
         repo.database.update.assert_not_called()
         repo._convert_to_datetime.assert_not_called()
         repo._convert_to_upbit_datetime_string.assert_called_once_with(["mango", "banana"])
-        mock_to_end_min.assert_called_once_with(start_dt=ANY, end_dt=ANY, max_count=10000000000)
-        self.assertTrue(isinstance(mock_to_end_min.call_args[1]["start_dt"], datetime))
-        self.assertTrue(isinstance(mock_to_end_min.call_args[1]["end_dt"], datetime))
+        mock_to_end_min.assert_called_once_with(
+            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15", max_count=100000000
+        )
 
     @patch("smtm.DateConverter.to_end_min")
-    def test_get_data_should_return_data_when_database_data_return_empty(self, mock_to_end_min):
+    def test_get_data_should_return_data_when_database_data_not_enough(self, mock_to_end_min):
         repo = DataRepository()
         mock_to_end_min.return_value = [
             ("2020-03-20T00:00:00", "2020-03-21T00:00:00", 10),
@@ -143,14 +197,57 @@ class DataRepositoryTests(unittest.TestCase):
         repo.database = MagicMock()
         repo.database.query.return_value = []
         repo._convert_to_upbit_datetime_string = MagicMock()
-        repo._convert_to_datetime = MagicMock()
         repo._fetch_from_upbit = MagicMock(return_value=["mango", "banana"])
         result = repo.get_data("2020-02-20T17:00:15", "2020-02-20T22:00:15", "mango")
 
         self.assertEqual(result, ["mango", "banana"])
-        repo.database.update.assert_called_once_with(["mango", "banana"])
-        repo._convert_to_datetime.assert_called_once_with(["mango", "banana"])
         repo._convert_to_upbit_datetime_string.assert_not_called()
-        mock_to_end_min.assert_called_once_with(start_dt=ANY, end_dt=ANY, max_count=10000000000)
-        self.assertTrue(isinstance(mock_to_end_min.call_args[1]["start_dt"], datetime))
-        self.assertTrue(isinstance(mock_to_end_min.call_args[1]["end_dt"], datetime))
+        mock_to_end_min.assert_called_once_with(
+            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15", max_count=100000000
+        )
+        repo._fetch_from_upbit.assert_called_once_with(
+            "2020-02-20T17:00:15", "2020-02-20T22:00:15", "mango"
+        )
+
+    def test__is_equal_should_return_correct_judgement(self):
+        dummy_data_a = [
+            {"market": "mango", "date_time": "2020-02-20T17:00:15", "period": 30},
+            {"market": "apple", "date_time": "2020-02-20T18:00:15", "period": 30},
+            {"market": "kiwi", "date_time": "2020-02-20T19:00:15", "period": 30},
+        ]
+        dummy_data_b = [
+            {"market": "mango", "date_time": "2020-02-20T17:00:15", "period": 30},
+            {"market": "apple", "date_time": "2020-02-20T18:00:15", "period": 30},
+        ]
+        dummy_data_c = [
+            {"market": "mango", "date_time": "2020-02-20T17:00:15"},
+            {"market": "apple", "date_time": "2020-02-20T18:00:15"},
+        ]
+        dummy_data_d = [
+            {"market": "mango", "date_time": "2020-02-20T17:00:15", "period": 30},
+            {"market": "apple", "date_time": "2020-02-20T18:00:15", "period": 30},
+            {"market": "kiwi", "date_time": "2020-02-20T19:00:15", "period": 30},
+        ]
+        self.assertFalse(DataRepository._is_equal(dummy_data_a, dummy_data_b))
+        self.assertTrue(DataRepository._is_equal(dummy_data_b, dummy_data_c))
+        self.assertFalse(DataRepository._is_equal(dummy_data_b, dummy_data_d))
+
+    def test__query_should_call_database_query_correctly(self):
+        repo = DataRepository()
+        repo.database = MagicMock()
+        repo._query("2020-02-20T17:00:15", "2020-02-20T18:00:15", "orange_market")
+        repo.database.query.assert_called_once_with("2020-02-20 17:00:15", "2020-02-20 18:00:15", "orange_market")
+
+    def test__update_should_call_database_update_correctly(self):
+        dummy_data = [
+            {"market": "mango", "date_time": "2020-02-20T17:00:15"},
+            {"market": "apple", "date_time": "2020-02-20T18:00:15"},
+        ]
+        expected_data = [
+            {"market": "mango", "date_time": "2020-02-20 17:00:15"},
+            {"market": "apple", "date_time": "2020-02-20 18:00:15"},
+        ]
+        repo = DataRepository()
+        repo.database = MagicMock()
+        repo._update(dummy_data)
+        repo.database.update.assert_called_once_with(expected_data)

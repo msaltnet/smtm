@@ -119,6 +119,42 @@ class DateConverterTests(unittest.TestCase):
         result = DateConverter.to_end_min(start_dt=start, end_dt=end, max_count=50000)
         self.assertEqual(result, None)
 
+    def test_to_end_min_return_correct_tuple_with_start_and_end_iso_format_string(self):
+        start = "2020-02-20T00:00:00"
+        end = "2020-03-20T00:00:00"
+        result = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=50000)
+        expect = ("2020-02-20T00:00:00", "2020-03-20T00:00:00", 41760)
+        self.assertEqual(result[0], expect)
+
+        start = "2020-02-20T12:00:15"
+        end = "2020-03-20T00:00:00"
+        result = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=50000)
+        expect = ("2020-02-20T12:00:15", "2020-03-20T00:00:00", 41040)
+        self.assertEqual(result[0], expect)
+
+        start = "2020-02-20T00:00:00"
+        end = "2020-03-20T12:00:15"
+        result = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=50000)
+        expect = ("2020-02-20T00:00:00", "2020-03-20T12:00:15", 42480)
+        self.assertEqual(result[0], expect)
+
+        start = "2020-02-20T12:00:15"
+        end = "2020-03-20T23:55:10"
+        result = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=50000)
+        expect = ("2020-02-20T12:00:15", "2020-03-20T23:55:10", 42475)
+        self.assertEqual(result[0], expect)
+
+        start = "2020-12-20T17:00:00"
+        end = "2020-12-20T18:00:00"
+        result = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=50000)
+        expect = ("2020-12-20T17:00:00", "2020-12-20T18:00:00", 60)
+        self.assertEqual(result[0], expect)
+
+        start = "2020-05-20T17:00:00"
+        end = "2020-03-20T18:00:00"
+        result = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=50000)
+        self.assertEqual(result, None)
+
     def test_num_2_datetime_return_correct_datetime(self):
         result = DateConverter.num_2_datetime(200220)
         expect = "2020-02-20T00:00:00"
