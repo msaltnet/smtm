@@ -2,7 +2,7 @@
 현재는 업비트의 1분단위 거래 내역만 사용 가능
 """
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from .log_manager import LogManager
 from .date_converter import DateConverter
@@ -45,6 +45,14 @@ class DataRepository:
             data["date_time"] = data["date_time"].replace("T", " ")
 
     @staticmethod
+    def _convert_to_dt(string):
+        return datetime.strptime(string, "%Y-%m-%dT%H:%M:%S")
+
+    @staticmethod
+    def _convert_to_string(dt):
+        return dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+    @staticmethod
     def _is_equal(db_data, fetch_data):
         if len(db_data) != len(fetch_data):
             print(f"### _is_equal: False, size")
@@ -75,21 +83,67 @@ class DataRepository:
         total_data = []
         dt_list = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=200)
         for dt in dt_list:
-            self.logger.info(f"fetch from {dt[0]} to {dt[1]}")
+            self.logger.info(f"fetch from {dt[0]} to {dt[1]}, count: {dt[2]}")
             query_data = self._query(dt[0], dt[1], market)
             if len(query_data) >= dt[2]:
                 if self.verify_mode:
                     fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
-                    self._is_equal(query_data, fetch_data)
+                    recovered_data = self._recovery_upbit_data(fetch_data, dt[0], dt[2], market)
+                    self._is_equal(query_data, recovered_data)
                 else:
                     fetch_data = query_data
             else:
                 fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
-                new_data = copy.deepcopy(fetch_data)
+                new_data = self._recovery_upbit_data(fetch_data, dt[0], dt[2], market)
                 self._update(new_data)
 
             total_data += fetch_data
         return total_data
+
+    def _recovery_upbit_data(self, data, start, count, market, period=60):
+        new_data = []
+        current_dt = self._convert_to_dt(start)
+        current_datetime = start
+        last_item = None
+        idx = 0
+        broken_count = 0
+
+        while len(new_data) < count:
+            if len(data) <= idx:
+                item_dt = self._convert_to_dt("2099-01-01T00:00:00")
+            else:
+                item_dt = self._convert_to_dt(data[idx]["date_time"])
+            delta = current_dt - item_dt
+            if delta.total_seconds() > 0:
+                # drop
+                last_item = copy.deepcopy(data[idx])
+                idx += 1
+                continue
+            elif delta.total_seconds() == 0:
+                # keep
+                new_data.append(copy.deepcopy(data[idx]))
+                last_item = copy.deepcopy(data[idx])
+                idx += 1
+            else:
+                # recovery from last
+                if last_item is None:
+                    raise UserWarning("something wrong in recovery data")
+
+                recovery_item = copy.deepcopy(last_item)
+                recovery_item["date_time"] = current_datetime
+                recovery_item["recovered"] = 1
+                new_data.append(recovery_item)
+                self._report_broken_block(current_datetime, market)
+                broken_count += 1
+
+            current_dt = current_dt + timedelta(seconds=period)
+            current_datetime = self._convert_to_string(current_dt)
+        if broken_count > 0:
+            self.logger.info(f"Recovered broken data: {broken_count}")
+        return new_data
+
+    def _report_broken_block(self, datetime, market, period=60):
+        self.logger.error(f"Broken data {datetime}, {market}, {period}")
 
     def _fetch_from_upbit_up_to_200(self, end, count, market):
         """업비트 서버에서 최대 200개까지 데이터 조회해서 반환

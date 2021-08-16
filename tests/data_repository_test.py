@@ -109,6 +109,7 @@ class DataRepositoryTests(unittest.TestCase):
             ("2020-03-20T00:10:00", "2020-03-21T00:20:00", 1),
             ("2020-03-20T00:20:00", "2020-03-21T00:30:00", 2),
         ]
+        repo._recovery_upbit_data = MagicMock(side_effect=[["orange"]])
         result = repo._fetch_from_upbit(start, end, "mango_market")
 
         mock_to_end_min.assert_called_once_with(start_iso=start, end_iso=end, max_count=200)
@@ -121,8 +122,11 @@ class DataRepositoryTests(unittest.TestCase):
         repo._fetch_from_upbit_up_to_200.assert_called_once_with(
             "2020-03-21T00:30:00", 2, "mango_market"
         )
-        repo._update.assert_called_once_with(["kiwi"])
+        repo._update.assert_called_once_with(["orange"])
         self.assertEqual(result, ["mango", "apple", "kiwi"])
+        repo._recovery_upbit_data.assert_called_once_with(
+            ["kiwi"], "2020-03-20T00:20:00", 2, "mango_market"
+        )
 
     @patch("smtm.DateConverter.to_end_min")
     def test__fetch_from_upbit_should_call__fetch_from_upbit_up_to_200_always_in_verify_mode(
@@ -141,6 +145,7 @@ class DataRepositoryTests(unittest.TestCase):
             ("2020-03-20T00:10:00", "2020-03-21T00:20:00", 1),
             ("2020-03-20T00:20:00", "2020-03-21T00:30:00", 2),
         ]
+        repo._recovery_upbit_data = MagicMock(side_effect=[["kiwi"], ["pear"], ["orange"]])
         result = repo._fetch_from_upbit(start, end, "mango_market")
 
         mock_to_end_min.assert_called_once_with(start_iso=start, end_iso=end, max_count=200)
@@ -159,12 +164,18 @@ class DataRepositoryTests(unittest.TestCase):
         self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[0][0][2], "mango_market")
         self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[1][0][2], "mango_market")
         self.assertEqual(repo._fetch_from_upbit_up_to_200.call_args_list[2][0][2], "mango_market")
-        repo._update.assert_called_once_with(["melon"])
+        repo._update.assert_called_once_with(["orange"])
         self.assertEqual(result, ["kiwi", "pear", "melon"])
         self.assertEqual(repo._is_equal.call_args_list[0][0][0], ["mango"])
         self.assertEqual(repo._is_equal.call_args_list[1][0][0], ["apple"])
         self.assertEqual(repo._is_equal.call_args_list[0][0][1], ["kiwi"])
         self.assertEqual(repo._is_equal.call_args_list[1][0][1], ["pear"])
+        self.assertEqual(repo._recovery_upbit_data.call_args_list[0][0][0], ["kiwi"])
+        self.assertEqual(repo._recovery_upbit_data.call_args_list[1][0][0], ["pear"])
+        self.assertEqual(repo._recovery_upbit_data.call_args_list[2][0][0], ["melon"])
+        self.assertEqual(repo._recovery_upbit_data.call_args_list[0][0][1], "2020-03-20T00:00:00")
+        self.assertEqual(repo._recovery_upbit_data.call_args_list[1][0][1], "2020-03-20T00:10:00")
+        self.assertEqual(repo._recovery_upbit_data.call_args_list[2][0][1], "2020-03-20T00:20:00")
 
     @patch("smtm.DateConverter.to_end_min")
     def test_get_data_should_return_data_when_database_return_data(self, mock_to_end_min):
@@ -236,7 +247,9 @@ class DataRepositoryTests(unittest.TestCase):
         repo = DataRepository()
         repo.database = MagicMock()
         repo._query("2020-02-20T17:00:15", "2020-02-20T18:00:15", "orange_market")
-        repo.database.query.assert_called_once_with("2020-02-20 17:00:15", "2020-02-20 18:00:15", "orange_market")
+        repo.database.query.assert_called_once_with(
+            "2020-02-20 17:00:15", "2020-02-20 18:00:15", "orange_market"
+        )
 
     def test__update_should_call_database_update_correctly(self):
         dummy_data = [
@@ -251,3 +264,230 @@ class DataRepositoryTests(unittest.TestCase):
         repo.database = MagicMock()
         repo._update(dummy_data)
         repo.database.update.assert_called_once_with(expected_data)
+
+    def test__recovery_upbit_data_should_return_recovered_data(self):
+        repo = DataRepository()
+        broken_data_0355_skipped = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:52:00",
+                "closing_price": 11546000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:53:00",
+                "closing_price": 11546000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:54:00",
+                "closing_price": 11545000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:56:00",
+                "closing_price": 11561000.0,
+            },
+        ]
+        repo._report_broken_block = MagicMock()
+        recovered = repo._recovery_upbit_data(
+            broken_data_0355_skipped, "2020-02-22T03:53:00", 4, "mango"
+        )
+        repo._report_broken_block.assert_called_once_with("2020-02-22T03:55:00", "mango")
+        self.assertEqual(len(recovered), 4)
+        self.assertEqual(recovered[0]["date_time"], "2020-02-22T03:53:00")
+        self.assertEqual(recovered[1]["date_time"], "2020-02-22T03:54:00")
+        self.assertEqual(recovered[2]["date_time"], "2020-02-22T03:55:00")
+        self.assertEqual(recovered[3]["date_time"], "2020-02-22T03:56:00")
+        self.assertEqual(recovered[2]["recovered"], 1)
+        self.assertEqual(recovered[0]["closing_price"], 11546000)
+        self.assertEqual(recovered[1]["closing_price"], 11545000)
+        self.assertEqual(recovered[2]["closing_price"], 11545000)
+        self.assertEqual(recovered[3]["closing_price"], 11561000)
+
+        broken_data_2_skipped = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:52:00",
+                "closing_price": 11547000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:53:00",
+                "closing_price": 11546000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:54:00",
+                "closing_price": 11545000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:57:00",
+                "closing_price": 11561000.0,
+            },
+        ]
+        repo._report_broken_block = MagicMock()
+        recovered = repo._recovery_upbit_data(
+            broken_data_2_skipped, "2020-02-22T03:54:00", 4, "mango"
+        )
+        self.assertEqual(repo._report_broken_block.call_args_list[0][0][0], "2020-02-22T03:55:00")
+        self.assertEqual(repo._report_broken_block.call_args_list[1][0][0], "2020-02-22T03:56:00")
+        self.assertEqual(len(recovered), 4)
+        self.assertEqual(recovered[0]["date_time"], "2020-02-22T03:54:00")
+        self.assertEqual(recovered[1]["date_time"], "2020-02-22T03:55:00")
+        self.assertEqual(recovered[2]["date_time"], "2020-02-22T03:56:00")
+        self.assertEqual(recovered[3]["date_time"], "2020-02-22T03:57:00")
+        self.assertEqual(recovered[1]["recovered"], 1)
+        self.assertEqual(recovered[2]["recovered"], 1)
+        self.assertEqual(recovered[0]["closing_price"], 11545000)
+        self.assertEqual(recovered[1]["closing_price"], 11545000)
+        self.assertEqual(recovered[2]["closing_price"], 11545000)
+        self.assertEqual(recovered[3]["closing_price"], 11561000)
+
+        broken_data_2_skipped2 = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:52:00",
+                "closing_price": 11547000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:53:00",
+                "closing_price": 11546000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:55:00",
+                "closing_price": 11545000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:57:00",
+                "closing_price": 11561000.0,
+            },
+        ]
+        repo._report_broken_block = MagicMock()
+        recovered = repo._recovery_upbit_data(
+            broken_data_2_skipped2, "2020-02-22T03:54:00", 4, "mango"
+        )
+        self.assertEqual(repo._report_broken_block.call_args_list[0][0][0], "2020-02-22T03:54:00")
+        self.assertEqual(repo._report_broken_block.call_args_list[1][0][0], "2020-02-22T03:56:00")
+        self.assertEqual(len(recovered), 4)
+        self.assertEqual(recovered[0]["date_time"], "2020-02-22T03:54:00")
+        self.assertEqual(recovered[1]["date_time"], "2020-02-22T03:55:00")
+        self.assertEqual(recovered[2]["date_time"], "2020-02-22T03:56:00")
+        self.assertEqual(recovered[3]["date_time"], "2020-02-22T03:57:00")
+        self.assertEqual(recovered[0]["recovered"], 1)
+        self.assertEqual(recovered[2]["recovered"], 1)
+        self.assertEqual(recovered[0]["closing_price"], 11546000)
+        self.assertEqual(recovered[1]["closing_price"], 11545000)
+        self.assertEqual(recovered[2]["closing_price"], 11545000)
+        self.assertEqual(recovered[3]["closing_price"], 11561000)
+
+        broken_data_first_skipped = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:52:00",
+                "closing_price": 11547000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:54:00",
+                "closing_price": 11546000.0,
+            },
+        ]
+        repo._report_broken_block = MagicMock()
+        recovered = repo._recovery_upbit_data(
+            broken_data_first_skipped, "2020-02-22T03:53:00", 2, "mango"
+        )
+        repo._report_broken_block.assert_called_with("2020-02-22T03:53:00", "mango")
+        self.assertEqual(len(recovered), 2)
+        self.assertEqual(recovered[0]["date_time"], "2020-02-22T03:53:00")
+        self.assertEqual(recovered[1]["date_time"], "2020-02-22T03:54:00")
+        self.assertEqual(recovered[0]["recovered"], 1)
+        self.assertEqual(recovered[0]["closing_price"], 11547000)
+        self.assertEqual(recovered[1]["closing_price"], 11546000)
+
+        broken_data_first_2_skipped = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:51:00",
+                "closing_price": 11547000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:52:00",
+                "closing_price": 11546000.0,
+            },
+        ]
+        repo._report_broken_block = MagicMock()
+        recovered = repo._recovery_upbit_data(
+            broken_data_first_2_skipped, "2020-02-22T03:53:00", 2, "mango"
+        )
+        self.assertEqual(repo._report_broken_block.call_args_list[0][0][0], "2020-02-22T03:53:00")
+        self.assertEqual(repo._report_broken_block.call_args_list[1][0][0], "2020-02-22T03:54:00")
+        self.assertEqual(len(recovered), 2)
+        self.assertEqual(recovered[0]["date_time"], "2020-02-22T03:53:00")
+        self.assertEqual(recovered[1]["date_time"], "2020-02-22T03:54:00")
+        self.assertEqual(recovered[0]["recovered"], 1)
+        self.assertEqual(recovered[1]["recovered"], 1)
+        self.assertEqual(recovered[0]["closing_price"], 11546000)
+        self.assertEqual(recovered[1]["closing_price"], 11546000)
+
+        broken_data_last_skipped = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:53:00",
+                "closing_price": 11547000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:54:00",
+                "closing_price": 11546000.0,
+            },
+        ]
+        repo._report_broken_block = MagicMock()
+        recovered = repo._recovery_upbit_data(
+            broken_data_last_skipped, "2020-02-22T03:54:00", 2, "mango"
+        )
+        repo._report_broken_block.assert_called_with("2020-02-22T03:55:00", "mango")
+        self.assertEqual(len(recovered), 2)
+        self.assertEqual(recovered[0]["date_time"], "2020-02-22T03:54:00")
+        self.assertEqual(recovered[1]["date_time"], "2020-02-22T03:55:00")
+        self.assertEqual(recovered[1]["recovered"], 1)
+        self.assertEqual(recovered[0]["closing_price"], 11546000)
+        self.assertEqual(recovered[1]["closing_price"], 11546000)
+
+        broken_data_last_2_skipped = [
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:52:00",
+                "closing_price": 11542000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:53:00",
+                "closing_price": 11547000.0,
+            },
+            {
+                "market": "KRW-BTC",
+                "date_time": "2020-02-22T03:54:00",
+                "closing_price": 11546000.0,
+            },
+        ]
+        repo._report_broken_block = MagicMock()
+        recovered = repo._recovery_upbit_data(
+            broken_data_last_skipped, "2020-02-22T03:54:00", 3, "mango"
+        )
+        self.assertEqual(repo._report_broken_block.call_args_list[0][0][0], "2020-02-22T03:55:00")
+        self.assertEqual(repo._report_broken_block.call_args_list[1][0][0], "2020-02-22T03:56:00")
+        self.assertEqual(len(recovered), 3)
+        self.assertEqual(recovered[0]["date_time"], "2020-02-22T03:54:00")
+        self.assertEqual(recovered[1]["date_time"], "2020-02-22T03:55:00")
+        self.assertEqual(recovered[2]["date_time"], "2020-02-22T03:56:00")
+        self.assertEqual(recovered[1]["recovered"], 1)
+        self.assertEqual(recovered[2]["recovered"], 1)
+        self.assertEqual(recovered[0]["closing_price"], 11546000)
+        self.assertEqual(recovered[1]["closing_price"], 11546000)
+        self.assertEqual(recovered[2]["closing_price"], 11546000)
