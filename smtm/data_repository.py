@@ -21,6 +21,7 @@ class DataRepository:
         데이터베이스에서 데이터 조회해서 결과를 반환하거나
         서버에서 데이터를 가져와서 반환
         """
+        self.logger.info(f"get data from repo: {start} to {end}, {market}")
         count_info = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=100000000)
         total_count = count_info[0][2]
         db_data = self._query(start, end, market)

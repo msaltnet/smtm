@@ -1,10 +1,9 @@
 """시뮬레이션을 위한 DataProvider 구현체"""
 
-import copy
-import requests
-from .date_converter import DateConverter
+from datetime import datetime, timedelta
 from .data_provider import DataProvider
 from .log_manager import LogManager
+from .data_repository import DataRepository
 
 
 class SimulationDataProvider(DataProvider):
@@ -20,6 +19,7 @@ class SimulationDataProvider(DataProvider):
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
+        self.repo = DataRepository("smtm.db")
         self.is_initialized = False
         self.data = []
         self.index = 0
@@ -28,28 +28,10 @@ class SimulationDataProvider(DataProvider):
         """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
 
         self.index = 0
-        query_string = copy.deepcopy(self.QUERY_STRING)
-
-        try:
-            if end is not None:
-                query_string["to"] = DateConverter.from_kst_to_utc_str(end) + "Z"
-            query_string["count"] = count
-
-            response = requests.get(self.URL, params=query_string)
-            response.raise_for_status()
-            self.data = response.json()
-            self.data.reverse()
-            self.is_initialized = True
-            self.logger.info(f"data is updated from server # end: {end}, count: {count}")
-        except ValueError as error:
-            self.logger.error("Invalid data from server")
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.HTTPError as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.RequestException as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
+        end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
+        start_dt = end_dt - timedelta(minutes=count)
+        start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
+        self.data = self.repo.get_data(start, end, market="KRW-BTC")
 
     def get_info(self):
         """순차적으로 거래 정보 전달한다
@@ -72,21 +54,5 @@ class SimulationDataProvider(DataProvider):
             return None
 
         self.index = now + 1
-        self.logger.info(f'[DATA] @ {self.data[now]["candle_date_time_kst"]}')
-        return self.__create_candle_info(self.data[now])
-
-    def __create_candle_info(self, data):
-        try:
-            return {
-                "market": data["market"],
-                "date_time": data["candle_date_time_kst"],
-                "opening_price": data["opening_price"],
-                "high_price": data["high_price"],
-                "low_price": data["low_price"],
-                "closing_price": data["trade_price"],
-                "acc_price": data["candle_acc_trade_price"],
-                "acc_volume": data["candle_acc_trade_volume"],
-            }
-        except KeyError:
-            self.logger.warning("invalid data for candle info")
-            return None
+        self.logger.info(f'[DATA] @ {self.data[now]["date_time"]}')
+        return self.data[now]
