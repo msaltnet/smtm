@@ -4,10 +4,10 @@ from .log_manager import LogManager
 
 
 class Database:
-    def __init__(self):
+    def __init__(self, db_file=None):
+        db = db_file if db_file is not None else "smtm.db"
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.firstTime = not (path.exists("smtm.db"))
-        self.conn = sqlite3.connect("smtm.db", check_same_thread=False)
+        self.conn = sqlite3.connect(db, check_same_thread=False)
 
         def dict_factory(cursor, row):
             d = {}

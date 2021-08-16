@@ -10,12 +10,13 @@ from .database import Database
 
 
 class DataRepository:
-    def __init__(self):
+    def __init__(self, db_file=None):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.database = Database()
-        self.verify_mode = True
+        db = db_file if db_file is not None else "smtm.db"
+        self.database = Database(db)
+        self.verify_mode = False
 
-    def get_data(self, start, end, market="BTC"):
+    def get_data(self, start, end, market="KRW-BTC"):
         """거래 데이터를 제공
         데이터베이스에서 데이터 조회해서 결과를 반환하거나
         서버에서 데이터를 가져와서 반환
@@ -27,11 +28,13 @@ class DataRepository:
         self.logger.info(f"total vs database: {total_count} vs {len(db_data)}")
         if total_count == len(db_data):
             self.logger.info(f"from database: {total_count}")
-            return self._convert_to_upbit_datetime_string(db_data)
+            self._convert_to_upbit_datetime_string(db_data)
+            return db_data
         elif len(db_data) > total_count:
             raise UserWarning("Something wrong in DB")
 
         server_data = self._fetch_from_upbit(start, end, market)
+        self._convert_to_upbit_datetime_string(server_data)
         return server_data
 
     @staticmethod
@@ -94,8 +97,8 @@ class DataRepository:
                     fetch_data = query_data
             else:
                 fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
-                new_data = self._recovery_upbit_data(fetch_data, dt[0], dt[2], market)
-                self._update(new_data)
+                fetch_data = self._recovery_upbit_data(fetch_data, dt[0], dt[2], market)
+                self._update(fetch_data)
 
             total_data += fetch_data
         return total_data
