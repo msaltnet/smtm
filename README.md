@@ -20,7 +20,6 @@ Performance critical approach is NOT suitable. e.g. trading in seconds. If you w
 | Controller | User Interface |
 | Operator | Operating Manager |
 | Analyzer, Trader, Strategy, Data Provider | Main Modules |
-| Requests(lib), Pandas(lib), Mpl plot(lib) | External Lib |
 
 
 ## User guide
