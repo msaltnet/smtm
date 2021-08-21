@@ -13,100 +13,19 @@ class VirtualMarketInitializeTests(unittest.TestCase):
     def tearDown(self):
         self.patcher.stop()
 
-    def test_intialize_should_call_request_get_with_real_market_config(self):
+    def test_intialize_should_update_data_from_data_repository(self):
         market = VirtualMarket()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.json = MagicMock()
-        dummy_response.raise_for_status = MagicMock()
-        self.request_mock.return_value = dummy_response
-        market.initialize(None)
-        expected_query = market.QUERY_STRING
-        expected_query["count"] = 100
-        expected_query["to"] = "2020-04-30 00:00:00"
-        self.request_mock.assert_called_once_with(market.URL, params=expected_query)
-
-    def test_intialize_should_not_download_again_after_initialized(self):
-        market = VirtualMarket()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.json = MagicMock()
-        dummy_response.raise_for_status = MagicMock()
-        self.request_mock.return_value = dummy_response
-        expected_query = market.QUERY_STRING
-        expected_query["count"] = 100
-        expected_query["to"] = "2020-04-30 00:00:00"
-        market.initialize(None)
-        market.initialize(None)
-        market.initialize(None)
-        self.request_mock.assert_called_once_with(market.URL, params=expected_query)
-
-    def test_intialize_update_trading_data(self):
-        market = VirtualMarket()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.json = MagicMock(
-            return_value=[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]
-        )
-        dummy_response.raise_for_status = MagicMock()
-        self.request_mock.return_value = dummy_response
-        market.initialize(None, None)
-        # 서버 데이터가 최신순으로 들어오므로 역순으로 저장
-        self.assertEqual(market.data[0]["market"], "apple")
-        self.assertEqual(market.data[1]["market"], "banana")
-        self.assertEqual(market.data[2]["market"], "mango")
-
-    def test_intialize_NOT_initialize_with_invalid_response_data(self):
-        market = VirtualMarket()
-        self.request_mock.side_effect = ValueError()
-        with self.assertRaises(UserWarning):
-            market.initialize(None, None)
-        self.assertEqual(market.is_initialized, False)
-
-    def test_intialize_NOT_initialize_when_receive_error(self):
-        market = VirtualMarket()
-        self.request_mock.side_effect = requests.exceptions.HTTPError("dummy exception")
-        with self.assertRaises(UserWarning):
-            market.initialize(None, None)
-        self.assertEqual(market.is_initialized, False)
-
-    def test_intialize_NOT_initialize_when_connection_fail(self):
-        market = VirtualMarket()
-        self.request_mock.side_effect = requests.exceptions.RequestException("dummy exception")
-        with self.assertRaises(UserWarning):
-            market.initialize(None, None)
-        self.assertEqual(market.is_initialized, False)
-
-    def test_initialize_set_default_params(self):
-        market = VirtualMarket()
-
-        class DummyResponse:
-            pass
-
-        dummy_response = DummyResponse()
-        dummy_response.json = MagicMock(
-            return_value=[{"market": "mango"}, {"market": "banana"}, {"market": "apple"}]
-        )
-        dummy_response.raise_for_status = MagicMock()
-        self.request_mock.return_value = dummy_response
-        expected_query = market.QUERY_STRING
-        expected_query["count"] = 100
-        expected_query["to"] = "2020-04-30 00:00:00"
-
-        market.initialize(None)
-        dummy_response.raise_for_status.assert_called_once()
-        self.request_mock.assert_called_once_with(market.URL, params=expected_query)
+        market.repo = MagicMock()
+        market.repo.get_data.return_value = ["mango", "orange"]
+        market.market = "mango_market"
+        market.initialize(end="2020-04-30T00:00:00", count=500, budget=7777777)
+        self.assertEqual(market.data[0], "mango")
+        self.assertEqual(market.data[1], "orange")
         self.assertEqual(market.is_initialized, True)
-        self.assertEqual(market.QUERY_STRING["to"], "2020-04-30 00:00:00")
+        self.assertEqual(market.balance, 7777777)
+        market.repo.get_data.assert_called_once_with(
+            "2020-04-29T15:40:00", "2020-04-30T00:00:00", market="mango_market"
+        )
 
 
 class VirtualMarketTests(unittest.TestCase):

@@ -1,6 +1,7 @@
 """업비트 거래소의 과거 거래 정보를 이용한 가상 거래소"""
-import copy
+from datetime import datetime, timedelta
 import requests
+from .data_repository import DataRepository
 from .date_converter import DateConverter
 from .log_manager import LogManager
 
@@ -21,14 +22,16 @@ class VirtualMarket:
     URL = "https://api.upbit.com/v1/candles/minutes/1"
     QUERY_STRING = {"market": "KRW-BTC", "to": "2020-04-30 00:00:00"}
 
-    def __init__(self):
+    def __init__(self, market="KRW-BTC"):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.is_initialized = False
+        self.repo = DataRepository("smtm.db")
         self.data = None
         self.turn_count = 0
         self.balance = 0
         self.commission_ratio = 0.0005
         self.asset = {}
+        self.is_initialized = False
+        self.market = market
 
     def initialize(self, end=None, count=100, budget=0):
         """
@@ -37,32 +40,13 @@ class VirtualMarket:
         end: 언제까지의 거래기간 정보를 사용할 것인지에 대한 날짜 시간 정보
         count: 거래기간까지 가져올 데이터의 갯수
         """
-        if self.is_initialized:
-            return
-
-        query_string = copy.deepcopy(self.QUERY_STRING)
-        if end is not None:
-            query_string["to"] = DateConverter.from_kst_to_utc_str(end) + "Z"
-
-        query_string["count"] = count
-
-        try:
-            response = requests.get(self.URL, params=query_string)
-            response.raise_for_status()
-            self.data = response.json()
-            self.data.reverse()
-            self.balance = budget
-            self.is_initialized = True
-            self.logger.debug(f"Virtual Market is initialized end: {end}, count: {count}")
-        except ValueError as err:
-            self.logger.error("Invalid data from server")
-            raise UserWarning("fail to get data from server") from err
-        except requests.exceptions.HTTPError as err:
-            self.logger.error(err)
-            raise UserWarning("fail to get data from server") from err
-        except requests.exceptions.RequestException as err:
-            self.logger.error(err)
-            raise UserWarning("fail to get data from server") from err
+        end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
+        start_dt = end_dt - timedelta(minutes=count)
+        start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
+        self.data = self.repo.get_data(start, end, market=self.market)
+        self.balance = budget
+        self.is_initialized = True
+        self.logger.debug(f"Virtual Market is initialized end: {end}, count: {count}")
 
     def get_balance(self):
         """

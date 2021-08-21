@@ -15,12 +15,10 @@ class SimulationDataProvider(DataProvider):
     """
 
     URL = "https://api.upbit.com/v1/candles/minutes/1"
-    QUERY_STRING = {"market": "KRW-BTC"}
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.repo = DataRepository("smtm.db")
-        self.is_initialized = False
         self.data = []
         self.index = 0
 
