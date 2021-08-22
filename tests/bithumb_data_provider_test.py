@@ -13,7 +13,7 @@ class BithumbDataProviderTests(unittest.TestCase):
 
     @patch("requests.get")
     def test_get_info_return_data_correctly(self, mock_get):
-        dp = BithumbDataProvider()
+        dp = BithumbDataProvider("BTC")
         dummy_response = MagicMock()
         dummy_response.json.return_value = {
             "status": "0000",
@@ -31,7 +31,8 @@ class BithumbDataProviderTests(unittest.TestCase):
         self.assertEqual(info["closing_price"], 68933000)
         self.assertEqual(info["acc_price"], 0)
         self.assertEqual(info["acc_volume"], 0.69114496)
-        mock_get.assert_called_once_with(dp.URL)
+        mock_get.assert_called_once_with(dp.url)
+        self.assertEqual(dp.url, "https://api.bithumb.com/public/candlestick/BTC_KRW/1m")
 
     @patch("requests.get")
     def test_get_info_NOT_throw_UserWarning_when_receive_invalid_data(self, mock_get):

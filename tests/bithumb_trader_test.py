@@ -180,11 +180,11 @@ class BithumbTraderCancelRequestTests(unittest.TestCase):
         self.assertEqual(trader.cancel_request.call_args_list[1][0][0], "mango_request_5678")
 
     def test__cancel_order_should_call_bithumb_api_call_correctly(self):
-        trader = BithumbTrader()
+        trader = BithumbTrader("BTC")
         trader.bithumb_api_call = MagicMock()
         expected_query = {
-            "order_currency": trader.MARKET,
-            "payment_currency": "KRW",
+            "order_currency": trader.market,
+            "payment_currency": trader.market_currency,
             "order_id": "mango_id",
         }
 
@@ -243,7 +243,7 @@ class BithumbTraderBasicTests(unittest.TestCase):
         trader = BithumbTrader()
         trader.balance = 123456789
         trader.asset = (23456, 500)
-        trader.MARKET = "APPLE"
+        trader.market = "APPLE"
         trader.worker = MagicMock()
         trader.get_trade_tick = MagicMock(return_value={"status": "0000", "data": [{"price": 777}]})
         result = trader.get_account_info()
@@ -560,10 +560,10 @@ class BithumbTraderBasicTests(unittest.TestCase):
         trader._start_timer.assert_not_called()
 
     def test__send_limit_order_should_call_bithumb_api_call_with_correct_query(self):
-        trader = BithumbTrader()
+        trader = BithumbTrader("BTC")
         expected_query = {
-            "order_currency": trader.MARKET,
-            "payment_currency": "KRW",
+            "order_currency": trader.market,
+            "payment_currency": trader.market_currency,
             "type": "bid",
             "units": "0.0051",
             "price": "500",
@@ -573,10 +573,10 @@ class BithumbTraderBasicTests(unittest.TestCase):
         trader.bithumb_api_call.assert_called_once_with("/trade/place", expected_query)
 
     def test__query_order_should_call_bithumb_api_call_with_correct_query(self):
-        trader = BithumbTrader()
+        trader = BithumbTrader("BTC")
         expected_query = {
-            "order_currency": trader.MARKET,
-            "payment_currency": "KRW",
+            "order_currency": trader.market,
+            "payment_currency": trader.market_currency,
             "order_id": "apple-007",
         }
         trader.bithumb_api_call = MagicMock()
@@ -599,9 +599,10 @@ class BithumbTraderBasicTests(unittest.TestCase):
 
     @patch("requests.get")
     def test_get_trade_tick_should_send_http_request_correctly(self, mock_get):
-        trader = BithumbTrader()
+        trader = BithumbTrader("BTC")
         expected_url = (
-            trader.SERVER_URL + f"/public/transaction_history/{trader.MARKET}_{trader.CURRENCY}"
+            trader.SERVER_URL
+            + f"/public/transaction_history/{trader.market}_{trader.market_currency}"
         )
 
         trader.get_trade_tick()

@@ -25,7 +25,7 @@ class UpditTraderTests(unittest.TestCase):
 
         trader._execute_order(dummy_task)
 
-        trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
+        trader._send_order.assert_called_once_with(trader.market, True, 500, 0.0001)
         trader._create_success_result.assert_called_once_with(dummy_task["request"])
         trader._start_timer.assert_called_once()
         self.assertEqual(trader.order_map["apple"]["uuid"], "mango")
@@ -64,7 +64,7 @@ class UpditTraderTests(unittest.TestCase):
         trader._execute_order(dummy_task)
 
         dummy_task["callback"].assert_called_once_with("error!")
-        trader._send_order.assert_called_once_with(trader.MARKET, True, 500, 0.0001)
+        trader._send_order.assert_called_once_with(trader.market, True, 500, 0.0001)
         trader._create_success_result.assert_not_called()
         trader._start_timer.assert_not_called()
         self.assertEqual(len(trader.order_map), 0)
@@ -715,8 +715,8 @@ class UpditTraderGetAccountTests(unittest.TestCase):
         trader = UpbitTrader()
         trader.balance = 123456789
         trader.asset = (23456, 500)
-        trader.MARKET_CURRENCY = "APPLE"
-        trader.MARKET = "APPLE"
+        trader.market_currency = "APPLE"
+        trader.market = "APPLE"
         trader.worker = MagicMock()
         trader.get_trade_tick = MagicMock(return_value=[{"trade_price": 777}])
         result = trader.get_account_info()

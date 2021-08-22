@@ -21,7 +21,15 @@ class Controller:
 
     MAIN_STATEMENT = "명령어를 입력하세요. (h: 도움말): "
 
-    def __init__(self, interval=10, strategy=0, budget=50000, is_bithumb=False):
+    def __init__(
+        self,
+        interval=10,
+        strategy=0,
+        budget=50000,
+        market="BTC",
+        commission_ratio=0.0005,
+        is_bithumb=False,
+    ):
         self.logger = LogManager.get_logger("Controller")
         self.terminating = False
         self.interval = float(interval)
@@ -32,6 +40,8 @@ class Controller:
         self.create_command()
         self.is_bithumb = is_bithumb
         self.strategy = StrategySma0()
+        self.market = market
+        self.commission_ratio = commission_ratio
         LogManager.set_stream_level(30)
 
         if int(strategy) == 0:
@@ -71,11 +81,13 @@ class Controller:
         """main 함수"""
 
         if self.is_bithumb:
-            data_provider = BithumbDataProvider()
-            trader = BithumbTrader(budget=self.budget)
+            data_provider = BithumbDataProvider(currency=self.market)
+            trader = BithumbTrader(
+                currency=self.market, commission_ratio=0.0005, budget=self.budget
+            )
         else:
-            data_provider = UpbitDataProvider()
-            trader = UpbitTrader(budget=self.budget)
+            data_provider = UpbitDataProvider(currency=self.market)
+            trader = UpbitTrader(currency=self.market, commission_ratio=0.0005, budget=self.budget)
 
         self.operator.initialize(
             data_provider,

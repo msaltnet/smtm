@@ -13,11 +13,11 @@ class UpbitDataProviderTests(unittest.TestCase):
 
     @patch("requests.get")
     def test_get_info_return_data_correctly(self, mock_get):
-        dp = UpbitDataProvider()
+        dp = UpbitDataProvider("BTC")
         dummy_response = MagicMock()
         dummy_response.json.return_value = [
             {
-                "market": "mango",
+                "market": "BTC_KRW",
                 "candle_date_time_utc": "2020-03-10T13:52:00",
                 "candle_date_time_kst": "2020-03-10T22:52:00",
                 "opening_price": 9777000.00000000,
@@ -34,7 +34,7 @@ class UpbitDataProviderTests(unittest.TestCase):
 
         info = dp.get_info()
 
-        self.assertEqual(info["market"], "mango")
+        self.assertEqual(info["market"], "BTC")
         self.assertEqual(info["date_time"], "2020-03-10T22:52:00")
         self.assertEqual(info["opening_price"], 9777000)
         self.assertEqual(info["high_price"], 9778000)
@@ -79,9 +79,3 @@ class UpbitDataProviderTests(unittest.TestCase):
 
         with self.assertRaises(UserWarning):
             dp.get_info()
-
-    def test_set_market_set_market_correctly(self):
-        dp = UpbitDataProvider()
-        dp.query_string["market"] = "mango"
-        dp.set_market("banana")
-        self.assertEqual(dp.query_string["market"], "banana")

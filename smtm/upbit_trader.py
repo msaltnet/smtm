@@ -28,12 +28,13 @@ class UpbitTrader(Trader):
     """
 
     RESULT_CHECKING_INTERVAL = 5
-    MARKET = "KRW-BTC"
-    MARKET_CURRENCY = "BTC"
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-    COMMISSION_RATIO = 0.0005
+    AVAILABLE_CURRENCY = {"BTC": ("KRW-BTC", "BTC")}
 
-    def __init__(self, budget=50000, opt_mode=True):
+    def __init__(self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True):
+        if currency not in self.AVAILABLE_CURRENCY:
+            raise UserWarning(f"not supported currency: {currency}")
+
         self.logger = LogManager.get_logger(__class__.__name__)
         self.worker = Worker("UpbitTrader-Worker")
         self.worker.start()
@@ -45,7 +46,11 @@ class UpbitTrader(Trader):
         self.is_opt_mode = opt_mode
         self.asset = (0, 0)  # avr_price, amount
         self.balance = budget
+        self.commission_ratio = commission_ratio
         self.name = "Upbit"
+        currency_info = self.AVAILABLE_CURRENCY[currency]
+        self.market = currency_info[0]
+        self.market_currency = currency_info[1]
 
     @staticmethod
     def _create_limit_order_query(market, is_buy, price, volume):
@@ -130,11 +135,11 @@ class UpbitTrader(Trader):
         trade_info = self.get_trade_tick()
         result = {
             "balance": self.balance,
-            "asset": {self.MARKET_CURRENCY: self.asset},
+            "asset": {self.market_currency: self.asset},
             "quote": {},
             "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
         }
-        result["quote"][self.MARKET_CURRENCY] = float(trade_info[0]["trade_price"])
+        result["quote"][self.market_currency] = float(trade_info[0]["trade_price"])
         self.logger.debug(f"account info {result}")
         return result
 
@@ -176,7 +181,7 @@ class UpbitTrader(Trader):
 
     def get_trade_tick(self):
         """최근 거래 정보 조회"""
-        querystring = {"market": self.MARKET, "count": "1"}
+        querystring = {"market": self.market, "count": "1"}
         return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
 
     def _execute_order(self, task):
@@ -200,7 +205,7 @@ class UpbitTrader(Trader):
             task["callback"]("error!")
             return
 
-        response = self._send_order(self.MARKET, is_buy, request["price"], request["amount"])
+        response = self._send_order(self.market, is_buy, request["price"], request["amount"])
         if response is None:
             task["callback"]("error!")
             return
@@ -277,7 +282,7 @@ class UpbitTrader(Trader):
 
     def _call_callback(self, callback, result):
         result_value = float(result["price"]) * float(result["amount"])
-        fee = result_value * self.COMMISSION_RATIO
+        fee = result_value * self.commission_ratio
 
         if result["state"] == "done" and result["type"] == "buy":
             old_value = self.asset[0] * self.asset[1]

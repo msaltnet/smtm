@@ -14,10 +14,15 @@ class UpbitDataProvider(DataProvider):
     """
 
     URL = "https://api.upbit.com/v1/candles/minutes/1"
+    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC"}
 
-    def __init__(self):
+    def __init__(self, currency="BTC"):
+        if currency not in self.AVAILABLE_CURRENCY:
+            raise UserWarning(f"not supported currency: {currency}")
+
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.query_string = {"market": "KRW-BTC", "count": 1}
+        self.query_string = {"market": self.AVAILABLE_CURRENCY[currency], "count": 1}
+        self.market = currency
 
     def get_info(self):
         """실시간 거래 정보 전달한다
@@ -37,14 +42,10 @@ class UpbitDataProvider(DataProvider):
         data = self.__get_data_from_server()
         return self.__create_candle_info(data[0])
 
-    def set_market(self, market="KRW-BTC"):
-        """마켓을 설정한다"""
-        self.query_string["market"] = market
-
     def __create_candle_info(self, data):
         try:
             return {
-                "market": data["market"],
+                "market": self.market,
                 "date_time": data["candle_date_time_kst"],
                 "opening_price": float(data["opening_price"]),
                 "high_price": float(data["high_price"]),

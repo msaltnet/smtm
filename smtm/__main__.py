@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("--term", help="trading tick interval (seconds)", type=int, default="60")
     parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0", default="0")
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
+    parser.add_argument("--market", help="trading market e.g.KRW-BTC", default="KRW-BTC")
     parser.add_argument(
         "--mode",
         help="0: interactive simulator, 1: single simulation, 2: real trading",

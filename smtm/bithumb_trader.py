@@ -30,12 +30,13 @@ class BithumbTrader(Trader):
     """
 
     RESULT_CHECKING_INTERVAL = 5
-    MARKET = "BTC"
-    CURRENCY = "KRW"
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-    COMMISSION_RATIO = 0.0005
+    AVAILABLE_CURRENCY = {"BTC": ("BTC", "KRW")}
 
-    def __init__(self, budget=50000, opt_mode=True):
+    def __init__(self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True):
+        if currency not in self.AVAILABLE_CURRENCY:
+            raise UserWarning(f"not supported currency: {currency}")
+
         self.logger = LogManager.get_logger(__class__.__name__)
         self.worker = Worker("BTR-Worker")
         self.worker.start()
@@ -47,7 +48,11 @@ class BithumbTrader(Trader):
         self.is_opt_mode = opt_mode
         self.asset = (0, 0)  # avr_price, amount
         self.balance = budget
+        self.commission_ratio = commission_ratio
         self.name = "Bithumb"
+        currency_info = self.AVAILABLE_CURRENCY[currency]
+        self.market = currency_info[0]
+        self.market_currency = currency_info[1]
 
     @staticmethod
     def _convert_timestamp(timestamp):
@@ -112,12 +117,12 @@ class BithumbTrader(Trader):
         trade_info = self.get_trade_tick()
         result = {
             "balance": self.balance,
-            "asset": {self.MARKET: self.asset},
+            "asset": {self.market: self.asset},
             "quote": {},
             "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
         }
         if trade_info is not None and trade_info["status"] == "0000":
-            result["quote"][self.MARKET] = float(trade_info["data"][0]["price"])
+            result["quote"][self.market] = float(trade_info["data"][0]["price"])
         else:
             self.logger.error("fail query quote")
         self.logger.debug(f"account {result['balance']}, {result['asset']}, {result['quote']}")
@@ -215,8 +220,8 @@ class BithumbTrader(Trader):
             available_krw: 주문 가능 원화(KRW) 금액, Number (String)
         """
         query = {
-            "order_currency": self.MARKET,
-            "payment_currency": self.CURRENCY,
+            "order_currency": self.market,
+            "payment_currency": self.market_currency,
             "order_id": order_id,
         }
         return self.bithumb_api_call("/trade/cancel", query)
@@ -269,7 +274,7 @@ class BithumbTrader(Trader):
 
     def _call_callback(self, callback, result):
         result_value = float(result["price"]) * float(result["amount"])
-        fee = result_value * self.COMMISSION_RATIO
+        fee = result_value * self.commission_ratio
 
         if result["state"] == "done" and result["type"] == "buy":
             old_value = self.asset[0] * self.asset[1]
@@ -313,11 +318,11 @@ class BithumbTrader(Trader):
 
         final_price = math.floor(final_price)
         self.logger.info(f"ORDER ##### {'BUY' if is_buy else 'SELL'}")
-        self.logger.info(f"{self.MARKET},price: {price}, volume: {final_volume}")
+        self.logger.info(f"{self.market},price: {price}, volume: {final_volume}")
 
         query = {
-            "order_currency": self.MARKET,
-            "payment_currency": self.CURRENCY,
+            "order_currency": self.market,
+            "payment_currency": self.market_currency,
             "type": "bid" if is_buy is True else "ask",
             "units": str(final_volume),
             "price": str(final_price),
@@ -363,8 +368,8 @@ class BithumbTrader(Trader):
             price: 1Currency당 주문 가격, Number (String)
         """
         query = {
-            "order_currency": self.MARKET,
-            "payment_currency": self.CURRENCY,
+            "order_currency": self.market,
+            "payment_currency": self.market_currency,
             "order_id": order_id,
         }
         if order_id is None:
@@ -383,7 +388,7 @@ class BithumbTrader(Trader):
             available_{currency}: 주문 가능 가상자산 수량, Number (String)
             available_krw: 주문 가능 원화(KRW) 금액, Number (String)
         """
-        query = {"order_currency": market, "payment_currency": self.CURRENCY}
+        query = {"order_currency": market, "payment_currency": self.market_currency}
         return self.bithumb_api_call("/info/balance", query)
 
     def get_trade_tick(self):
@@ -400,7 +405,7 @@ class BithumbTrader(Trader):
 
         try:
             response = requests.get(
-                f"{self.SERVER_URL}/public/transaction_history/{self.MARKET}_{self.CURRENCY}",
+                f"{self.SERVER_URL}/public/transaction_history/{self.market}_{self.market_currency}",
                 params=querystring,
             )
             response.raise_for_status()

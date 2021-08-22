@@ -16,12 +16,19 @@ class BithumbDataProvider(DataProvider):
     https://apidocs.bithumb.com/docs/candlestick
     """
 
-    URL = "https://api.bithumb.com/public/candlestick/BTC_KRW/1m"
     KST = timezone(timedelta(hours=9))
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+    AVAILABLE_CURRENCY = {"BTC": "BTC_KRW"}
 
-    def __init__(self):
+    def __init__(self, currency="BTC"):
+        if currency not in self.AVAILABLE_CURRENCY:
+            raise UserWarning(f"not supported currency: {currency}")
+
         self.logger = LogManager.get_logger(__class__.__name__)
+        self.url = (
+            f"https://api.bithumb.com/public/candlestick/{self.AVAILABLE_CURRENCY[currency]}/1m"
+        )
+        self.market = currency
 
     def get_info(self):
         """실시간 거래 정보 전달한다
@@ -47,7 +54,7 @@ class BithumbDataProvider(DataProvider):
     def __create_candle_info(self, data):
         try:
             return {
-                "market": "BTC",
+                "market": self.market,
                 "date_time": datetime.fromtimestamp(data[0] / 1000.0, tz=self.KST).strftime(
                     self.ISO_DATEFORMAT
                 ),
@@ -64,7 +71,7 @@ class BithumbDataProvider(DataProvider):
 
     def __get_data_from_server(self):
         try:
-            response = requests.get(self.URL)
+            response = requests.get(self.url)
             response.raise_for_status()
             return response.json()
         except ValueError as error:
