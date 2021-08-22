@@ -19,11 +19,20 @@ from . import (
 class JptController:
     """smtm 컨트롤러"""
 
-    def __init__(self, interval=10, strategy=0, budget=50000):
+    def __init__(
+        self,
+        interval=10,
+        strategy=0,
+        budget=50000,
+        market="BTC",
+        commission_ratio=0.0005,
+    ):
         self.interval = interval
         self.budget = budget
         self.strategy_num = strategy
         self.strategy = None
+        self.market = market
+        self.commission_ratio = commission_ratio
         self.operator = None
         self.need_init = True
         self.logger = LogManager.get_logger("JptController")
@@ -36,11 +45,13 @@ class JptController:
         self.strategy = StrategyBuyAndHold() if self.strategy_num == 0 else StrategySma0()
         self.operator = Operator()
         if is_bithumb:
-            data_provider = BithumbDataProvider()
-            trader = BithumbTrader(budget=self.budget)
+            data_provider = BithumbDataProvider(currency=self.market)
+            trader = BithumbTrader(
+                currency=self.market, commission_ratio=0.0005, budget=self.budget
+            )
         else:
-            data_provider = UpbitDataProvider()
-            trader = UpbitTrader(budget=self.budget)
+            data_provider = UpbitDataProvider(currency=self.market)
+            trader = UpbitTrader(currency=self.market, commission_ratio=0.0005, budget=self.budget)
 
         self.operator.initialize(
             data_provider,
