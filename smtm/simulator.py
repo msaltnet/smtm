@@ -37,7 +37,12 @@ class Simulator:
     MAIN_STATEMENT = "input command (h:help): "
 
     def __init__(
-        self, budget=50000, interval=2, strategy=0, from_dash_to="201220.170000-201220.180000"
+        self,
+        budget=50000,
+        interval=2,
+        strategy=0,
+        from_dash_to="201220.170000-201220.180000",
+        currency="BTC",
     ):
         self.logger = LogManager.get_logger("Simulator")
         self.__terminating = False
@@ -48,6 +53,7 @@ class Simulator:
         self.strategy = strategy
         self.budget = int(budget)
         self.need_init = True
+        self.currency = currency
 
         self.interval = float(self.interval)
 

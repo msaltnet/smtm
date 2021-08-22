@@ -18,7 +18,7 @@ class BithumbDataProvider(DataProvider):
 
     KST = timezone(timedelta(hours=9))
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-    AVAILABLE_CURRENCY = {"BTC": "BTC_KRW"}
+    AVAILABLE_CURRENCY = {"BTC": "BTC_KRW", "ETH": "ETH_KRW"}
 
     def __init__(self, currency="BTC"):
         if currency not in self.AVAILABLE_CURRENCY:

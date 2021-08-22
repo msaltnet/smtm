@@ -14,7 +14,7 @@ class UpbitDataProvider(DataProvider):
     """
 
     URL = "https://api.upbit.com/v1/candles/minutes/1"
-    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC"}
+    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH"}
 
     def __init__(self, currency="BTC"):
         if currency not in self.AVAILABLE_CURRENCY:

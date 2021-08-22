@@ -201,8 +201,8 @@ class Operator:
                         graph_filename=graph_filename, index_info=index_info
                     )
                 )
-            except TypeError:
-                self.logger.error("invalid callback")
+            except TypeError as msg:
+                self.logger.error(f"invalid callback {msg}")
 
         self.worker.post_task(
             {"runnable": get_score_callback, "callback": callback, "index_info": index_info}

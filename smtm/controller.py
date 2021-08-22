@@ -26,8 +26,7 @@ class Controller:
         interval=10,
         strategy=0,
         budget=50000,
-        market="BTC",
-        commission_ratio=0.0005,
+        currency="BTC",
         is_bithumb=False,
     ):
         self.logger = LogManager.get_logger("Controller")
@@ -40,8 +39,7 @@ class Controller:
         self.create_command()
         self.is_bithumb = is_bithumb
         self.strategy = StrategySma0()
-        self.market = market
-        self.commission_ratio = commission_ratio
+        self.currency = currency
         LogManager.set_stream_level(30)
 
         if int(strategy) == 0:
@@ -81,13 +79,11 @@ class Controller:
         """main 함수"""
 
         if self.is_bithumb:
-            data_provider = BithumbDataProvider(currency=self.market)
-            trader = BithumbTrader(
-                currency=self.market, commission_ratio=0.0005, budget=self.budget
-            )
+            data_provider = BithumbDataProvider(currency=self.currency)
+            trader = BithumbTrader(currency=self.currency, budget=self.budget)
         else:
-            data_provider = UpbitDataProvider(currency=self.market)
-            trader = UpbitTrader(currency=self.market, commission_ratio=0.0005, budget=self.budget)
+            data_provider = UpbitDataProvider(currency=self.currency)
+            trader = UpbitTrader(currency=self.currency, budget=self.budget)
 
         self.operator.initialize(
             data_provider,

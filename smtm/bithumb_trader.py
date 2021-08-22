@@ -31,7 +31,7 @@ class BithumbTrader(Trader):
 
     RESULT_CHECKING_INTERVAL = 5
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
-    AVAILABLE_CURRENCY = {"BTC": ("BTC", "KRW")}
+    AVAILABLE_CURRENCY = {"BTC": ("BTC", "KRW"), "ETH": ("ETH", "KRW")}
 
     def __init__(self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True):
         if currency not in self.AVAILABLE_CURRENCY:

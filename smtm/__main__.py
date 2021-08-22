@@ -7,7 +7,7 @@ mode:
 Example) python -m smtm --mode 0
 Example) python -m smtm --mode 1
 Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy 0
-Example) python -m smtm --mode 2
+Example) python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 Example) python -m smtm --mode 3
 """
 import argparse
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("--term", help="trading tick interval (seconds)", type=int, default="60")
     parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0", default="0")
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
-    parser.add_argument("--market", help="trading market e.g.KRW-BTC", default="KRW-BTC")
+    parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
     parser.add_argument(
         "--mode",
         help="0: interactive simulator, 1: single simulation, 2: real trading",
@@ -38,6 +38,7 @@ if __name__ == "__main__":
             budget=args.budget,
             interval=args.term,
             strategy=args.strategy,
+            currency=args.currency,
             from_dash_to=args.from_dash_to,
         )
 
@@ -50,6 +51,7 @@ if __name__ == "__main__":
             budget=args.budget,
             interval=args.term,
             strategy=args.strategy,
+            currency=args.currency,
             is_bithumb=args.trader == "1",
         )
         controller.main()
