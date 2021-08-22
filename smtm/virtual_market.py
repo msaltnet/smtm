@@ -64,7 +64,7 @@ class VirtualMarket:
         quote = None
         try:
             quote = {
-                self.data[self.turn_count]["market"]: self.data[self.turn_count]["trade_price"]
+                self.data[self.turn_count]["market"]: self.data[self.turn_count]["closing_price"]
             }
             for name, item in self.asset.items():
                 self.logger.debug(f"asset item: {name}, item price: {item[0]}, amount: {item[1]}")
@@ -74,7 +74,7 @@ class VirtualMarket:
 
         asset_info["asset"] = self.asset
         asset_info["quote"] = quote
-        asset_info["date_time"] = self.data[self.turn_count]["candle_date_time_kst"]
+        asset_info["date_time"] = self.data[self.turn_count]["date_time"]
         return asset_info
 
     def handle_request(self, request):
@@ -98,7 +98,7 @@ class VirtualMarket:
         if self.is_initialized is not True:
             self.logger.error("virtual market is NOT initialized")
             return None
-        now = self.data[self.turn_count]["candle_date_time_kst"]
+        now = self.data[self.turn_count]["date_time"]
         self.turn_count += 1
         next_index = self.turn_count
 

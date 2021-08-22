@@ -62,8 +62,8 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["opening_price"] = 2000.00000000
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
-            market.data[i]["trade_price"] = 2050.00000000
-            market.data[i]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+            market.data[i]["closing_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
@@ -91,7 +91,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["igh_price"] = 2100.00000000
             market.data[i]["ow_price"] = 1900.00000000
             market.data[i]["rade_price"] = 2050.00000000
-            market.data[i]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
@@ -116,8 +116,8 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["opening_price"] = 2000.00000000
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
-            market.data[i]["trade_price"] = 2050.00000000
-            market.data[i]["candle_date_time_kst"] = dummy_datetime[i]
+            market.data[i]["closing_price"] = 2050.00000000
+            market.data[i]["date_time"] = dummy_datetime[i]
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
@@ -170,7 +170,7 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["igh_price"] = 2100.00000000
             market.data[i]["ow_price"] = 1900.00000000
             market.data[i]["rade_price"] = 2050.00000000
-            market.data[i]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "sell", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
@@ -206,8 +206,8 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["opening_price"] = 2000.00000000
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
-            market.data[i]["trade_price"] = 2050.00000000
-            market.data[i]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+            market.data[i]["closing_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.048}
         result = market.handle_request(dummy_request)
@@ -235,8 +235,8 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["opening_price"] = 2000.00000000
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
-            market.data[i]["trade_price"] = 2050.00000000
-            market.data[i]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+            market.data[i]["closing_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
@@ -303,8 +303,8 @@ class VirtualMarketTests(unittest.TestCase):
             market.data[i]["opening_price"] = 2000.00000000
             market.data[i]["high_price"] = 2100.00000000
             market.data[i]["low_price"] = 1900.00000000
-            market.data[i]["trade_price"] = 2050.00000000
-            market.data[i]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+            market.data[i]["closing_price"] = 2050.00000000
+            market.data[i]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 0, "amount": 0}
         result = market.handle_request(dummy_request)
@@ -333,32 +333,32 @@ class VirtualMarketTests(unittest.TestCase):
         market.data[0]["opening_price"] = 2000.00000000
         market.data[0]["high_price"] = 2100.00000000
         market.data[0]["low_price"] = 1900.00000000
-        market.data[0]["trade_price"] = 2050.00000000
-        market.data[0]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+        market.data[0]["closing_price"] = 2050.00000000
+        market.data[0]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[1]["opening_price"] = 2010.00000000
         market.data[1]["high_price"] = 2100.00000000
         market.data[1]["low_price"] = 1900.00000000
-        market.data[1]["trade_price"] = 2050.00000000
-        market.data[1]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+        market.data[1]["closing_price"] = 2050.00000000
+        market.data[1]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[2]["opening_price"] = 2020.00000000
         market.data[2]["high_price"] = 2100.00000000
         market.data[2]["low_price"] = 1900.00000000
-        market.data[2]["trade_price"] = 2020.00000000
-        market.data[2]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+        market.data[2]["closing_price"] = 2020.00000000
+        market.data[2]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[3]["opening_price"] = 2030.00000000
         market.data[3]["high_price"] = 2100.00000000
         market.data[3]["low_price"] = 1900.00000000
-        market.data[3]["trade_price"] = 2030.00000000
-        market.data[3]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+        market.data[3]["closing_price"] = 2030.00000000
+        market.data[3]["date_time"] = "2020-02-27T00:00:59"
 
         market.data[4]["opening_price"] = 2040.00000000
         market.data[4]["high_price"] = 2100.00000000
         market.data[4]["low_price"] = 1900.00000000
-        market.data[4]["trade_price"] = 2040.00000000
-        market.data[4]["candle_date_time_kst"] = "2020-02-27T00:00:59"
+        market.data[4]["closing_price"] = 2040.00000000
+        market.data[4]["date_time"] = "2020-02-27T00:00:59"
 
         dummy_request = {"id": "mango", "type": "buy", "price": 2000, "amount": 0.1}
         result = market.handle_request(dummy_request)
@@ -421,78 +421,78 @@ class VirtualMarketTests(unittest.TestCase):
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2000.00000000,
                 "high_price": 2100.00000000,
                 "low_price": 1900.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
@@ -504,65 +504,65 @@ class VirtualMarketTests(unittest.TestCase):
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "pening_price": 2000.00000000,
                 "igh_price": 2100.00000000,
                 "ow_price": 1900.00000000,
                 "rade_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "pening_price": 2050.00000000,
                 "igh_price": 2200.00000000,
                 "ow_price": 2000.00000000,
                 "rade_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
             {
                 "market": "mango",
                 "candle_date_time_utc": "2020-02-25T06:41:00",
-                "candle_date_time_kst": "2020-02-25T15:41:00",
+                "date_time": "2020-02-25T15:41:00",
                 "opening_price": 2050.00000000,
                 "high_price": 2200.00000000,
                 "low_price": 2000.00000000,
-                "trade_price": 2050.00000000,
+                "closing_price": 2050.00000000,
                 "timestamp": 1582612901489,
-                "candle_acc_trade_price": 17001839.06758000,
+                "candle_acc_closing_price": 17001839.06758000,
                 "candle_acc_trade_volume": 1.48642105,
                 "unit": 1,
             },
