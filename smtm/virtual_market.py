@@ -20,7 +20,6 @@ class VirtualMarket:
     """
 
     URL = "https://api.upbit.com/v1/candles/minutes/1"
-    QUERY_STRING = {"market": "KRW-BTC", "to": "2020-04-30 00:00:00"}
 
     def __init__(self, market="KRW-BTC"):
         self.logger = LogManager.get_logger(__class__.__name__)

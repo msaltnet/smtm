@@ -15,9 +15,13 @@ class SimulationTrader(Trader):
     amount: 거래 수량
     """
 
-    def __init__(self):
+    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH"}
+
+    def __init__(self, currency="BTC"):
+        if currency not in self.AVAILABLE_CURRENCY:
+            raise UserWarning(f"not supported currency: {currency}")
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.market = VirtualMarket()
+        self.market = VirtualMarket(market=self.AVAILABLE_CURRENCY[currency])
         self.is_initialized = False
         self.name = "Simulation"
 

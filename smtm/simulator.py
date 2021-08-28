@@ -130,6 +130,11 @@ class Simulator:
                 "value": self.strategy,
                 "action": self._set_strategy,
             },
+            {
+                "guide": "화폐 코드 입력. BTC, ETH",
+                "value": self.currency,
+                "action": self._set_currency,
+            },
         ]
 
     def initialize(self):
@@ -147,9 +152,9 @@ class Simulator:
         self.operator = SimulationOperator()
         self._print_configuration(strategy.name)
 
-        data_provider = SimulationDataProvider()
+        data_provider = SimulationDataProvider(currency=self.currency)
         data_provider.initialize_simulation(end=end, count=count)
-        trader = SimulationTrader()
+        trader = SimulationTrader(currency=self.currency)
         trader.initialize_simulation(end=end, count=count, budget=self.budget)
         analyzer = Analyzer()
         analyzer.is_simulation = True
@@ -264,6 +269,9 @@ class Simulator:
 
     def _set_strategy(self, value):
         self.strategy = int(value)
+
+    def _set_currency(self, value):
+        self.currency = value
 
     def _print_state(self):
         if self.operator is None:

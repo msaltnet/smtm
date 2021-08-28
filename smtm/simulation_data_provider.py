@@ -15,12 +15,17 @@ class SimulationDataProvider(DataProvider):
     """
 
     URL = "https://api.upbit.com/v1/candles/minutes/1"
+    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH"}
 
-    def __init__(self):
+    def __init__(self, currency="BTC"):
+        if currency not in self.AVAILABLE_CURRENCY:
+            raise UserWarning(f"not supported currency: {currency}")
         self.logger = LogManager.get_logger(__class__.__name__)
         self.repo = DataRepository("smtm.db")
         self.data = []
         self.index = 0
+
+        self.market = self.AVAILABLE_CURRENCY[currency]
 
     def initialize_simulation(self, end=None, count=100):
         """Open Api를 사용해서 데이터를 가져와서 초기화한다"""
@@ -29,7 +34,7 @@ class SimulationDataProvider(DataProvider):
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
         start_dt = end_dt - timedelta(minutes=count)
         start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
-        self.data = self.repo.get_data(start, end, market="KRW-BTC")
+        self.data = self.repo.get_data(start, end, market=self.market)
 
     def get_info(self):
         """순차적으로 거래 정보 전달한다
