@@ -1,17 +1,17 @@
 {
+    "title": "BnH-2Hour",
     "budget": 50000,
     "strategy": 0,
-    "interval": 60,
-    "trader": 0,
-    "market": "KRW-BTC",
-    "term": [
+    "interval": 1,
+    "currency": "BTC",
+    "period_list": [
         {
-            "start": "200430.170000",
-            "end": "200430.170000"
+            "start": "2020-04-30T17:00:00",
+            "end": "2020-04-30T19:00:00"
         },
         {
-            "start": "200430.170000",
-            "end": "200430.170000"
+            "start": "2020-04-30T18:00:00",
+            "end": "2020-04-30T20:00:00"
         }
     ]
 }

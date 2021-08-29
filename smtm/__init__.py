@@ -22,6 +22,7 @@ from .jpt_controller import JptController
 from .telegram_controller import TelegramController
 from .data_repository import DataRepository
 from .database import Database
+from .mass_simulator import MassSimulator
 
 __all__ = [
     "Operator",
@@ -38,5 +39,6 @@ __all__ = [
     "UpbitTrader",
     "BithumbTrader",
     "UpbitDataProvider",
+    "MassSimulator",
 ]
 __version__ = "0.1.0"

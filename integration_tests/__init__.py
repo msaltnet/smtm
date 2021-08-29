@@ -13,3 +13,4 @@ from .strategy_bnh_ITG_test import StrategyBuyAndHoldIntegrationTests
 from .upbit_data_provider_ITG_test import UpbitDataProviderIntegrationTests
 from .simulator_ITG_test import SimulatorIntegrationTests
 from .data_repository_ITG_test import DataRepositoryIntegrationTests
+from .mass_simulator_ITG_test import MassSimulatorIntegrationTests

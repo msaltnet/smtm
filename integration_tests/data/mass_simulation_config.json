@@ -1,0 +1,17 @@
+{
+    "title": "SMA-1Hour",
+    "budget": 50000,
+    "strategy": 1,
+    "interval": 0.5,
+    "currency": "BTC",
+    "period_list": [
+        {
+            "start": "2020-04-30T17:00:00",
+            "end": "2020-04-30T18:00:00"
+        },
+        {
+            "start": "2020-04-30T17:30:00",
+            "end": "2020-04-30T18:30:00"
+        }
+    ]
+}
