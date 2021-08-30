@@ -280,6 +280,7 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.update_asset_info()
 
         report = analyzer.get_return_report()
+        print(report)
         self.assertEqual(
             report,
             (
@@ -289,6 +290,8 @@ class AnalyzerIntegrationTests(unittest.TestCase):
                 {"KRW-BTC": -0.252},
                 None,
                 "2020-12-21T01:13:00 - 2020-12-21T01:17:00",
+                -0.213,
+                0,
             ),
         )
 

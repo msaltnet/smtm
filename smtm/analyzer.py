@@ -256,10 +256,12 @@ class Analyzer:
             (
                 start_budget: 시작 자산
                 final_balance: 최종 자산
-                cumulative_return : 기준 시점부터 누적 수익률
+                cumulative_return: 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
                 graph: 그래프 파일 패스
                 period: 수익률 산출 구간
+                return_high: 기간내 최고 수익률
+                return_low: 기간내 최저 수익률
             )
         """
         self.update_asset_info()
@@ -310,6 +312,13 @@ class Analyzer:
         return (asset_info_list, score_list, info_list, result_list)
 
     @staticmethod
+    def _get_min_max_return(score_list):
+        return_list = []
+        for score in score_list:
+            return_list.append(score["cumulative_return"])
+        return (min(return_list), max(return_list))
+
+    @staticmethod
     def __make_filtered_list(start_dt, end_dt, dest, source):
         for target in source:
             target_dt = datetime.strptime(target["date_time"], "%Y-%m-%dT%H:%M:%S")
@@ -325,12 +334,22 @@ class Analyzer:
             last_value = Analyzer.__get_last_property_value(asset_info_list)
             last_return = score_list[-1]["cumulative_return"]
             change_ratio = score_list[-1]["price_change_ratio"]
+            min_max = self._get_min_max_return(score_list)
             if graph_filename is not None:
                 graph = self.__draw_graph(
                     info_list, result_list, score_list, graph_filename, is_fullpath=True
                 )
             period = info_list[0]["date_time"] + " - " + info_list[-1]["date_time"]
-            summary = (start_value, last_value, last_return, change_ratio, graph, period)
+            summary = (
+                start_value,
+                last_value,
+                last_return,
+                change_ratio,
+                graph,
+                period,
+                min_max[0],
+                min_max[1],
+            )
             self.logger.info("### Return Report ===============================")
             self.logger.info(f"Property                 {start_value:10} -> {last_value:10}")
             self.logger.info(
@@ -362,6 +381,8 @@ class Analyzer:
                     price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
                     graph: 그래프 파일 패스
                     period: 수익률 산출 구간
+                    return_high: 기간내 최고 수익률
+                    return_low: 기간내 최저 수익률
                 ),
                 "trading_table" : [
                     {

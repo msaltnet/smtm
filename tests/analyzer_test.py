@@ -542,7 +542,7 @@ class AnalyzerTests(unittest.TestCase):
 
         report = analyzer.get_return_report()
 
-        self.assertEqual(len(report), 6)
+        self.assertEqual(len(report), 8)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -555,6 +555,9 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(report[4], None)
         self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+        # 최저/최대 수익률
+        self.assertEqual(report[6], -75.067)
+        self.assertEqual(report[7], -65.248)
 
         analyzer.update_asset_info.assert_called_once()
 
@@ -576,7 +579,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_asset_info = MagicMock()
         report = analyzer.get_return_report(index_info=(3, -3))
 
-        self.assertEqual(len(report), 6)
+        self.assertEqual(len(report), 8)
         # 입금 자산
         self.assertEqual(report[0], 100016)
         # 최종 자산
@@ -587,10 +590,13 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[3]["KRW-BTC"], 0.236)
         self.assertEqual(report[4], None)
         self.assertEqual(report[5], "2020-04-30T05:51:00 - 2020-04-30T05:53:00")
+        # 최저/최대 수익률
+        self.assertEqual(report[6], 0.016)
+        self.assertEqual(report[7], 0.093)
 
         report = analyzer.get_return_report(index_info=(3, 2))
 
-        self.assertEqual(len(report), 6)
+        self.assertEqual(len(report), 8)
         # 입금 자산
         self.assertEqual(report[0], 100197)
         # 최종 자산
@@ -601,10 +607,13 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[3]["KRW-BTC"], 0.396)
         self.assertEqual(report[4], None)
         self.assertEqual(report[5], "2020-04-30T05:56:00 - 2020-04-30T05:58:00")
+        # 최저/최대 수익률
+        self.assertEqual(report[6], 0.197)
+        self.assertEqual(report[7], 0.197)
 
         report = analyzer.get_return_report(graph_filename="mango_graph.png", index_info=(3, -1))
 
-        self.assertEqual(len(report), 6)
+        self.assertEqual(len(report), 8)
         # 입금 자산
         self.assertEqual(report[0], 100197)
         # 최종 자산
@@ -615,6 +624,9 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[3]["KRW-BTC"], 0.613)
         self.assertEqual(report[4], "mango_graph.png")
         self.assertEqual(report[5], "2020-04-30T05:57:00 - 2020-04-30T05:59:00")
+        # 최저/최대 수익률
+        self.assertEqual(report[6], 0.197)
+        self.assertEqual(report[7], 0.413)
 
         analyzer.update_asset_info.assert_called()
 
@@ -636,7 +648,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_asset_info = MagicMock()
         report = analyzer.get_return_report("mango_graph.png")
 
-        self.assertEqual(len(report), 6)
+        self.assertEqual(len(report), 8)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -649,6 +661,10 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(report[4], "mango_graph.png")
         self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+
+        # 최저/최대 수익률
+        self.assertEqual(report[6], -75.067)
+        self.assertEqual(report[7], -65.248)
 
         analyzer.update_asset_info.assert_called_once()
         mock_plot.assert_called_once_with(
@@ -736,7 +752,17 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["trading_table"][8], expected_return2)
 
         # 입금 자산, 최종 자산, 누적 수익률, 가격 변동률을 포함한다
-        self.assertEqual(len(report["summary"]), 6)
+        # (
+        #     start_budget: 시작 자산
+        #     final_balance: 최종 자산
+        #     cumulative_return: 기준 시점부터 누적 수익률
+        #     price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+        #     graph: 그래프 파일 패스
+        #     period: 수익률 산출 구간
+        #     return_high: 기간내 최고 수익률
+        #     return_low: 기간내 최저 수익률
+        # )
+        self.assertEqual(len(report["summary"]), 8)
 
         # 입금 자산
         self.assertEqual(report["summary"][0], 23456)
@@ -755,6 +781,8 @@ class AnalyzerTests(unittest.TestCase):
 
         self.assertEqual(report["summary"][4], None)
         self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+        self.assertEqual(report["summary"][6], -75.067)
+        self.assertEqual(report["summary"][7], -65.248)
 
     @patch("mplfinance.plot")
     def test_create_report_call_update_info_func_with_asset_type_and_callback(self, mock_plot):
@@ -1345,3 +1373,15 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(analyzer.info_list, "c")
         self.assertEqual(analyzer.asset_info_list, "d")
         self.assertEqual(analyzer.score_list, "e")
+
+    def test__get_min_max_return_should_return_min_max_tuple(self):
+        dummy = [
+            {"cumulative_return": 1},
+            {"cumulative_return": 2},
+            {"cumulative_return": 3.6},
+            {"cumulative_return": 4.55555555},
+            {"cumulative_return": -21312},
+        ]
+        result = Analyzer._get_min_max_return(dummy)
+        self.assertEqual(result[0], -21312)
+        self.assertEqual(result[1], 4.55555555)
