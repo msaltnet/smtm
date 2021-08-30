@@ -170,6 +170,8 @@ class Operator:
         self.worker.register_on_terminated(on_terminated)
         self.worker.stop()
 
+        return self.last_report
+
     def get_score(self, callback, index_info=None):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
 

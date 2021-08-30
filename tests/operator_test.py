@@ -201,6 +201,19 @@ class OperatorStopTests(unittest.TestCase):
         operator.trader.cancel_all_requests.assert_called_once()
         operator.analyzer.put_trading_info.assert_called_once_with("mango")
 
+    def test_stop_should_call_create_report_and_return_result_correctly(self):
+        operator = Operator()
+        operator.worker = MagicMock()
+        operator.data_provider = MagicMock()
+        operator.trader = MagicMock()
+        operator.analyzer = MagicMock()
+        operator.analyzer.create_report.return_value = "mango_result"
+        operator.state = "running"
+        operator.tag = "mango"
+        result = operator.stop()
+        operator.analyzer.create_report.assert_called_once_with(tag="mango")
+        self.assertEqual(result, "mango_result")
+
 
 class OperatorTests(unittest.TestCase):
     def setUp(self):

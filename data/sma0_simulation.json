@@ -1,5 +1,6 @@
 {
     "title": "BnH-2Hour",
+    "description": "BnH 2시간 간격으로 일주일 진행",
     "budget": 50000,
     "strategy": 0,
     "interval": 1,
