@@ -77,7 +77,7 @@ class VirtualMarketTests(unittest.TestCase):
 
         dummy_request2 = {"id": "orange", "type": "buy", "price": 1800, "amount": 0.1}
         result = market.handle_request(dummy_request2)
-        self.assertEqual(result, "error!")
+        self.assertEqual(result, "pass")
 
     def test_handle_request_handle_buy_return_error_request_when_data_invalid(self):
         market = VirtualMarket()
@@ -144,7 +144,7 @@ class VirtualMarketTests(unittest.TestCase):
         # 매도 요청 가격이 높은 경우
         dummy_request3 = {"id": "apple", "type": "sell", "price": 2500, "amount": 0.05}
         result = market.handle_request(dummy_request3)
-        self.assertEqual(result, "error!")
+        self.assertEqual(result, "pass")
 
         # 매도 요청 양이 보유양 보다 많은 경우
         dummy_request4 = {"id": "banana", "type": "sell", "price": 2000, "amount": 0.1}

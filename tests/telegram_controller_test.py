@@ -423,9 +423,9 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb.trader = MagicMock()
         tcb.currency = "mango"
-        tcb.trader.name = "mango trader"
+        tcb.trader.NAME = "mango trader"
         tcb.strategy = MagicMock()
-        tcb.strategy.name = "mango strategy"
+        tcb.strategy.NAME = "mango strategy"
         tcb.budget = 500
         tcb._start_trading("SMA")
 

@@ -4,6 +4,7 @@
     "strategy": 1,
     "interval": 0.5,
     "currency": "BTC",
+    "description": "mass-simulation-integration-test",
     "period_list": [
         {
             "start": "2020-04-30T17:00:00",

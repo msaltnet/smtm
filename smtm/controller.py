@@ -95,11 +95,11 @@ class Controller:
 
         self.operator.set_interval(self.interval)
         print("##### smtm is intialized #####")
-        print(f"interval: {self.interval}, strategy: {self.strategy.name} , trader: {trader.name}")
+        print(f"interval: {self.interval}, strategy: {self.strategy.NAME} , trader: {trader.NAME}")
         print("==============================")
 
         self.logger.info(
-            f"interval: {self.interval}, strategy: {self.strategy.name} , trader: {trader.name}"
+            f"interval: {self.interval}, strategy: {self.strategy.NAME} , trader: {trader.NAME}"
         )
         signal.signal(signal.SIGINT, self.terminate)
         signal.signal(signal.SIGTERM, self.terminate)

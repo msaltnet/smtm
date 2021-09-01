@@ -22,6 +22,7 @@ class StrategyBuyAndHold(Strategy):
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     COMMISSION_RATIO = 0.0005
+    NAME = "BnH"
 
     def __init__(self):
         self.is_intialized = False
@@ -33,7 +34,6 @@ class StrategyBuyAndHold(Strategy):
         self.result = []
         self.request = None
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.name = "BnH"
         self.waiting_requests = {}
 
     def update_trading_info(self, info):

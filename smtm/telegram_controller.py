@@ -288,8 +288,8 @@ class TelegramController:
                 message = "".join(
                     [
                         f"화폐: {self.currency}\n",
-                        f"전략: {self.strategy.name}\n",
-                        f"거래소: {self.trader.name}\n",
+                        f"전략: {self.strategy.NAME}\n",
+                        f"거래소: {self.trader.NAME}\n",
                         f"예산: {self.budget}\n",
                     ]
                 )
@@ -312,14 +312,14 @@ class TelegramController:
                 start_message = [
                     "자동 거래가 시작되었습니다!\n",
                     f"화폐: {self.currency}\n",
-                    f"전략: {self.strategy.name}\n",
-                    f"거래소: {self.trader.name}\n",
+                    f"전략: {self.strategy.NAME}\n",
+                    f"거래소: {self.trader.NAME}\n",
                     f"예산: {self.budget}\n",
                     f"거래 간격: {self.INTERVAL}",
                 ]
                 self._send_text_message("".join(start_message), self.main_keyboard)
                 self.logger.info(
-                    f"## START! strategy: {self.strategy.name} , trader: {self.trader.name}"
+                    f"## START! strategy: {self.strategy.NAME} , trader: {self.trader.NAME}"
                 )
                 self.in_progress = None
                 self.in_progress_step = 0

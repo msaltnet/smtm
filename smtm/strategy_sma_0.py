@@ -29,6 +29,7 @@ class StrategySma0(Strategy):
     SHORT = 5
     LONG = 20
     STEP = 3
+    NAME = "SMA0"
 
     def __init__(self):
         self.is_intialized = False
@@ -44,7 +45,6 @@ class StrategySma0(Strategy):
         self.closing_price_list = []
         self.process_unit = (0, 0)  # budget and amount
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.name = "SMA0"
         self.waiting_requests = {}
 
     def update_trading_info(self, info):

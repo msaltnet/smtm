@@ -30,6 +30,7 @@ class UpbitTrader(Trader):
     RESULT_CHECKING_INTERVAL = 5
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     AVAILABLE_CURRENCY = {"BTC": ("KRW-BTC", "BTC"), "ETH": ("KRW-ETH", "ETH")}
+    NAME = "Upbit"
 
     def __init__(self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True):
         if currency not in self.AVAILABLE_CURRENCY:
@@ -47,7 +48,6 @@ class UpbitTrader(Trader):
         self.asset = (0, 0)  # avr_price, amount
         self.balance = budget
         self.commission_ratio = commission_ratio
-        self.name = "Upbit"
         currency_info = self.AVAILABLE_CURRENCY[currency]
         self.market = currency_info[0]
         self.market_currency = currency_info[1]

@@ -45,7 +45,6 @@ class Analyzer:
             self.SMA = (sma_s, sma_l)
 
         if os.path.isdir("output") is False:
-            print("create output folder")
             os.mkdir("output")
 
     def initialize(self, get_asset_info_func):

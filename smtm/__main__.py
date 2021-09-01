@@ -21,6 +21,7 @@ import sys
 from . import Simulator, Controller, TelegramController, MassSimulator
 
 if __name__ == "__main__":
+    default_mode = 6
     parser = argparse.ArgumentParser(
         description="""자동 거래 시스템 smtm
 
@@ -54,7 +55,7 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1
         "--mode",
         help="0: interactive simulator, 1: single simulation, 2: real trading",
         type=int,
-        default=5,
+        default=default_mode,
     )
     parser.add_argument(
         "--from_dash_to",
@@ -72,7 +73,7 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1
             from_dash_to=args.from_dash_to,
         )
 
-    if args.mode == 6:
+    if args.mode == default_mode:
         parser.print_help()
         sys.exit(0)
 

@@ -26,11 +26,11 @@ class SimulationOperatorTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
-        strategy_mock.name = "mango_st"
+        strategy_mock.NAME = "mango_st"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
-        trader_mock.name = "orange_tr"
+        trader_mock.NAME = "orange_tr"
         trader_mock.send_request = MagicMock()
         operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
@@ -51,12 +51,12 @@ class SimulationOperatorTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
-        strategy_mock.name = "mango_st"
+        strategy_mock.NAME = "mango_st"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.update_result = MagicMock()
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
-        trader_mock.name = "orange_tr"
+        trader_mock.NAME = "orange_tr"
         trader_mock.send_request = MagicMock()
         operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
@@ -82,12 +82,12 @@ class SimulationOperatorTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
-        strategy_mock.name = "mango_st"
+        strategy_mock.NAME = "mango_st"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.update_result = MagicMock()
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
-        trader_mock.name = "orange_tr"
+        trader_mock.NAME = "orange_tr"
         trader_mock.send_request = MagicMock()
         operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
@@ -110,11 +110,11 @@ class SimulationOperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
         strategy_mock = Mock()
-        strategy_mock.name = "mango_st"
+        strategy_mock.NAME = "mango_st"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=None)
         trader_mock = Mock()
-        trader_mock.name = "orange_tr"
+        trader_mock.NAME = "orange_tr"
         trader_mock.send_request = MagicMock()
         operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)

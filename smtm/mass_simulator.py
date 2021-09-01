@@ -4,7 +4,9 @@ SimulationOperator를 사용해서 대량 시뮬레이션을 수행하는 모듈
 """
 import json
 import time
+from datetime import datetime
 from datetime import timedelta
+import pandas as pd
 from . import (
     LogManager,
     DateConverter,
@@ -22,27 +24,62 @@ class MassSimulator:
     설정 파일을 사용하여 대량 시뮬레이션 진행
     """
 
+    RESULT_FILE_OUTPUT = "output/"
     CONFIG_FILE_OUTPUT = "output/generated_config.json"
 
     def __init__(self):
         self.logger = LogManager.get_logger("MassSimulator")
         self.result = []
+        self.start = 0
+        self.last_print = 0
 
     def _load_config(self, config_file):
-        with open(config_file) as json_file:
+        with open(config_file, encoding="utf-8") as json_file:
             json_data = json.load(json_file)
         return json_data
 
-    @staticmethod
-    def run_single(operator):
+    def print_state(self, is_start=False, is_end=False):
+        """현재 시뮬레이터의 상태를 화면에 표시"""
+        iso_format = "%Y-%m-%dT%H:%M:%S"
+        now = datetime.now()
+        now_string = now.strftime(iso_format)
+        if is_start:
+            self.start = self.last_print = now
+            print(f"{now_string}     +0          simulation start!")
+            return
+
+        if is_end:
+            total_diff = now - self.start
+            print(f"{now_string}     +{total_diff.total_seconds():<10} simulation completed")
+            return
+
+        delta = now - self.last_print
+        diff = delta.total_seconds()
+        if diff > 3:
+            self.last_print = now
+            total_diff = now - self.start
+            print(f"{now_string}     +{total_diff.total_seconds():<10} simulation is running")
+
+    def run_single(self, operator):
+        """시뮬레이션 1회 실행"""
         operator.start()
         while operator.state == "running":
+            self.print_state()
             time.sleep(0.5)
 
-        return operator.stop()
+        last_report = None
+
+        def get_score_callback(report):
+            nonlocal last_report
+            last_report = report
+
+        operator.get_score(get_score_callback)
+        operator.stop()
+        return last_report
 
     @staticmethod
     def get_initialized_operator(budget, strategy_num, interval, currency, start, end, tag):
+        """시뮬레이션 오퍼레이션 생성 후 주어진 설정 값으로 초기화 하여 반환"""
         dt = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=999999999999999)
         end = dt[0][1]
         count = dt[0][2]
@@ -82,12 +119,98 @@ class MassSimulator:
         currency = config["currency"]
         period_list = config["period_list"]
         self.result = [None for x in range(len(period_list))]
+        self.print_state(is_start=True)
         for idx, period in enumerate(period_list):
             tag = f"MASS-{title}-{idx}"
             operator = self.get_initialized_operator(
                 budget, strategy, interval, currency, period["start"], period["end"], tag
             )
             self.result[idx] = self.run_single(operator)
+        self.analyze_result(self.result, config)
+        self.print_state(is_end=True)
+
+    @staticmethod
+    def _round(num):
+        return round(num, 3)
+
+    def analyze_result(self, result_list, config):
+        """수익률 비교 결과를 파일로 저장"""
+        title = config["title"]
+        budget = config["budget"]
+        strategy_num = config["strategy"]
+        interval = config["interval"]
+        currency = config["currency"]
+        description = config["description"]
+        period_list = config["period_list"]
+        strategy = StrategyBuyAndHold.NAME if strategy_num == 0 else StrategySma0.NAME
+
+        final_return_list = []
+        min_return_list = []
+        max_return_list = []
+        for result in result_list:
+            final_return_list.append(result[2])
+            min_return_list.append(result[6])
+            max_return_list.append(result[7])
+        dataframe = pd.DataFrame(
+            {
+                "min_return": min_return_list,
+                "max_return": max_return_list,
+                "final_return": final_return_list,
+            }
+        )
+        # 최종수익율
+        df_final = dataframe.sort_values(by="final_return", ascending=False)
+
+        # 순간 최대 수익율
+        df_max = dataframe.sort_values(by="max_return", ascending=False)
+
+        # 순간 최저 수익율
+        df_mix = dataframe.sort_values(by="min_return")
+
+        with open(f"{self.RESULT_FILE_OUTPUT}{title}.result", "w", encoding="utf-8") as f:
+            # 기본 정보
+            f.write(f"Title: {title}\n")
+            f.write(f"Description: {description}\n")
+            f.write(f"Strategy: {strategy}, Budget: {budget}, Currency: {currency}\n")
+            f.write(
+                f"{period_list[0]['start']} ~ {period_list[-1]['end']} ({len(final_return_list)})\n"
+            )
+
+            f.write(f"수익률 평균: {self._round(dataframe['final_return'].mean()):8}\n")
+            f.write(f"수익률 편차: {self._round(dataframe['final_return'].std()):8}\n")
+            f.write(
+                f"수익률 최대: {self._round(df_final['final_return'].iloc[0]):8}, {df_final['final_return'].index[0]:3}\n"
+            )
+            f.write(
+                f"수익률 최소: {self._round(df_final['final_return'].iloc[-1]):8}, {df_final['final_return'].index[-1]:3}\n"
+            )
+
+            if len(final_return_list) > 10:
+                f.write("수익률 TOP 10 ===============================================\n")
+                for i in range(10):
+                    f.write(
+                        f"{self._round(df_final['final_return'].iloc[i]):8}, {df_final['final_return'].index[i]:3}\n"
+                    )
+
+                f.write("순간 최대 수익률 BEST 10 =====================================\n")
+                for i in range(10):
+                    f.write(
+                        f"{self._round(df_max['max_return'].iloc[i]):8}, {df_max['max_return'].index[i]:3}\n"
+                    )
+
+                f.write("순간 최저 수익률 WORST 10 =====================================\n")
+                for i in range(10):
+                    f.write(
+                        f"{self._round(df_mix['min_return'].iloc[i]):8}, {df_mix['min_return'].index[i]:3}\n"
+                    )
+
+            f.write("순번, 기간 인덱스, 수익률, 순간 최대 수익률, 순간 최저 수익률 ===\n")
+            count = 0
+            for index, row in df_final.iterrows():
+                count += 1
+                f.write(
+                    f"{count:3}, {index:3}, {self._round(row['final_return']):8}, {self._round(row['max_return']):8}, {self._round(row['min_return']):8}\n"
+                )
 
     @staticmethod
     def make_config_json(
@@ -99,6 +222,7 @@ class MassSimulator:
         from_dash_to="210804.000000-210811.000000",
         offset_min=120,
     ):
+        """대량 시뮬레이션을 위한 설정 파일 생성"""
         iso_format = "%Y-%m-%dT%H:%M:%S"
         config = {
             "title": title,
@@ -122,6 +246,6 @@ class MassSimulator:
             start_dt = inter_end_dt
             delta = end_dt - start_dt
 
-        with open(MassSimulator.CONFIG_FILE_OUTPUT, "w") as f:
+        with open(MassSimulator.CONFIG_FILE_OUTPUT, "w", encoding="utf-8") as f:
             json.dump(config, f)
         return MassSimulator.CONFIG_FILE_OUTPUT

@@ -32,6 +32,9 @@ class SimulationOperator(Operator):
 
             def send_request_callback(result):
                 self.logger.debug("send_request_callback is called")
+                if result == "pass":
+                    return
+
                 if result == "error!":
                     self.logger.error("request fail")
                     return

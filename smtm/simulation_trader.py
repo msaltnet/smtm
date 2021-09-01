@@ -16,6 +16,7 @@ class SimulationTrader(Trader):
     """
 
     AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH"}
+    NAME = "Simulation"
 
     def __init__(self, currency="BTC"):
         if currency not in self.AVAILABLE_CURRENCY:
@@ -23,7 +24,6 @@ class SimulationTrader(Trader):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.market = VirtualMarket(market=self.AVAILABLE_CURRENCY[currency])
         self.is_initialized = False
-        self.name = "Simulation"
 
     def initialize_simulation(self, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""

@@ -150,7 +150,7 @@ class Simulator:
             strategy = StrategySma0()
         strategy.is_simulation = True
         self.operator = SimulationOperator()
-        self._print_configuration(strategy.name)
+        self._print_configuration(strategy.NAME)
 
         data_provider = SimulationDataProvider(currency=self.currency)
         data_provider.initialize_simulation(end=end, count=count)
@@ -165,7 +165,7 @@ class Simulator:
             analyzer,
             budget=self.budget,
         )
-        self.operator.tag = self._make_tag(self.start_str, self.end_str, strategy.name)
+        self.operator.tag = self._make_tag(self.start_str, self.end_str, strategy.NAME)
         self.operator.set_interval(self.interval)
         self.need_init = False
 

@@ -108,7 +108,7 @@ class SimulationTraderIntegrationTests(unittest.TestCase):
                 "date_time": "2020-04-30T14:43:00",
             }
         ]
-        expected_result = "error!"
+        expected_result = "pass"
         result = None
 
         def send_request_callback(callback_result):

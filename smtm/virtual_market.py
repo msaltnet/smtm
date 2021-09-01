@@ -138,7 +138,7 @@ class VirtualMarket:
         try:
             if request["price"] < self.data[next_index]["low_price"]:
                 self.logger.info("not matched")
-                return "error!"
+                return "pass"
 
             name = self.data[next_index]["market"]
             if name in self.asset:
@@ -177,7 +177,7 @@ class VirtualMarket:
 
             if request["price"] >= self.data[next_index]["high_price"]:
                 self.logger.info("not matched")
-                return "error!"
+                return "pass"
 
             sell_amount = request["amount"]
             if request["amount"] > self.asset[name][1]:
