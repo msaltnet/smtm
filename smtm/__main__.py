@@ -13,7 +13,7 @@ Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 
 Example) python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 Example) python -m smtm --mode 3
 Example) python -m smtm --mode 4 --config /data/sma0_simulation.json
-Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120
+Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120 --file generated_config.json
 """
 import argparse
 from argparse import RawTextHelpFormatter
@@ -39,7 +39,7 @@ Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 
 Example) python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 Example) python -m smtm --mode 3
 Example) python -m smtm --mode 4 --config /data/sma0_simulation.json
-Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120
+Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120 --file generated_config.json
 """,
         formatter_class=RawTextHelpFormatter,
     )
@@ -50,6 +50,7 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1
     parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
     parser.add_argument("--config", help="mass simulation config file", default="")
     parser.add_argument("--title", help="mass simulation title", default="SMA_2H_week")
+    parser.add_argument("--file", help="generated config file name", default=None)
     parser.add_argument("--offset", help="mass simulation period offset", type=int, default=120)
     parser.add_argument(
         "--mode",
@@ -108,5 +109,6 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1
             currency=args.currency,
             from_dash_to=args.from_dash_to,
             offset_min=args.offset,
+            filepath=args.file,
         )
         print(f"{result} is generated")

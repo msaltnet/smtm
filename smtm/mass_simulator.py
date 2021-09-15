@@ -2,6 +2,7 @@
 
 SimulationOperator를 사용해서 대량 시뮬레이션을 수행하는 모듈
 """
+import os
 import json
 import time
 from datetime import datetime
@@ -33,6 +34,9 @@ class MassSimulator:
         self.start = 0
         self.last_print = 0
 
+        if os.path.isdir("output") is False:
+            os.mkdir("output")
+
     def _load_config(self, config_file):
         with open(config_file, encoding="utf-8") as json_file:
             json_data = json.load(json_file)
@@ -62,6 +66,7 @@ class MassSimulator:
 
     def run_single(self, operator):
         """시뮬레이션 1회 실행"""
+        start_time = datetime.now()
         operator.start()
         while operator.state == "running":
             self.print_state()
@@ -75,6 +80,8 @@ class MassSimulator:
 
         operator.get_score(get_score_callback)
         operator.stop()
+        diff = datetime.now() - start_time
+        print(f"single took {diff.total_seconds()}seconds")
         return last_report
 
     @staticmethod
@@ -204,12 +211,12 @@ class MassSimulator:
                         f"{self._round(df_mix['min_return'].iloc[i]):8}, {df_mix['min_return'].index[i]:3}\n"
                     )
 
-            f.write("순번, 기간 인덱스, 수익률, 순간 최대 수익률, 순간 최저 수익률 ===\n")
+            f.write("순번, 인덱스, 구간 수익률, 최대 수익률, 최저 수익률 ===\n")
             count = 0
             for index, row in df_final.iterrows():
                 count += 1
                 f.write(
-                    f"{count:3}, {index:3}, {self._round(row['final_return']):8}, {self._round(row['max_return']):8}, {self._round(row['min_return']):8}\n"
+                    f"{count:4}, {index:6}, {self._round(row['final_return']):11}, {self._round(row['max_return']):11}, {self._round(row['min_return']):11}\n"
                 )
 
     @staticmethod
@@ -221,6 +228,7 @@ class MassSimulator:
         currency="BTC",
         from_dash_to="210804.000000-210811.000000",
         offset_min=120,
+        filepath=None,
     ):
         """대량 시뮬레이션을 위한 설정 파일 생성"""
         iso_format = "%Y-%m-%dT%H:%M:%S"
@@ -233,6 +241,8 @@ class MassSimulator:
             "currency": currency,
             "period_list": [],
         }
+        if filepath is None:
+            filepath = MassSimulator.CONFIG_FILE_OUTPUT
 
         start_end = from_dash_to.split("-")
         start_dt = DateConverter.num_2_datetime(start_end[0])
@@ -246,6 +256,6 @@ class MassSimulator:
             start_dt = inter_end_dt
             delta = end_dt - start_dt
 
-        with open(MassSimulator.CONFIG_FILE_OUTPUT, "w", encoding="utf-8") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(config, f)
-        return MassSimulator.CONFIG_FILE_OUTPUT
+        return filepath
