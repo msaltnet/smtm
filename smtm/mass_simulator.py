@@ -199,6 +199,13 @@ class MassSimulator:
                         f"{self._round(df_final['final_return'].iloc[i]):8}, {df_final['final_return'].index[i]:3}\n"
                     )
 
+                f.write("수익률 WORST 10 ===============================================\n")
+                for i in range(10):
+                    idx = -1 * (i + 1)
+                    f.write(
+                        f"{self._round(df_final['final_return'].iloc[idx]):8}, {df_final['final_return'].index[idx]:3}\n"
+                    )
+
                 f.write("순간 최대 수익률 BEST 10 =====================================\n")
                 for i in range(10):
                     f.write(
