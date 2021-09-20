@@ -674,7 +674,8 @@ class AnalyzerTests(unittest.TestCase):
             addplot=ANY,
             mav=analyzer.SMA,
             style="starsandstripes",
-            savefig=dict(fname="mango_graph.png", dpi=100, pad_inches=0.25),
+            savefig=dict(fname="mango_graph.png", dpi=300, pad_inches=0.25),
+            figscale=1.25,
         )
 
     @patch("pandas.to_datetime")
@@ -964,8 +965,9 @@ class AnalyzerTests(unittest.TestCase):
             mav=analyzer.SMA,
             style="starsandstripes",
             savefig=dict(
-                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=100, pad_inches=0.25
+                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=300, pad_inches=0.25
             ),
+            figscale=1.25,
         )
         analyzer.update_asset_info.assert_called_once()
 
