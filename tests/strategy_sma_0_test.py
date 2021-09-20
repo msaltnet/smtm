@@ -66,18 +66,21 @@ class StrategySma0Tests(unittest.TestCase):
 
                 return DummyRolling(window)
 
-        mock_series.return_value = DummySeries()
-        mock_np.return_value = False
-        sma.initialize(100, 10)
         dummy_info = {
             "closing_price": 500,
         }
+        for i in range(sma.LONG):
+            sma.closing_price_list.append(500)
+
+        mock_series.return_value = DummySeries()
+        mock_np.return_value = False
+        sma.initialize(100, 10)
         sma.current_process = "buy"
         sma.asset_amount = 12
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "sell")
         self.assertEqual(sma.process_unit[0], 0)
-        self.assertEqual(sma.process_unit[1], 4)  # 12 / STEP
+        self.assertEqual(sma.process_unit[1], 12)  # 12 / STEP
 
         # current_process가 "sell" 일때는 업데이트 되지 않아야함
         sma.current_process = "sell"
@@ -85,7 +88,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "sell")
         self.assertEqual(sma.process_unit[0], 0)
-        self.assertEqual(sma.process_unit[1], 4)  # 12 / STEP
+        self.assertEqual(sma.process_unit[1], 12)  # 12 / STEP
 
         # mock_np.return_value가 True 일때는 업데이트 되지 않아야함
         mock_np.return_value = True
@@ -94,7 +97,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "buy")
         self.assertEqual(sma.process_unit[0], 0)
-        self.assertEqual(sma.process_unit[1], 4)  # 12 / STEP
+        self.assertEqual(sma.process_unit[1], 12)  # 12 / STEP
 
         mock_np.return_value = False
         sma.current_process = "buy"
@@ -102,12 +105,14 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "sell")
         self.assertEqual(sma.process_unit[0], 0)
-        self.assertEqual(sma.process_unit[1], 5)  # 15 / STEP
+        self.assertEqual(sma.process_unit[1], 15)  # 15 / STEP
 
     @patch("numpy.isnan")
     @patch("pandas.Series")
     def test_update_trading_info_update_process_when_long_lt_short(self, mock_series, mock_np):
         sma = StrategySma0()
+        for i in range(sma.LONG):
+            sma.closing_price_list.append(500)
 
         class DummySeriesInverse:
             """rolling의 window인자에 -1을 곱한 값을 최종 결과로 리턴
@@ -139,7 +144,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.balance = 90000
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "buy")
-        self.assertEqual(sma.process_unit[0], 30000)  # 90000 / STEP
+        self.assertEqual(sma.process_unit[0], 90000)  # 90000 / STEP
         self.assertEqual(sma.process_unit[1], 0)
 
         # current_process가 "buy" 일때는 업데이트 되지 않아야함
@@ -147,7 +152,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.balance = 90000
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "buy")
-        self.assertEqual(sma.process_unit[0], 30000)  # 90000 / STEP
+        self.assertEqual(sma.process_unit[0], 90000)  # 90000 / STEP
         self.assertEqual(sma.process_unit[1], 0)
 
         # mock_np.return_value가 True 일때는 업데이트 되지 않아야함
@@ -156,7 +161,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.balance = 30000
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "sell")
-        self.assertEqual(sma.process_unit[0], 30000)  # 90000 / STEP
+        self.assertEqual(sma.process_unit[0], 90000)  # 90000 / STEP
         self.assertEqual(sma.process_unit[1], 0)
 
         mock_np.return_value = False
@@ -164,7 +169,7 @@ class StrategySma0Tests(unittest.TestCase):
         sma.balance = 30000
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "buy")
-        self.assertEqual(sma.process_unit[0], 10000)  # 30000 / STEP
+        self.assertEqual(sma.process_unit[0], 30000)  # 30000 / STEP
         self.assertEqual(sma.process_unit[1], 0)
 
     def test_update_trading_info_ignore_info_when_not_yet_initialzed(self):

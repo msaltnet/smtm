@@ -28,8 +28,8 @@ class StrategySma0(Strategy):
     COMMISSION_RATIO = 0.0005
     SHORT = 5
     LONG = 20
-    STEP = 3
-    NAME = "SMA0"
+    STEP = 1
+    NAME = "SMA0-A"
 
     def __init__(self):
         self.is_intialized = False
@@ -70,9 +70,12 @@ class StrategySma0(Strategy):
     def __update_process(self, info):
         try:
             self.closing_price_list.append(info["closing_price"])
+            current_idx = len(self.closing_price_list)
+            self.logger.info(f"# update process :: {current_idx}")
             sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
             sma_long = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values[-1]
-            if np.isnan(sma_short) or np.isnan(sma_long):
+
+            if np.isnan(sma_short) or np.isnan(sma_long) or current_idx < self.LONG:
                 return
             if sma_short > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
