@@ -44,7 +44,7 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1
         formatter_class=RawTextHelpFormatter,
     )
     parser.add_argument("--budget", help="budget", type=int, default=10000)
-    parser.add_argument("--term", help="trading tick interval (seconds)", type=int, default="60")
+    parser.add_argument("--term", help="trading tick interval (seconds)", type=float, default="60")
     parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0", default="0")
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
     parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
