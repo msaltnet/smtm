@@ -27,7 +27,8 @@ class StrategySma0(Strategy):
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     COMMISSION_RATIO = 0.0005
     SHORT = 5
-    LONG = 20
+    MID = 20
+    LONG = 60
     STEP = 1
     NAME = "SMA0-A"
 
@@ -73,15 +74,16 @@ class StrategySma0(Strategy):
             current_idx = len(self.closing_price_list)
             self.logger.info(f"# update process :: {current_idx}")
             sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
+            sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
             sma_long = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values[-1]
 
             if np.isnan(sma_short) or np.isnan(sma_long) or current_idx < self.LONG:
                 return
-            if sma_short > sma_long and self.current_process != "buy":
+            if sma_short > sma_mid and sma_mid > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
                 self.logger.debug(f"process_unit updated {self.process_unit}")
-            elif sma_short < sma_long and self.current_process != "sell":
+            elif sma_short < sma_mid and sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
                 self.logger.debug(f"process_unit updated {self.process_unit}")
