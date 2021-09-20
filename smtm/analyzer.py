@@ -551,7 +551,8 @@ class Analyzer:
             addplot=apds,
             mav=self.SMA,
             style="starsandstripes",
-            savefig=dict(fname=destination, dpi=100, pad_inches=0.25),
+            savefig=dict(fname=destination, dpi=300, pad_inches=0.25),
+            figscale=1.25,
         )
         return destination
 
