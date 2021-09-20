@@ -231,7 +231,7 @@ class MassSimulator:
         title="",
         budget=50000,
         strategy_num=0,
-        interval=0.1,
+        interval=0.000001,
         currency="BTC",
         from_dash_to="210804.000000-210811.000000",
         offset_min=120,
