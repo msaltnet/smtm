@@ -27,6 +27,7 @@ class MassSimulator:
 
     RESULT_FILE_OUTPUT = "output/"
     CONFIG_FILE_OUTPUT = "output/generated_config.json"
+    MIN_PRINT_STATE_SEC = 3
 
     def __init__(self):
         self.logger = LogManager.get_logger("MassSimulator")
@@ -59,7 +60,7 @@ class MassSimulator:
 
         delta = now - self.last_print
         diff = delta.total_seconds()
-        if diff > 3:
+        if diff > self.MIN_PRINT_STATE_SEC:
             self.last_print = now
             total_diff = now - self.start
             print(f"{now_string}     +{total_diff.total_seconds():<10} simulation is running")
@@ -70,7 +71,7 @@ class MassSimulator:
         operator.start()
         while operator.state == "running":
             self.print_state()
-            time.sleep(0.5)
+            time.sleep(0.1)
 
         last_report = None
 
@@ -132,7 +133,12 @@ class MassSimulator:
             operator = self.get_initialized_operator(
                 budget, strategy, interval, currency, period["start"], period["end"], tag
             )
+            start_time = datetime.now()
             self.result[idx] = self.run_single(operator)
+            diff = datetime.now() - start_time
+            print(
+                f"{idx} simulation took {diff.total_seconds()} sec : {period['start']} - {period['end']}"
+            )
         self.analyze_result(self.result, config)
         self.print_state(is_end=True)
 
