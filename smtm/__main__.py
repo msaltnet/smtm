@@ -39,12 +39,12 @@ Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 
 Example) python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 Example) python -m smtm --mode 3
 Example) python -m smtm --mode 4 --config /data/sma0_simulation.json
-Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120 --file generated_config.json
+Example) python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
 """,
         formatter_class=RawTextHelpFormatter,
     )
     parser.add_argument("--budget", help="budget", type=int, default=10000)
-    parser.add_argument("--term", help="trading tick interval (seconds)", type=int, default="60")
+    parser.add_argument("--term", help="trading tick interval (seconds)", type=float, default="60")
     parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0", default="0")
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
     parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
