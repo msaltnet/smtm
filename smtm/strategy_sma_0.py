@@ -84,7 +84,7 @@ class StrategySma0(Strategy):
             sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
             sma_long = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values[-1]
 
-            if np.isnan(sma_short) or np.isnan(sma_long) or current_idx < self.LONG:
+            if np.isnan(sma_short) or np.isnan(sma_long) or current_idx + 1 < self.LONG:
                 return
 
             if (sma_short > sma_mid and (sma_mid > sma_long or sma_short > sma_long))and self.current_process != "buy":
