@@ -28,9 +28,9 @@ class StrategySma0(Strategy):
     COMMISSION_RATIO = 0.0005
     SHORT = 10
     MID = 40
-    LONG = 60
+    LONG = 80
     STEP = 1
-    NAME = "SMA0-D"
+    NAME = "SMA0-E"
 
     def __init__(self):
         self.is_intialized = False
