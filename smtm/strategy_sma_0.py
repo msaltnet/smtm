@@ -31,9 +31,9 @@ class StrategySma0(Strategy):
     MID = 40
     LONG = 60
     STEP = 1
-    NAME = "SMA0-G"
-    SLOPE_K = 5
-    SLOPE_RATIO = -0.00007
+    NAME = "SMA0-H"
+    STD_K = 20
+    STD_RATIO = 0.00015
 
     def __init__(self):
         self.is_intialized = False
@@ -74,9 +74,9 @@ class StrategySma0(Strategy):
         self.__update_process(info)
 
     @staticmethod
-    def _get_slope(a, b):
-        if b == 0: return 0
-        ratio = (b - a) / b * 1000000
+    def _get_deviation_ratio(std, last):
+        if last == 0: return 0
+        ratio = std / last * 1000000
         return math.floor(ratio) / 1000000
 
     def __update_process(self, info):
@@ -100,10 +100,10 @@ class StrategySma0(Strategy):
             if sma_short > sma_mid and sma_mid > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
-                if current_idx + 1 > self.LONG + self.SLOPE_K:
-                    slope = self._get_slope(sma_long_list[-self.SLOPE_K], sma_long)
-                    self.logger.error(f"Slope {sma_long_list[-self.SLOPE_K]}, {sma_long}: {slope:.6f}======")
-                    if slope < self.SLOPE_RATIO:
+                if current_idx + 1 > self.LONG + self.STD_K:
+                    std_ratio = self._get_deviation_ratio(np.std(sma_long_list[-self.STD_K:]), sma_long_list[-1])
+                    self.logger.error(f"Slope {std_ratio:.6f}======")
+                    if std_ratio > self.STD_RATIO:
                         self.cross_info[1] = {"price": 0, "index": current_idx}
                         self.logger.error(f"SKIP BUY !!! ====== {current_idx}")
             elif sma_short < sma_mid and sma_mid < sma_long and self.current_process != "sell":
