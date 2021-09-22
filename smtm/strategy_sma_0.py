@@ -2,6 +2,7 @@
 
 import copy
 from datetime import datetime
+import math
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
@@ -30,7 +31,9 @@ class StrategySma0(Strategy):
     MID = 40
     LONG = 60
     STEP = 1
-    NAME = "SMA0-F"
+    NAME = "SMA0-G"
+    SLOPE_K = 5
+    SLOPE_RATIO = -0.00007
 
     def __init__(self):
         self.is_intialized = False
@@ -70,6 +73,12 @@ class StrategySma0(Strategy):
         self.data.append(copy.deepcopy(info))
         self.__update_process(info)
 
+    @staticmethod
+    def _get_slope(a, b):
+        if b == 0: return 0
+        ratio = (b - a) / b * 1000000
+        return math.floor(ratio) / 1000000
+
     def __update_process(self, info):
         # if self.breaking_count > 0:
         #     self.breaking_count -= 1
@@ -82,7 +91,8 @@ class StrategySma0(Strategy):
 
             sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
             sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
-            sma_long = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values[-1]
+            sma_long_list = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            sma_long = sma_long_list[-1]
 
             if np.isnan(sma_short) or np.isnan(sma_long) or current_idx + 1 < self.LONG:
                 return
@@ -90,6 +100,12 @@ class StrategySma0(Strategy):
             if sma_short > sma_mid and sma_mid > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
+                if current_idx + 1 > self.LONG + self.SLOPE_K:
+                    slope = self._get_slope(sma_long_list[-self.SLOPE_K], sma_long)
+                    self.logger.error(f"Slope {sma_long_list[-self.SLOPE_K]}, {sma_long}: {slope:.6f}======")
+                    if slope < self.SLOPE_RATIO:
+                        self.cross_info[1] = {"price": 0, "index": current_idx}
+                        self.logger.error(f"SKIP BUY !!! ====== {current_idx}")
             elif sma_short < sma_mid and sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
@@ -99,6 +115,7 @@ class StrategySma0(Strategy):
             self.cross_info[0] = self.cross_info[1]
             self.cross_info[1] = {"price": current_price, "index": current_idx}
             self.logger.debug(f"process_unit updated {self.process_unit}")
+
         except (KeyError, TypeError):
             self.logger.warning("invalid info")
 
