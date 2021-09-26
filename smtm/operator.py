@@ -149,7 +149,7 @@ class Operator:
     def stop(self):
         """거래를 중단한다"""
         if self.state != "running":
-            return
+            return None
 
         self.trader.cancel_all_requests()
         trading_info = self.data_provider.get_info()

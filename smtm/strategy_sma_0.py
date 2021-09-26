@@ -94,7 +94,7 @@ class StrategySma0(Strategy):
             if np.isnan(sma_long) or current_idx + 1 < self.LONG:
                 return
 
-            if sma_short > sma_mid and sma_mid > sma_long and self.current_process != "buy":
+            if sma_short > sma_mid > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
                 if current_idx + 1 > self.LONG + self.STD_K:
@@ -105,7 +105,7 @@ class StrategySma0(Strategy):
                     if std_ratio > self.STD_RATIO:
                         self.cross_info[1] = {"price": 0, "index": current_idx}
                         self.logger.info(f"SKIP BUY !!! ====== {current_idx}")
-            elif sma_short < sma_mid and sma_mid < sma_long and self.current_process != "sell":
+            elif sma_short < sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
             else:
@@ -204,37 +204,13 @@ class StrategySma0(Strategy):
                     }
                 ]
 
-            # skip invalid cross info
+            request = None
             if self.cross_info[0]["price"] <= 0 or self.cross_info[1]["price"] <= 0:
-                self.logger.info(f"SKIP !!! ===== {len(self.closing_price_list) - 1}")
-                if self.is_simulation:
-                    return [
-                        {
-                            "id": DateConverter.timestamp_id(),
-                            "type": "buy",
-                            "price": 0,
-                            "amount": 0,
-                            "date_time": now,
-                        }
-                    ]
-                return None
-
-            if self.current_process == "buy":
+                request = None
+            elif self.current_process == "buy":
                 request = self.__create_buy()
             elif self.current_process == "sell":
                 request = self.__create_sell()
-            else:
-                if self.is_simulation:
-                    return [
-                        {
-                            "id": DateConverter.timestamp_id(),
-                            "type": "buy",
-                            "price": 0,
-                            "amount": 0,
-                            "date_time": now,
-                        }
-                    ]
-                return None
 
             if request is None:
                 if self.is_simulation:
@@ -250,8 +226,7 @@ class StrategySma0(Strategy):
                 return None
             request["amount"] = round(request["amount"], 4)
             request["date_time"] = now
-            self.logger.info(f"[REQ] id: {request['id']} =====================")
-            self.logger.info(f"type: {request['type']}")
+            self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
             final_requests = []

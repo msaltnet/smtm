@@ -10,6 +10,8 @@ from .database import Database
 
 
 class DataRepository:
+    """데이터를 서버 또는 데이터베이스에서 가져와서 반환해주는 클래스"""
+
     def __init__(self, db_file=None):
         self.logger = LogManager.get_logger(__class__.__name__)
         db = db_file if db_file is not None else "smtm.db"
@@ -27,12 +29,13 @@ class DataRepository:
         db_data = self._query(start, end, market)
 
         self.logger.info(f"total vs database: {total_count} vs {len(db_data)}")
+        if len(db_data) > total_count:
+            raise UserWarning("Something wrong in DB")
+
         if total_count == len(db_data):
             self.logger.info(f"from database: {total_count}")
             self._convert_to_upbit_datetime_string(db_data)
             return db_data
-        elif len(db_data) > total_count:
-            raise UserWarning("Something wrong in DB")
 
         server_data = self._fetch_from_upbit(start, end, market)
         self._convert_to_upbit_datetime_string(server_data)
@@ -59,7 +62,7 @@ class DataRepository:
     @staticmethod
     def _is_equal(db_data, fetch_data):
         if len(db_data) != len(fetch_data):
-            print(f"### _is_equal: False, size")
+            print("### _is_equal: False, size")
             return False
 
         for data in db_data:
@@ -123,7 +126,8 @@ class DataRepository:
                 last_item = copy.deepcopy(data[idx])
                 idx += 1
                 continue
-            elif delta.total_seconds() == 0:
+
+            if delta.total_seconds() == 0:
                 # keep
                 new_data.append(copy.deepcopy(data[idx]))
                 last_item = copy.deepcopy(data[idx])
@@ -146,8 +150,8 @@ class DataRepository:
             self.logger.info(f"Recovered broken data: {broken_count}")
         return new_data
 
-    def _report_broken_block(self, datetime, market, period=60):
-        self.logger.error(f"Broken data {datetime}, {market}, {period}")
+    def _report_broken_block(self, dt, market, period=60):
+        self.logger.error(f"Broken data {dt}, {market}, {period}")
 
     def _fetch_from_upbit_up_to_200(self, end, count, market):
         """업비트 서버에서 최대 200개까지 데이터 조회해서 반환
@@ -155,12 +159,12 @@ class DataRepository:
         https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
         """
 
-        URL = f"https://api.upbit.com/v1/candles/minutes/1"
-        to = DateConverter.from_kst_to_utc_str(end) + "Z"
-        query_string = {"market": market, "to": to, "count": count}
+        url = "https://api.upbit.com/v1/candles/minutes/1"
+        to_datetime = DateConverter.from_kst_to_utc_str(end) + "Z"
+        query_string = {"market": market, "to": to_datetime, "count": count}
         self.logger.debug(f"query_string {query_string}")
         try:
-            response = requests.get(URL, params=query_string)
+            response = requests.get(url, params=query_string)
             response.raise_for_status()
             data = response.json()
             data.reverse()

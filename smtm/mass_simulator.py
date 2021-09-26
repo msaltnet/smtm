@@ -38,7 +38,8 @@ class MassSimulator:
         if os.path.isdir("output") is False:
             os.mkdir("output")
 
-    def _load_config(self, config_file):
+    @staticmethod
+    def _load_config(config_file):
         with open(config_file, encoding="utf-8") as json_file:
             json_data = json.load(json_file)
         return json_data
@@ -146,9 +147,8 @@ class MassSimulator:
     def analyze_result(self, result_list, config):
         """수익률 비교 결과를 파일로 저장"""
         title = config["title"]
-        strategy_num = config["strategy"]
         period_list = config["period_list"]
-        strategy = StrategyBuyAndHold.NAME if strategy_num == 0 else StrategySma0.NAME
+        strategy = StrategyBuyAndHold.NAME if config["strategy"] == 0 else StrategySma0.NAME
 
         final_return_list = []
         min_return_list = []
@@ -157,6 +157,7 @@ class MassSimulator:
             final_return_list.append(result[2])
             min_return_list.append(result[6])
             max_return_list.append(result[7])
+
         dataframe = pd.DataFrame(
             {
                 "min_return": min_return_list,
@@ -173,57 +174,57 @@ class MassSimulator:
         # 순간 최저 수익율
         df_mix = dataframe.sort_values(by="min_return")
 
-        with open(f"{self.RESULT_FILE_OUTPUT}{title}.result", "w", encoding="utf-8") as f:
+        with open(f"{self.RESULT_FILE_OUTPUT}{title}.result", "w", encoding="utf-8") as result_file:
             # 기본 정보
-            f.write(f"Title: {title}\n")
-            f.write(f"Description: {config['description']}\n")
-            f.write(
+            result_file.write(f"Title: {title}\n")
+            result_file.write(f"Description: {config['description']}\n")
+            result_file.write(
                 f"Strategy: {strategy}, Budget: {config['budget']}, Currency: {config['currency']}\n"
             )
-            f.write(
+            result_file.write(
                 f"{period_list[0]['start']} ~ {period_list[-1]['end']} ({len(final_return_list)})\n"
             )
 
-            f.write(f"수익률 평균: {self._round(dataframe['final_return'].mean()):8}\n")
-            f.write(f"수익률 편차: {self._round(dataframe['final_return'].std()):8}\n")
-            f.write(
+            result_file.write(f"수익률 평균: {self._round(dataframe['final_return'].mean()):8}\n")
+            result_file.write(f"수익률 편차: {self._round(dataframe['final_return'].std()):8}\n")
+            result_file.write(
                 f"수익률 최대: {self._round(df_final['final_return'].iloc[0]):8}, {df_final['final_return'].index[0]:3}\n"
             )
-            f.write(
+            result_file.write(
                 f"수익률 최소: {self._round(df_final['final_return'].iloc[-1]):8}, {df_final['final_return'].index[-1]:3}\n"
             )
 
             if len(final_return_list) > 10:
-                f.write("수익률 TOP 10 ===============================================\n")
+                result_file.write("수익률 TOP 10 ===============================================\n")
                 for i in range(10):
-                    f.write(
+                    result_file.write(
                         f"{self._round(df_final['final_return'].iloc[i]):8}, {df_final['final_return'].index[i]:3}\n"
                     )
 
-                f.write("수익률 WORST 10 ===============================================\n")
+                result_file.write("수익률 WORST 10 ===============================================\n")
                 for i in range(10):
                     idx = -1 * (i + 1)
-                    f.write(
+                    result_file.write(
                         f"{self._round(df_final['final_return'].iloc[idx]):8}, {df_final['final_return'].index[idx]:3}\n"
                     )
 
-                f.write("순간 최대 수익률 BEST 10 =====================================\n")
+                result_file.write("순간 최대 수익률 BEST 10 =====================================\n")
                 for i in range(10):
-                    f.write(
+                    result_file.write(
                         f"{self._round(df_max['max_return'].iloc[i]):8}, {df_max['max_return'].index[i]:3}\n"
                     )
 
-                f.write("순간 최저 수익률 WORST 10 =====================================\n")
+                result_file.write("순간 최저 수익률 WORST 10 =====================================\n")
                 for i in range(10):
-                    f.write(
+                    result_file.write(
                         f"{self._round(df_mix['min_return'].iloc[i]):8}, {df_mix['min_return'].index[i]:3}\n"
                     )
 
-            f.write("순번, 인덱스, 구간 수익률, 최대 수익률, 최저 수익률 ===\n")
+            result_file.write("순번, 인덱스, 구간 수익률, 최대 수익률, 최저 수익률 ===\n")
             count = 0
             for index, row in df_final.iterrows():
                 count += 1
-                f.write(
+                result_file.write(
                     f"{count:4}, {index:6}, {self._round(row['final_return']):11}, {self._round(row['max_return']):11}, {self._round(row['min_return']):11}\n"
                 )
 
@@ -264,6 +265,6 @@ class MassSimulator:
             start_dt = inter_end_dt
             delta = end_dt - start_dt
 
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(config, f)
+        with open(filepath, "w", encoding="utf-8") as dump_file:
+            json.dump(config, dump_file)
         return filepath
