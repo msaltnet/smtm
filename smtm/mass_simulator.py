@@ -67,7 +67,6 @@ class MassSimulator:
 
     def run_single(self, operator):
         """시뮬레이션 1회 실행"""
-        start_time = datetime.now()
         operator.start()
         while operator.state == "running":
             self.print_state()
@@ -81,8 +80,6 @@ class MassSimulator:
 
         operator.get_score(get_score_callback)
         operator.stop()
-        diff = datetime.now() - start_time
-        print(f"single took {diff.total_seconds()}seconds")
         return last_report
 
     @staticmethod
