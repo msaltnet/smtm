@@ -46,33 +46,36 @@ class StrategySma0Tests(unittest.TestCase):
     def test_update_trading_info_update_process_when_long_gt_short(self, mock_series, mock_np):
         sma = StrategySma0()
 
-        class DummySeries:
-            """rolling의 window인자를 최종 결과로 리턴
-            장기 이동평균 값이 단기 이동평균 값보다 큰 상황을 만들기 위함
-            """
+        for i in range(sma.LONG):
+            sma.closing_price_list.append(500)
 
-            def rolling(self, window):
-                class DummyRolling:
-                    def __init__(self, value):
-                        self.return_value = value
+        class DummyMean:
+            pass
 
-                    def mean(self):
-                        class DummyValue:
-                            pass
+        dummy_mean_short = DummyMean()
+        dummy_mean_mid = DummyMean()
+        dummy_mean_long = DummyMean()
 
-                        meanlist = DummyValue()
-                        meanlist.values = [self.return_value]
-                        return meanlist
+        dummy_mean_short.values = [5]
+        dummy_mean_mid.values = [7]
+        dummy_mean_long.values = [10]
 
-                return DummyRolling(window)
+        rolling_return_mock = MagicMock()
+        rolling_return_mock.mean.side_effect = [
+            dummy_mean_short,
+            dummy_mean_mid,
+            dummy_mean_long,
+            dummy_mean_short,
+            dummy_mean_mid,
+            dummy_mean_long,
+        ]
+        series_return = MagicMock()
+        series_return.rolling.return_value = rolling_return_mock
+        mock_series.return_value = series_return
 
         dummy_info = {
             "closing_price": 500,
         }
-        for i in range(sma.LONG):
-            sma.closing_price_list.append(500)
-
-        mock_series.return_value = DummySeries()
         mock_np.return_value = False
         sma.initialize(100, 10)
         sma.current_process = "buy"
@@ -80,7 +83,10 @@ class StrategySma0Tests(unittest.TestCase):
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "sell")
         self.assertEqual(sma.process_unit[0], 0)
-        self.assertEqual(sma.process_unit[1], 12)  # 12 / STEP
+        self.assertEqual(sma.process_unit[1], 12 / sma.STEP)
+
+        self.assertEqual(sma.cross_info[0], {"price": 0, "index": 0})
+        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 60})
 
         # current_process가 "sell" 일때는 업데이트 되지 않아야함
         sma.current_process = "sell"
@@ -90,62 +96,53 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.process_unit[0], 0)
         self.assertEqual(sma.process_unit[1], 12)  # 12 / STEP
 
-        # mock_np.return_value가 True 일때는 업데이트 되지 않아야함
-        mock_np.return_value = True
-        sma.current_process = "buy"
-        sma.asset_amount = 15
-        sma.update_trading_info(dummy_info)
-        self.assertEqual(sma.current_process, "buy")
-        self.assertEqual(sma.process_unit[0], 0)
-        self.assertEqual(sma.process_unit[1], 12)  # 12 / STEP
-
-        mock_np.return_value = False
-        sma.current_process = "buy"
-        sma.asset_amount = 15
-        sma.update_trading_info(dummy_info)
-        self.assertEqual(sma.current_process, "sell")
-        self.assertEqual(sma.process_unit[0], 0)
-        self.assertEqual(sma.process_unit[1], 15)  # 15 / STEP
-
     @patch("numpy.isnan")
     @patch("pandas.Series")
     def test_update_trading_info_update_process_when_long_lt_short(self, mock_series, mock_np):
         sma = StrategySma0()
+
         for i in range(sma.LONG):
             sma.closing_price_list.append(500)
 
-        class DummySeriesInverse:
-            """rolling의 window인자에 -1을 곱한 값을 최종 결과로 리턴
-            장기 이동평균 값이 단기 이동평균 값보다 작은 상황을 만들기 위함
-            """
+        class DummyMean:
+            pass
 
-            def rolling(self, window):
-                class DummyRolling:
-                    def __init__(self, value):
-                        self.return_value = value * -1
+        dummy_mean_short = DummyMean()
+        dummy_mean_mid = DummyMean()
+        dummy_mean_long = DummyMean()
 
-                    def mean(self):
-                        class DummyValue:
-                            pass
+        dummy_mean_short.values = [10]
+        dummy_mean_mid.values = [7]
+        dummy_mean_long.values = [5]
 
-                        meanlist = DummyValue()
-                        meanlist.values = [self.return_value]
-                        return meanlist
+        rolling_return_mock = MagicMock()
+        rolling_return_mock.mean.side_effect = [
+            dummy_mean_short,
+            dummy_mean_mid,
+            dummy_mean_long,
+            dummy_mean_short,
+            dummy_mean_mid,
+            dummy_mean_long,
+        ]
+        series_return = MagicMock()
+        series_return.rolling.return_value = rolling_return_mock
+        mock_series.return_value = series_return
 
-                return DummyRolling(window)
-
-        mock_series.return_value = DummySeriesInverse()
-        mock_np.return_value = False
-        sma.initialize(100, 10)
         dummy_info = {
             "closing_price": 500,
         }
+        mock_np.return_value = False
+        sma.initialize(100, 10)
         sma.current_process = "sell"
         sma.balance = 90000
+        expected_price = 90000 / sma.STEP
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "buy")
-        self.assertEqual(sma.process_unit[0], 90000)  # 90000 / STEP
+        self.assertEqual(sma.process_unit[0], expected_price)
         self.assertEqual(sma.process_unit[1], 0)
+
+        self.assertEqual(sma.cross_info[0], {"price": 0, "index": 0})
+        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 60})
 
         # current_process가 "buy" 일때는 업데이트 되지 않아야함
         sma.current_process = "buy"
@@ -155,22 +152,59 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.process_unit[0], 90000)  # 90000 / STEP
         self.assertEqual(sma.process_unit[1], 0)
 
-        # mock_np.return_value가 True 일때는 업데이트 되지 않아야함
-        mock_np.return_value = True
-        sma.current_process = "sell"
-        sma.balance = 30000
-        sma.update_trading_info(dummy_info)
-        self.assertEqual(sma.current_process, "sell")
-        self.assertEqual(sma.process_unit[0], 90000)  # 90000 / STEP
-        self.assertEqual(sma.process_unit[1], 0)
+    @patch("numpy.isnan")
+    @patch("pandas.Series")
+    def test_update_trading_info_update_process_and_cross_info_when_long_lt_short(
+        self, mock_series, mock_np
+    ):
+        sma = StrategySma0()
 
+        for i in range(sma.LONG + sma.STD_K):
+            sma.closing_price_list.append(500)
+
+        class DummyMean:
+            pass
+
+        dummy_mean_short = DummyMean()
+        dummy_mean_mid = DummyMean()
+        dummy_mean_long = DummyMean()
+
+        dummy_mean_short.values = [10]
+        dummy_mean_mid.values = [7]
+        dummy_mean_long.values = []
+
+        for i in range(sma.STD_K):
+            dummy_mean_long.values.append(i)
+
+        dummy_mean_long.values.append(5)
+
+        rolling_return_mock = MagicMock()
+        rolling_return_mock.mean.side_effect = [
+            dummy_mean_short,
+            dummy_mean_mid,
+            dummy_mean_long,
+            dummy_mean_short,
+            dummy_mean_mid,
+            dummy_mean_long,
+        ]
+        series_return = MagicMock()
+        series_return.rolling.return_value = rolling_return_mock
+        mock_series.return_value = series_return
+
+        dummy_info = {
+            "closing_price": 500,
+        }
         mock_np.return_value = False
+        sma.initialize(100, 10)
         sma.current_process = "sell"
-        sma.balance = 30000
+        sma.balance = 90000
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.current_process, "buy")
-        self.assertEqual(sma.process_unit[0], 30000)  # 30000 / STEP
+        self.assertEqual(sma.process_unit[0], 90000 / sma.STEP)
         self.assertEqual(sma.process_unit[1], 0)
+
+        self.assertEqual(sma.cross_info[0], {"price": 0, "index": 80})
+        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 80})
 
     def test_update_trading_info_ignore_info_when_not_yet_initialzed(self):
         sma = StrategySma0()
@@ -307,12 +341,22 @@ class StrategySma0Tests(unittest.TestCase):
         requests = sma.get_request()
         self.assertEqual(requests, None)
 
+    def test_get_request_return_None_when_cross_info_is_invaild(self):
+        sma = StrategySma0()
+        sma.initialize(100, 10)
+        dummy_info = {"closing_price": 2000}
+        sma.closing_price_list.append(dummy_info)
+        sma.cross_info[0] = {"price": 0, "index": 1}
+        requests = sma.get_request()
+        self.assertEqual(requests, None)
+
     def test_get_request_return_correct_request_at_buy_process(self):
         sma = StrategySma0()
         sma.initialize(10000, 100)
-        dummy_info = {}
-        dummy_info["closing_price"] = 20000000
+        dummy_info = {"closing_price": 20000000}
         sma.update_trading_info(dummy_info)
+        sma.cross_info[0] = {"price": 500, "index": 1}
+        sma.cross_info[1] = {"price": 500, "index": 2}
         sma.current_process = "buy"
         sma.process_unit = (4000, 0)
         requests = sma.get_request()
@@ -320,16 +364,14 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 0.0001)
         self.assertEqual(requests[0]["type"], "buy")
 
-        dummy_info = {}
-        dummy_info["closing_price"] = 10000000
+        dummy_info = {"closing_price": 10000000}
         sma.update_trading_info(dummy_info)
         requests = sma.get_request()
         self.assertEqual(requests[0]["price"], 10000000)
         self.assertEqual(requests[0]["amount"], 0.0003)
         self.assertEqual(requests[0]["type"], "buy")
 
-        dummy_info = {}
-        dummy_info["closing_price"] = 100
+        dummy_info = {"closing_price": 100}
         sma.update_trading_info(dummy_info)
         sma.balance = 2000
         requests = sma.get_request()
@@ -340,9 +382,11 @@ class StrategySma0Tests(unittest.TestCase):
     def test_get_request_return_correct_request_at_sell_process(self):
         sma = StrategySma0()
         sma.initialize(10000, 100)
-        dummy_info = {}
-        dummy_info["closing_price"] = 20000000
+        dummy_info = {"closing_price": 20000000}
         sma.update_trading_info(dummy_info)
+        sma.cross_info[0] = {"price": 500, "index": 1}
+        sma.cross_info[1] = {"price": 500, "index": 2}
+
         sma.current_process = "sell"
         sma.asset_amount = 60
         sma.process_unit = (0, 20)
@@ -351,10 +395,9 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 20)
         self.assertEqual(requests[0]["type"], "sell")
 
-        dummy_info = {}
-        dummy_info["closing_price"] = 10000000
-        sma.asset_amount = 10
+        dummy_info = {"closing_price": 10000000}
         sma.update_trading_info(dummy_info)
+        sma.asset_amount = 10
         requests = sma.get_request()
         self.assertEqual(requests[0]["price"], 10000000)
         self.assertEqual(requests[0]["amount"], 10)
@@ -363,6 +406,8 @@ class StrategySma0Tests(unittest.TestCase):
     def test_get_request_return_request_with_cancel_requests(self):
         sma = StrategySma0()
         sma.initialize(10000, 100)
+        sma.cross_info[0] = {"price": 500, "index": 1}
+        sma.cross_info[1] = {"price": 500, "index": 2}
         sma.waiting_requests["mango_id"] = {"request": {"id": "mango_id"}}
         sma.waiting_requests["orange_id"] = {"request": {"id": "orange_id"}}
         sma.is_simulation = True
@@ -383,26 +428,11 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[2]["type"], "sell")
         self.assertEqual(requests[2]["date_time"], "2020-02-25T15:41:09")
 
-    def test_get_request_return_same_datetime_at_simulation(self):
-        sma = StrategySma0()
-        sma.initialize(10000, 100)
-        sma.is_simulation = True
-        dummy_info = {}
-        dummy_info["date_time"] = "2020-02-25T15:41:09"
-        dummy_info["closing_price"] = 20000000
-        sma.update_trading_info(dummy_info)
-        sma.current_process = "sell"
-        sma.asset_amount = 60
-        sma.process_unit = (0, 20)
-        requests = sma.get_request()
-        self.assertEqual(requests[0]["price"], 20000000)
-        self.assertEqual(requests[0]["amount"], 20)
-        self.assertEqual(requests[0]["type"], "sell")
-        self.assertEqual(requests[0]["date_time"], "2020-02-25T15:41:09")
-
     def test_get_request_return_turn_over_when_last_data_is_None(self):
         sma = StrategySma0()
         sma.initialize(10000, 100)
+        sma.cross_info[0] = {"price": 500, "index": 1}
+        sma.cross_info[1] = {"price": 500, "index": 2}
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         sma.update_trading_info(dummy_info)
@@ -433,32 +463,11 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 0)
         self.assertEqual(requests[0]["type"], "buy")
 
-    def test_get_request_return_turn_over_when_process_unit_invalid_at_simulation(self):
-        sma = StrategySma0()
-        sma.initialize(1000, 500)
-        sma.is_simulation = True
-        dummy_info = {}
-        dummy_info["date_time"] = "2020-02-25T15:41:09"
-        dummy_info["closing_price"] = 20000000
-        sma.update_trading_info(dummy_info)
-        sma.current_process = "buy"
-        sma.process_unit = (0, 0)
-        requests = sma.get_request()
-        self.assertEqual(requests[0]["price"], 0)
-        self.assertEqual(requests[0]["amount"], 0)
-        self.assertEqual(requests[0]["type"], "buy")
-
-        sma.current_process = "sell"
-        sma.asset_amount = 60
-        sma.process_unit = (0, 0)
-        requests = sma.get_request()
-        self.assertEqual(requests[0]["price"], 0)
-        self.assertEqual(requests[0]["amount"], 0)
-        self.assertEqual(requests[0]["type"], "sell")
-
     def test_get_request_return_turn_over_when_asset_amount_empty_at_simulation(self):
         sma = StrategySma0()
         sma.initialize(900, 10)
+        sma.cross_info[0] = {"price": 500, "index": 1}
+        sma.cross_info[1] = {"price": 500, "index": 2}
         sma.is_simulation = True
         dummy_info = {}
         dummy_info["date_time"] = "2020-02-25T15:41:09"
