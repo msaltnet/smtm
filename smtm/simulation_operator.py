@@ -51,7 +51,7 @@ class SimulationOperator(Operator):
 
             target_request = self.strategy.get_request()
             if target_request is None:
-                self.logger.error(f"request should be submitted at simulation!")
+                self.logger.error("request should be submitted at simulation!")
                 return
             self.trader.send_request(target_request, send_request_callback)
             self.analyzer.put_requests(target_request)
@@ -61,7 +61,6 @@ class SimulationOperator(Operator):
         self.turn += 1
         self.logger.debug("############# Simulation trading is completed")
         self._start_timer()
-        return True
 
     def get_score(self, callback, index_info=None):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다

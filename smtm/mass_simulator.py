@@ -146,11 +146,7 @@ class MassSimulator:
     def analyze_result(self, result_list, config):
         """수익률 비교 결과를 파일로 저장"""
         title = config["title"]
-        budget = config["budget"]
         strategy_num = config["strategy"]
-        interval = config["interval"]
-        currency = config["currency"]
-        description = config["description"]
         period_list = config["period_list"]
         strategy = StrategyBuyAndHold.NAME if strategy_num == 0 else StrategySma0.NAME
 
@@ -180,8 +176,10 @@ class MassSimulator:
         with open(f"{self.RESULT_FILE_OUTPUT}{title}.result", "w", encoding="utf-8") as f:
             # 기본 정보
             f.write(f"Title: {title}\n")
-            f.write(f"Description: {description}\n")
-            f.write(f"Strategy: {strategy}, Budget: {budget}, Currency: {currency}\n")
+            f.write(f"Description: {config['description']}\n")
+            f.write(
+                f"Strategy: {strategy}, Budget: {config['budget']}, Currency: {config['currency']}\n"
+            )
             f.write(
                 f"{period_list[0]['start']} ~ {period_list[-1]['end']} ({len(final_return_list)})\n"
             )

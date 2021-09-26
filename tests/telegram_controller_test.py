@@ -1,6 +1,7 @@
 import unittest
 import requests
 from smtm import TelegramController
+from smtm import StrategySma0
 from unittest.mock import *
 
 
@@ -430,7 +431,7 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._start_trading("SMA")
 
         tcb._send_text_message.assert_called_once_with(
-            "화폐: mango\n전략: SMA0\n거래소: mango trader\n예산: 500\n자동 거래를 시작할까요?",
+            f"화폐: mango\n전략: {StrategySma0.NAME}\n거래소: mango trader\n예산: 500\n자동 거래를 시작할까요?",
             tcb.setup_list[4]["keyboard"],
         )
         self.assertIsNotNone(tcb.strategy)

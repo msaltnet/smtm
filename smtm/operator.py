@@ -145,7 +145,6 @@ class Operator:
 
         self.logger.debug("trading is completed #####################")
         self._start_timer()
-        return True
 
     def stop(self):
         """거래를 중단한다"""
