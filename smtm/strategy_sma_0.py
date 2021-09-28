@@ -31,9 +31,10 @@ class StrategySma0(Strategy):
     MID = 40
     LONG = 60
     STEP = 1
-    NAME = "SMA0-H"
-    STD_K = 20
+    NAME = "SMA0-I"
+    STD_K = 25
     STD_RATIO = 0.00015
+    PREDICT_N = 3
 
     def __init__(self):
         self.is_intialized = False
@@ -85,10 +86,13 @@ class StrategySma0(Strategy):
             current_idx = len(self.closing_price_list)
             self.logger.info(f"# update process :: {current_idx}")
             self.closing_price_list.append(current_price)
+            feeded_list = copy.deepcopy(self.closing_price_list)
+            for i in range(self.PREDICT_N):
+                feeded_list.append(current_price)
 
-            sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
-            sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
-            sma_long_list = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            sma_short = pd.Series(feeded_list).rolling(self.SHORT).mean().values[-1]
+            sma_mid = pd.Series(feeded_list).rolling(self.MID).mean().values[-1]
+            sma_long_list = pd.Series(feeded_list).rolling(self.LONG).mean().values
             sma_long = sma_long_list[-1]
 
             if np.isnan(sma_long) or current_idx + 1 < self.LONG:
@@ -97,9 +101,14 @@ class StrategySma0(Strategy):
             if sma_short > sma_mid > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
-                if current_idx + 1 > self.LONG + self.STD_K:
+
+                if current_idx > self.LONG:
+                    deviation_count = current_idx - self.LONG
+                    if deviation_count > self.STD_K:
+                        deviation_count = self.STD_K
+
                     std_ratio = self._get_deviation_ratio(
-                        np.std(sma_long_list[-self.STD_K :]), sma_long_list[-1]
+                        np.std(sma_long_list[-deviation_count:]), sma_long_list[-1]
                     )
                     self.logger.info(f"Stand deviation {std_ratio:.6f}======")
                     if std_ratio > self.STD_RATIO:

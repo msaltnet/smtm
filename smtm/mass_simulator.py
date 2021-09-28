@@ -135,7 +135,7 @@ class MassSimulator:
             self.result[idx] = self.run_single(operator)
             diff = datetime.now() - start_time
             print(
-                f"{idx} simulation took {diff.total_seconds()} sec : {period['start']} - {period['end']}"
+                f"{idx} simulation return: {self.result[idx][2]}, {diff.total_seconds()} sec : {period['start']} - {period['end']}"
             )
         self.analyze_result(self.result, config)
         self.print_state(is_end=True)
