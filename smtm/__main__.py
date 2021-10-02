@@ -18,7 +18,7 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1
 import argparse
 from argparse import RawTextHelpFormatter
 import sys
-from . import Simulator, Controller, TelegramController, MassSimulator
+from . import Simulator, Controller, TelegramController, MassSimulator, LogManager
 
 if __name__ == "__main__":
     DEFAULT_MODE = 6
@@ -34,8 +34,7 @@ mode:
     5: make config file for mass simulation
 
 Example) python -m smtm --mode 0
-Example) python -m smtm --mode 1
-Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy 0 --currency BTC
+Example) python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy 0 --currency BTC
 Example) python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 Example) python -m smtm --mode 3
 Example) python -m smtm --mode 4 --config /data/sma0_simulation.json
@@ -52,6 +51,7 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1
     parser.add_argument("--title", help="mass simulation title", default="SMA_2H_week")
     parser.add_argument("--file", help="generated config file name", default=None)
     parser.add_argument("--offset", help="mass simulation period offset", type=int, default=120)
+    parser.add_argument("--log", help="log file name", default=None)
     parser.add_argument(
         "--mode",
         help="0: interactive simulator, 1: single simulation, 2: real trading",
@@ -64,6 +64,8 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1
         default="201220.170000-201220.180000",
     )
     args = parser.parse_args()
+    if args.log is not None:
+        LogManager.change_log_file(args.log)
 
     if args.mode < 2:
         simulator = Simulator(
