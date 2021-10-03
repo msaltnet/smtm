@@ -38,10 +38,12 @@ class LogManagerTests(unittest.TestCase):
     def test_change_log_file_should_change_file_handler(self):
         logger = LogManager.get_logger("orange")
         has_RotatingFileHandler = False
+        old_handler = None
         for handler in logger.handlers:
             if issubclass(type(handler), logging.handlers.RotatingFileHandler):
                 self.assertEqual(handler.baseFilename[-8:], "smtm.log")
                 has_RotatingFileHandler = True
+                old_handler = handler
         self.assertTrue(has_RotatingFileHandler)
 
         has_RotatingFileHandler = False
@@ -49,5 +51,16 @@ class LogManagerTests(unittest.TestCase):
         for handler in logger.handlers:
             if issubclass(type(handler), logging.handlers.RotatingFileHandler):
                 self.assertEqual(handler.baseFilename[-8:], "kiwi.log")
+                has_RotatingFileHandler = True
+                self.assertNotEqual(old_handler, handler)
+                old_handler = handler
+        self.assertTrue(has_RotatingFileHandler)
+
+        has_RotatingFileHandler = False
+        LogManager.change_log_file("kiwi.log")
+        for handler in logger.handlers:
+            if issubclass(type(handler), logging.handlers.RotatingFileHandler):
+                self.assertEqual(handler.baseFilename[-8:], "kiwi.log")
+                self.assertEqual(old_handler, handler)
                 has_RotatingFileHandler = True
         self.assertTrue(has_RotatingFileHandler)
