@@ -48,6 +48,12 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
     parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
     parser.add_argument("--config", help="mass simulation config file", default="")
+    parser.add_argument(
+        "--process",
+        help="process number for mass simulation. default -1 use cpu number",
+        type=int,
+        default=-1,
+    )
     parser.add_argument("--title", help="mass simulation title", default="SMA_2H_week")
     parser.add_argument("--file", help="generated config file name", default=None)
     parser.add_argument("--offset", help="mass simulation period offset", type=int, default=120)
@@ -102,7 +108,7 @@ Example) python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1
             sys.exit(0)
 
         mass = MassSimulator()
-        mass.run(args.config)
+        mass.run(args.config, args.process)
     elif args.mode == 5:
         result = MassSimulator.make_config_json(
             title=args.title,

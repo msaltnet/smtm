@@ -2,11 +2,15 @@
 
 SimulationOperator를 사용해서 대량 시뮬레이션을 수행하는 모듈
 """
+import copy
 import os
 import json
 import time
+import sys
+from multiprocessing import Pool, TimeoutError, current_process
 from datetime import datetime
 from datetime import timedelta
+import psutil
 import pandas as pd
 from . import (
     LogManager,
@@ -30,13 +34,28 @@ class MassSimulator:
     MIN_PRINT_STATE_SEC = 3
 
     def __init__(self):
+        """
+        analyzed_result: 수익률 분석 결과 (평균, 표준편차, 최대, 최소)
+        """
         self.logger = LogManager.get_logger("MassSimulator")
         self.result = []
         self.start = 0
         self.last_print = 0
+        self.config = {}
+        self.analyzed_result = None
+        LogManager.change_log_file("mass-simulation.log")
 
         if os.path.isdir("output") is False:
             os.mkdir("output")
+
+    @staticmethod
+    def memory_usage():
+        """현재 프로세스의 이름과 메모리 사용양을 화면에 출력"""
+        # current process RAM usage
+        process = psutil.Process()
+        rss = process.memory_info().rss / 2 ** 20  # Bytes to MB
+        print(f"[{current_process().name}] memory usage: {rss: 10.5f} MB")
+        # print(f"[{current_process().name}] memory usage: {p.memory_info().rss} MB")
 
     @staticmethod
     def _load_config(config_file):
@@ -50,6 +69,14 @@ class MassSimulator:
         now = datetime.now()
         now_string = now.strftime(iso_format)
         if is_start:
+            print("Mass Simulation ========================================")
+            print(f"Title: {self.config['title']}, Currency: {self.config['currency']}")
+            print(f"Description: {self.config['description']}")
+            print(f"Budget: {self.config['budget']}, Strategy: {self.config['strategy']}")
+            print(
+                f"{self.config['period_list'][0]['start']} ~ {self.config['period_list'][-1]['end']} ({len(self.config['period_list'])})"
+            )
+            print("========================================================")
             self.start = self.last_print = now
             print(f"{now_string}     +0          simulation start!")
             return
@@ -57,6 +84,12 @@ class MassSimulator:
         if is_end:
             total_diff = now - self.start
             print(f"{now_string}     +{total_diff.total_seconds():<10} simulation completed")
+            print("Result Summary =========================================")
+            print(f"수익률 평균: {self.analyzed_result[0]:8}")
+            print(f"수익률 편차: {self.analyzed_result[1]:8}")
+            print(f"수익률 최대: {self.analyzed_result[2]:8}")
+            print(f"수익률 최소: {self.analyzed_result[3]:8}")
+            print("========================================================")
             return
 
         delta = now - self.last_print
@@ -66,14 +99,14 @@ class MassSimulator:
             total_diff = now - self.start
             print(f"{now_string}     +{total_diff.total_seconds():<10} simulation is running")
 
-    def run_single(self, operator):
+    @staticmethod
+    def run_single(operator):
         """시뮬레이션 1회 실행"""
         operator.start()
         while operator.state == "running":
-            self.print_state()
             time.sleep(0.1)
 
-        last_report = None
+        last_report = (None, None, None, None)
 
         def get_score_callback(report):
             nonlocal last_report
@@ -114,31 +147,96 @@ class MassSimulator:
         operator.set_interval(interval)
         return operator
 
-    def run(self, config_file):
+    def run(self, config_file, process=-1):
         """설정 파일의 내용으로 기간을 변경하며 시뮬레이션 진행"""
-        config = self._load_config(config_file)
-        LogManager.set_stream_level(30)
-        title = config["title"]
-        budget = config["budget"]
-        strategy = config["strategy"]
-        interval = config["interval"]
-        currency = config["currency"]
-        period_list = config["period_list"]
-        self.result = [None for x in range(len(period_list))]
+        self.config = self._load_config(config_file)
+        process_num = process
+        if process_num < 1:
+            process_num = os.cpu_count()
+
+        # 시뮬레이션 준비
+        config_list = []
+        period_object_list = []
+        for i in range(len(self.config["period_list"])):
+            period_object_list.append({"idx": i, "period": self.config["period_list"][i]})
+        separated_periods = self.make_chunk(period_object_list, process_num)
+        for i in range(process_num):
+            config_list.append(
+                {
+                    "title": self.config["title"],
+                    "budget": self.config["budget"],
+                    "strategy": self.config["strategy"],
+                    "interval": self.config["interval"],
+                    "currency": self.config["currency"],
+                    "partial_idx": i,
+                    "partial_period_list": separated_periods[i],
+                }
+            )
+
+        # 시뮬레이션 수행
+        self.result = [None for x in range(len(self.config["period_list"]))]
         self.print_state(is_start=True)
-        for idx, period in enumerate(period_list):
-            tag = f"MASS-{title}-{idx}"
-            operator = self.get_initialized_operator(
-                budget, strategy, interval, currency, period["start"], period["end"], tag
-            )
-            start_time = datetime.now()
-            self.result[idx] = self.run_single(operator)
-            diff = datetime.now() - start_time
-            print(
-                f"{idx} simulation return: {self.result[idx][2]}, {diff.total_seconds()} sec : {period['start']} - {period['end']}"
-            )
-        self.analyze_result(self.result, config)
+        self._execute_simulation(config_list, process_num)
+
+        # 결과 분석
+        self.analyze_result(self.result, self.config)
         self.print_state(is_end=True)
+
+    def _execute_simulation(self, config_list, process_num):
+        is_running = True
+        result_list = []
+        self.memory_usage()
+        with Pool(processes=process_num) as pool:
+            try:
+                async_result = pool.map_async(
+                    MassSimulator._execute_single_process_simulation, config_list
+                )
+                while is_running:
+                    try:
+                        result_list = async_result.get(timeout=0.5)
+                        is_running = False
+                    except TimeoutError:
+                        self.print_state()
+
+                for result in result_list:
+                    self._update_result(result)
+            except KeyboardInterrupt:
+                print("Terminating......")
+                sys.exit(0)
+
+    def _update_result(self, partial_result):
+        for result in partial_result:
+            idx = result["idx"]
+            self.result[idx] = result["result"]
+
+    @staticmethod
+    def _execute_single_process_simulation(config):
+        LogManager.set_stream_level(30)
+        LogManager.change_log_file(f"mass-simulation-{config['partial_idx']}.log")
+        period_list = config["partial_period_list"]
+        result_list = []
+        MassSimulator.memory_usage()
+        print(f"partial simulation start @{current_process().name}")
+        for period in period_list:
+            tag = f"MASS-{config['title']}-{period['idx']}"
+            operator = MassSimulator.get_initialized_operator(
+                config["budget"],
+                config["strategy"],
+                config["interval"],
+                config["currency"],
+                period["period"]["start"],
+                period["period"]["end"],
+                tag,
+            )
+            try:
+                report = MassSimulator.run_single(operator)
+                result_list.append({"idx": period["idx"], "result": report})
+                print(f"     #{period['idx']} return: {report[2]}")
+            except KeyboardInterrupt:
+                print(f"Terminating......@{current_process().name}")
+                operator.stop()
+
+        return result_list
 
     @staticmethod
     def _round(num):
@@ -173,6 +271,12 @@ class MassSimulator:
 
         # 순간 최저 수익율
         df_mix = dataframe.sort_values(by="min_return")
+        self.analyzed_result = (
+            self._round(dataframe["final_return"].mean()),
+            self._round(dataframe["final_return"].std()),
+            self._round(df_final["final_return"].iloc[0]),
+            self._round(df_final["final_return"].iloc[-1]),
+        )
 
         with open(f"{self.RESULT_FILE_OUTPUT}{title}.result", "w", encoding="utf-8") as result_file:
             # 기본 정보
@@ -185,13 +289,13 @@ class MassSimulator:
                 f"{period_list[0]['start']} ~ {period_list[-1]['end']} ({len(final_return_list)})\n"
             )
 
-            result_file.write(f"수익률 평균: {self._round(dataframe['final_return'].mean()):8}\n")
-            result_file.write(f"수익률 편차: {self._round(dataframe['final_return'].std()):8}\n")
+            result_file.write(f"수익률 평균: {self.analyzed_result[0]:8}\n")
+            result_file.write(f"수익률 편차: {self.analyzed_result[1]:8}\n")
             result_file.write(
-                f"수익률 최대: {self._round(df_final['final_return'].iloc[0]):8}, {df_final['final_return'].index[0]:3}\n"
+                f"수익률 최대: {self.analyzed_result[2]:8}, {df_final['final_return'].index[0]:3}\n"
             )
             result_file.write(
-                f"수익률 최소: {self._round(df_final['final_return'].iloc[-1]):8}, {df_final['final_return'].index[-1]:3}\n"
+                f"수익률 최소: {self.analyzed_result[3]:8}, {df_final['final_return'].index[-1]:3}\n"
             )
 
             if len(final_return_list) > 10:
@@ -268,3 +372,24 @@ class MassSimulator:
         with open(filepath, "w", encoding="utf-8") as dump_file:
             json.dump(config, dump_file)
         return filepath
+
+    @staticmethod
+    def make_chunk(original, num):
+        """전달 받은 리스트를 num개로 분할하여 반환"""
+        if len(original) < num or num == 1:
+            return [copy.deepcopy(original)]
+
+        div = divmod(len(original), num)
+        result = []
+        last = 0
+
+        for i in range(num):
+            if i < div[1]:
+                count = div[0] + 1
+            else:
+                count = div[0]
+
+            result.append(original[last : last + count])
+            last += count
+
+        return result
