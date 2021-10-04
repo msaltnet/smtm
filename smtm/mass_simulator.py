@@ -154,6 +154,9 @@ class MassSimulator:
         if process_num < 1:
             process_num = os.cpu_count()
 
+        if process_num > len(self.config["period_list"]):
+            process_num = len(self.config["period_list"])
+
         # 시뮬레이션 준비
         config_list = []
         period_object_list = []
