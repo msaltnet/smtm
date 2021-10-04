@@ -236,13 +236,13 @@ class DataRepositoryTests(unittest.TestCase):
 
     def test__is_equal_should_return_correct_judgement(self):
         dummy_data_a = [
-            {"market": "mango", "date_time": "2020-02-20T17:00:15", "period": 30},
-            {"market": "apple", "date_time": "2020-02-20T18:00:15", "period": 30},
-            {"market": "kiwi", "date_time": "2020-02-20T19:00:15", "period": 30},
+            {"market": "mango", "date_time": "2020-02-20T17:00:15", "period": 30, "recovered": 0},
+            {"market": "apple", "date_time": "2020-02-20T18:00:15", "period": 30, "recovered": 0},
+            {"market": "kiwi", "date_time": "2020-02-20T19:00:15", "period": 30, "recovered": 0},
         ]
         dummy_data_b = [
-            {"market": "mango", "date_time": "2020-02-20T17:00:15", "period": 30},
-            {"market": "apple", "date_time": "2020-02-20T18:00:15", "period": 30},
+            {"market": "mango", "date_time": "2020-02-20T17:00:15", "period": 30, "recovered": 0},
+            {"market": "apple", "date_time": "2020-02-20T18:00:15", "period": 30, "recovered": 0},
         ]
         dummy_data_c = [
             {"market": "mango", "date_time": "2020-02-20T17:00:15"},

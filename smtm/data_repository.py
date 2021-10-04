@@ -2,6 +2,7 @@
 현재는 업비트의 1분단위 거래 내역만 사용 가능
 """
 import copy
+import time
 from datetime import datetime, timedelta
 import requests
 from .log_manager import LogManager
@@ -32,7 +33,7 @@ class DataRepository:
         if len(db_data) > total_count:
             raise UserWarning("Something wrong in DB")
 
-        if total_count == len(db_data):
+        if not self.verify_mode and total_count == len(db_data):
             self.logger.info(f"from database: {total_count}")
             self._convert_to_upbit_datetime_string(db_data)
             return db_data
@@ -61,16 +62,23 @@ class DataRepository:
 
     @staticmethod
     def _is_equal(db_data, fetch_data):
-        if len(db_data) != len(fetch_data):
+        target_db_data = copy.deepcopy(db_data)
+        target_fetch_data = copy.deepcopy(fetch_data)
+        if len(target_db_data) != len(target_fetch_data):
             print("### _is_equal: False, size")
             return False
 
-        for data in db_data:
+        for data in target_db_data:
             del data["period"]
+            del data["recovered"]
 
-        DataRepository._convert_to_upbit_datetime_string(db_data)
-        print(f"### _is_equal: {db_data == fetch_data}")
-        return db_data == fetch_data
+        for data in target_fetch_data:
+            if "recovered" in data:
+                del data["recovered"]
+
+        DataRepository._convert_to_upbit_datetime_string(target_db_data)
+        print(f"### _is_equal: {target_db_data == target_fetch_data}")
+        return target_db_data == target_fetch_data
 
     def _query(self, start, end, market):
         start_datetime = start.replace("T", " ")
@@ -100,6 +108,7 @@ class DataRepository:
                 else:
                     fetch_data = query_data
             else:
+                self.logger.info("fetch from upbit")
                 fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
                 fetch_data = self._recovery_upbit_data(fetch_data, dt[0], dt[2], market)
                 self._update(fetch_data)
@@ -122,18 +131,19 @@ class DataRepository:
                 item_dt = self._convert_to_dt(data[idx]["date_time"])
             delta = current_dt - item_dt
             if delta.total_seconds() > 0:
-                # drop
+                # 기준보다 과거의 데이터 저장, 첫 데이터가 깨진 경우 사용
+                self.logger.debug(f"pass data:  {idx}")
                 last_item = copy.deepcopy(data[idx])
                 idx += 1
                 continue
 
             if delta.total_seconds() == 0:
-                # keep
+                # 일치하는 데이터 복사
                 new_data.append(copy.deepcopy(data[idx]))
                 last_item = copy.deepcopy(data[idx])
                 idx += 1
             else:
-                # recovery from last
+                # 일치할때까지 저장된 과거의 데이터로 채움
                 if last_item is None:
                     raise UserWarning("something wrong in recovery data")
 
@@ -154,6 +164,21 @@ class DataRepository:
         self.logger.error(f"Broken data {dt}, {market}, {period}")
 
     def _fetch_from_upbit_up_to_200(self, end, count, market):
+        result = None
+        while result is None:
+            try:
+                result = self._fetch_from_upbit_up_to_200_impl(end, count, market)
+            except UserWarning as msg:
+                if str(msg).find("429 Client Error: Too Many Requests") == 0:
+                    self.logger.warning("Try again for Upbit throttling")
+                    time.sleep(0.5)
+                else:
+                    self.logger.warning(msg)
+                    raise UserWarning("Fail get data from sever") from msg
+
+        return result
+
+    def _fetch_from_upbit_up_to_200_impl(self, end, count, market):
         """업비트 서버에서 최대 200개까지 데이터 조회해서 반환
         1, 3, 5, 15, 10, 30, 60, 240분 가능
         https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
@@ -189,7 +214,7 @@ class DataRepository:
             raise UserWarning("Fail get data from sever") from error
         except requests.exceptions.HTTPError as error:
             self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
+            raise UserWarning(f"{error}") from error
         except requests.exceptions.RequestException as error:
             self.logger.error(error)
             raise UserWarning("Fail get data from sever") from error
