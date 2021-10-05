@@ -51,6 +51,7 @@ class MassSimulatorAnalyzeTests(unittest.TestCase):
             (0, 0, 2.25, 0, 0, 0, 1.99, -1.88),
             (0, 0, 2.01, 0, 0, 0, 4.99, 2.88),
         ]
+        mass.draw_graph = MagicMock()
         mass.analyze_result(dummy_result, dummy_config)
         self.assertEqual(mock_file.call_args_list[1][0][0], "output/BnH-2Hour.result")
         self.assertEqual(mock_file.call_args_list[1][0][1], "w")
@@ -81,6 +82,18 @@ class MassSimulatorAnalyzeTests(unittest.TestCase):
         self.assertEqual(mass.analyzed_result[1], 0.595)
         self.assertEqual(mass.analyzed_result[2], 2.25)
         self.assertEqual(mass.analyzed_result[3], 1.12)
+        mass.draw_graph.assert_called_with(
+            [1.12, 2.25, 2.01], mean=1.793, filename="output/BnH-2Hour.jpg"
+        )
+
+    @patch("matplotlib.pyplot.bar")
+    @patch("matplotlib.pyplot.plot")
+    @patch("matplotlib.pyplot.savefig")
+    def test_draw_graph_should_call_plt_correctly(self, mock_savefig, mock_plot, mock_bar):
+        MassSimulator.draw_graph([1.12, 2.25, 2.01], mean=1.793, filename="mango.jpg")
+        mock_bar.assert_called_once_with([0, 1, 2], [1.12, 2.25, 2.01])
+        mock_plot.assert_called_once_with([1.793, 1.793, 1.793], "r")
+        mock_savefig.assert_called_once_with("mango.jpg", dpi=300, pad_inches=0.25)
 
 
 class MassSimulatorInitializeTests(unittest.TestCase):

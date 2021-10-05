@@ -12,6 +12,7 @@ from datetime import datetime
 from datetime import timedelta
 import psutil
 import pandas as pd
+import matplotlib.pyplot as plt
 from . import (
     LogManager,
     DateConverter,
@@ -335,6 +336,21 @@ class MassSimulator:
                     f"{count:4}, {index:6}, {self._round(row['final_return']):11}, {self._round(row['max_return']):11}, {self._round(row['min_return']):11}\n"
                 )
 
+            self.draw_graph(
+                final_return_list,
+                mean=self._round(dataframe["final_return"].mean()),
+                filename=f"{self.RESULT_FILE_OUTPUT}{title}.jpg",
+            )
+
+    @staticmethod
+    def draw_graph(return_list, mean=0, filename="mass-simulation-result.jpg"):
+        """수익률 막대 그래프를 파일로 저장"""
+        idx = list(range(len(return_list)))
+        mean = [mean for i in range(len(return_list))]
+        plt.bar(idx, return_list)
+        plt.plot(mean, "r")
+        plt.savefig(filename, dpi=300, pad_inches=0.25)
+
     @staticmethod
     def make_config_json(
         title="",
@@ -346,7 +362,22 @@ class MassSimulator:
         offset_min=120,
         filepath=None,
     ):
-        """대량 시뮬레이션을 위한 설정 파일 생성"""
+        """대량 시뮬레이션을 위한 설정 파일 생성
+        config: {
+            "title": 타이틀
+            "description": 시뮬레이션 설명
+            "budget": 예산
+            "strategy": 사용할 전략 번호
+            "interval": 거래 간의 시간 간격
+            "currency": 암호 화폐 종류
+            "period_list": [
+                {
+                    "start": 시뮬레이션 기간 시작
+                    "end": 시뮬레이션 기간 종료
+                }
+            ],
+        }
+        """
         iso_format = "%Y-%m-%dT%H:%M:%S"
         config = {
             "title": title,

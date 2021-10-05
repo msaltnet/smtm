@@ -73,6 +73,8 @@ class SimulationOperator(Operator):
                 cumulative_return : 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
                 graph: 그래프 파일 패스
+                return_high: 기간내 최고 수익률
+                return_low: 기간내 최저 수익률
             )
         """
 
