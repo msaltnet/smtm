@@ -2,7 +2,6 @@
 
 import copy
 from datetime import datetime
-import math
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
@@ -27,14 +26,10 @@ class StrategySma0(Strategy):
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     COMMISSION_RATIO = 0.0005
-    SHORT = 10
-    MID = 40
-    LONG = 60
-    STEP = 1
-    NAME = "SMA0-I"
-    STD_K = 25
-    STD_RATIO = 0.00015
-    PREDICT_N = 3
+    SHORT = 5
+    LONG = 20
+    STEP = 3
+    NAME = "SMA0"
 
     def __init__(self):
         self.is_intialized = False
@@ -51,7 +46,6 @@ class StrategySma0(Strategy):
         self.process_unit = (0, 0)  # budget and amount
         self.logger = LogManager.get_logger(__class__.__name__)
         self.waiting_requests = {}
-        self.cross_info = [{"price": 0, "index": 0}, {"price": 0, "index": 0}]
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트
@@ -73,57 +67,21 @@ class StrategySma0(Strategy):
         self.data.append(copy.deepcopy(info))
         self.__update_process(info)
 
-    @staticmethod
-    def _get_deviation_ratio(std, last):
-        if last == 0:
-            return 0
-        ratio = std / last * 1000000
-        return math.floor(ratio) / 1000000
-
     def __update_process(self, info):
         try:
-            current_price = info["closing_price"]
-            current_idx = len(self.closing_price_list)
-            self.logger.info(f"# update process :: {current_idx}")
-            self.closing_price_list.append(current_price)
-            feeded_list = copy.deepcopy(self.closing_price_list)
-            for i in range(self.PREDICT_N):
-                feeded_list.append(current_price)
-
-            sma_short = pd.Series(feeded_list).rolling(self.SHORT).mean().values[-1]
-            sma_mid = pd.Series(feeded_list).rolling(self.MID).mean().values[-1]
-            sma_long_list = pd.Series(feeded_list).rolling(self.LONG).mean().values
-            sma_long = sma_long_list[-1]
-
-            if np.isnan(sma_long) or current_idx + 1 < self.LONG:
+            self.closing_price_list.append(info["closing_price"])
+            sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
+            sma_long = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values[-1]
+            if np.isnan(sma_short) or np.isnan(sma_long):
                 return
-
-            if sma_short > sma_mid > sma_long and self.current_process != "buy":
+            if sma_short > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
-
-                if current_idx > self.LONG:
-                    deviation_count = current_idx - self.LONG
-                    if deviation_count > self.STD_K:
-                        deviation_count = self.STD_K
-
-                    std_ratio = self._get_deviation_ratio(
-                        np.std(sma_long_list[-deviation_count:]), sma_long_list[-1]
-                    )
-                    self.logger.info(f"Stand deviation {std_ratio:.6f}======")
-                    if std_ratio > self.STD_RATIO:
-                        self.cross_info[1] = {"price": 0, "index": current_idx}
-                        self.logger.info(f"SKIP BUY !!! ====== {current_idx}")
-            elif sma_short < sma_mid < sma_long and self.current_process != "sell":
+                self.logger.debug(f"process_unit updated {self.process_unit}")
+            elif sma_short < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
-            else:
-                return
-
-            self.cross_info[0] = self.cross_info[1]
-            self.cross_info[1] = {"price": current_price, "index": current_idx}
-            self.logger.debug(f"process_unit updated {self.process_unit}")
-
+                self.logger.debug(f"process_unit updated {self.process_unit}")
         except (KeyError, TypeError):
             self.logger.warning("invalid info")
 
@@ -213,15 +171,11 @@ class StrategySma0(Strategy):
                     }
                 ]
 
-            request = None
-            if self.cross_info[0]["price"] <= 0 or self.cross_info[1]["price"] <= 0:
-                request = None
-            elif self.current_process == "buy":
+            if self.current_process == "buy":
                 request = self.__create_buy()
             elif self.current_process == "sell":
                 request = self.__create_sell()
-
-            if request is None:
+            else:
                 if self.is_simulation:
                     return [
                         {
@@ -233,9 +187,13 @@ class StrategySma0(Strategy):
                         }
                     ]
                 return None
+
+            if request is None:
+                return None
             request["amount"] = round(request["amount"], 4)
             request["date_time"] = now
-            self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
+            self.logger.info(f"[REQ] id: {request['id']} =====================")
+            self.logger.info(f"type: {request['type']}")
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
             final_requests = []
