@@ -51,7 +51,7 @@ class SimulationOperator(Operator):
 
             target_request = self.strategy.get_request()
             if target_request is None:
-                self.logger.error(f"request should be submitted at simulation!")
+                self.logger.error("request should be submitted at simulation!")
                 return
             self.trader.send_request(target_request, send_request_callback)
             self.analyzer.put_requests(target_request)
@@ -61,7 +61,6 @@ class SimulationOperator(Operator):
         self.turn += 1
         self.logger.debug("############# Simulation trading is completed")
         self._start_timer()
-        return True
 
     def get_score(self, callback, index_info=None):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
@@ -74,6 +73,8 @@ class SimulationOperator(Operator):
                 cumulative_return : 기준 시점부터 누적 수익률
                 price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
                 graph: 그래프 파일 패스
+                return_high: 기간내 최고 수익률
+                return_low: 기간내 최저 수익률
             )
         """
 
