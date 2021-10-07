@@ -49,6 +49,10 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
             "2020-09-01T00:00:00",
             "2020-11-01T00:00:00",
             "2021-01-01T00:00:00",
+            "2019-03-01T00:00:00",
+            "2020-05-01T00:00:00",
+            "2020-07-01T00:00:00",
+            "2021-01-01T00:00:00",
         ]
 
         for item in base_datetime:

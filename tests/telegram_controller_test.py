@@ -1,6 +1,7 @@
 import unittest
 import requests
-from smtm import TelegramController, StrategySma0
+from smtm import TelegramController
+from smtm import StrategySma0
 from unittest.mock import *
 
 

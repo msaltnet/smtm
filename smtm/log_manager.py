@@ -12,10 +12,11 @@ class LogManager:
     파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공하는 클래스
     """
 
+    log_filename = "smtm.log"
     file_formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)5.5s %(name)20.20s %(lineno)5d - %(message)s"
     )
-    file_handler = RotatingFileHandler(filename="smtm.log", maxBytes=1000000, backupCount=10)
+    file_handler = RotatingFileHandler(filename=log_filename, maxBytes=1000000, backupCount=10)
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
     stream_formatter = logging.Formatter(
@@ -38,7 +39,7 @@ class LogManager:
         logger.addHandler(cls.stream_handler)
         logger.addHandler(cls.file_handler)
         logger.setLevel(logging.DEBUG)
-        cls.logger_map[name] = True
+        cls.logger_map[name] = logger
         return logger
 
     @classmethod
@@ -47,3 +48,22 @@ class LogManager:
         스트림 핸들러의 레벨을 설정한다
         """
         cls.stream_handler.setLevel(level)
+
+    @classmethod
+    def change_log_file(cls, log_file="smtm.log"):
+        """
+        파일 핸들러의 로그 파일을 변경한다
+        """
+        if log_file == cls.log_filename:
+            return
+
+        new_file_handler = RotatingFileHandler(filename=log_file, maxBytes=1000000, backupCount=10)
+        new_file_handler.setLevel(logging.DEBUG)
+        new_file_handler.setFormatter(cls.file_formatter)
+
+        for logger in cls.logger_map.values():
+            logger.removeHandler(cls.file_handler)
+            logger.addHandler(new_file_handler)
+
+        cls.log_filename = log_file
+        cls.file_handler = new_file_handler

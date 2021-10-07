@@ -2,6 +2,7 @@
 
 import copy
 from datetime import datetime
+import math
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
@@ -28,9 +29,12 @@ class StrategySma0(Strategy):
     COMMISSION_RATIO = 0.0005
     SHORT = 10
     MID = 40
-    LONG = 60
+    LONG = 80
     STEP = 1
     NAME = "SMA0-F"
+    STD_K = 20
+    STD_RATIO = 0.00015
+    PREDICT_N = 3
 
     def __init__(self):
         self.is_intialized = False
@@ -48,7 +52,6 @@ class StrategySma0(Strategy):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.waiting_requests = {}
         self.cross_info = [{"price": 0, "index": 0}, {"price": 0, "index": 0}]
-        self.breaking_count = 0
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트
@@ -70,27 +73,48 @@ class StrategySma0(Strategy):
         self.data.append(copy.deepcopy(info))
         self.__update_process(info)
 
-    def __update_process(self, info):
-        # if self.breaking_count > 0:
-        #     self.breaking_count -= 1
+    @staticmethod
+    def _get_deviation_ratio(std, last):
+        if last == 0:
+            return 0
+        ratio = std / last * 1000000
+        return math.floor(ratio) / 1000000
 
+    def __update_process(self, info):
         try:
             current_price = info["closing_price"]
             current_idx = len(self.closing_price_list)
             self.logger.info(f"# update process :: {current_idx}")
             self.closing_price_list.append(current_price)
+            feeded_list = copy.deepcopy(self.closing_price_list)
+            for i in range(self.PREDICT_N):
+                feeded_list.append(current_price)
 
-            sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
-            sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
-            sma_long = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values[-1]
+            sma_short = pd.Series(feeded_list).rolling(self.SHORT).mean().values[-1]
+            sma_mid = pd.Series(feeded_list).rolling(self.MID).mean().values[-1]
+            sma_long_list = pd.Series(feeded_list).rolling(self.LONG).mean().values
+            sma_long = sma_long_list[-1]
 
-            if np.isnan(sma_short) or np.isnan(sma_long) or current_idx + 1 < self.LONG:
+            if np.isnan(sma_long) or current_idx + 1 < self.LONG:
                 return
 
-            if sma_short > sma_mid and sma_mid > sma_long and self.current_process != "buy":
+            if sma_short > sma_mid > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
-            elif sma_short < sma_mid and sma_mid < sma_long and self.current_process != "sell":
+
+                if current_idx > self.LONG:
+                    deviation_count = current_idx - self.LONG
+                    if deviation_count > self.STD_K:
+                        deviation_count = self.STD_K
+
+                    std_ratio = self._get_deviation_ratio(
+                        np.std(sma_long_list[-deviation_count:]), sma_long_list[-1]
+                    )
+                    self.logger.info(f"Stand deviation {std_ratio:.6f}======")
+                    if std_ratio > self.STD_RATIO:
+                        self.cross_info[1] = {"price": 0, "index": current_idx}
+                        self.logger.info(f"SKIP BUY !!! ====== {current_idx}")
+            elif sma_short < sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
             else:
@@ -141,7 +165,6 @@ class StrategySma0(Strategy):
                     self.asset_amount += result["amount"]
                 elif result["type"] == "sell":
                     self.asset_amount -= result["amount"]
-                    # self.breaking_count = self.MID
 
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
@@ -189,50 +212,13 @@ class StrategySma0(Strategy):
                     }
                 ]
 
-            self.logger.debug(f"cross info {self.cross_info}")
-            # skip invalid cross info
+            request = None
             if self.cross_info[0]["price"] <= 0 or self.cross_info[1]["price"] <= 0:
-                self.logger.info(f"SKIP !!! ===== {len(self.closing_price_list) - 1}")
-                if self.is_simulation:
-                    return [
-                        {
-                            "id": DateConverter.timestamp_id(),
-                            "type": "buy",
-                            "price": 0,
-                            "amount": 0,
-                            "date_time": now,
-                        }
-                    ]
-                return None
-
-            if self.current_process == "buy":
-                # current_idx = len(self.closing_price_list) - 1
-                # if self.breaking_count > 0:
-                #     self.cross_info[0]["price"] = 0
-                #     self.logger.info(f"Breaking Time !!! ===== {current_idx}")
-                #     request = None
-                # elif current_idx > self.cross_info[1]["index"] + 1:
-                #     self.cross_info[0]["price"] = 0
-                #     self.logger.info(
-                #         f"TOO LATE!!! ===== {current_idx}, {self.cross_info[1]['index']}"
-                #     )
-                #     request = None
-                # else:
+                request = None
+            elif self.current_process == "buy":
                 request = self.__create_buy()
             elif self.current_process == "sell":
                 request = self.__create_sell()
-            else:
-                if self.is_simulation:
-                    return [
-                        {
-                            "id": DateConverter.timestamp_id(),
-                            "type": "buy",
-                            "price": 0,
-                            "amount": 0,
-                            "date_time": now,
-                        }
-                    ]
-                return None
 
             if request is None:
                 if self.is_simulation:
@@ -248,8 +234,7 @@ class StrategySma0(Strategy):
                 return None
             request["amount"] = round(request["amount"], 4)
             request["date_time"] = now
-            self.logger.info(f"[REQ] id: {request['id']} =====================")
-            self.logger.info(f"type: {request['type']}")
+            self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
             final_requests = []
