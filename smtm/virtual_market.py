@@ -1,8 +1,6 @@
 """업비트 거래소의 과거 거래 정보를 이용한 가상 거래소"""
 from datetime import datetime, timedelta
-import requests
 from .data_repository import DataRepository
-from .date_converter import DateConverter
 from .log_manager import LogManager
 
 

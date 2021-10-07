@@ -2,6 +2,7 @@
 
 import copy
 from datetime import datetime
+import math
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
@@ -12,7 +13,6 @@ from .date_converter import DateConverter
 class StrategySma0(Strategy):
     """
     이동 평균선을 이용한 기본 전략
-
     is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
     result: 거래 요청 결과 리스트
@@ -31,6 +31,8 @@ class StrategySma0(Strategy):
     LONG = 80
     STEP = 1
     NAME = "SMA0-E"
+    STD_K = 20
+    STD_RATIO = 0.00015
 
     def __init__(self):
         self.is_intialized = False
@@ -47,10 +49,10 @@ class StrategySma0(Strategy):
         self.process_unit = (0, 0)  # budget and amount
         self.logger = LogManager.get_logger(__class__.__name__)
         self.waiting_requests = {}
+        self.cross_info = [{"price": 0, "index": 0}, {"price": 0, "index": 0}]
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트
-
         Returns: 거래 정보 딕셔너리
         {
             "market": 거래 시장 종류 BTC
@@ -68,31 +70,54 @@ class StrategySma0(Strategy):
         self.data.append(copy.deepcopy(info))
         self.__update_process(info)
 
+    @staticmethod
+    def _get_deviation_ratio(std, last):
+        if last == 0:
+            return 0
+        ratio = std / last * 1000000
+        return math.floor(ratio) / 1000000
+
     def __update_process(self, info):
         try:
-            self.closing_price_list.append(info["closing_price"])
+            current_price = info["closing_price"]
             current_idx = len(self.closing_price_list)
             self.logger.info(f"# update process :: {current_idx}")
+            self.closing_price_list.append(current_price)
+
             sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
             sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
-            sma_long = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values[-1]
+            sma_long_list = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            sma_long = sma_long_list[-1]
 
-            if np.isnan(sma_short) or np.isnan(sma_long) or current_idx < self.LONG:
+            if np.isnan(sma_long) or current_idx + 1 < self.LONG:
                 return
+
             if sma_short > sma_mid and sma_mid > sma_long and self.current_process != "buy":
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
-                self.logger.debug(f"process_unit updated {self.process_unit}")
+                if current_idx + 1 > self.LONG + self.STD_K:
+                    std_ratio = self._get_deviation_ratio(
+                        np.std(sma_long_list[-self.STD_K :]), sma_long_list[-1]
+                    )
+                    self.logger.info(f"Stand deviation {std_ratio:.6f}======")
+                    if std_ratio > self.STD_RATIO:
+                        self.cross_info[1] = {"price": 0, "index": current_idx}
+                        self.logger.info(f"SKIP BUY !!! ====== {current_idx}")
             elif sma_short < sma_mid and sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
-                self.logger.debug(f"process_unit updated {self.process_unit}")
+            else:
+                return
+
+            self.cross_info[0] = self.cross_info[1]
+            self.cross_info[1] = {"price": current_price, "index": current_idx}
+            self.logger.debug(f"process_unit updated {self.process_unit}")
+
         except (KeyError, TypeError):
             self.logger.warning("invalid info")
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트
-
         request: 거래 요청 정보
         result:
         {
@@ -141,7 +166,6 @@ class StrategySma0(Strategy):
 
     def get_request(self):
         """이동 평균선을 이용한 기본 전략
-
         장기 이동 평균선과 단기 이동 평균선이 교차할 때부터 n회에 걸쳐 매매 주문 요청
         교차 지점과 거래 단위는 update_trading_info에서 결정
         사전에 결정된 정보를 바탕으로 매매 요청 생성
@@ -176,6 +200,21 @@ class StrategySma0(Strategy):
                     }
                 ]
 
+            # skip invalid cross info
+            if self.cross_info[0]["price"] <= 0 or self.cross_info[1]["price"] <= 0:
+                self.logger.info(f"SKIP !!! ===== {len(self.closing_price_list) - 1}")
+                if self.is_simulation:
+                    return [
+                        {
+                            "id": DateConverter.timestamp_id(),
+                            "type": "buy",
+                            "price": 0,
+                            "amount": 0,
+                            "date_time": now,
+                        }
+                    ]
+                return None
+
             if self.current_process == "buy":
                 request = self.__create_buy()
             elif self.current_process == "sell":
@@ -194,6 +233,16 @@ class StrategySma0(Strategy):
                 return None
 
             if request is None:
+                if self.is_simulation:
+                    return [
+                        {
+                            "id": DateConverter.timestamp_id(),
+                            "type": "buy",
+                            "price": 0,
+                            "amount": 0,
+                            "date_time": now,
+                        }
+                    ]
                 return None
             request["amount"] = round(request["amount"], 4)
             request["date_time"] = now
