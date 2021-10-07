@@ -30,7 +30,7 @@ class Analyzer:
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     OUTPUT_FOLDER = "output/"
     RECORD_INTERVAL = 60
-    SMA = (10, 40, 60)
+    SMA = (10, 30, 80)
 
     def __init__(self, sma_s=None, sma_l=None):
         self.request_list = []

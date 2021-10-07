@@ -261,7 +261,8 @@ good-names=i,
            TEST_FILE,
            TOKEN,
            CHAT_ID,
-           POLLING_TIMEOUT
+           POLLING_TIMEOUT,
+           db
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted
@@ -494,7 +495,7 @@ init-import=no
 
 # List of qualified module names which can have objects that can redefine
 # builtins.
-redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io,multiprocessing
 
 
 [CLASSES]
@@ -526,7 +527,7 @@ valid-metaclass-classmethod-first-arg=cls
 max-args=10
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=15
+max-attributes=20
 
 # Maximum number of boolean expressions in an if statement (see R0916).
 max-bool-expr=5
@@ -544,10 +545,10 @@ max-parents=7
 max-public-methods=20
 
 # Maximum number of return / yield for function / method body.
-max-returns=6
+max-returns=7
 
 # Maximum number of statements in function / method body.
-max-statements=50
+max-statements=60
 
 # Minimum number of public methods for a class (see R0903).
 min-public-methods=1

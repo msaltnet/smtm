@@ -1,19 +1,21 @@
+"""데이터베이스 모듈"""
 import sqlite3
-import os.path as path
 from .log_manager import LogManager
 
 
 class Database:
+    """데이터 베이스 클래스"""
+
     def __init__(self, db_file=None):
         db = db_file if db_file is not None else "smtm.db"
         self.logger = LogManager.get_logger(__class__.__name__)
         self.conn = sqlite3.connect(db, check_same_thread=False)
 
         def dict_factory(cursor, row):
-            d = {}
+            dictionay = {}
             for idx, col in enumerate(cursor.description):
-                d[col[0]] = row[idx]
-            return d
+                dictionay[col[0]] = row[idx]
+            return dictionay
 
         self.conn.row_factory = dict_factory
 
