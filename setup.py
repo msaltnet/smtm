@@ -20,6 +20,7 @@ REQUIRED = [
     "pyjwt",
     "python-dotenv",
     "jupyter",
+    "psutil",
 ]
 
 
