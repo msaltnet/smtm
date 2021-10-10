@@ -5,23 +5,23 @@ from smtm import MassSimulator
 from unittest.mock import *
 
 
-# class MassSimulatorUtilTests(unittest.TestCase):
-#     def setUp(self):
-#         pass
+class MassSimulatorUtilTests(unittest.TestCase):
+    def setUp(self):
+        pass
 
-#     def tearDown(self):
-#         pass
+    def tearDown(self):
+        pass
 
-#     @patch("builtins.print")
-#     @patch("psutil.Process")
-#     def test_memory_usage_should_print_correctly(self, mock_process, mock_print):
-#         dummy_memory_info_return = MagicMock()
-#         dummy_memory_info_return.rss = 777000000.123456789
-#         dummy_process_return = MagicMock()
-#         dummy_process_return.memory_info.return_value = dummy_memory_info_return
-#         mock_process.return_value = dummy_process_return
-#         MassSimulator.memory_usage()
-#         mock_print.assert_called_with("[MainProcess] memory usage:  741.00494 MB")
+    @patch("builtins.print")
+    @patch("psutil.Process")
+    def test_memory_usage_should_print_correctly(self, mock_process, mock_print):
+        dummy_memory_info_return = MagicMock()
+        dummy_memory_info_return.rss = 777000000.123456789
+        dummy_process_return = MagicMock()
+        dummy_process_return.memory_info.return_value = dummy_memory_info_return
+        mock_process.return_value = dummy_process_return
+        MassSimulator.memory_usage()
+        mock_print.assert_called_with("[MainProcess] memory usage:  741.00494 MB")
 
 
 class MassSimulatorAnalyzeTests(unittest.TestCase):
@@ -296,11 +296,7 @@ class MassSimulatorTests(unittest.TestCase):
         mass._update_result([{"idx": 0, "result": "mango"}])
         self.assertEqual(mass.result[0], "mango")
 
-    @patch("smtm.LogManager.set_stream_level")
-    @patch("smtm.LogManager.change_log_file")
-    def test__execute_single_process_simulation_should_run_simulation(
-        self, mock_log_file, mock_set_stream
-    ):
+    def test__execute_single_process_simulation_should_run_simulation(self):
         dummy_config = {
             "title": "BnH-2Hour",
             "budget": 50000,
@@ -320,6 +316,8 @@ class MassSimulatorTests(unittest.TestCase):
                 },
             ],
         }
+        backup_run_single = MassSimulator.run_single
+        backup_memory_usage = MassSimulator.memory_usage
         MassSimulator.run_single = MagicMock(return_value="mango_result")
         MassSimulator.memory_usage = MagicMock()
         MassSimulator.get_initialized_operator = MagicMock(return_value="dummy_operator")
@@ -351,6 +349,8 @@ class MassSimulatorTests(unittest.TestCase):
         self.assertEqual(
             MassSimulator.get_initialized_operator.call_args_list[1][0][5], "2020-04-30T20:00:00"
         )
+        MassSimulator.run_single = backup_run_single
+        MassSimulator.memory_usage = backup_memory_usage
 
     def test_make_chunk_should_make_chunk_list_from_original_list(self):
         a = [1, 2, 3, 4, 5, 6, 7]
