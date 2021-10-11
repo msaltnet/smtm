@@ -159,16 +159,18 @@ class Operator:
         if self.state != "running":
             return None
 
+        try:
+            self.logger.info("cancel timer first")
+            self.timer.cancel()
+        except AttributeError:
+            self.logger.error("stop operation fail")
+        self.is_timer_running = False
+
         self.trader.cancel_all_requests()
         trading_info = self.data_provider.get_info()
         self.analyzer.put_trading_info(trading_info)
         self.last_report = self.analyzer.create_report(tag=self.tag)
         self.logger.info("===== Stop operating =====")
-        try:
-            self.timer.cancel()
-        except AttributeError:
-            self.logger.error("stop operation fail")
-        self.is_timer_running = False
         self.state = "terminating"
 
         def on_terminated():
