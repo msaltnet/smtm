@@ -31,6 +31,7 @@ class Analyzer:
     OUTPUT_FOLDER = "output/"
     RECORD_INTERVAL = 60
     SMA = (10, 40, 60)
+    GRAPH_MAX_COUNT = 1440
 
     def __init__(self, sma_s=None, sma_l=None):
         self.request_list = []
@@ -513,10 +514,10 @@ class Analyzer:
                         new["avr_price"] = last_avr_price
                     break
             plot_data.append(new)
-        return plot_data
+        return pd.DataFrame(plot_data)[-self.GRAPH_MAX_COUNT :]
 
     def __draw_graph(self, info_list, result_list, score_list, filename, is_fullpath=False):
-        total = pd.DataFrame(self.__create_plot_data(info_list, result_list, score_list))
+        total = self.__create_plot_data(info_list, result_list, score_list)
         total = total.rename(
             columns={
                 "date_time": "Date",
