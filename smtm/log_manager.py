@@ -13,10 +13,14 @@ class LogManager:
     """
 
     log_filename = "smtm.log"
+    log_file_size = 2097152
+    log_file_backup = 10
     file_formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)5.5s %(name)20.20s %(lineno)5d - %(message)s"
     )
-    file_handler = RotatingFileHandler(filename=log_filename, maxBytes=1000000, backupCount=10)
+    file_handler = RotatingFileHandler(
+        filename=log_filename, maxBytes=log_file_size, backupCount=log_file_backup
+    )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(file_formatter)
     stream_formatter = logging.Formatter(
