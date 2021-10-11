@@ -191,17 +191,20 @@ class UpbitTrader(Trader):
             return
 
         if request["price"] == 0:
-            self.logger.warning("invalid price request. market price is not supported now")
+            self.logger.warning("[REJECT] market price is not supported now")
             return
 
         is_buy = request["type"] == "buy"
         if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
-            self.logger.warning("invalid price request. balance is too small!")
+            request_price = float(request["price"]) * float(request["amount"])
+            self.logger.warning(f"[REJECT] balance is too small! {request_price} > {self.balance}")
             task["callback"]("error!")
             return
 
         if is_buy is False and float(request["amount"]) > self.asset[1]:
-            self.logger.warning("invalid price request. rest asset amount is less than request!")
+            self.logger.warning(
+                f"[REJECT] invalid amount {float(request['amount'])} > {self.asset[1]}"
+            )
             task["callback"]("error!")
             return
 

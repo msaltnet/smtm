@@ -2,7 +2,6 @@
 
 import copy
 from datetime import datetime
-import math
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
@@ -78,7 +77,7 @@ class StrategySma0(Strategy):
         if last == 0:
             return 0
         ratio = std / last * 1000000
-        return math.floor(ratio) / 1000000
+        return int(ratio) / 1000000
 
     def __update_process(self, info):
         try:
@@ -154,7 +153,9 @@ class StrategySma0(Strategy):
             if result["state"] == "done" and request["id"] in self.waiting_requests:
                 del self.waiting_requests[request["id"]]
 
-            total = float(result["price"]) * float(result["amount"])
+            price = float(result["price"])
+            amount = float(result["amount"])
+            total = price * amount
             fee = total * self.COMMISSION_RATIO
             if result["type"] == "buy":
                 self.balance -= round(total + fee)
@@ -163,13 +164,13 @@ class StrategySma0(Strategy):
 
             if result["msg"] == "success":
                 if result["type"] == "buy":
-                    self.asset_amount += result["amount"]
+                    self.asset_amount = round(self.asset_amount + amount, 6)
                 elif result["type"] == "sell":
-                    self.asset_amount -= result["amount"]
+                    self.asset_amount = round(self.asset_amount - amount, 6)
 
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
-            self.logger.info(f"price: {result['price']}, amount: {result['amount']}")
+            self.logger.info(f"price: {price}, amount: {amount}")
             self.logger.info(f"balance: {self.balance}, asset_amount: {self.asset_amount}")
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
@@ -233,7 +234,6 @@ class StrategySma0(Strategy):
                         }
                     ]
                 return None
-            request["amount"] = round(request["amount"], 4)
             request["date_time"] = now
             self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
@@ -267,6 +267,8 @@ class StrategySma0(Strategy):
         budget -= budget * self.COMMISSION_RATIO
         price = float(self.data[-1]["closing_price"])
         amount = budget / price
+
+        # 소숫점 4자리 아래 버림
         amount = int(amount * 10000) / 10000
         final_value = amount * price
 
@@ -293,9 +295,11 @@ class StrategySma0(Strategy):
         if amount > self.asset_amount:
             amount = self.asset_amount
 
+        # 소숫점 4자리 아래 버림
+        amount = int(amount * 10000) / 10000
+
         price = float(self.data[-1]["closing_price"])
         total_value = price * amount
-
         if amount <= 0 or total_value < self.min_price:
             self.logger.info(f"asset is too small or invalid unit {self.process_unit}")
             if self.is_simulation:
