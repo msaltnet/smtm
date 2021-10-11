@@ -13,6 +13,7 @@ from .worker import Worker
 class Operator:
     """
     전체 시스템의 운영을 담당하는 클래스
+    PERIODIC_RECORD : 주기적으로 수익률 보고서와 그래프를 생성하는 기능
 
     Attributes:
         data_provider: 사용될 DataProvider 인스턴스
@@ -24,6 +25,9 @@ class Operator:
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     OUTPUT_FOLDER = "output/"
+    PERIODIC_RECORD = True
+    PERIODIC_RECORD_INFO = (360, -1)  # (turn, index) e.g. (360, -1) 최근 6시간
+    PERIODIC_RECORD_INTERVAL_SEC = 300 * 60
 
     def __init__(self):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -40,6 +44,7 @@ class Operator:
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         self.timer_expired_time = None
         self.last_report = None
+        self.last_periodic_time = datetime.now()
 
     def initialize(self, data_provider, strategy, trader, analyzer, budget=500):
         """
@@ -143,6 +148,9 @@ class Operator:
         except (AttributeError, TypeError) as msg:
             self.logger.error(f"excuting fail {msg}")
 
+        if self.PERIODIC_RECORD is True:
+            self._periodic_internal_get_score()
+
         self.logger.debug("trading is completed #####################")
         self._start_timer()
 
@@ -171,7 +179,7 @@ class Operator:
 
         return self.last_report
 
-    def get_score(self, callback, index_info=None):
+    def get_score(self, callback, index_info=None, graph_tag=None):
         """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
 
         index_info: 수익률 구간 정보
@@ -196,7 +204,11 @@ class Operator:
             return
 
         def get_score_callback(task):
-            graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}.jpg"
+            if graph_tag is not None:
+                graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}-{graph_tag}.jpg"
+            else:
+                graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}.jpg"
+
             try:
                 index_info = task["index_info"]
                 task["callback"](
@@ -214,3 +226,20 @@ class Operator:
     def get_trading_results(self):
         """현재까지 거래 결과 기록을 반환한다"""
         return self.analyzer.get_trading_results()
+
+    def _periodic_internal_get_score(self):
+        now = datetime.now()
+        time_delta = now - self.last_periodic_time
+        self.last_periodic_time = now
+
+        if time_delta.total_seconds() < self.PERIODIC_RECORD_INTERVAL_SEC:
+            return
+
+        def internal_get_score_callback(score):
+            self.logger.info(f"save score graph to {score[4]}")
+
+        self.get_score(
+            internal_get_score_callback,
+            index_info=self.PERIODIC_RECORD_INFO,
+            graph_tag=f"{now.hour}-{now.minute}",
+        )

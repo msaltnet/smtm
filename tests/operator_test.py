@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta
 from smtm import Operator
 from unittest.mock import *
 import requests
@@ -107,12 +108,17 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         )
         self.operator.set_interval(27)
         self.operator.state = "running"
+        self.operator._periodic_internal_get_score = MagicMock()
         self.operator._execute_trading(None)
 
         self.threading_mock.assert_called_once_with(27, ANY)
         self.timer_mock.start.assert_called_once()
         self.dp_mock.get_info.assert_called_once()
         self.analyzer_mock.put_trading_info.assert_called_once_with("mango")
+        if self.operator.PERIODIC_RECORD is True:
+            self.operator._periodic_internal_get_score.assert_called_once()
+        else:
+            self.operator._periodic_internal_get_score.assert_not_called()
 
     def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(self):
         self.dp_mock.get_info = MagicMock(return_value="mango")
@@ -307,6 +313,21 @@ class OperatorTests(unittest.TestCase):
         self.operator.state = "pear"
         self.operator.get_score("dummy")
         self.operator.worker.post_task.assert_not_called()
+
+    def test__periodic_internal_get_score_should_call_get_score_correctlye(self):
+        operator = Operator()
+        operator.get_score = MagicMock()
+        operator.last_periodic_time = datetime.now()
+        operator._periodic_internal_get_score()
+        operator.get_score.assert_not_called()
+
+        operator.last_periodic_time = datetime.now() - timedelta(
+            seconds=operator.PERIODIC_RECORD_INTERVAL_SEC + 1
+        )
+        operator._periodic_internal_get_score()
+        operator.get_score.assert_called_with(
+            ANY, index_info=operator.PERIODIC_RECORD_INFO, graph_tag=ANY
+        )
 
     def test_get_trading_results_return_result_of_analyzer_get_trading_results(self):
         operator = Operator()
