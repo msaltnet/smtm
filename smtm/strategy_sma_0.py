@@ -28,7 +28,7 @@ class StrategySma0(Strategy):
     COMMISSION_RATIO = 0.0005
     SHORT = 10
     MID = 40
-    LONG = 60
+    LONG = 80
     STEP = 1
     NAME = "SMA0-I"
     STD_K = 25
