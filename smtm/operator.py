@@ -221,6 +221,7 @@ class Operator:
             except TypeError as msg:
                 self.logger.error(f"invalid callback {msg}")
 
+        self.logger.info(f"get_score: {index_info}")
         self.worker.post_task(
             {"runnable": get_score_callback, "callback": callback, "index_info": index_info}
         )
@@ -232,7 +233,6 @@ class Operator:
     def _periodic_internal_get_score(self):
         now = datetime.now()
         time_delta = now - self.last_periodic_time
-        self.last_periodic_time = now
 
         if time_delta.total_seconds() < self.PERIODIC_RECORD_INTERVAL_SEC:
             return
@@ -243,5 +243,6 @@ class Operator:
         self.get_score(
             internal_get_score_callback,
             index_info=self.PERIODIC_RECORD_INFO,
-            graph_tag=f"{now.hour}-{now.minute}",
+            graph_tag=f"{now.day}{now.hour}{now.minute}",
         )
+        self.last_periodic_time = now
