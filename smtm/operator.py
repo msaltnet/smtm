@@ -243,6 +243,6 @@ class Operator:
         self.get_score(
             internal_get_score_callback,
             index_info=self.PERIODIC_RECORD_INFO,
-            graph_tag=f"{now.day}{now.hour}{now.minute}",
+            graph_tag=f"{now.day:02d}-{now.hour:02d}{now.minute:02d}",
         )
         self.last_periodic_time = now
