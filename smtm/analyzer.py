@@ -10,6 +10,7 @@ import ast
 import matplotlib
 import pandas as pd
 import mplfinance as mpf
+import psutil
 from .log_manager import LogManager
 
 matplotlib.use("Agg")
@@ -32,6 +33,7 @@ class Analyzer:
     RECORD_INTERVAL = 60
     SMA = (10, 40, 80)
     GRAPH_MAX_COUNT = 1440
+    DEBUG_MODE = True
 
     def __init__(self, sma_s=None, sma_l=None):
         self.request_list = []
@@ -465,6 +467,17 @@ class Analyzer:
             )
             report_file.write(f"Cumulative return                    {summary[2]:10} %\n")
             report_file.write(f"Price_change_ratio {summary[3]}\n")
+
+            if self.DEBUG_MODE is True:
+                report_file.write("### DEBUG INFO ====================================\n")
+                process = psutil.Process()
+                rss = process.memory_info().rss / 2 ** 20  # Bytes to MB
+                report_file.write(f"memory usage: {rss: 10.5f} MB")
+                report_file.write(f"self.request_list: {len(self.request_list)}")
+                report_file.write(f"self.result_list: {len(self.result_list)}")
+                report_file.write(f"self.info_list: {len(self.info_list)}")
+                report_file.write(f"self.asset_info_list: {len(self.asset_info_list)}")
+                report_file.write(f"self.score_list: {len(self.score_list)}")
 
     def __create_plot_data(self, info_list, result_list, score_list):
         result_pos = 0
