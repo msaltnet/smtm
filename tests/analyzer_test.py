@@ -221,6 +221,7 @@ class AnalyzerTests(unittest.TestCase):
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
+        analyzer.update_start_point(dummy_asset_info)
         analyzer.asset_info_list.append(dummy_asset_info)
         analyzer.initialize(MagicMock())
         analyzer.is_simulation = True
@@ -281,6 +282,7 @@ class AnalyzerTests(unittest.TestCase):
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
+        analyzer.update_start_point(dummy_asset_info)
         analyzer.asset_info_list.append(dummy_asset_info)
         target_dummy_asset = {
             "balance": 10000,
@@ -323,6 +325,7 @@ class AnalyzerTests(unittest.TestCase):
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
+        analyzer.update_start_point(dummy_asset_info)
         analyzer.asset_info_list.append(dummy_asset_info)
 
         target_dummy_asset = {
@@ -367,6 +370,7 @@ class AnalyzerTests(unittest.TestCase):
         }
 
         # 시작점을 생성하기 위해 초기 자산 정보 추가
+        analyzer.start_asset_info = dummy_asset_info
         analyzer.asset_info_list.append(dummy_asset_info)
 
         target_dummy_asset = {

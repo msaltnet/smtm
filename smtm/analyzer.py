@@ -40,6 +40,7 @@ class Analyzer:
         self.info_list = []
         self.asset_info_list = []
         self.score_list = []
+        self.start_asset_info = None
         self.get_asset_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
@@ -154,15 +155,22 @@ class Analyzer:
         new["balance"] = float(new["balance"])
         if self.is_simulation is True and len(self.info_list) > 0:
             new["date_time"] = self.info_list[-1]["date_time"]
+        if self.start_asset_info is None and len(self.asset_info_list) == 0:
+            self.start_asset_info = new
         self.asset_info_list.append(new)
         self.make_score_record(new)
 
     def make_start_point(self):
         """시작시점 거래정보를 기록한다"""
+        self.start_asset_info = None
         self.request_list = []
         self.result_list = []
         self.asset_info_list = []
         self.update_asset_info()
+
+    def update_start_point(self, info):
+        """기준 시작 자산 정보를 변경한다"""
+        self.start_asset_info = info
 
     def make_periodic_record(self):
         """주기적으로 수익율을 기록한다"""
@@ -189,8 +197,8 @@ class Analyzer:
         """
 
         try:
-            start_total = self.__get_start_property_value(self.asset_info_list)
-            start_quote = self.asset_info_list[0]["quote"]
+            start_total = self.__get_start_property_value(self.start_asset_info)
+            start_quote = self.start_asset_info["quote"]
             current_total = float(new_info["balance"])
             current_quote = new_info["quote"]
             cumulative_return = 0
@@ -330,8 +338,8 @@ class Analyzer:
     ):
         try:
             graph = None
-            start_value = Analyzer.__get_start_property_value(asset_info_list)
-            last_value = Analyzer.__get_last_property_value(asset_info_list)
+            start_value = Analyzer.__get_start_property_value(asset_info_list[0])
+            last_value = Analyzer.__get_last_property_value(asset_info_list[-1])
             last_return = score_list[-1]["cumulative_return"]
             change_ratio = score_list[-1]["price_change_ratio"]
             min_max = self._get_min_max_return(score_list)
@@ -573,18 +581,18 @@ class Analyzer:
         return destination
 
     @staticmethod
-    def __get_start_property_value(asset_info_list):
-        return round(Analyzer.__get_property_total_value(asset_info_list, 0))
+    def __get_start_property_value(start_asset_info):
+        return round(Analyzer.__get_property_total_value(start_asset_info))
 
     @staticmethod
-    def __get_last_property_value(asset_info_list):
-        return round(Analyzer.__get_property_total_value(asset_info_list, -1))
+    def __get_last_property_value(asset_info):
+        return round(Analyzer.__get_property_total_value(asset_info))
 
     @staticmethod
-    def __get_property_total_value(asset_info_list, index):
-        total = float(asset_info_list[index]["balance"])
-        quote = asset_info_list[index]["quote"]
-        for name, item in asset_info_list[index]["asset"].items():
+    def __get_property_total_value(asset_info_list):
+        total = float(asset_info_list["balance"])
+        quote = asset_info_list["quote"]
+        for name, item in asset_info_list["asset"].items():
             total += float(item[1]) * float(quote[name])
         return total
 
