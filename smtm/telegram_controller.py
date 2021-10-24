@@ -362,7 +362,6 @@ class TelegramController:
         if last_report is None:
             self._send_text_message("자동 거래가 중지되었습니다", self.main_keyboard)
         else:
-            print(last_report)
             score_message = [
                 f"자동 거래가 중지되었습니다\n",
                 f"{last_report['summary'][8][1]} - {last_report['summary'][8][2]}\n",
