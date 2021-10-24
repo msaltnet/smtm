@@ -467,15 +467,19 @@ class Analyzer:
             report_file.write(f"Price_change_ratio {summary[3]}\n")
 
             if self.DEBUG_MODE is True:
+                rss = self._get_rss_memory()
                 report_file.write("### DEBUG INFO ====================================\n")
-                process = psutil.Process()
-                rss = process.memory_info().rss / 2 ** 20  # Bytes to MB
                 report_file.write(f"memory usage: {rss: 10.5f} MB")
                 report_file.write(f"self.request_list: {len(self.request_list)}")
                 report_file.write(f"self.result_list: {len(self.result_list)}")
                 report_file.write(f"self.info_list: {len(self.info_list)}")
                 report_file.write(f"self.asset_info_list: {len(self.asset_info_list)}")
                 report_file.write(f"self.score_list: {len(self.score_list)}")
+
+    @staticmethod
+    def _get_rss_memory():
+        process = psutil.Process()
+        return process.memory_info().rss / 2 ** 20  # Bytes to MB
 
     def __create_plot_data(self, info_list, result_list, score_list):
         result_pos = 0

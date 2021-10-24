@@ -703,6 +703,7 @@ class AnalyzerTests(unittest.TestCase):
         }
         """
         analyzer = Analyzer()
+        analyzer._get_rss_memory = MagicMock(return_value=123.45678)
         analyzer.initialize("mango")
         analyzer.is_simulation = True
         analyzer.update_asset_info = MagicMock()
@@ -784,6 +785,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
         self.assertEqual(report["summary"][6], -75.067)
         self.assertEqual(report["summary"][7], -65.248)
+        analyzer._get_rss_memory.assert_called_once()
 
     @patch("mplfinance.plot")
     def test_create_report_call_update_info_func_with_asset_type_and_callback(self, mock_plot):
@@ -801,6 +803,7 @@ class AnalyzerTests(unittest.TestCase):
         self, mock_file, mock_plot, mock_DataFrame, mock_to_datetime
     ):
         analyzer = Analyzer()
+        analyzer._get_rss_memory = MagicMock(return_value=123.45678)
         analyzer.initialize("mango")
         analyzer.update_asset_info = MagicMock()
 
@@ -839,12 +842,14 @@ class AnalyzerTests(unittest.TestCase):
         mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + tag + ".txt", "w")
 
         analyzer.update_asset_info.assert_called()
+        analyzer._get_rss_memory.assert_called()
 
     @patch("mplfinance.make_addplot")
     @patch("mplfinance.plot")
     @patch("builtins.open", new_callable=mock_open)
     def test_create_report_draw_correct_graph(self, mock_file, mock_plot, mock_make_addplot):
         analyzer = Analyzer()
+        analyzer._get_rss_memory = MagicMock(return_value=123.45678)
         analyzer.initialize("mango")
         analyzer.update_asset_info = MagicMock()
         filename = "apple"
@@ -880,6 +885,7 @@ class AnalyzerTests(unittest.TestCase):
             figscale=1.25,
         )
         analyzer.update_asset_info.assert_called_once()
+        analyzer._get_rss_memory.assert_called_once()
 
     def test_get_trading_results_return_result(self):
         analyzer = Analyzer()
