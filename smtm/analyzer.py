@@ -31,11 +31,10 @@ class Analyzer:
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     OUTPUT_FOLDER = "output/"
     RECORD_INTERVAL = 60
-    SMA = (10, 40, 80)
     GRAPH_MAX_COUNT = 1440
     DEBUG_MODE = True
 
-    def __init__(self, sma_s=None, sma_l=None):
+    def __init__(self, sma_info=(10, 40, 80)):
         self.request_list = []
         self.result_list = []
         self.info_list = []
@@ -44,8 +43,7 @@ class Analyzer:
         self.get_asset_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
-        if sma_s is not None and sma_l is not None:
-            self.SMA = (sma_s, sma_l)
+        self.sma_info = sma_info
 
         if os.path.isdir("output") is False:
             os.mkdir("output")
@@ -563,7 +561,7 @@ class Analyzer:
             type="candle",
             volume=True,
             addplot=apds,
-            mav=self.SMA,
+            mav=self.sma_info,
             style="starsandstripes",
             savefig=dict(fname=destination, dpi=300, pad_inches=0.25),
             figscale=1.25,

@@ -672,7 +672,7 @@ class AnalyzerTests(unittest.TestCase):
             type="candle",
             volume=True,
             addplot=ANY,
-            mav=analyzer.SMA,
+            mav=analyzer.sma_info,
             style="starsandstripes",
             savefig=dict(fname="mango_graph.png", dpi=300, pad_inches=0.25),
             figscale=1.25,
@@ -872,7 +872,7 @@ class AnalyzerTests(unittest.TestCase):
             type="candle",
             volume=True,
             addplot=ANY,
-            mav=analyzer.SMA,
+            mav=analyzer.sma_info,
             style="starsandstripes",
             savefig=dict(
                 fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=300, pad_inches=0.25
