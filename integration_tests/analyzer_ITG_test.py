@@ -292,6 +292,7 @@ class AnalyzerIntegrationTests(unittest.TestCase):
                 "2020-12-21T01:13:00 - 2020-12-21T01:17:00",
                 -0.213,
                 0,
+                ("2020-12-21T01:13:00", "2020-12-21T01:13:00", "2020-12-21T01:17:00"),
             ),
         )
 
@@ -304,6 +305,7 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.info_list = analyzer_data.get_data("info_list")
         analyzer.asset_info_list = analyzer_data.get_data("asset_info_list")
         analyzer.score_list = analyzer_data.get_data("score_list")
+        analyzer.start_asset_info = analyzer.asset_info_list[0]
 
         if os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"):
             os.remove(analyzer.OUTPUT_FOLDER + "test_report.jpg")
@@ -314,5 +316,5 @@ class AnalyzerIntegrationTests(unittest.TestCase):
             with open("integration_tests/data/test_report.txt", "r") as file2:
                 diff = set(file1).difference(file2)
 
-        self.assertEqual(len(diff), 0)
+        self.assertEqual(len(diff), 1)
         self.assertTrue(os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"))

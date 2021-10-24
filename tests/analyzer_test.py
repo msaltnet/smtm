@@ -434,7 +434,7 @@ class AnalyzerTests(unittest.TestCase):
             "quote": {"banana": 1700, "mango": 600, "apple": 500},
         }
         analyzer.asset_info_list.append(dummy_asset_info)
-
+        analyzer.start_asset_info = dummy_asset_info
         target_dummy_asset = {
             "balance": 5000,
             "asset": {"mango": (500, 5.23), "apple": (250, 2.11)},
@@ -546,7 +546,7 @@ class AnalyzerTests(unittest.TestCase):
 
         report = analyzer.get_return_report()
 
-        self.assertEqual(len(report), 8)
+        self.assertEqual(len(report), 9)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -562,6 +562,9 @@ class AnalyzerTests(unittest.TestCase):
         # 최저/최대 수익률
         self.assertEqual(report[6], -75.067)
         self.assertEqual(report[7], -65.248)
+        self.assertEqual(
+            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:01:00")
+        )
 
         analyzer.update_asset_info.assert_called_once()
 
@@ -583,7 +586,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_asset_info = MagicMock()
         report = analyzer.get_return_report(index_info=(3, -3))
 
-        self.assertEqual(len(report), 8)
+        self.assertEqual(len(report), 9)
         # 입금 자산
         self.assertEqual(report[0], 100016)
         # 최종 자산
@@ -597,10 +600,14 @@ class AnalyzerTests(unittest.TestCase):
         # 최저/최대 수익률
         self.assertEqual(report[6], 0.016)
         self.assertEqual(report[7], 0.093)
+        # 시간 정보
+        self.assertEqual(
+            report[8], ("2020-04-30T05:50:00", "2020-04-30T05:51:00", "2020-04-30T05:53:00")
+        )
 
         report = analyzer.get_return_report(index_info=(3, 2))
 
-        self.assertEqual(len(report), 8)
+        self.assertEqual(len(report), 9)
         # 입금 자산
         self.assertEqual(report[0], 100197)
         # 최종 자산
@@ -614,10 +621,14 @@ class AnalyzerTests(unittest.TestCase):
         # 최저/최대 수익률
         self.assertEqual(report[6], 0.197)
         self.assertEqual(report[7], 0.197)
+        # 시간 정보
+        self.assertEqual(
+            report[8], ("2020-04-30T05:50:00", "2020-04-30T05:56:00", "2020-04-30T05:58:00")
+        )
 
         report = analyzer.get_return_report(graph_filename="mango_graph.png", index_info=(3, -1))
 
-        self.assertEqual(len(report), 8)
+        self.assertEqual(len(report), 9)
         # 입금 자산
         self.assertEqual(report[0], 100197)
         # 최종 자산
@@ -631,6 +642,10 @@ class AnalyzerTests(unittest.TestCase):
         # 최저/최대 수익률
         self.assertEqual(report[6], 0.197)
         self.assertEqual(report[7], 0.413)
+        # 시간 정보
+        self.assertEqual(
+            report[8], ("2020-04-30T05:50:00", "2020-04-30T05:57:00", "2020-04-30T05:59:00")
+        )
 
         analyzer.update_asset_info.assert_called()
 
@@ -652,7 +667,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_asset_info = MagicMock()
         report = analyzer.get_return_report("mango_graph.png")
 
-        self.assertEqual(len(report), 8)
+        self.assertEqual(len(report), 9)
         # 입금 자산
         self.assertEqual(report[0], 23456)
         # 최종 자산
@@ -669,6 +684,10 @@ class AnalyzerTests(unittest.TestCase):
         # 최저/최대 수익률
         self.assertEqual(report[6], -75.067)
         self.assertEqual(report[7], -65.248)
+        # 시간 정보
+        self.assertEqual(
+            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:01:00")
+        )
 
         analyzer.update_asset_info.assert_called_once()
         mock_plot.assert_called_once_with(
@@ -768,7 +787,7 @@ class AnalyzerTests(unittest.TestCase):
         #     return_high: 기간내 최고 수익률
         #     return_low: 기간내 최저 수익률
         # )
-        self.assertEqual(len(report["summary"]), 8)
+        self.assertEqual(len(report["summary"]), 9)
 
         # 입금 자산
         self.assertEqual(report["summary"][0], 23456)
@@ -789,6 +808,11 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
         self.assertEqual(report["summary"][6], -75.067)
         self.assertEqual(report["summary"][7], -65.248)
+        # 시간 정보
+        self.assertEqual(
+            report["summary"][8],
+            ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:01:00"),
+        )
         analyzer._get_rss_memory.assert_called_once()
 
     @patch("mplfinance.plot")
@@ -1240,6 +1264,7 @@ class AnalyzerTests(unittest.TestCase):
                 "kind": 2,
             },
         ]
+        analyzer.start_asset_info = analyzer.asset_info_list[0]
 
     @patch("builtins.open", new_callable=mock_open)
     def test__write_to_file_make_dumpfile_correctly(self, mock_file):

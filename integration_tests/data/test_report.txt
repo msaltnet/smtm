@@ -49,3 +49,10 @@ Property                   10000000 ->   10025211
 Gap                                         25211
 Cumulative return                         0.252 %
 Price_change_ratio {'KRW-BTC': 0.242}
+### DEBUG INFO ====================================
+memory usage:  100.45703 MB
+request_list: 5
+result_list: 5
+info_list: 20
+asset_info_list: 15
+score_list: 15

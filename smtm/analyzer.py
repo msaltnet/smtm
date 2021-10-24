@@ -189,8 +189,8 @@ class Analyzer:
 
         score_record:
             balance: 계좌 현금 잔고
-            cumulative_return: 기준 시점부터 누적 수익률
-            price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+            cumulative_return: 시스템 시작 시점부터 누적 수익률
+            price_change_ratio: 시스템 시작 시점부터 보유 종목별 가격 변동률 딕셔너리
             asset: 자산 정보 튜플 리스트 (종목, 평균 가격, 현재 가격, 수량, 수익률(소숫점3자리))
             date_time: 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
             kind: 3, 보고서를 위한 데이터 종류
@@ -264,12 +264,13 @@ class Analyzer:
             (
                 start_budget: 시작 자산
                 final_balance: 최종 자산
-                cumulative_return: 기준 시점부터 누적 수익률
-                price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+                cumulative_return: 시스템 시작 시점부터 누적 수익률
+                price_change_ratio: 시스템 시작 시점부터 보유 종목별 가격 변동률 딕셔너리
                 graph: 그래프 파일 패스
                 period: 수익률 산출 구간
                 return_high: 기간내 최고 수익률
                 return_low: 기간내 최저 수익률
+                date_info: 시스템 시작 시간, 구간 시작 시간, 구간 종료 시간
             )
         """
         self.update_asset_info()
@@ -357,6 +358,11 @@ class Analyzer:
                 period,
                 min_max[0],
                 min_max[1],
+                (
+                    self.start_asset_info["date_time"],
+                    info_list[0]["date_time"],
+                    info_list[-1]["date_time"],
+                ),
             )
             self.logger.info("### Return Report ===============================")
             self.logger.info(f"Property                 {start_value:10} -> {last_value:10}")
@@ -385,12 +391,13 @@ class Analyzer:
                 "summary": (
                     start_budget: 시작 자산
                     final_balance: 최종 자산
-                    cumulative_return : 기준 시점부터 누적 수익률
-                    price_change_ratio: 기준 시점부터 보유 종목별 가격 변동률 딕셔너리
+                    cumulative_return : 시스템 시작 시점부터 누적 수익률
+                    price_change_ratio: 시스템 시작 시점부터 보유 종목별 가격 변동률 딕셔너리
                     graph: 그래프 파일 패스
                     period: 수익률 산출 구간
                     return_high: 기간내 최고 수익률
                     return_low: 기간내 최저 수익률
+                    date_info: 시스템 시작 시간, 구간 시작 시간, 구간 종료 시간
                 ),
                 "trading_table" : [
                     {
@@ -400,6 +407,7 @@ class Analyzer:
                 ]
             }
         """
+
         try:
             summary = self.get_return_report()
             if summary is None:
@@ -477,12 +485,12 @@ class Analyzer:
             if self.DEBUG_MODE is True:
                 rss = self._get_rss_memory()
                 report_file.write("### DEBUG INFO ====================================\n")
-                report_file.write(f"memory usage: {rss: 10.5f} MB")
-                report_file.write(f"self.request_list: {len(self.request_list)}")
-                report_file.write(f"self.result_list: {len(self.result_list)}")
-                report_file.write(f"self.info_list: {len(self.info_list)}")
-                report_file.write(f"self.asset_info_list: {len(self.asset_info_list)}")
-                report_file.write(f"self.score_list: {len(self.score_list)}")
+                report_file.write(f"memory usage: {rss: 10.5f} MB\n")
+                report_file.write(f"request_list: {len(self.request_list)}\n")
+                report_file.write(f"result_list: {len(self.result_list)}\n")
+                report_file.write(f"info_list: {len(self.info_list)}\n")
+                report_file.write(f"asset_info_list: {len(self.asset_info_list)}\n")
+                report_file.write(f"score_list: {len(self.score_list)}\n")
 
     @staticmethod
     def _get_rss_memory():
