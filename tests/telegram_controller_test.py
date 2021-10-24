@@ -311,10 +311,15 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.data_provider = "mango_data_provider"
         tcb.trader = "mango_trader"
         tcb.budget = "mango_budget"
+        tcb.operator.stop = MagicMock(
+            return_value={
+                "summary": (100, 200, 0.5, 0.9, "test.jpg", 0, 0, 0, ("12-01", "12-05", "12-08"))
+            }
+        )
         tcb._send_text_message = MagicMock()
 
         tcb._stop_trading("2")
-        tcb._send_text_message.assert_called_once_with("자동 거래가 중지되었습니다", tcb.main_keyboard)
+        tcb._send_text_message.assert_called_once_with("자동 거래가 중지되었습니다\n12-05 - 12-08\n자산 100 -> 200\n수익률 0.5\n비교 수익률 0.9\n", tcb.main_keyboard)
         self.assertEqual(tcb.operator, None)
         self.assertEqual(tcb.strategy, None)
         self.assertEqual(tcb.data_provider, None)
@@ -515,9 +520,10 @@ class TelegramControllerTests(unittest.TestCase):
         callback = tcb.operator.get_score.call_args[0][0]
         callback(None)
         tcb._send_text_message.assert_called_with("수익률 조회중 문제가 발생하였습니다.", tcb.main_keyboard)
-        callback((100, 200, 0.5, 0.9, "test.jpg"))
+        callback((100, 200, 0.5, 0.9, "test.jpg", 0, 0, 0, ("12-01", "12-05", "12-08")))
         tcb._send_text_message.assert_called_with(
-            "자산 100 -> 200\n누적수익률 0.5\n비교수익률 0.9\n", tcb.main_keyboard
+            "12-05 - 12-08\n자산 100 -> 200\n구간 수익률 100.0\n12-01~\n누적 수익률 0.5\n비교 수익률 0.9\n",
+            tcb.main_keyboard,
         )
         tcb._send_image_message.assert_called_with("test.jpg")
 

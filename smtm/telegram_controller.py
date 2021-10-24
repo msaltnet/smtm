@@ -348,8 +348,9 @@ class TelegramController:
     def _stop_trading(self, command):
         """자동 거래 중지"""
         del command
+        last_report = None
         if self.operator is not None:
-            self.operator.stop()
+            last_report = self.operator.stop()
         self.in_progress = None
         self.in_progress_step = 0
         self.operator = None
@@ -357,7 +358,19 @@ class TelegramController:
         self.strategy = None
         self.data_provider = None
         self.trader = None
-        self._send_text_message("자동 거래가 중지되었습니다", self.main_keyboard)
+
+        if last_report is None:
+            self._send_text_message("자동 거래가 중지되었습니다", self.main_keyboard)
+        else:
+            print(last_report)
+            score_message = [
+                f"자동 거래가 중지되었습니다\n",
+                f"{last_report['summary'][8][1]} - {last_report['summary'][8][2]}\n",
+                f"자산 {last_report['summary'][0]} -> {last_report['summary'][1]}\n",
+                f"수익률 {last_report['summary'][2]}\n",
+                f"비교 수익률 {last_report['summary'][3]}\n",
+            ]
+            self._send_text_message("".join(score_message), self.main_keyboard)
 
     def _query_state(self, command):
         """현재 상태를 메세지로 전송"""
@@ -402,10 +415,15 @@ class TelegramController:
                         self._send_text_message("수익률 조회중 문제가 발생하였습니다.", self.main_keyboard)
                         return
 
+                    diff = score[1] - score[0]
+                    ratio = round(diff / score[0] * 100, 3)
                     score_message = [
+                        f"{score[8][1]} - {score[8][2]}\n",
                         f"자산 {score[0]} -> {score[1]}\n",
-                        f"누적수익률 {score[2]}\n",
-                        f"비교수익률 {score[3]}\n",
+                        f"구간 수익률 {ratio}\n",
+                        f"{score[8][0]}~\n",
+                        f"누적 수익률 {score[2]}\n",
+                        f"비교 수익률 {score[3]}\n",
                     ]
 
                     self._send_text_message("".join(score_message), self.main_keyboard)

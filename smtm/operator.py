@@ -155,7 +155,9 @@ class Operator:
         self._start_timer()
 
     def stop(self):
-        """거래를 중단한다"""
+        """거래를 중단한다
+        analyzer.create_report을 실행하고 반환값을 반환한다.
+        """
         if self.state != "running":
             return None
 
