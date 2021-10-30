@@ -6,6 +6,8 @@
 
 > It's a game to get money.
 
+![smtm_wide](https://user-images.githubusercontent.com/9311990/139534314-a98dbd87-33e3-4cd9-a4c7-d9d42f695807.jpg)
+
 It has a very simple routine and repeat periodically.
 Performance critical approach is NOT suitable. e.g. trading in seconds. If you want, find another solution.
 
@@ -15,7 +17,7 @@ Performance critical approach is NOT suitable. e.g. trading in seconds. If you w
  --- repeat ---
 4. Create analyzing result by Analyzer
 
-| Layered Architecture | Role |
+| Layer | Role |
 |:---:|:---:|
 | Controller | User Interface |
 | Operator | Operating Manager |
@@ -38,15 +40,52 @@ for development, all development depedencies included.
 pip install -e .[dev]
 ```
 
-### How to run simulator
-After install, run module smtm
+### How to run
+There are 6 mode for each features.
+- 0: simulator with interative mode
+- 1: execute single simulation
+- 2: controller for real trading
+- 3: telegram chatbot controller
+- 4: mass simulation with config file
+- 5: make config file for mass simulation
 
+#### interactive mode simulator
+run with only mode
 ```
-python -m smtm
+python -m smtm --mode 0
+```
+
+#### execute single simulation
+run with mode and simulation setting parameters
+```
+python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy 0 --currency BTC
+```
+
+#### run controller for trading
+run with mode and initial setting parameters
+```
+python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
+```
+
+#### run telegram chatbot controller for trading
+run with only mode 
+```
+python -m smtm --mode 3
+```
+
+#### execute mass simulation with config file
+run with mode and config file info
+```
+python -m smtm --mode 4 --config /data/sma0_simulation.json
+```
+
+#### make config file for mass simulation
+run with mode and simulation setting parameters
+```
+python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
 ```
 
 ### How to test
-
 #### Unit test
 Test project with unittest.
 
