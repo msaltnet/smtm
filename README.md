@@ -17,12 +17,22 @@ Performance critical approach is NOT suitable. e.g. trading in seconds. If you w
  --- repeat ---
 4. Create analyzing result by Analyzer
 
+![intro](https://user-images.githubusercontent.com/9311990/140635403-4b9db009-57c1-41bf-937d-84e48c8cae20.gif)
+
+
+## Architecture
+
 | Layer | Role |
 |:---:|:---:|
 | Controller | User Interface |
 | Operator | Operating Manager |
 | Analyzer, Trader, Strategy, Data Provider | Main Modules |
 
+### Telemgram Chatbot Controller
+![chatbot](https://user-images.githubusercontent.com/9311990/140635384-58b6e3ed-d5d7-4c20-a217-6493e25799d0.jpg)
+
+### Simulator
+![simulator](https://user-images.githubusercontent.com/9311990/140635388-5ced5e05-23ad-44df-a14f-8492f489cfd9.jpg)
 
 ## User guide
 It's need to install and run manually like general python packages.
