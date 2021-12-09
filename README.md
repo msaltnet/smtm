@@ -4,9 +4,11 @@
 ![language](https://img.shields.io/github/languages/top/msaltnet/smtm.svg?style=flat-square&colorB=green)
 [![codecov](https://codecov.io/gh/msaltnet/smtm/branch/master/graph/badge.svg?token=USXTX7MG70)](https://codecov.io/gh/msaltnet/smtm)
 
-> It's a game to get money.
+> It's a game to get money. 
 
-![smtm_wide](https://user-images.githubusercontent.com/9311990/139534314-a98dbd87-33e3-4cd9-a4c7-d9d42f695807.jpg)
+An algorithm-based cryptocurrency automatic trading system made in Python. https://smtm.msalt.net
+
+[![icon_white](https://user-images.githubusercontent.com/9311990/145375774-c63cab8b-e4fe-47b5-9d2b-99b9a530f726.png)](https://smtm.msalt.net/)
 
 It has a very simple routine and repeat periodically.
 Performance critical approach is NOT suitable. e.g. trading in seconds. If you want, find another solution.
@@ -17,7 +19,7 @@ Performance critical approach is NOT suitable. e.g. trading in seconds. If you w
  --- repeat ---
 4. Create analyzing result by Analyzer
 
-![intro](https://user-images.githubusercontent.com/9311990/140635403-4b9db009-57c1-41bf-937d-84e48c8cae20.gif)
+![intro](https://user-images.githubusercontent.com/9311990/140635409-93e4b678-5a6b-40b8-8e28-5c8f819aa88c.jpg)
 
 
 ## Architecture
@@ -26,12 +28,16 @@ Performance critical approach is NOT suitable. e.g. trading in seconds. If you w
 |:---:|:---:|
 | Controller | User Interface |
 | Operator | Operating Manager |
-| Analyzer, Trader, Strategy, Data Provider | Main Modules |
+| Analyzer, Trader, Strategy, Data Provider | Modules |
 
-### Telemgram Chatbot Controller
+### Telegram Chat-bot Mode
+User can launch the program with Telegram chat-bot mode which provide user interface via Telegram chat-bot.
+
 ![chatbot](https://user-images.githubusercontent.com/9311990/140635384-58b6e3ed-d5d7-4c20-a217-6493e25799d0.jpg)
 
-### Simulator
+### Simulation Mode
+User can execute simulation with Simulator or MassSimulator, which run simulations using past trading records.
+
 ![simulator](https://user-images.githubusercontent.com/9311990/140635388-5ced5e05-23ad-44df-a14f-8492f489cfd9.jpg)
 
 ## User guide
