@@ -8,7 +8,8 @@
 
 An algorithm-based cryptocurrency automatic trading system made in Python. https://smtm.msalt.net
 
-[![icon_white](https://user-images.githubusercontent.com/9311990/145375774-c63cab8b-e4fe-47b5-9d2b-99b9a530f726.png)](https://smtm.msalt.net/)
+[![icon_wide_white](https://user-images.githubusercontent.com/9311990/145382769-a6ee70c4-3e30-4229-96cf-7e0117b09a72.png)
+](https://smtm.msalt.net/)
 
 It has a very simple routine and repeat periodically.
 Performance critical approach is NOT suitable. e.g. trading in seconds. If you want, find another solution.
