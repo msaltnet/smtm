@@ -1,0 +1,16 @@
+__pycache__
+/smtm.egg-info/
+/build/
+/dist/
+/.vscode/
+.ipynb_checkpoints
+*.log*
+/htmlcov/
+.coverage
+report.txt
+/output/
+.env
+temp.ipynb
+dump.*
+smtm.db
+test.db
