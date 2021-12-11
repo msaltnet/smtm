@@ -1,0 +1,178 @@
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 500;
+  word-break: keep-all;
+}
+
+/* layout */
+.main-container {
+  max-width: 1024px;
+}
+
+.intro-section, .description-section, .sale-section {
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.telegram-section {
+  padding-top: 30px;
+  background-color: rgb(0, 101, 160);
+}
+
+.first-block {
+  margin-top: 100px;
+  margin-bottom: 100px;
+}
+
+.intro-box {
+  margin-top: 120px;
+  margin-bottom: 120px;
+}
+
+.sale-box {
+  margin-top: 120px;
+  margin-bottom: 30px;
+}
+
+.description-box {
+  max-width: 980px;
+  margin-top: 120px;
+  margin-bottom: 120px;
+}
+
+.description-item {
+  margin-top: 90px;
+  margin-bottom: 150px;
+}
+
+.telegram-item {
+  margin-top: 90px;
+  align-items: center;
+}
+
+.telegram-box {
+  max-width: 980px;
+  margin-top: 80px;
+}
+
+.description-figure{
+  width: 100%;
+  padding-bottom: 80%;
+  min-height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.telegram-figure {
+  width: 100%;
+  padding-bottom: 175%;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.figure-editor {
+  background-image: url('./images/vscode.png');
+}
+
+.figure-graph {
+  background-position-x: 85%;
+  background-image: url('./images/graph.jpg');
+}
+
+.figure-phone {
+  background-image: url('./images/iphone.png');
+}
+
+/* text */
+.typhography-headline {
+  line-height: 1.2;
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.typhography-headline-mid {
+  line-height: 1.2;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.typhography-headline-description {
+  line-height: 1.3;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.description-box .typhography-headline-description,
+.telegram-box .typhography-headline-description {
+  color: rgba(255,255,255,.85);
+}
+
+.typhography-headline-description-title {
+  line-height: 1.2;
+  font-size: 70px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.typhography-headline-description-title strong {
+  color: gold;
+}
+
+.typhography-headline-description strong {
+  font-weight: 500;
+  color: gold;
+}
+
+.typhography-headline-sale {
+  line-height: 1.2;
+  font-size: 52px;
+  font-weight: 700;
+}
+
+.typhography-sale-title {
+  line-height: 1.2;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.typhography-sale-description {
+  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.typhography-sale-description a {
+  text-decoration: none;
+}
+
+@media only screen and (max-width: 720px) {
+  .typhography-headline {
+    font-size: 36px;
+  }
+  .typhography-headline-description {
+    font-size: 28px;
+  }
+  .typhography-headline-description-title {
+    line-height: 1.2;
+    font-size: 56px;
+  }
+}
+
+@media only screen and (max-width: 460px) {
+  .typhography-headline {
+    font-size: 30px;
+  }
+  .typhography-headline-description {
+    font-size: 26px;
+  }
+  .typhography-headline-mid {
+    font-size: 28px;
+  }
+  .typhography-headline-description-title {
+    line-height: 1.2;
+    font-size: 42px;
+  }
+  .typhography-headline-sale {
+    font-size: 40px;
+  }
+}
