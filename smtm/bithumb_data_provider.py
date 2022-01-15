@@ -1,4 +1,4 @@
-"""빗썸 거래소의 실시간 거래 데이터를 제공하는 DataProvider"""
+"""빗썸 거래소의 실시간 거래 데이터를 제공하는 BithumbDataProvider 클래스"""
 
 from datetime import datetime, timezone, timedelta
 import requests

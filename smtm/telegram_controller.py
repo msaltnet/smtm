@@ -1,7 +1,5 @@
-"""텔래그램 챗봇을 활용한 시스템 운영 인터페이스
+"""텔래그램 챗봇을 활용한 자동 거래 시스템 운영 인터페이스 TelegramController 클래스"""
 
-Operator를 사용해서 시스템을 컨트롤하는 모듈
-"""
 import os
 import signal
 import time
@@ -27,7 +25,7 @@ load_dotenv()
 
 
 class TelegramController:
-    """smtm 탤래그램 챗봇 컨트롤러"""
+    """자동 거래 시스템 탤래그램 챗봇 컨트롤러"""
 
     API_HOST = "https://api.telegram.org/"
     TEST_FILE = "data/telegram_chatbot.jpg"

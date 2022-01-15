@@ -1,6 +1,6 @@
-"""대량시뮬레이터
+"""대량시뮬레이션을 위핸 MassSimulator 클래스
 
-SimulationOperator를 사용해서 대량 시뮬레이션을 수행하는 모듈
+SimulationOperator과 설정 파일을 사용해서 대량 시뮬레이션을 수행하는 모듈
 """
 import copy
 import os

@@ -1,7 +1,4 @@
-"""시스템의 운영을 담당
-
-이 모듈은 각 모듈을 컨트롤하여 전체 시스템을 운영한다.
-"""
+"""각 모듈을 컨트롤하여 전체 시스템의 운영을 담당하는 Operator 클래스"""
 
 import time
 import threading
@@ -74,7 +71,7 @@ class Operator:
     def set_interval(self, interval):
         """자동 거래 시간 간격을 설정한다.
 
-        interval : 매매 프로세스가 수행되는 간격
+        interval : 거래 프로세스가 수행되는 간격
         """
         self.interval = interval
 

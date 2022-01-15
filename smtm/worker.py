@@ -1,4 +1,4 @@
-"""입력받은 task를 별도의 thread에서 차례대로 수행하는 일꾼"""
+"""입력받은 task를 별도의 thread에서 차례대로 수행하는 일꾼 역할의 Worker 클래스"""
 import queue
 import threading
 from .log_manager import LogManager

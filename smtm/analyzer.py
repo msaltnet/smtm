@@ -1,7 +1,5 @@
-"""거래 요청, 결과 정보를 저장하고 투자 결과를 분석
+"""거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 Analayzer 클래스"""
 
-이 모듈은 거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스인 Analayzer를 포함하고 있다.
-"""
 import copy
 import os
 from datetime import datetime
@@ -19,13 +17,12 @@ matplotlib.use("Agg")
 class Analyzer:
     """거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스
 
-    Attributes:
-        request_list: 거래 요청 데이터 목록
-        result_list: 거래 결과 데이터 목록
-        info_list: 거래 데이터 목록
-        asset_info_list: 특정 시점에 기록된 자산 데이터 목록
-        score_list: 특정 시점에 기록된 수익률 데이터 목록
-        get_asset_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
+    request_list: 거래 요청 데이터 목록
+    result_list: 거래 결과 데이터 목록
+    info_list: 거래 데이터 목록
+    asset_info_list: 특정 시점에 기록된 자산 데이터 목록
+    score_list: 특정 시점에 기록된 수익률 데이터 목록
+    get_asset_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -52,8 +49,7 @@ class Analyzer:
     def initialize(self, get_asset_info_func):
         """콜백 함수를 입력받아 초기화한다
 
-        Args:
-            get_asset_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
+        get_asset_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
         """
         self.get_asset_info_func = get_asset_info_func
 
@@ -173,7 +169,9 @@ class Analyzer:
         self.start_asset_info = info
 
     def make_periodic_record(self):
-        """주기적으로 수익율을 기록한다"""
+        """최소 간격을 유지하며 수익율을 기록한다
+        RECORD_INTERVAL: 수익률 기록 간의 최소 시간(초)
+        """
         now = datetime.now()
         if self.is_simulation:
             now = datetime.strptime(self.info_list[-1]["date_time"], self.ISO_DATEFORMAT)
@@ -384,8 +382,7 @@ class Analyzer:
         """수익률 보고서를 생성한다
 
         수익률 보고서를 생성하고, 그래프를 파일로 저장한다.
-        Args:
-            filename: 생성할 리포트 파일명
+        tag: 생성할 리포트 파일명
         Returns:
             {
                 "summary": (

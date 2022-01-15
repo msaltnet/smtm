@@ -1,4 +1,4 @@
-"""업비트 거래소의 과거 거래 정보를 이용한 가상 거래소"""
+"""업비트 거래소의 과거 거래 정보를 이용한 가상 거래소 역할의 VirtualMarket 클래스"""
 from datetime import datetime, timedelta
 from .data_repository import DataRepository
 from .log_manager import LogManager

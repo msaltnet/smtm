@@ -1,7 +1,5 @@
-"""거래에 관련된 데이터를 수집해서 정보를 제공
+"""거래에 관련된 데이터를 수집해서 정해진 데이터 포맷에 맞게 정보를 제공하는 DataProvider 추상클래스"""
 
-이 모듈은 거래에 관련된 데이터를 수집해서 필요한 데이터 포맷에 맞게 정보를 제공하는 클래스인 DataProvider 추상클래스다.
-"""
 from abc import ABCMeta, abstractmethod
 
 

@@ -1,4 +1,4 @@
-"""이동 평균선을 이용한 기본 전략"""
+"""이동 평균선을 이용한 기본 전략 StrategySma0 클래스"""
 
 import copy
 from datetime import datetime

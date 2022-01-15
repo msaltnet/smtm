@@ -1,4 +1,4 @@
-"""분할 매수 후 홀딩 하는 간단한 전략"""
+"""분할 매수 후 홀딩 하는 간단한 전략 StrategyBuyAndHold 클래스"""
 
 import copy
 from datetime import datetime
@@ -182,9 +182,7 @@ class StrategyBuyAndHold(Strategy):
             return None
 
     def initialize(self, budget, min_price=5000):
-        """
-        예산과 최소 거래 가능 금액을 설정한다
-        """
+        """예산과 최소 거래 가능 금액을 설정한다"""
         if self.is_intialized:
             return
 

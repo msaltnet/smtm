@@ -1,4 +1,4 @@
-"""시뮬레이션을 위한 가상 거래를 처리"""
+"""시뮬레이션을 위한 가상 거래를 처리해주는 SimulationTrader 클래스"""
 
 from .log_manager import LogManager
 from .trader import Trader
@@ -88,11 +88,11 @@ class SimulationTrader(Trader):
             raise UserWarning("invalid state") from msg
 
     def cancel_request(self, request_id):
-        """거래 요청을 취소한다
+        """거래 요청을 취소한다. 시뮬레이션에서는 미사용
         request_id: 취소하고자 하는 request의 id
         """
 
     def cancel_all_requests(self):
-        """모든 거래 요청을 취소한다
+        """모든 거래 요청을 취소한다. 시뮬레이션에서는 미사용
         체결되지 않고 대기중인 모든 거래 요청을 취소한다
         """

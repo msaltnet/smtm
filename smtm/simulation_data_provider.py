@@ -1,4 +1,4 @@
-"""시뮬레이션을 위한 DataProvider 구현체"""
+"""시뮬레이션을 위한 DataProvider 구현체 SimulationDataProvider 클래스"""
 
 from datetime import datetime, timedelta
 from .data_provider import DataProvider
@@ -7,9 +7,7 @@ from .data_repository import DataRepository
 
 
 class SimulationDataProvider(DataProvider):
-    """
-    거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
-    """
+    """거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스"""
 
     AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH"}
 

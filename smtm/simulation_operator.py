@@ -1,4 +1,4 @@
-"""시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영"""
+"""시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영하는 SimulationOperator 클래스"""
 
 import time
 from .log_manager import LogManager
@@ -6,9 +6,7 @@ from .operator import Operator
 
 
 class SimulationOperator(Operator):
-    """
-    각 모듈을 연동해 시뮬레이션을 진행하는 클래스
-    """
+    """각 모듈을 연동해 시뮬레이션을 진행하는 클래스"""
 
     def __init__(self):
         super().__init__()

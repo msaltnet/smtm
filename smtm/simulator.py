@@ -1,7 +1,4 @@
-"""시뮬레이터
-
-SimulationOperator를 사용해서 시뮬레이션을 컨트롤하는 모듈
-"""
+"""SimulationOperator를 사용해서 시뮬레이션을 컨트롤하는 Simulator 클래스"""
 import signal
 import time
 from . import (
@@ -17,7 +14,7 @@ from . import (
 
 
 class Simulator:
-    """smtm 시뮬레이터
+    """자동 거래 시뮬레이터 클래스
 
     command_list:
         {

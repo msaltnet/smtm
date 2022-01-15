@@ -1,4 +1,4 @@
-"""거래 데이터를 클라우드에서 가져오고, 저장해서 제공
+"""거래 데이터를 클라우드에서 가져오고, 저장해서 제공하는 DataRepository 클래스
 현재는 업비트의 1분단위 거래 내역만 사용 가능
 """
 import copy
@@ -22,7 +22,8 @@ class DataRepository:
     def get_data(self, start, end, market="KRW-BTC"):
         """거래 데이터를 제공
         데이터베이스에서 데이터 조회해서 결과를 반환하거나
-        서버에서 데이터를 가져와서 반환
+        데이터베이스에 데이터가 없을 경우 서버에서 데이터를 가져와서 반환
+        서버에서 가져온 데이터는 데이터베이스에 업데이트
         """
         self.logger.info(f"get data from repo: {start} to {end}, {market}")
         count_info = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=100000000)
@@ -117,6 +118,7 @@ class DataRepository:
         return total_data
 
     def _recovery_upbit_data(self, data, start, count, market, period=60):
+        """업비트 거래 데이터가 없는 경우 바로 앞의 데이터를 복사해서 채워준다"""
         new_data = []
         current_dt = self._convert_to_dt(start)
         current_datetime = start

@@ -1,10 +1,10 @@
-"""거래 요청을 거래소에 보내고, 결과를 받아서 리턴"""
+"""거래 요청과 계좌 정보 요청을 처리하는 Trader 추상클래스"""
 from abc import ABCMeta, abstractmethod
 
 
 class Trader(metaclass=ABCMeta):
     """
-    거래 요청 정보를 받아서 거래소에 요청 후 결과를 돌려준다
+    거래 요청 정보를 받아서 거래소에 요청 후 결과를 콜백으로 돌려준다
     """
 
     @abstractmethod

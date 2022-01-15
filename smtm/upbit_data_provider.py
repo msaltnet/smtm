@@ -1,4 +1,4 @@
-"""업비트 거래소의 실시간 거래 데이터를 제공하는 DataProvider"""
+"""업비트 거래소의 실시간 거래 데이터를 제공하는 DataProvider 클래스"""
 
 import requests
 from .data_provider import DataProvider

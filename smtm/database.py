@@ -1,10 +1,10 @@
-"""데이터베이스 모듈"""
+"""거래 데이터의 데이터베이스 역할의 Database 클래스"""
 import sqlite3
 from .log_manager import LogManager
 
 
 class Database:
-    """데이터 베이스 클래스"""
+    """과거 거래 데이터의 데이터 베이스 클래스"""
 
     def __init__(self, db_file=None):
         db = db_file if db_file is not None else "smtm.db"

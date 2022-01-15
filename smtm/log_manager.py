@@ -1,7 +1,4 @@
-"""logger 인스턴스를 제공
-
-이 모듈은 상황에 맞는 핸들러가 설정된 logger 인스턴스를 제공한다.
-"""
+"""file, stream handler를 공유하는 logger 인스턴스를 제공하는 LogManager 클래스"""
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -33,9 +30,7 @@ class LogManager:
 
     @classmethod
     def get_logger(cls, name):
-        """
-        파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공한다
-        """
+        """파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공한다"""
         logger = logging.getLogger(name)
         if name in cls.logger_map:
             return logger
@@ -48,16 +43,12 @@ class LogManager:
 
     @classmethod
     def set_stream_level(cls, level):
-        """
-        스트림 핸들러의 레벨을 설정한다
-        """
+        """스트림 핸들러의 레벨을 설정한다"""
         cls.stream_handler.setLevel(level)
 
     @classmethod
     def change_log_file(cls, log_file="smtm.log"):
-        """
-        파일 핸들러의 로그 파일을 변경한다
-        """
+        """파일 핸들러의 로그 파일을 변경한다"""
         if log_file == cls.log_filename:
             return
 

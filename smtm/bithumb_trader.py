@@ -1,4 +1,4 @@
-"""빗썸 거래소를 통한 거래 처리"""
+"""빗썸 거래소를 통한 거래 처리 및 계좌 정보 조회 할 수 있는 BithumbTrader 클래스"""
 
 import os
 import copy
@@ -88,7 +88,7 @@ class BithumbTrader(Trader):
             "amount": 거래 수량
             "date_time": 요청 데이터 생성 시간
         }]
-        callback(result):
+        callback(result): 결과를 전달할 콜백함수
         {
             "request": 요청 정보
             "type": 거래 유형 sell, buy, cancel
@@ -210,6 +210,7 @@ class BithumbTrader(Trader):
 
     def _cancel_order(self, order_id):
         """
+        거래 요청 취소 api 호출
         Returns:
             status: 결과 상태 코드 (정상: 0000, 그 외 에러 코드 참조), String
             total_{currency}: 전체 가상자산 수량, Number (String)
@@ -379,6 +380,7 @@ class BithumbTrader(Trader):
 
     def _query_balance(self, market):
         """
+        잔고 조회 api 호출
         Returns:
             status: 결과 상태 코드 (정상: 0000, 그 외 에러 코드 참조), String
             total_{currency}: 전체 가상자산 수량, Number (String)

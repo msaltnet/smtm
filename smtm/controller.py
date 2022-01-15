@@ -1,7 +1,5 @@
-"""시스템 운영 인터페이스
+"""시스템 운영 인터페이스로서 Operator를 사용해서 자동 거래 시스템을 컨트롤하는 Controller 클래스"""
 
-Operator를 사용해서 시스템을 컨트롤하는 모듈
-"""
 import signal
 from . import (
     LogManager,
@@ -17,7 +15,7 @@ from . import (
 
 
 class Controller:
-    """smtm 컨트롤러"""
+    """자동 거래 시스템 기본 컨트롤러"""
 
     MAIN_STATEMENT = "명령어를 입력하세요. (h: 도움말): "
 
@@ -76,7 +74,7 @@ class Controller:
         ]
 
     def main(self):
-        """main 함수"""
+        """시작점이 되는 main 함수"""
 
         if self.is_bithumb:
             data_provider = BithumbDataProvider(currency=self.currency)

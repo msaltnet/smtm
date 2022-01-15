@@ -1,6 +1,6 @@
-"""Jupyter notebook용 시스템 운영 인터페이스
+"""Jupyter notebook용 자동 거래 시스템 운영 인터페이스 JptController 클래스
 
-Jupyter notebook에서 사용하기 좋게 만든 Operator를 사용해서 시스템을 컨트롤하는 모듈
+Jupyter notebook에서 사용하기 좋게 만든 자동 거래 시스템 컨트롤 모듈
 """
 from IPython.display import Image, display
 from . import (
@@ -17,7 +17,7 @@ from . import (
 
 
 class JptController:
-    """smtm 컨트롤러"""
+    """Jupyter notebook용 자동 거래 시스템 컨트롤러"""
 
     def __init__(
         self,
