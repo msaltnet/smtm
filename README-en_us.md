@@ -36,7 +36,7 @@ Layered architecture
 ### Telegram Chat-bot Mode
 User can launch the program with Telegram chat-bot mode which provide user interface via Telegram chat-bot.
 
-![smtm_bot](https://user-images.githubusercontent.com/9311990/150664353-54b3d855-90c5-402e-bfaf-b95b84e3db70.png)
+![smtm_bot](https://user-images.githubusercontent.com/9311990/150667094-95139bfb-03e0-41d5-bad9-6be05ec6c9df.png)
 
 ![telegram_chatbot](https://user-images.githubusercontent.com/9311990/150663864-c5a7ed27-f1c6-4b87-8220-e31b8ccce368.PNG)
 
