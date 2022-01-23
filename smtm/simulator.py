@@ -47,7 +47,7 @@ class Simulator:
         self.end_str = "200430.180000"
         self.interval = interval
         self.operator = None
-        self.strategy = strategy
+        self.strategy = int(strategy)
         self.budget = int(budget)
         self.need_init = True
         self.currency = currency
@@ -145,6 +145,7 @@ class Simulator:
             strategy = StrategyBuyAndHold()
         else:
             strategy = StrategySma0()
+
         strategy.is_simulation = True
         self.operator = SimulationOperator()
         self._print_configuration(strategy.NAME)

@@ -86,7 +86,7 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.process_unit[1], 12 / sma.STEP)
 
         self.assertEqual(sma.cross_info[0], {"price": 0, "index": 0})
-        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 80})
+        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 60})
 
         # current_process가 "sell" 일때는 업데이트 되지 않아야함
         sma.current_process = "sell"
@@ -142,7 +142,7 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.process_unit[1], 0)
 
         self.assertEqual(sma.cross_info[0], {"price": 0, "index": 0})
-        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 80})
+        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 60})
 
         # current_process가 "buy" 일때는 업데이트 되지 않아야함
         sma.current_process = "buy"
@@ -203,8 +203,8 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(sma.process_unit[0], 90000 / sma.STEP)
         self.assertEqual(sma.process_unit[1], 0)
 
-        self.assertEqual(sma.cross_info[0], {"price": 0, "index": 105})
-        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 105})
+        self.assertEqual(sma.cross_info[0], {"price": 0, "index": 85})
+        self.assertEqual(sma.cross_info[1], {"price": 500, "index": 85})
 
     def test_update_trading_info_ignore_info_when_not_yet_initialzed(self):
         sma = StrategySma0()

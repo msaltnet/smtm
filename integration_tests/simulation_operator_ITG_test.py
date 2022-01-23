@@ -26,7 +26,7 @@ class SimulationOperatorIntegrationBnhTests(unittest.TestCase):
         strategy.is_simulation = True
         count = 100
         budget = 100000
-        interval = 0.1
+        interval = 0.001
         time_limit = 15
         end_str = "2020-04-30T16:30:00"
 
@@ -78,8 +78,8 @@ class SimulationOperatorIntegrationBnhTests(unittest.TestCase):
 
         self.assertIsNotNone(report)
         self.assertEqual(report[0], 100000)
-        self.assertEqual(report[1], 97126)
-        self.assertEqual(report[2], -2.874)
+        self.assertEqual(report[1], 97220)
+        self.assertEqual(report[2], -2.78)
         self.assertEqual(report[3]["KRW-BTC"], -2.693)
 
     def check_equal_results_list(self, a, b):

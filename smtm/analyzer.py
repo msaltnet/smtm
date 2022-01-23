@@ -31,7 +31,7 @@ class Analyzer:
     GRAPH_MAX_COUNT = 1440
     DEBUG_MODE = True
 
-    def __init__(self, sma_info=(10, 40, 80)):
+    def __init__(self, sma_info=(10, 40, 60)):
         self.request_list = []
         self.result_list = []
         self.info_list = []
@@ -583,6 +583,7 @@ class Analyzer:
             savefig=dict(fname=destination, dpi=300, pad_inches=0.25),
             figscale=1.25,
         )
+        self.logger.info(f'"{destination}" graph file created!')
         return destination
 
     @staticmethod

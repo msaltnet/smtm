@@ -171,13 +171,13 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_turn_over_when_last_data_is_None(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(5000, 100)
+        bnh.initialize(50000, 100)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
         requests = bnh.get_request()
         self.assertEqual(requests[0]["price"], 20000000)
-        self.assertEqual(requests[0]["amount"], 0.0001)
+        self.assertEqual(requests[0]["amount"], 0.0005)
         self.assertEqual(requests[0]["type"], "buy")
         bnh.update_trading_info(None)
         requests = bnh.get_request()
@@ -208,7 +208,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_None_when_balance_is_smaller_than_total_value(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(50000, 10)
+        bnh.initialize(5000, 10)
         dummy_info = {}
         dummy_info["closing_price"] = 62000000
         bnh.update_trading_info(dummy_info)
@@ -244,18 +244,18 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
 
     def test_get_request_return_correct_request(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(5000, 100)
+        bnh.initialize(50000, 100)
         dummy_info = {}
         dummy_info["closing_price"] = 20000000
         bnh.update_trading_info(dummy_info)
         requests = bnh.get_request()
         self.assertEqual(requests[0]["price"], 20000000)
-        self.assertEqual(requests[0]["amount"], 0.0001)
+        self.assertEqual(requests[0]["amount"], 0.0005)
         self.assertEqual(requests[0]["type"], "buy")
 
     def test_get_request_return_correct_request_with_cancel_requests(self):
         bnh = StrategyBuyAndHold()
-        bnh.initialize(5000, 100)
+        bnh.initialize(50000, 100)
         bnh.waiting_requests["mango_id"] = {"request": {"id": "mango_id"}}
         bnh.waiting_requests["orange_id"] = {"request": {"id": "orange_id"}}
         dummy_info = {}
@@ -270,7 +270,7 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(requests[1]["type"], "cancel")
 
         self.assertEqual(requests[2]["price"], 20000000)
-        self.assertEqual(requests[2]["amount"], 0.0001)
+        self.assertEqual(requests[2]["amount"], 0.0005)
         self.assertEqual(requests[2]["type"], "buy")
 
     def test_get_request_return_same_datetime_at_simulation(self):

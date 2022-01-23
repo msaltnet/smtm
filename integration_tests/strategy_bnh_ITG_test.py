@@ -32,7 +32,7 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
         expected_request = {
             "type": "buy",
             "price": 11304000.0,
-            "amount": 0.0009,
+            "amount": 0.0008,
         }
         self.assertEqual(request[0]["type"], expected_request["type"])
         self.assertEqual(request[0]["price"], expected_request["price"])
@@ -76,7 +76,7 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
         expected_request = {
             "type": "buy",
             "price": 21304000.0,
-            "amount": 0.0005,
+            "amount": 0.0004,
         }
         self.assertEqual(request[0]["type"], expected_request["type"])
         self.assertEqual(request[0]["price"], expected_request["price"])
@@ -122,7 +122,7 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
         expected_request = {
             "type": "buy",
             "price": 21304000.0,
-            "amount": 0.0005,
+            "amount": 0.0004,
         }
         self.assertEqual(request[0]["type"], "cancel")
         self.assertEqual(request[0]["id"], last_id)
@@ -214,7 +214,7 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
         expected_request = {
             "type": "buy",
             "price": 61304000.0,
-            "amount": 0.0002,
+            "amount": 0.0001,
         }
         self.assertEqual(request[0]["type"], expected_request["type"])
         self.assertEqual(request[0]["price"], expected_request["price"])
@@ -259,7 +259,7 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
         expected_request = {
             "type": "buy",
             "price": 61304000.0,
-            "amount": 0.0002,
+            "amount": 0.0001,
         }
         self.assertEqual(request[0]["type"], expected_request["type"])
         self.assertEqual(request[0]["price"], expected_request["price"])

@@ -2,6 +2,7 @@
 
 import copy
 from datetime import datetime
+import math
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
@@ -28,7 +29,7 @@ class StrategySma0(Strategy):
     COMMISSION_RATIO = 0.0005
     SHORT = 10
     MID = 40
-    LONG = 80
+    LONG = 60
     STEP = 1
     NAME = "SMA0-I"
     STD_K = 25
@@ -77,7 +78,7 @@ class StrategySma0(Strategy):
         if last == 0:
             return 0
         ratio = std / last * 1000000
-        return int(ratio) / 1000000
+        return math.floor(ratio) / 1000000
 
     def __update_process(self, info):
         try:
@@ -269,7 +270,7 @@ class StrategySma0(Strategy):
         amount = budget / price
 
         # 소숫점 4자리 아래 버림
-        amount = int(amount * 10000) / 10000
+        amount = math.floor(amount * 10000) / 10000
         final_value = amount * price
 
         if self.min_price > budget or self.process_unit[0] <= 0 or final_value > self.balance:
@@ -296,10 +297,11 @@ class StrategySma0(Strategy):
             amount = self.asset_amount
 
         # 소숫점 4자리 아래 버림
-        amount = int(amount * 10000) / 10000
+        amount = math.floor(amount * 10000) / 10000
 
         price = float(self.data[-1]["closing_price"])
         total_value = price * amount
+
         if amount <= 0 or total_value < self.min_price:
             self.logger.info(f"asset is too small or invalid unit {self.process_unit}")
             if self.is_simulation:

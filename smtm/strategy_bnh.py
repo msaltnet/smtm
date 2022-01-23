@@ -1,6 +1,7 @@
 """분할 매수 후 홀딩 하는 간단한 전략 StrategyBuyAndHold 클래스"""
 
 import copy
+import math
 from datetime import datetime
 from .strategy import Strategy
 from .log_manager import LogManager
@@ -130,7 +131,7 @@ class StrategyBuyAndHold(Strategy):
             if target_budget > self.balance:
                 target_budget = self.balance
 
-            amount = round(target_budget / last_closing_price, 4)
+            amount = math.floor((target_budget / last_closing_price) * 10000) / 10000
             trading_request = {
                 "id": DateConverter.timestamp_id(),
                 "type": "buy",
