@@ -203,7 +203,7 @@ class DataRepositoryTests(unittest.TestCase):
         repo.database.update.assert_not_called()
         repo._convert_to_datetime.assert_not_called()
         mock_to_end_min.assert_called_once_with(
-            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15", max_count=100000000
+            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15"
         )
 
     @patch("smtm.DateConverter.to_end_min")
@@ -214,10 +214,12 @@ class DataRepositoryTests(unittest.TestCase):
         ]
         repo.database = MagicMock()
         repo.database.query.return_value = []
-        repo._fetch_from_upbit = MagicMock(return_value=[
-            {"content": "mango", "date_time": "2020-03-20T00:00:00"},
-            {"content": "banana", "date_time": "2020-03-20 00:01:00"},
-        ])
+        repo._fetch_from_upbit = MagicMock(
+            return_value=[
+                {"content": "mango", "date_time": "2020-03-20T00:00:00"},
+                {"content": "banana", "date_time": "2020-03-20 00:01:00"},
+            ]
+        )
         result = repo.get_data("2020-02-20T17:00:15", "2020-02-20T22:00:15", "mango")
 
         self.assertEqual(
@@ -228,7 +230,7 @@ class DataRepositoryTests(unittest.TestCase):
             ],
         )
         mock_to_end_min.assert_called_once_with(
-            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15", max_count=100000000
+            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15"
         )
         repo._fetch_from_upbit.assert_called_once_with(
             "2020-02-20T17:00:15", "2020-02-20T22:00:15", "mango"

@@ -120,7 +120,7 @@ class MassSimulator:
     @staticmethod
     def get_initialized_operator(budget, strategy_num, interval, currency, start, end, tag):
         """시뮬레이션 오퍼레이션 생성 후 주어진 설정 값으로 초기화 하여 반환"""
-        dt = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=999999999999999)
+        dt = DateConverter.to_end_min(start_iso=start, end_iso=end)
         end = dt[0][1]
         count = dt[0][2]
 

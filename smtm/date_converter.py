@@ -17,7 +17,7 @@ class DateConverter:
         end_dt=None,
         start_iso=None,
         end_iso=None,
-        max_count=200,
+        max_count=9999999999,
     ):
         """숫자로 주어진 기간을 분으로 계산해서 시작, 끝, 분의 배열로 반환
 

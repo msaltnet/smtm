@@ -26,7 +26,7 @@ class DataRepository:
         서버에서 가져온 데이터는 데이터베이스에 업데이트
         """
         self.logger.info(f"get data from repo: {start} to {end}, {market}")
-        count_info = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=100000000)
+        count_info = DateConverter.to_end_min(start_iso=start, end_iso=end)
         total_count = count_info[0][2]
         db_data = self._query(start, end, market)
 
