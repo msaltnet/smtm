@@ -173,34 +173,34 @@ class Simulator:
     def start(self):
         """시뮬레이션 시작, 재시작"""
         if self.operator is None or self.need_init:
-            print("초기화가 필요합니다")
+            self._print("초기화가 필요합니다")
             return
 
-        self.logger.info("Simulation start! ==================")
+        self.logger.info("Simulation start! ============================")
 
         if self.operator.start() is not True:
-            print("Fail operator start")
+            self._print("Fail operator start")
             return
 
     def stop(self, signum, frame):
         """시뮬레이션 중지"""
         self._stop()
         self.__terminating = True
-        print(f"Receive Signal {signum} {frame}")
-        print("Stop Singing")
+        self._print(f"Receive Signal {signum} {frame}")
+        self._print("Stop Singing")
 
     def _stop(self):
         if self.operator is not None:
             self.operator.stop()
             self.need_init = True
-            print("프로그램을 재시작하려면 초기화하세요")
+            self._print("프로그램을 재시작하려면 초기화하세요")
 
     def terminate(self):
         """시뮬레이터 종료"""
-        print("Terminating......")
+        self._print("Terminating......")
         self._stop()
         self.__terminating = True
-        print("Good Bye~")
+        self._print("Good Bye~")
 
     def run_single(self):
         """인터렉션 없이 초기 설정 값으로 단독 1회 실행"""
@@ -229,21 +229,21 @@ class Simulator:
             if key.lower() in cmd["cmd"]:
                 cmd["action"]()
                 return
-        print("invalid command")
+        self._print("invalid command")
 
     def print_help(self):
         """가이드 문구 출력"""
-        print("command list =================")
+        self._print("command list =================")
         for item in self.command_list:
-            print(item["guide"])
+            self._print(item["guide"])
 
     def initialize_with_command(self):
         """설정 값을 입력받아서 초기화 진행"""
         for config in self.config_list:
-            print(config["guide"])
+            self._print(config["guide"])
             value = input(f"현재값: {config['value']} >> ")
             value = config["value"] if value == "" else value
-            print(f"설정값: {value}")
+            self._print(f"설정값: {value}")
             config["action"](value)
 
         self.initialize()
@@ -272,21 +272,21 @@ class Simulator:
 
     def _print_state(self):
         if self.operator is None:
-            print("초기화가 필요합니다")
+            self._print("초기화가 필요합니다")
             return
-        print(self.operator.state)
+        self._print(self.operator.state)
 
     def _print_configuration(self, strategy_name):
-        print("Simulation Configuration =====")
-        print(f"Simulation Period {self.start_str} ~ {self.end_str}")
-        print(f"Budget: {self.budget}, Interval: {self.interval}")
-        print(f"Strategy: {strategy_name}")
+        self._print("Simulation Configuration =====")
+        self._print(f"Simulation Period {self.start_str} ~ {self.end_str}")
+        self._print(f"Budget: {self.budget}, Interval: {self.interval}")
+        self._print(f"Strategy: {strategy_name}")
 
     def _print_score(self):
         def print_score_and_main_statement(score):
-            print("current score ==========")
-            print(score)
-            print(self.MAIN_STATEMENT)
+            self._print("current score ==========")
+            self._print(score)
+            self._print(self.MAIN_STATEMENT)
 
         self.operator.get_score(print_score_and_main_statement)
 
@@ -294,9 +294,13 @@ class Simulator:
         results = self.operator.get_trading_results()
 
         if results is None or len(results) == 0:
-            print("거래 기록이 없습니다")
+            self._print("거래 기록이 없습니다")
             return
 
         for result in results:
-            print(f"@{result['date_time']}, {result['type']}")
-            print(f"{result['price']} x {result['amount']}")
+            self._print(f"@{result['date_time']}, {result['type']}")
+            self._print(f"{result['price']} x {result['amount']}")
+
+    def _print(self, contents):
+        self.logger.info(contents)
+        print(contents)
