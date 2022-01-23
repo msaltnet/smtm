@@ -49,16 +49,16 @@ User can execute simulation with Simulator or MassSimulator, which run simulatio
 It's need to install and run manually like general python packages.
 
 ### How to install
-Install all packages using setup.py
+Install all packages using requirements.txt
 
 ```
-python setup.py install
+pip install -r requirements.txt
 ```
 
-for development, all development depedencies included.
+For development, all development depedencies included.
 
 ```
-pip install -e .[dev]
+pip install -r requirements-dev.txt
 ```
 
 ### How to run

@@ -54,16 +54,16 @@ Telegram Controller 모듈은 제공된 정보를 바탕으로 사용자와 텔�
 일반적인 파이썬 패키지와 같이 설치하고 실행하면 됩니다.
 
 ### 설치방법
-setup.py를 사용해서 모든 패키지를 설치하세요.
+소스 코드를 다운로드하고 관련된 패키지를 설치하세요.
 
 ```
-python setup.py install
+pip install -r requirements.txt
 ```
 
 시스템 수정 및 개발을 원할 때는 -e 옵션으로 개발관련 패키지도 설치하세요.
 
 ```
-pip install -e .[dev]
+pip install -r requirements-dev.txt
 ```
 
 ### 실행방법

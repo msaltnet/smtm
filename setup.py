@@ -4,18 +4,18 @@ from setuptools import find_packages, setup
 
 # Package meta-data.
 NAME = "smtm"
-DESCRIPTION = "make money using algorithm with python"
+DESCRIPTION = "A algorithm crypto trading system."
 URL = "https://github.com/msaltnet/smtm"
 EMAIL = "salt.jeong@gmail.com"
 AUTHOR = "msalt"
-VERSION = "0.1"
+VERSION = "1.0"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
     "requests",
+    "pandas",
     "numpy",
     "matplotlib",
-    "pandas",
     "mplfinance",
     "pyjwt",
     "python-dotenv",
