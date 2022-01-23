@@ -1,8 +1,8 @@
 # smtm
-[![Travis](https://travis-ci.com/msaltnet/smtm.svg?branch=master&style=flat-square&colorB=green)](https://app.travis-ci.com/github/msaltnet/smtm)
-[![license](https://img.shields.io/github/license/msaltnet/smtm.svg?style=flat-square)](https://github.com/msaltnet/smtm/blob/master/LICENSE)
-![language](https://img.shields.io/github/languages/top/msaltnet/smtm.svg?style=flat-square&colorB=green)
-[![codecov](https://codecov.io/gh/msaltnet/smtm/branch/master/graph/badge.svg?token=USXTX7MG70)](https://codecov.io/gh/msaltnet/smtm)
+[![Travis](https://travis-ci.com/msaltnet/smtm.svg?branch=master&style=flat-square&colorB=green)](https://app.travis-ci.com/github/msaltnet/smtm){:target="_blank"}
+[![license](https://img.shields.io/github/license/msaltnet/smtm.svg?style=flat-square)](https://github.com/msaltnet/smtm/blob/master/LICENSE){:target="_blank"}
+![language](https://img.shields.io/github/languages/top/msaltnet/smtm.svg?style=flat-square&colorB=green){:target="_blank"}
+[![codecov](https://codecov.io/gh/msaltnet/smtm/branch/master/graph/badge.svg?token=USXTX7MG70)](https://codecov.io/gh/msaltnet/smtm){:target="_blank"}
 
 > It's a game to get money. 
 
@@ -10,7 +10,7 @@
 
 [English](https://github.com/msaltnet/smtm/blob/master/README-en_us.md) 👈
 
-[![icon_wide](https://user-images.githubusercontent.com/9311990/150662620-9c2ef1d8-7384-4856-a8fa-f1e52031d6fa.jpg)](https://smtm.msalt.net/)
+[![icon_wide](https://user-images.githubusercontent.com/9311990/150662620-9c2ef1d8-7384-4856-a8fa-f1e52031d6fa.jpg)](https://smtm.msalt.net/){:target="_blank"}
 
 
 데이터 수집 -> 알고리즘 분석 -> 거래로 이루어진 간단한 프로세스를 정해진 간격으로 반복 수행하는 것이 기본 개념이며, 기본적으로 분당 1회 프로세스를 처리하는 것으로 검증되었습니다.

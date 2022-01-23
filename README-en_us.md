@@ -1,8 +1,8 @@
 # smtm
-[![Travis](https://travis-ci.com/msaltnet/smtm.svg?branch=master&style=flat-square&colorB=green)](https://app.travis-ci.com/github/msaltnet/smtm)
-[![license](https://img.shields.io/github/license/msaltnet/smtm.svg?style=flat-square)](https://github.com/msaltnet/smtm/blob/master/LICENSE)
-![language](https://img.shields.io/github/languages/top/msaltnet/smtm.svg?style=flat-square&colorB=green)
-[![codecov](https://codecov.io/gh/msaltnet/smtm/branch/master/graph/badge.svg?token=USXTX7MG70)](https://codecov.io/gh/msaltnet/smtm)
+[![Travis](https://travis-ci.com/msaltnet/smtm.svg?branch=master&style=flat-square&colorB=green)](https://app.travis-ci.com/github/msaltnet/smtm){:target="_blank"}
+[![license](https://img.shields.io/github/license/msaltnet/smtm.svg?style=flat-square)](https://github.com/msaltnet/smtm/blob/master/LICENSE){:target="_blank"}
+![language](https://img.shields.io/github/languages/top/msaltnet/smtm.svg?style=flat-square&colorB=green){:target="_blank"}
+[![codecov](https://codecov.io/gh/msaltnet/smtm/branch/master/graph/badge.svg?token=USXTX7MG70)](https://codecov.io/gh/msaltnet/smtm){:target="_blank"}
 
 > It's a game to get money. 
 
@@ -10,7 +10,7 @@ An algorithm-based cryptocurrency automatic trading system made in Python. https
 
 [한국어](https://github.com/msaltnet/smtm/blob/master/README.md) 👈
 
-[![icon_wide](https://user-images.githubusercontent.com/9311990/150662620-9c2ef1d8-7384-4856-a8fa-f1e52031d6fa.jpg)](https://smtm.msalt.net/)
+[![icon_wide](https://user-images.githubusercontent.com/9311990/150662620-9c2ef1d8-7384-4856-a8fa-f1e52031d6fa.jpg)](https://smtm.msalt.net/){:target="_blank"}
 
 It has a very simple routine and repeat periodically.
 Performance critical approach is NOT suitable. e.g. multiple tradings in seconds. If you want, find another solution.
