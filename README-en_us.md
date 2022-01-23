@@ -88,10 +88,25 @@ run with mode and initial setting parameters
 python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 ```
 
+for real trading API key and host url is included in `.env` file.
+
+```
+UPBIT_OPEN_API_ACCESS_KEY=Your API KEY
+UPBIT_OPEN_API_SECRET_KEY=Your API KEY
+UPBIT_OPEN_API_SERVER_URL=https://api.upbit.com
+```
+
 #### run telegram chatbot controller for trading
 run with only mode 
 ```
 python -m smtm --mode 3
+```
+
+chat-bot api token and chat room id is needed in `.env`.
+
+```
+TELEGRAM_BOT_TOKEN=bot123456789:YOUR bot Token
+TELEGRAM_CHAT_ID=123456789
 ```
 
 #### execute mass simulation with config file

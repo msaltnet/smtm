@@ -87,14 +87,22 @@ python -m smtm --mode 0
 시뮬레이션 파라미터와 아래 명령어로 단일 시뮬레이션을 바로 실행 후 결과 반환.
 
 ```
-python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy 0 --currency BTC
+python -m smtm --mode 1 --budget 500000 --from_dash_to 201220.080000-201221 --term 0.001 --strategy 1 --currency BTC
 ```
 
 #### 기본 실전 매매 프로그램
 초기값과 함께 기본 실전 매매 프로그램을 실행. 기본 실전 매매 프로그램은 인터렉티브 모드로 실행되어 입력에 따라 거래 시작, 중지, 결과 조회가 가능합니다.
 
 ```
-python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
+python -m smtm --mode 2 --budget 100000 --term 60 --strategy 0 --currency ETH
+```
+
+실전 거래를 위해서는 `.env` 파일에 거래소 API KEY와 API host url을 넣어 주어야 합니다.
+
+```
+UPBIT_OPEN_API_ACCESS_KEY=Your API KEY
+UPBIT_OPEN_API_SECRET_KEY=Your API KEY
+UPBIT_OPEN_API_SERVER_URL=https://api.upbit.com
 ```
 
 #### 텔레그램 챗봇 모드 실전 매매 프로그램
@@ -102,6 +110,13 @@ python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 
 ```
 python -m smtm --mode 3
+```
+
+챗봇 모드를 위해서는 `.env` 파일에 텔레그램 챗봇 API 토큰과 챗봇 대화방 아이디를 넣어 주어야 합니다.
+
+```
+TELEGRAM_BOT_TOKEN=bot123456789:YOUR bot Token
+TELEGRAM_CHAT_ID=123456789
 ```
 
 #### 대량 시뮬레이션
