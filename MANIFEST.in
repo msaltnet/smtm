@@ -1,0 +1,13 @@
+include LICENSE
+include tests/*
+include tests/data/*
+include integration_tests/*
+include integration_tests/data/*
+include example_data/*
+include notebook/*
+include .pylintrc
+include *.bat
+include *.md
+include requirements.txt
+include requirements-dev.txt
+prune *.log

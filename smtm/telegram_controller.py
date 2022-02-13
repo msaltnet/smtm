@@ -28,7 +28,6 @@ class TelegramController:
     """자동 거래 시스템 탤래그램 챗봇 컨트롤러"""
 
     API_HOST = "https://api.telegram.org/"
-    TEST_FILE = "data/telegram_chatbot.jpg"
     TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
     CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "123456"))
     POLLING_TIMEOUT = 10
