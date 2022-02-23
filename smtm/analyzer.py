@@ -37,6 +37,7 @@ class Analyzer:
         self.info_list = []
         self.asset_info_list = []
         self.score_list = []
+        self.spot_list = []
         self.start_asset_info = None
         self.get_asset_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -52,6 +53,14 @@ class Analyzer:
         get_asset_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
         """
         self.get_asset_info_func = get_asset_info_func
+
+    def add_drawing_spot(self, date_time, value):
+        """그래프에 그려질 점의 위치를 입력받아서 저장한다
+
+        date_time: 그래프의 시간축 정보로 info_list의 date_time과 같은 형식
+        value: 그래프의 y축에 해당하는 정보로 price 정보와 비슷한 수준의 값을 갖는 것이 좋다
+        """
+        self.spot_list.append({"date_time": date_time, "value": value})
 
     def put_trading_info(self, info):
         """거래 정보를 저장한다

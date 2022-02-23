@@ -1,7 +1,7 @@
 import os
 import copy
 import unittest
-from smtm import Analyzer
+from smtm import Analyzer, analyzer
 from unittest.mock import *
 from datetime import datetime, timedelta
 
@@ -12,6 +12,15 @@ class AnalyzerTests(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_add_drawing_spot_append_spot_info(self):
+        analyzer = Analyzer()
+        analyzer.add_drawing_spot("2020-02-27T23:00:00", 12345)
+        analyzer.add_drawing_spot("2020-02-27T24:00:00", 700)
+        self.assertEqual(analyzer.spot_list[0]["date_time"], "2020-02-27T23:00:00")
+        self.assertEqual(analyzer.spot_list[0]["value"], 12345)
+        self.assertEqual(analyzer.spot_list[1]["date_time"], "2020-02-27T24:00:00")
+        self.assertEqual(analyzer.spot_list[1]["value"], 700)
 
     def test_put_requests_append_request(self):
         analyzer = Analyzer()
