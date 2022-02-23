@@ -286,6 +286,7 @@ class Analyzer:
         score_list = self.score_list
         info_list = self.info_list
         result_list = self.result_list
+        spot_list = self.spot_list
 
         if index_info is not None:
             interval_data = self.__make_interval_data(index_info)
@@ -293,9 +294,15 @@ class Analyzer:
             score_list = interval_data[1]
             info_list = interval_data[2]
             result_list = interval_data[3]
+            spot_list = interval_data[4]
 
         return self.__get_return_report(
-            asset_info_list, score_list, info_list, result_list, graph_filename=graph_filename
+            asset_info_list,
+            score_list,
+            info_list,
+            result_list,
+            graph_filename=graph_filename,
+            spot_list=spot_list,
         )
 
     def __make_interval_data(self, index_info):
@@ -321,11 +328,13 @@ class Analyzer:
         score_list = []
         asset_info_list = []
         result_list = []
+        spot_list = []
         self.__make_filtered_list(start_dt, end_dt, score_list, self.score_list)
         self.__make_filtered_list(start_dt, end_dt, asset_info_list, self.asset_info_list)
         self.__make_filtered_list(start_dt, end_dt, result_list, self.result_list)
+        self.__make_filtered_list(start_dt, end_dt, spot_list, self.spot_list)
 
-        return (asset_info_list, score_list, info_list, result_list)
+        return (asset_info_list, score_list, info_list, result_list, spot_list)
 
     @staticmethod
     def _get_min_max_return(score_list):
@@ -342,7 +351,13 @@ class Analyzer:
                 dest.append(target)
 
     def __get_return_report(
-        self, asset_info_list, score_list, info_list, result_list, graph_filename=None
+        self,
+        asset_info_list,
+        score_list,
+        info_list,
+        result_list,
+        graph_filename=None,
+        spot_list=None,
     ):
         try:
             graph = None
@@ -353,7 +368,12 @@ class Analyzer:
             min_max = self._get_min_max_return(score_list)
             if graph_filename is not None:
                 graph = self.__draw_graph(
-                    info_list, result_list, score_list, graph_filename, is_fullpath=True
+                    info_list,
+                    result_list,
+                    score_list,
+                    graph_filename,
+                    is_fullpath=True,
+                    spot_list=spot_list,
                 )
             period = info_list[0]["date_time"] + " - " + info_list[-1]["date_time"]
             summary = (
@@ -429,7 +449,9 @@ class Analyzer:
                 ),
             )
             self.__create_report_file(tag, summary, trading_table)
-            self.__draw_graph(self.info_list, self.result_list, self.score_list, tag)
+            self.__draw_graph(
+                self.info_list, self.result_list, self.score_list, tag, spot_list=self.spot_list
+            )
             return {"summary": summary, "trading_table": trading_table}
         except (IndexError, AttributeError):
             self.logger.error("create report FAIL")
@@ -503,9 +525,22 @@ class Analyzer:
         process = psutil.Process()
         return process.memory_info().rss / 2 ** 20  # Bytes to MB
 
-    def __create_plot_data(self, info_list, result_list, score_list):
+    def __get_spot_info(self, spot_list, start_pos, ref_time):
+        spot_pos = start_pos
+        spot_info = None
+        while spot_pos < len(spot_list):
+            spot = spot_list[spot_pos]
+            spot_time = datetime.strptime(spot["date_time"], self.ISO_DATEFORMAT)
+            if ref_time < spot_time:
+                break
+            spot_info = spot["value"]
+            spot_pos += 1
+        return spot_info, spot_pos
+
+    def __create_plot_data(self, info_list, result_list, score_list, spot_list=None):
         result_pos = 0
         score_pos = 0
+        spot_pos = 0
         last_avr_price = None
         last_acc_return = 0
         plot_data = []
@@ -527,6 +562,13 @@ class Analyzer:
                 elif result["type"] == "sell":
                     new["sell"] = result["price"]
                 result_pos += 1
+
+            # 추가 spot 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
+            if spot_list is not None:
+                spot_info = self.__get_spot_info(spot_list, spot_pos, info_time)
+                if spot_info[0] is not None:
+                    new["spot"] = spot_info[0]
+                spot_pos = spot_info[1]
 
             # 수익률 정보를 추가. 정보가 없는 경우 최근 정보로 채움
             while score_pos < len(score_list):
@@ -553,8 +595,10 @@ class Analyzer:
             plot_data.append(new)
         return pd.DataFrame(plot_data)[-self.GRAPH_MAX_COUNT :]
 
-    def __draw_graph(self, info_list, result_list, score_list, filename, is_fullpath=False):
-        total = self.__create_plot_data(info_list, result_list, score_list)
+    def __draw_graph(
+        self, info_list, result_list, score_list, filename, is_fullpath=False, spot_list=None
+    ):
+        total = self.__create_plot_data(info_list, result_list, score_list, spot_list=spot_list)
         total = total.rename(
             columns={
                 "date_time": "Date",
@@ -577,6 +621,12 @@ class Analyzer:
             apds.append(mpf.make_addplot(total["avr_price"]))
         if "return" in total.columns:
             apds.append(mpf.make_addplot((total["return"]), panel=1, color="g", secondary_y=True))
+        if "spot" in total.columns:
+            apds.append(
+                mpf.make_addplot(
+                    (total["spot"]), type="scatter", markersize=50, marker=".", color="g"
+                )
+            )
 
         destination = self.OUTPUT_FOLDER + filename + ".jpg"
         if is_fullpath:

@@ -436,6 +436,18 @@ class AnalyzerTests(unittest.TestCase):
         }
         analyzer.result_list.append(dummy_result)
 
+        dummy_spot = {
+            "value": 5900,
+            "date_time": "2020-02-23T00:00:00",
+        }
+        analyzer.spot_list.append(dummy_spot)
+
+        dummy_spot2 = {
+            "value": 6900,
+            "date_time": "2020-02-23T00:00:01",
+        }
+        analyzer.spot_list.append(dummy_spot2)
+
         dummy_asset_info = {
             "balance": 23456,
             "asset": {},
@@ -506,6 +518,12 @@ class AnalyzerTests(unittest.TestCase):
             "kind": 2,
         }
         analyzer.result_list.append(dummy_result3)
+
+        dummy_spot3 = {
+            "value": 8888,
+            "date_time": "2020-02-23T00:01:00",
+        }
+        analyzer.spot_list.append(dummy_spot3)
 
         target_dummy_asset2 = {
             "balance": 5000,
@@ -658,8 +676,9 @@ class AnalyzerTests(unittest.TestCase):
 
         analyzer.update_asset_info.assert_called()
 
+    @patch("mplfinance.make_addplot")
     @patch("mplfinance.plot")
-    def test_get_return_report_draw_graph_when_graph_filename_exist(self, mock_plot):
+    def test_get_return_report_draw_graph_when_graph_filename_exist(self, mock_plot, mock_addplot):
         """
         {
             cumulative_return: 기준 시점부터 누적 수익률
@@ -709,6 +728,28 @@ class AnalyzerTests(unittest.TestCase):
             savefig=dict(fname="mango_graph.png", dpi=300, pad_inches=0.25),
             figscale=1.25,
         )
+        self.assertEqual(len(mock_addplot.call_args_list), 5)
+        self.assertEqual(mock_addplot.call_args_list[0][1]["type"], "scatter")
+        self.assertEqual(mock_addplot.call_args_list[0][1]["markersize"], 100)
+        self.assertEqual(mock_addplot.call_args_list[0][1]["marker"], "^")
+        self.assertEqual(mock_addplot.call_args_list[1][1]["type"], "scatter")
+        self.assertEqual(mock_addplot.call_args_list[1][1]["markersize"], 100)
+        self.assertEqual(mock_addplot.call_args_list[1][1]["marker"], "v")
+        self.assertEqual(mock_addplot.call_args_list[3][1]["panel"], 1)
+        self.assertEqual(mock_addplot.call_args_list[3][1]["color"], "g")
+        self.assertEqual(mock_addplot.call_args_list[3][1]["secondary_y"], True)
+        self.assertEqual(mock_addplot.call_args_list[4][1]["type"], "scatter")
+        self.assertEqual(mock_addplot.call_args_list[4][1]["markersize"], 50)
+        self.assertEqual(mock_addplot.call_args_list[4][1]["marker"], ".")
+        self.assertEqual(mock_addplot.call_args_list[0][0][0][0], 5000)
+        self.assertEqual(mock_addplot.call_args_list[0][0][0][1], 5000)
+        self.assertEqual(mock_addplot.call_args_list[1][0][0][1], 6000.0)
+        self.assertEqual(mock_addplot.call_args_list[2][0][0][0], 500)
+        self.assertEqual(mock_addplot.call_args_list[2][0][0][1], 600)
+        self.assertEqual(mock_addplot.call_args_list[3][0][0][0], -65.248)
+        self.assertEqual(mock_addplot.call_args_list[3][0][0][1], -75.067)
+        self.assertEqual(mock_addplot.call_args_list[4][0][0][0], 5900)
+        self.assertEqual(mock_addplot.call_args_list[4][0][0][1], 8888)
 
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")

@@ -92,6 +92,9 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         }
         analyzer.put_trading_info(info)
 
+        analyzer.add_drawing_spot("2020-12-21T01:14:00", 26020000.0)
+        analyzer.add_drawing_spot("2020-12-21T01:14:01", 26182000.0)
+
         requests = [
             {
                 "id": "1621767064.395",
@@ -242,6 +245,8 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         }
         analyzer.put_trading_info(info)
 
+        analyzer.add_drawing_spot("2020-12-21T01:17:00", 25061000.0)
+
         requests = [
             {
                 "id": "1621767067.473",
@@ -305,6 +310,7 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.info_list = analyzer_data.get_data("info_list")
         analyzer.asset_info_list = analyzer_data.get_data("asset_info_list")
         analyzer.score_list = analyzer_data.get_data("score_list")
+        analyzer.spot_list = analyzer_data.get_data("spot_list")
         analyzer.start_asset_info = analyzer.asset_info_list[0]
 
         if os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"):

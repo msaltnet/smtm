@@ -9,7 +9,28 @@ def get_data(name):
         return asset_info_list
     elif name == "score_list":
         return score_list
+    elif name == "spot_list":
+        return spot_list
 
+
+spot_list = [
+    {
+        "date_time": "2020-12-20T17:01:00",
+        "value": 26020000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:01:01",
+        "value": 26020000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:03:00",
+        "value": 26029000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:07:00",
+        "value": 26039000.0,
+    },
+]
 
 request_list = [
     {
