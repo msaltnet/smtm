@@ -9,7 +9,7 @@ mode:
 
 Example) python -m smtm --mode 0
 Example) python -m smtm --mode 1
-Example) python -m smtm --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy 0 --currency BTC
+Example) python -m smtm --mode 1 --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy 0 --currency BTC
 Example) python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 Example) python -m smtm --mode 3
 Example) python -m smtm --mode 4 --config /data/sma0_simulation.json

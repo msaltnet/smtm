@@ -236,7 +236,7 @@ class Simulator:
         """가이드 문구 출력"""
         self._print("command list =================")
         for item in self.command_list:
-            self._print(item["guide"])
+            self._print(item["guide"], True)
 
     def initialize_with_command(self):
         """설정 값을 입력받아서 초기화 진행"""
@@ -302,6 +302,7 @@ class Simulator:
             self._print(f"@{result['date_time']}, {result['type']}")
             self._print(f"{result['price']} x {result['amount']}")
 
-    def _print(self, contents):
-        self.logger.info(contents)
+    def _print(self, contents, logger_skip=False):
+        if logger_skip is not True:
+            self.logger.info(contents)
         print(contents)
