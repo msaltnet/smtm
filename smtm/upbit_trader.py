@@ -378,8 +378,8 @@ class UpbitTrader(Trader):
             )
             response.raise_for_status()
             result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
+        except ValueError as err:
+            self.logger.error(f"Invalid data from server: {err}")
             return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
@@ -467,8 +467,8 @@ class UpbitTrader(Trader):
                 response = requests.get(url, headers=headers)
             response.raise_for_status()
             result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
+        except ValueError as err:
+            self.logger.error(f"Invalid data from server: {err}")
             return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
@@ -536,8 +536,8 @@ class UpbitTrader(Trader):
             )
             response.raise_for_status()
             result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
+        except ValueError as err:
+            self.logger.error(f"Invalid data from server: {err}")
             return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)

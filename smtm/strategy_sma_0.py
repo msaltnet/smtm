@@ -124,8 +124,8 @@ class StrategySma0(Strategy):
             self.cross_info[1] = {"price": current_price, "index": current_idx}
             self.logger.debug(f"process_unit updated {self.process_unit}")
 
-        except (KeyError, TypeError):
-            self.logger.warning("invalid info")
+        except (KeyError, TypeError) as err:
+            self.logger.warning(f"invalid info: {err}")
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트

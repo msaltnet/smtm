@@ -163,8 +163,8 @@ class TelegramController:
                     if "text" in result["message"]:
                         self._execute_command(result["message"]["text"])
                     self.last_update_id = result["update_id"]
-        except (ValueError, KeyError):
-            self.logger.error("Invalid data from server")
+        except (ValueError, KeyError) as err:
+            self.logger.error(f"Invalid data from server: {err}")
 
     def _execute_command(self, command):
         self.logger.debug(f"_execute_command: {command}")
@@ -173,8 +173,8 @@ class TelegramController:
             if self.in_progress is not None:
                 self.in_progress(command)
                 return
-        except TypeError:
-            self.logger.debug("invalid in_progress")
+        except TypeError as err:
+            self.logger.debug(f"invalid in_progress: {err}")
 
         for item in self.command_list:
             if command in item["cmd"]:
@@ -229,8 +229,8 @@ class TelegramController:
                 response = requests.get(url)
             response.raise_for_status()
             result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
+        except ValueError as err:
+            self.logger.error(f"Invalid data from server: {err}")
             return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)

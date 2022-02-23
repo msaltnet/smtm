@@ -53,8 +53,8 @@ class SimulationOperator(Operator):
                 return
             self.trader.send_request(target_request, send_request_callback)
             self.analyzer.put_requests(target_request)
-        except AttributeError:
-            self.logger.error("excuting fail")
+        except AttributeError as err:
+            self.logger.error(f"excuting fail: {err}")
 
         self.turn += 1
         self.logger.debug("############# Simulation trading is completed")
@@ -90,8 +90,8 @@ class SimulationOperator(Operator):
                         graph_filename=graph_filename, index_info=index_info
                     )
                 )
-            except TypeError:
-                self.logger.error("invalid callback")
+            except TypeError as err:
+                self.logger.error(f"invalid callback: {err}")
 
         self.worker.post_task(
             {"runnable": get_score_callback, "callback": callback, "index_info": index_info}

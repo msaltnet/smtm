@@ -212,7 +212,7 @@ class DataRepository:
             return final_data
 
         except ValueError as error:
-            self.logger.error("Invalid data from server")
+            self.logger.error(f"Invalid data from server: {error}")
             raise UserWarning("Fail get data from sever") from error
         except requests.exceptions.HTTPError as error:
             self.logger.error(error)

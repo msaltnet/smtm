@@ -65,8 +65,8 @@ class Operator:
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         try:
             self.tag += "-" + self.trader.NAME + "-" + self.strategy.NAME
-        except AttributeError:
-            self.logger.warning("can't get additional info form strategy and trader")
+        except AttributeError as err:
+            self.logger.warning(f"can't get additional info form strategy and trader: {err}")
 
     def set_interval(self, interval):
         """자동 거래 시간 간격을 설정한다.

@@ -54,8 +54,8 @@ class UpbitDataProvider(DataProvider):
                 "acc_price": float(data["candle_acc_trade_price"]),
                 "acc_volume": float(data["candle_acc_trade_volume"]),
             }
-        except KeyError:
-            self.logger.warning("invalid data for candle info")
+        except KeyError as err:
+            self.logger.warning(f"invalid data for candle info: {err}")
             return None
 
     def __get_data_from_server(self):
@@ -64,7 +64,7 @@ class UpbitDataProvider(DataProvider):
             response.raise_for_status()
             return response.json()
         except ValueError as error:
-            self.logger.error("Invalid data from server")
+            self.logger.error(f"Invalid data from server: {error}")
             raise UserWarning("Fail get data from sever") from error
         except requests.exceptions.HTTPError as error:
             self.logger.error(error)

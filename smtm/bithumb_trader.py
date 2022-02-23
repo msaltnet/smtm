@@ -264,8 +264,8 @@ class BithumbTrader(Trader):
                     self._call_callback(order["callback"], result)
                 else:
                     waiting_request[request_id] = order
-            except KeyError:
-                self.logger.error(f"query_order fail! request_id {request_id}")
+            except KeyError as err:
+                self.logger.error(f"query_order fail! request_id {request_id}: {err}")
 
         self.order_map = waiting_request
         self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
@@ -412,8 +412,8 @@ class BithumbTrader(Trader):
             )
             response.raise_for_status()
             result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
+        except ValueError as err:
+            self.logger.error(f"Invalid data from server: {err}")
             return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)
@@ -458,8 +458,8 @@ class BithumbTrader(Trader):
             response = requests.post(url, headers=headers, data=str_data)
             response.raise_for_status()
             result = response.json()
-        except ValueError:
-            self.logger.error("Invalid data from server")
+        except ValueError as err:
+            self.logger.error(f"Invalid data from server: {err}")
             return None
         except requests.exceptions.HTTPError as msg:
             self.logger.error(msg)

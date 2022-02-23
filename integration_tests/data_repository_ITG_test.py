@@ -125,7 +125,7 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
             return final_data
 
         except ValueError as error:
-            print("Invalid data from server")
+            print(f"Invalid data from server: {error}")
             raise UserWarning("Fail get data from sever") from error
         except requests.exceptions.HTTPError as error:
             print(error)

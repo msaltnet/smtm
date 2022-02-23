@@ -121,8 +121,8 @@ class Analyzer:
         try:
             if float(result["price"]) <= 0 or float(result["amount"]) <= 0:
                 return
-        except KeyError:
-            self.logger.warning("Invalid result")
+        except KeyError as err:
+            self.logger.warning(f"Invalid result: {err}")
             return
 
         new = copy.deepcopy(result)
