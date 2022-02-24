@@ -55,12 +55,15 @@ class Operator:
         if self.state is not None:
             return
 
+        def add_spot_callback(date_time, value):
+            analyzer.add_drawing_spot(date_time, value)
+
         self.data_provider = data_provider
         self.strategy = strategy
         self.trader = trader
         self.analyzer = analyzer
         self.state = "ready"
-        self.strategy.initialize(budget)
+        self.strategy.initialize(budget, add_spot_callback=add_spot_callback)
         self.analyzer.initialize(trader.get_account_info)
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         try:

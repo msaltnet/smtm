@@ -320,7 +320,7 @@ class StrategySma0(Strategy):
             "amount": amount,
         }
 
-    def initialize(self, budget, min_price=5000):
+    def initialize(self, budget, min_price=5000, add_spot_callback=None):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
