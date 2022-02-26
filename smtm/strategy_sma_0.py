@@ -52,6 +52,7 @@ class StrategySma0(Strategy):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.waiting_requests = {}
         self.cross_info = [{"price": 0, "index": 0}, {"price": 0, "index": 0}]
+        self.add_spot_callback = None
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트
@@ -80,6 +81,10 @@ class StrategySma0(Strategy):
         ratio = std / last * 1000000
         return math.floor(ratio) / 1000000
 
+    def __add_drawing_spot(self, date_time, value):
+        if self.add_spot_callback is not None:
+            self.add_spot_callback(date_time, value)
+
     def __update_process(self, info):
         try:
             current_price = info["closing_price"]
@@ -100,6 +105,7 @@ class StrategySma0(Strategy):
                 return
 
             if sma_short > sma_mid > sma_long and self.current_process != "buy":
+                is_skip = False
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
 
@@ -118,13 +124,16 @@ class StrategySma0(Strategy):
                     if std_ratio > self.STD_RATIO:
                         self.cross_info[1] = {"price": 0, "index": current_idx}
                         self.logger.debug(f"[SMA] SKIP BUY !!! === Stand deviation:{std_ratio:.6f}")
-
+                        is_skip = True
+                if is_skip is not True:
+                    self.__add_drawing_spot(info["date_time"], self.process_unit[0])
             elif sma_short < sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
                 self.logger.debug(
                     f"[SMA] Try to sell {sma_short} {sma_mid} {sma_long}, amout: {self.process_unit[1]}"
                 )
+                self.__add_drawing_spot(info["date_time"], info["closing_price"])
             else:
                 return
             self.cross_info[0] = self.cross_info[1]
@@ -337,3 +346,4 @@ class StrategySma0(Strategy):
         self.budget = budget
         self.balance = budget
         self.min_price = min_price
+        self.add_spot_callback = add_spot_callback
