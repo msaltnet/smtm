@@ -95,6 +95,7 @@ class StrategySma0(Strategy):
             sma_long_list = pd.Series(feeded_list).rolling(self.LONG).mean().values
             sma_long = sma_long_list[-1]
 
+            self.logger.debug(f"[SMA] Start current index {current_idx}")
             if np.isnan(sma_long) or current_idx + 1 < self.LONG:
                 return
 
@@ -102,6 +103,9 @@ class StrategySma0(Strategy):
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
 
+                self.logger.debug(
+                    f"[SMA] Try to buy {sma_short} {sma_mid} {sma_long}, price: {self.process_unit[0]}"
+                )
                 if current_idx > self.LONG:
                     deviation_count = current_idx - self.LONG
                     if deviation_count > self.STD_K:
@@ -110,19 +114,21 @@ class StrategySma0(Strategy):
                     std_ratio = self._get_deviation_ratio(
                         np.std(sma_long_list[-deviation_count:]), sma_long_list[-1]
                     )
-                    self.logger.info(f"Stand deviation {std_ratio:.6f}======")
+
                     if std_ratio > self.STD_RATIO:
                         self.cross_info[1] = {"price": 0, "index": current_idx}
-                        self.logger.info(f"SKIP BUY !!! ====== {current_idx}")
+                        self.logger.debug(f"[SMA] SKIP BUY !!! === Stand deviation:{std_ratio:.6f}")
+
             elif sma_short < sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
+                self.logger.debug(
+                    f"[SMA] Try to sell {sma_short} {sma_mid} {sma_long}, amout: {self.process_unit[1]}"
+                )
             else:
                 return
-
             self.cross_info[0] = self.cross_info[1]
             self.cross_info[1] = {"price": current_price, "index": current_idx}
-            self.logger.debug(f"process_unit updated {self.process_unit}")
 
         except (KeyError, TypeError) as err:
             self.logger.warning(f"invalid info: {err}")
