@@ -521,9 +521,15 @@ class AnalyzerTests(unittest.TestCase):
 
         dummy_spot3 = {
             "value": 8888,
-            "date_time": "2020-02-23T00:01:00",
+            "date_time": "2020-02-23T00:02:00",
         }
         analyzer.spot_list.append(dummy_spot3)
+
+        dummy_spot4 = {
+            "value": 9999,
+            "date_time": "2020-02-23T00:01:00",
+        }
+        analyzer.spot_list.append(dummy_spot4)
 
         target_dummy_asset2 = {
             "balance": 5000,
@@ -542,6 +548,19 @@ class AnalyzerTests(unittest.TestCase):
                 "kind": 3,
             }
         )
+
+        dummy_info3 = {
+            "market": "orange",
+            "date_time": "2020-02-23T00:02:00",
+            "opening_price": 5500,
+            "high_price": 19000,
+            "low_price": 4900,
+            "closing_price": 8000,
+            "acc_price": 15000000,
+            "acc_volume": 15000,
+            "kind": 0,
+        }
+        analyzer.info_list.append(dummy_info3)
 
         return (
             dummy_info,
@@ -585,12 +604,12 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[3]["apple"], -99.85)
 
         self.assertEqual(report[4], None)
-        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:02:00")
         # 최저/최대 수익률
         self.assertEqual(report[6], -75.067)
         self.assertEqual(report[7], -65.248)
         self.assertEqual(
-            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:01:00")
+            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:02:00")
         )
 
         analyzer.update_asset_info.assert_called_once()
@@ -707,14 +726,14 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[3]["apple"], -99.85)
 
         self.assertEqual(report[4], "mango_graph.png")
-        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+        self.assertEqual(report[5], "2020-02-23T00:00:00 - 2020-02-23T00:02:00")
 
         # 최저/최대 수익률
         self.assertEqual(report[6], -75.067)
         self.assertEqual(report[7], -65.248)
         # 시간 정보
         self.assertEqual(
-            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:01:00")
+            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:02:00")
         )
 
         analyzer.update_asset_info.assert_called_once()
@@ -749,7 +768,8 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(mock_addplot.call_args_list[3][0][0][0], -65.248)
         self.assertEqual(mock_addplot.call_args_list[3][0][0][1], -75.067)
         self.assertEqual(mock_addplot.call_args_list[4][0][0][0], 5900)
-        self.assertEqual(mock_addplot.call_args_list[4][0][0][1], 8888)
+        self.assertEqual(mock_addplot.call_args_list[4][0][0][1], 9999)
+        self.assertEqual(mock_addplot.call_args_list[4][0][0][2], 8888)
 
     @patch("pandas.to_datetime")
     @patch("pandas.DataFrame")
@@ -798,6 +818,9 @@ class AnalyzerTests(unittest.TestCase):
         expected_result2["kind"] = 2
         expected_result3 = copy.deepcopy(dummy_data[8])
         expected_result3["kind"] = 2
+        expected_info3 = copy.deepcopy(dummy_data[4])
+        expected_info3["kind"] = 0
+        expected_info3["date_time"] = "2020-02-23T00:02:00"
         expected_return1 = {
             "balance": 5000,
             "cumulative_return": -65.248,
@@ -815,7 +838,7 @@ class AnalyzerTests(unittest.TestCase):
             "kind": 3,
         }
 
-        self.assertEqual(len(report["trading_table"]), 9)
+        self.assertEqual(len(report["trading_table"]), 10)
         self.assertEqual(report["trading_table"][0], expected_info)
         self.assertEqual(report["trading_table"][1], expected_request)
         self.assertEqual(report["trading_table"][2], expected_result)
@@ -825,6 +848,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["trading_table"][6], expected_request2)
         self.assertEqual(report["trading_table"][7], expected_result3)
         self.assertEqual(report["trading_table"][8], expected_return2)
+        self.assertEqual(report["trading_table"][9], expected_info3)
 
         # 입금 자산, 최종 자산, 누적 수익률, 가격 변동률을 포함한다
         # (
@@ -855,13 +879,13 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][3]["apple"], -99.85)
 
         self.assertEqual(report["summary"][4], None)
-        self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:01:00")
+        self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:02:00")
         self.assertEqual(report["summary"][6], -75.067)
         self.assertEqual(report["summary"][7], -65.248)
         # 시간 정보
         self.assertEqual(
             report["summary"][8],
-            ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:01:00"),
+            ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:02:00"),
         )
         analyzer._get_rss_memory.assert_called_once()
 
@@ -903,6 +927,7 @@ class AnalyzerTests(unittest.TestCase):
             "2020-02-23T00:01:00, [->] 1607862457.560075, sell, 6000, 0.5\n",
             "2020-02-23T00:01:00, [<-] 1607862457.560075, sell, 6000, 0.2, success\n",
             "2020-02-23T00:01:00, [#] 5000, -75.067, {'mango': -66.667, 'apple': -99.85}, [('mango', 600, 200, 4.23, -66.667), ('apple', 500, 0.75, 3.11, -99.85)]\n",
+            "2020-02-23T00:02:00, 5500, 19000, 4900, 8000, 15000000, 15000\n",
             "### SUMMARY =======================================\n",
             "Property                      23456 ->       5848\n",
             "Gap                                        -17608\n",

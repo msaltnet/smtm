@@ -544,6 +544,12 @@ class Analyzer:
         last_avr_price = None
         last_acc_return = 0
         plot_data = []
+        spots = None
+        if spot_list is not None:
+            spots = sorted(
+                spot_list,
+                key=lambda x: (datetime.strptime(x["date_time"], self.ISO_DATEFORMAT),),
+            )
 
         # 그래프를 그리기 위해 매매, 수익률 정보를 트레이딩 정보와 합쳐서 하나의 테이블로 생성
         for info in info_list:
@@ -564,8 +570,8 @@ class Analyzer:
                 result_pos += 1
 
             # 추가 spot 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
-            if spot_list is not None:
-                spot_info = self.__get_spot_info(spot_list, spot_pos, info_time)
+            if spots is not None:
+                spot_info = self.__get_spot_info(spots, spot_pos, info_time)
                 if spot_info[0] is not None:
                     new["spot"] = spot_info[0]
                 spot_pos = spot_info[1]
