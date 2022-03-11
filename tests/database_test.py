@@ -12,14 +12,23 @@ class DatabaseTests(unittest.TestCase):
     def tearDown(self):
         pass
 
+    @patch("sqlite3.connect")
+    def test_constructor_make_connection_correctly(self, mock_connect):
+        dummy_connection = MagicMock()
+        mock_connect.return_value = dummy_connection
+        db = Database()
+        mock_connect.assert_called_once_with("smtm.db", check_same_thread=False, timeout=30.0)
+        dummy_connection.cursor.assert_called_once()
+
     def test_create_table_should_execute_and_commit_correct_statement(self):
         db = Database()
         db.cursor = MagicMock()
+        db.conn = MagicMock()
         db.create_table()
         db.cursor.execute.assert_called_once_with(
             "CREATE TABLE IF NOT EXISTS upbit (id TEXT PRIMARY KEY, period INT, recovered INT, market TEXT, date_time DATETIME, opening_price FLOAT, high_price FLOAT, low_price FLOAT, closing_price FLOAT, acc_price FLOAT, acc_volume FLOAT)"
         )
-        db.cursor.commit.asser_called_once()
+        db.conn.commit.assert_called_once()
 
     def test_query_should_execute_and_commit_correct_statement(self):
         db = Database()
@@ -29,7 +38,7 @@ class DatabaseTests(unittest.TestCase):
             "SELECT period, recovered, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume FROM upbit WHERE market = ? AND period = ? AND date_time >= ? AND date_time < ? ORDER BY datetime(date_time) ASC",
             ("mango_market", 60, "start_date", "end_date"),
         )
-        db.cursor.commit.asser_called_once()
+        db.cursor.fetchall.assert_called_once()
 
     def test_update_should_execute_and_commit_correct_statement(self):
         db = Database()
@@ -68,6 +77,7 @@ class DatabaseTests(unittest.TestCase):
         ]
 
         db.cursor = MagicMock()
+        db.conn = MagicMock()
         db.update(dummy_data)
         expected_tuple_list = [
             (
@@ -115,4 +125,4 @@ class DatabaseTests(unittest.TestCase):
             "REPLACE INTO upbit(id, period, recovered, market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             expected_tuple_list,
         )
-        db.cursor.commit.asser_called_once()
+        db.conn.commit.assert_called_once()
