@@ -10,7 +10,7 @@
 
 [English](https://github.com/msaltnet/smtm/blob/master/README-en_us.md) 👈
 
-[![icon_wide](https://user-images.githubusercontent.com/9311990/150662620-9c2ef1d8-7384-4856-a8fa-f1e52031d6fa.jpg)](https://smtm.msalt.net/)
+[![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
 
 
 데이터 수집 -> 알고리즘 분석 -> 거래로 이루어진 간단한 프로세스를 정해진 간격으로 반복 수행하는 것이 기본 개념이며, 기본적으로 분당 1회 프로세스를 처리하는 것으로 검증되었습니다.
