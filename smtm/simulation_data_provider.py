@@ -90,3 +90,8 @@ class SimulationDataProvider(DataProvider):
         except KeyError:
             self.logger.warning("invalid data for candle info")
             return None
+
+    def initialize_from_server(self, end=None, count=100):
+        """Open Api를 사용해서 데이터를 가져와서 초기화한다.
+        initialize_simulation로 대체되었으니 initialize_simulation를 사용하세요"""
+        self.initialize_simulation(end, count)
