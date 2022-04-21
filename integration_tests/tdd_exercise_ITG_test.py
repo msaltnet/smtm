@@ -13,8 +13,10 @@ class TddExerciseIntegrationTests(unittest.TestCase):
 
     def test_initialize_correctly(self):
         ex = TddExercise()
-        ex.initialize_from_server("2020-02-25T06:41:00Z", 60)
+        ex.to = "2020-02-25T06:41:00Z"
+        ex.count = 60
+        ex.initialize_from_server()
 
         self.assertEqual(len(ex.data), 60)
-        self.assertEqual(ex.data[0]["candle_date_time_utc"], "2020-02-25T05:41:00")
-        self.assertEqual(ex.data[-1]["candle_date_time_utc"], "2020-02-25T06:40:00")
+        self.assertEqual(ex.data[0]["candle_date_time_utc"], "2020-02-25T06:40:00")
+        self.assertEqual(ex.data[-1]["candle_date_time_utc"], "2020-02-25T05:41:00")
