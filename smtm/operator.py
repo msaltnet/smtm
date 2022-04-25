@@ -208,10 +208,11 @@ class Operator:
             return
 
         def get_score_callback(task):
+            now = datetime.now()
             if graph_tag is not None:
                 graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}-{graph_tag}.jpg"
             else:
-                graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}.jpg"
+                graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}-{now.month:02d}{now.day:02d}T{now.hour:02d}{now.minute:02d}.jpg"
 
             try:
                 index_info = task["index_info"]
@@ -245,6 +246,6 @@ class Operator:
         self.get_score(
             internal_get_score_callback,
             index_info=self.PERIODIC_RECORD_INFO,
-            graph_tag=f"{now.month:02d}{now.day:02d}-{now.hour:02d}{now.minute:02d}",
+            graph_tag=f"P{now.month:02d}{now.day:02d}T{now.hour:02d}{now.minute:02d}",
         )
         self.last_periodic_time = now
