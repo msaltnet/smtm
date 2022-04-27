@@ -125,15 +125,15 @@ class StrategySma0(Strategy):
                         self.cross_info[1] = {"price": 0, "index": current_idx}
                         self.logger.debug(f"[SMA] SKIP BUY !!! === Stand deviation:{std_ratio:.6f}")
                         is_skip = True
-                if is_skip is not True:
-                    self.__add_drawing_spot(info["date_time"], self.process_unit[0])
+
+                self.__add_drawing_spot(info["date_time"], current_price)
             elif sma_short < sma_mid < sma_long and self.current_process != "sell":
                 self.current_process = "sell"
                 self.process_unit = (0, self.asset_amount / self.STEP)
                 self.logger.debug(
                     f"[SMA] Try to sell {sma_short} {sma_mid} {sma_long}, amout: {self.process_unit[1]}"
                 )
-                self.__add_drawing_spot(info["date_time"], info["closing_price"])
+                self.__add_drawing_spot(info["date_time"], current_price)
             else:
                 return
             self.cross_info[0] = self.cross_info[1]

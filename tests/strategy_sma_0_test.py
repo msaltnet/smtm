@@ -194,6 +194,7 @@ class StrategySma0Tests(unittest.TestCase):
         mock_series.return_value = series_return
 
         dummy_info = {
+            "date_time": "dummy_datetime",
             "closing_price": 500,
         }
         mock_np.return_value = False

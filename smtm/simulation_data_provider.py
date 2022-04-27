@@ -9,7 +9,7 @@ from .data_repository import DataRepository
 class SimulationDataProvider(DataProvider):
     """거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스"""
 
-    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH"}
+    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"}
 
     def __init__(self, currency="BTC"):
         if currency not in self.AVAILABLE_CURRENCY:

@@ -15,7 +15,7 @@ class SimulationTrader(Trader):
     amount: 거래 수량
     """
 
-    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH"}
+    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"}
     NAME = "Simulation"
 
     def __init__(self, currency="BTC"):
