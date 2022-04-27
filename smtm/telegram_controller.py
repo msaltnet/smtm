@@ -34,6 +34,9 @@ class TelegramController:
     INTERVAL = 60
     GUIDE_READY = "자동 거래 시작 전입니다.\n명령어를 입력해주세요.\n\n"
     GUIDE_RUNNING = "자동 거래 운영 중입니다.\n명령어를 입력해주세요.\n\n"
+    AVAILABLE_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
+    UPBIT_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
+    BITHUMB_CURRENCY = ["BTC", "ETH"]
 
     def __init__(self):
         LogManager.set_stream_level(30)
@@ -97,7 +100,7 @@ class TelegramController:
         self.main_keyboard = parse.quote(main_keyboard)
         self.setup_list = [
             {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000", "1000000"]},
-            {"guide": "거래할 화폐를 정해주세요", "keyboard": ["BTC", "ETH"]},
+            {"guide": "거래할 화폐를 정해주세요", "keyboard": self.AVAILABLE_CURRENCY},
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
             {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average"]},
             {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
@@ -241,6 +244,24 @@ class TelegramController:
 
         return result
 
+    def _on_start_step3(self, command):
+        not_ok = True
+        if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
+            if self.currency in self.UPBIT_CURRENCY:
+                self.data_provider = UpbitDataProvider(currency=self.currency)
+                self.trader = UpbitTrader(budget=self.budget, currency=self.currency)
+                not_ok = False
+            else:
+                self._send_text_message("현재 지원하지 않는 코인입니다.")
+        elif command.upper() in ["2. BITHUMB", "2", "BITHUMB"]:
+            if self.currency in self.BITHUMB_CURRENCY:
+                self.data_provider = BithumbDataProvider(currency=self.currency)
+                self.trader = BithumbTrader(budget=self.budget, currency=self.currency)
+                not_ok = False
+            else:
+                self._send_text_message("현재 지원하지 않는 코인입니다.")
+        return not_ok
+
     def _start_trading(self, command):
         """초기화 후 자동 거래 시작"""
         not_ok = True
@@ -254,21 +275,11 @@ class TelegramController:
             except ValueError:
                 self.logger.info(f"invalid budget {command}")
         elif self.in_progress_step == 2:
-            if command.upper() == "BTC":
-                self.currency = "BTC"
-                not_ok = False
-            elif command.upper() == "ETH":
-                self.currency = "ETH"
+            if command.upper() in self.AVAILABLE_CURRENCY:
+                self.currency = command.upper()
                 not_ok = False
         elif self.in_progress_step == 3:
-            if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
-                self.data_provider = UpbitDataProvider(currency=self.currency)
-                self.trader = UpbitTrader(budget=self.budget, currency=self.currency)
-                not_ok = False
-            elif command.upper() in ["2. BITHUMB", "2", "BITHUMB"]:
-                self.data_provider = BithumbDataProvider(currency=self.currency)
-                self.trader = BithumbTrader(budget=self.budget, currency=self.currency)
-                not_ok = False
+            not_ok = self._on_start_step3(command)
         elif self.in_progress_step == 4:
             if command.upper() in ["1. BUY AND HOLD", "1", "BUY AND HOLD", "BNH"]:
                 self.strategy = StrategyBuyAndHold()
