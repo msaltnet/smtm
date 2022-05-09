@@ -157,3 +157,16 @@ class SimulationOperatorTests(unittest.TestCase):
         operator.get_score(callback)
         operator.worker.post_task.assert_not_called()
         callback.assert_called_once_with("apple_report")
+
+    def test__periodic_internal_get_score_should_call_get_score_correctlye(self):
+        operator = SimulationOperator()
+        operator.get_score = MagicMock()
+        operator.last_periodic_turn = operator.current_turn
+        operator._periodic_internal_get_score()
+        operator.get_score.assert_not_called()
+
+        operator.current_turn = operator.last_periodic_turn + operator.PERIODIC_RECORD_INTERVAL_TURN
+        operator._periodic_internal_get_score()
+        operator.get_score.assert_called_with(
+            ANY, index_info=operator.PERIODIC_RECORD_INFO, graph_tag=ANY
+        )

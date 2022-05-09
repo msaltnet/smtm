@@ -136,7 +136,7 @@ class MassSimulator:
         analyzer = Analyzer()
         analyzer.is_simulation = True
 
-        operator = SimulationOperator()
+        operator = SimulationOperator(periodic_record_enable=False)
         operator.initialize(
             data_provider,
             strategy,
