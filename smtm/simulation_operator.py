@@ -11,7 +11,7 @@ class SimulationOperator(Operator):
     PERIODIC_RECORD_INFO = (360, -1)  # (turn, index) e.g. (360, -1) 최근 6시간
     PERIODIC_RECORD_INTERVAL_TURN = 300
 
-    def __init__(self, periodic_record_enable=True):
+    def __init__(self, periodic_record_enable=False):
         super().__init__()
         self.logger = LogManager.get_logger(__class__.__name__)
         self.turn = 0
