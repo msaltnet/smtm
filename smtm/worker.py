@@ -1,6 +1,7 @@
 """입력받은 task를 별도의 thread에서 차례대로 수행하는 일꾼 역할의 Worker 클래스"""
 import queue
 import threading
+import traceback
 from .log_manager import LogManager
 
 
@@ -43,18 +44,22 @@ class Worker:
             while True:
                 self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] WAIT ==========")
                 task = self.task_queue.get()
+                self.task_queue.task_done()
                 if task is None:
                     self.logger.debug(
                         f"Worker[{self.name}:{threading.get_ident()}] Termanited .........."
                     )
                     if self.on_terminated is not None:
                         self.on_terminated()
-                    self.task_queue.task_done()
                     break
                 self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] GO ----------")
                 runnable = task["runnable"]
-                runnable(task)
-                self.task_queue.task_done()
+                try:
+                    runnable(task)
+                except Exception:
+                    self.logger.error(traceback.format_exc())
+                    self.thread = None
+                    raise UserWarning("Worker catched exception. force stop!")
 
         self.thread = threading.Thread(target=looper, name=self.name, daemon=True)
         self.thread.start()
