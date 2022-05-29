@@ -537,3 +537,12 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._send_text_message.assert_called_once_with(wrong_message, tcb.main_keyboard)
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
+
+    def test_on_exception_should_call__send_text_message(self):
+        tcb = TelegramController()
+        tcb._send_text_message = MagicMock()
+        tcb.main_keyboard = "banana"
+        tcb.on_exception("mango")
+        tcb._send_text_message.assert_called_once_with(
+            "트레이딩 중 문제가 발생하여 트레이딩이 중단되었습니다! mango", "banana"
+        )
