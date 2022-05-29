@@ -26,7 +26,7 @@ class Operator:
     PERIODIC_RECORD_INFO = (360, -1)  # (turn, index) e.g. (360, -1) 최근 6시간
     PERIODIC_RECORD_INTERVAL_SEC = 300 * 60
 
-    def __init__(self):
+    def __init__(self, on_exception=None):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.data_provider = None
         self.strategy = None
@@ -42,6 +42,7 @@ class Operator:
         self.timer_expired_time = None
         self.last_report = None
         self.last_periodic_time = datetime.now()
+        self.on_exception = on_exception
 
     def initialize(self, data_provider, strategy, trader, analyzer, budget=500):
         """
@@ -147,6 +148,10 @@ class Operator:
                 self.analyzer.put_requests(target_request)
         except (AttributeError, TypeError) as msg:
             self.logger.error(f"excuting fail {msg}")
+        except Exception as exc:
+            if self.on_exception is not None:
+                self.on_exception("Something bad happened during trading")
+            raise RuntimeError("Something bad happened during trading") from exc
 
         if self.PERIODIC_RECORD is True:
             self._periodic_internal_get_score()

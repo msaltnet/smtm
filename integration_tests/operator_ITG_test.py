@@ -63,4 +63,5 @@ class OperatorIntegrationTests(unittest.TestCase):
         dummy_callback.assert_called_with("dummy_report")
 
         op.stop()
+        time.sleep(0.5)
         self.assertEqual(op.state, "ready")

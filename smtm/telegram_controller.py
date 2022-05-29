@@ -307,7 +307,9 @@ class TelegramController:
             "Y",
             "YES",
         ]:
-            self.operator = Operator()
+            def _on_exception(msg):
+                self.on_exception(msg)
+            self.operator = Operator(on_exception=_on_exception)
             self.operator.initialize(
                 self.data_provider,
                 self.strategy,
@@ -483,3 +485,6 @@ class TelegramController:
             print("강제 종료 신호 감지")
         print("프로그램 종료 중.....")
         print("Good Bye~")
+
+    def on_exception(self, msg):
+        self._send_text_message(f"트레이딩 중 문제가 발생하여 트레이딩이 중단되었습니다! {msg}", self.main_keyboard)
