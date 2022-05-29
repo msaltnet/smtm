@@ -56,10 +56,10 @@ class Worker:
                 runnable = task["runnable"]
                 try:
                     runnable(task)
-                except Exception:
+                except Exception as err:
                     self.logger.error(traceback.format_exc())
                     self.thread = None
-                    raise UserWarning("Worker catched exception. force stop!")
+                    raise UserWarning("Worker catched exception. force stop!") from err
 
         self.thread = threading.Thread(target=looper, name=self.name, daemon=True)
         self.thread.start()
