@@ -158,8 +158,6 @@ class Analyzer:
         asset_info = self.get_asset_info_func()
         new = copy.deepcopy(asset_info)
         new["balance"] = float(new["balance"])
-        if self.is_simulation is True and len(self.info_list) > 0:
-            new["date_time"] = self.info_list[-1]["date_time"]
         if self.start_asset_info is None and len(self.asset_info_list) == 0:
             self.start_asset_info = new
         self.asset_info_list.append(new)
