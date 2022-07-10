@@ -957,7 +957,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_asset_info = MagicMock()
         filename = "apple"
 
-        dummy_data = self.fill_test_data_for_report(analyzer)
+        self.fill_test_data_for_report(analyzer)
         analyzer.create_report(filename)
 
         self.assertEqual(
@@ -989,6 +989,91 @@ class AnalyzerTests(unittest.TestCase):
         )
         analyzer.update_asset_info.assert_called_once()
         analyzer._get_rss_memory.assert_called_once()
+
+    @patch("mplfinance.make_addplot")
+    @patch("mplfinance.plot")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_create_report_draw_correct_graph_when_rsi_enabled(
+        self, mock_file, mock_plot, mock_make_addplot
+    ):
+        analyzer = Analyzer()
+        analyzer.RSI = (30, 70, 7)
+        analyzer._get_rss_memory = MagicMock(return_value=123.45678)
+        analyzer.initialize("mango")
+        analyzer.update_asset_info = MagicMock()
+        filename = "apple"
+
+        self.fill_test_data_for_report(analyzer)
+        analyzer.create_report(filename)
+
+        self.assertEqual(
+            mock_make_addplot.call_args_list[0][1],
+            {"panel": 2, "color": "lime", "ylim": (10, 90)},
+        )
+
+        self.assertEqual(
+            mock_make_addplot.call_args_list[1][1],
+            {"panel": 2, "color": "red", "width": 0.5},
+        )
+
+        self.assertEqual(
+            mock_make_addplot.call_args_list[2][1],
+            {"panel": 2, "color": "red", "width": 0.5},
+        )
+
+        mock_plot.assert_called_once_with(
+            ANY,
+            type="candle",
+            volume=True,
+            addplot=ANY,
+            mav=analyzer.sma_info,
+            style="starsandstripes",
+            savefig=dict(
+                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=300, pad_inches=0.25
+            ),
+            figscale=1.25,
+        )
+        analyzer.update_asset_info.assert_called_once()
+        analyzer._get_rss_memory.assert_called_once()
+
+    def test_make_rsi_return_correct_rsi(self):
+        prices = [
+            26026000.0,
+            26075000.0,
+            26051000.0,
+            26039000.0,
+            26007000.0,
+            25981000.0,
+            26004000.0,
+            26020000.0,
+            25997000.0,
+            25981000.0,
+            26002000.0,
+            26002000.0,
+            25970000.0,
+            25940000.0,
+            25924000.0,
+        ]
+        expected = [
+            34.27,
+            34.27,
+            34.27,
+            34.27,
+            34.27,
+            34.27,
+            45.27,
+            52.22,
+            42.52,
+            36.6,
+            48.38,
+            48.38,
+            33.54,
+            24.67,
+            20.97,
+        ]
+        rsi = Analyzer.make_rsi(prices, count=5)
+        for i in range(len(rsi)):
+            self.assertAlmostEqual(rsi[i], expected[i], 2)
 
     def test_get_trading_results_return_result(self):
         analyzer = Analyzer()
