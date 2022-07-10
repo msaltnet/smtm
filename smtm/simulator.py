@@ -8,6 +8,7 @@ from . import (
     SimulationDataProvider,
     StrategyBuyAndHold,
     StrategySma0,
+    StrategyRsi,
     SimulationOperator,
     DateConverter,
 )
@@ -123,7 +124,7 @@ class Simulator:
                 "action": self._set_budget,
             },
             {
-                "guide": "전략 번호 입력. 0: Buy and Hold, 1: SMA-0",
+                "guide": "전략 번호 입력. 0: Buy and Hold, 1: SMA-0, 2: RSI",
                 "value": self.strategy,
                 "action": self._set_strategy,
             },
@@ -143,8 +144,12 @@ class Simulator:
 
         if self.strategy == 0:
             strategy = StrategyBuyAndHold()
-        else:
+        elif self.strategy == 1:
             strategy = StrategySma0()
+        elif self.strategy == 2:
+            strategy = StrategyRsi()
+        else:
+            raise UserWarning(f"Invalid Strategy! {self.strategy}")
 
         strategy.is_simulation = True
         self.operator = SimulationOperator()

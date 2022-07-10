@@ -10,6 +10,7 @@ from . import (
     BithumbDataProvider,
     StrategyBuyAndHold,
     StrategySma0,
+    StrategyRsi,
     Operator,
 )
 
@@ -36,12 +37,19 @@ class Controller:
         self.command_list = []
         self.create_command()
         self.is_bithumb = is_bithumb
-        self.strategy = StrategySma0()
+        self.strategy = None
         self.currency = currency
         LogManager.set_stream_level(30)
 
-        if int(strategy) == 0:
+        strategy_num = int(strategy)
+        if strategy_num == 0:
             self.strategy = StrategyBuyAndHold()
+        elif strategy_num == 1:
+            self.strategy = StrategySma0()
+        elif strategy_num == 2:
+            self.strategy = StrategyRsi()
+        else:
+            raise UserWarning(f"Invalid Strategy! {self.strategy}")
 
     def create_command(self):
         """명령어 정보를 생성한다"""

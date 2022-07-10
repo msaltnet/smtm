@@ -19,6 +19,7 @@ from . import (
     SimulationDataProvider,
     StrategyBuyAndHold,
     StrategySma0,
+    StrategyRsi,
     SimulationOperator,
     SimulationTrader,
     Analyzer,
@@ -127,7 +128,16 @@ class MassSimulator:
         data_provider = SimulationDataProvider(currency=currency)
         data_provider.initialize_simulation(end=end, count=count)
 
-        strategy = StrategyBuyAndHold() if strategy_num == 0 else StrategySma0()
+        strategy_number = int(strategy_num)
+        if strategy_number == 0:
+            strategy = StrategyBuyAndHold()
+        elif strategy_number == 1:
+            strategy = StrategySma0()
+        elif strategy_number == 2:
+            strategy = StrategyRsi()
+        else:
+            raise UserWarning(f"Invalid Strategy! {strategy_number}")
+
         strategy.is_simulation = True
 
         trader = SimulationTrader(currency=currency)
@@ -250,7 +260,16 @@ class MassSimulator:
         """수익률 비교 결과를 파일로 저장"""
         title = config["title"]
         period_list = config["period_list"]
-        strategy = StrategyBuyAndHold.NAME if config["strategy"] == 0 else StrategySma0.NAME
+
+        strategy_number = int(config["strategy"])
+        if strategy_number == 0:
+            strategy_name = StrategyBuyAndHold.NAME
+        elif strategy_number == 1:
+            strategy_name = StrategySma0.NAME
+        elif strategy_number == 2:
+            strategy_name = StrategyRsi.NAME
+        else:
+            raise UserWarning(f"Invalid Strategy! {strategy_number}")
 
         final_return_list = []
         min_return_list = []
@@ -287,7 +306,7 @@ class MassSimulator:
             result_file.write(f"Title: {title}\n")
             result_file.write(f"Description: {config['description']}\n")
             result_file.write(
-                f"Strategy: {strategy}, Budget: {config['budget']}, Currency: {config['currency']}\n"
+                f"Strategy: {strategy_name}, Budget: {config['budget']}, Currency: {config['currency']}\n"
             )
             result_file.write(
                 f"{period_list[0]['start']} ~ {period_list[-1]['end']} ({len(final_return_list)})\n"
@@ -383,7 +402,7 @@ class MassSimulator:
             "title": title,
             "description": "write descriptionf here",
             "budget": budget,
-            "strategy": strategy_num,
+            "strategy": int(strategy_num),
             "interval": interval,
             "currency": currency,
             "period_list": [],

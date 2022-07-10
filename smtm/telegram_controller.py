@@ -18,6 +18,7 @@ from . import (
     Worker,
     StrategyBuyAndHold,
     StrategySma0,
+    StrategyRsi,
     Operator,
 )
 
@@ -102,7 +103,7 @@ class TelegramController:
             {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000", "1000000"]},
             {"guide": "거래할 화폐를 정해주세요", "keyboard": self.AVAILABLE_CURRENCY},
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
-            {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average"]},
+            {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average", "3. RSI"]},
             {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
         ]
         self._convert_keyboard_markup(self.setup_list)
@@ -292,6 +293,14 @@ class TelegramController:
             ]:
                 self.strategy = StrategySma0()
                 not_ok = False
+            elif command.upper() in [
+                "3. RSI",
+                "3",
+                "RSI",
+            ]:
+                self.strategy = StrategyRsi()
+                not_ok = False
+
             if not not_ok:
                 message = "".join(
                     [
