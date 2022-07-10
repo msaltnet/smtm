@@ -9,6 +9,7 @@ import matplotlib
 import pandas as pd
 import mplfinance as mpf
 import psutil
+import numpy as np
 from .log_manager import LogManager
 
 matplotlib.use("Agg")
@@ -30,6 +31,7 @@ class Analyzer:
     RECORD_INTERVAL = 60
     GRAPH_MAX_COUNT = 1440
     DEBUG_MODE = True
+    RSI = None  # set (low, high, count) tuple to draw e.g. (30, 70, 14)
 
     def __init__(self, sma_info=(10, 40, 60)):
         self.request_list = []
@@ -302,6 +304,39 @@ class Analyzer:
             graph_filename=graph_filename,
             spot_list=spot_list,
         )
+
+    @staticmethod
+    def make_rsi(prices, count=14):
+        """
+        compute the n period relative strength indicator
+        http://stockcharts.com/school/doku.php?id=chart_school:glossary_r#relativestrengthindex
+        http://www.investopedia.com/terms/r/rsi.asp
+        """
+        deltas = np.diff(prices)
+        seed = deltas[:count]
+        up_avg = seed[seed >= 0].sum() / count
+        down_avg = -seed[seed < 0].sum() / count
+        r_strength = up_avg / down_avg
+        rsi = np.zeros_like(prices)
+        rsi[: count + 1] = 100.0 - 100.0 / (1.0 + r_strength)
+
+        for i in range(count + 1, len(prices)):
+            delta = deltas[i - 1]  # cause the diff is 1 shorter
+
+            if delta > 0:
+                upval = delta
+                downval = 0.0
+            else:
+                upval = 0.0
+                downval = -delta
+
+            up_avg = (up_avg * (count - 1) + upval) / count
+            down_avg = (down_avg * (count - 1) + downval) / count
+
+            r_strength = up_avg / down_avg
+            rsi[i] = 100.0 - 100.0 / (1.0 + r_strength)
+
+        return rsi
 
     def __make_interval_data(self, index_info):
         period = index_info[0]
@@ -616,6 +651,14 @@ class Analyzer:
         total = total.set_index("Date")
         total.index = pd.to_datetime(total.index)
         apds = []
+
+        if self.RSI is not None:
+            rsi = self.make_rsi(total["Close"], count=self.RSI[2])
+            rsi_low = np.full(len(rsi), self.RSI[0])
+            rsi_high = np.full(len(rsi), self.RSI[1])
+            apds.append(mpf.make_addplot(rsi, panel=2, color="lime", ylim=(10, 90)))
+            apds.append(mpf.make_addplot(rsi_low, panel=2, color="red", width=0.5))
+            apds.append(mpf.make_addplot(rsi_high, panel=2, color="red", width=0.5))
 
         if "buy" in total.columns:
             apds.append(mpf.make_addplot(total["buy"], type="scatter", markersize=100, marker="^"))
