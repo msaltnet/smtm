@@ -312,6 +312,9 @@ class Analyzer:
         http://stockcharts.com/school/doku.php?id=chart_school:glossary_r#relativestrengthindex
         http://www.investopedia.com/terms/r/rsi.asp
         """
+        if len(prices) <= count:
+            return None
+
         deltas = np.diff(prices)
         seed = deltas[:count]
         up_avg = seed[seed >= 0].sum() / count
@@ -654,11 +657,18 @@ class Analyzer:
 
         if self.RSI is not None:
             rsi = self.make_rsi(total["Close"], count=self.RSI[2])
-            rsi_low = np.full(len(rsi), self.RSI[0])
-            rsi_high = np.full(len(rsi), self.RSI[1])
-            apds.append(mpf.make_addplot(rsi, panel=2, color="lime", ylim=(10, 90)))
-            apds.append(mpf.make_addplot(rsi_low, panel=2, color="red", width=0.5))
-            apds.append(mpf.make_addplot(rsi_high, panel=2, color="red", width=0.5))
+            if rsi is not None:
+                rsi_low = np.full(len(rsi), self.RSI[0])
+                rsi_high = np.full(len(rsi), self.RSI[1])
+                apds.append(
+                    mpf.make_addplot(rsi, panel=2, color="lime", ylim=(10, 90), secondary_y=False)
+                )
+                apds.append(
+                    mpf.make_addplot(rsi_low, panel=2, color="red", width=0.5, secondary_y=False)
+                )
+                apds.append(
+                    mpf.make_addplot(rsi_high, panel=2, color="red", width=0.5, secondary_y=False)
+                )
 
         if "buy" in total.columns:
             apds.append(mpf.make_addplot(total["buy"], type="scatter", markersize=100, marker="^"))
