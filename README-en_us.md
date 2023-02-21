@@ -63,19 +63,19 @@ There are 6 mode for each features.
 - 4: mass simulation with config file
 - 5: make config file for mass simulation
 
-### interactive mode simulator
+### Interactive mode simulator
 run with only mode
 ```
 python -m smtm --mode 0
 ```
 
-### execute single simulation
+### Execute single simulation
 run with mode and simulation setting parameters
 ```
 python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy 0 --currency BTC
 ```
 
-### run controller for trading
+### Run controller for trading
 run with mode and initial setting parameters
 ```
 python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
@@ -89,7 +89,7 @@ UPBIT_OPEN_API_SECRET_KEY=Your API KEY
 UPBIT_OPEN_API_SERVER_URL=https://api.upbit.com
 ```
 
-### run telegram chatbot controller for trading
+### Run telegram chatbot controller for trading
 run with only mode 
 ```
 python -m smtm --mode 3
@@ -102,13 +102,13 @@ TELEGRAM_BOT_TOKEN=bot123456789:YOUR bot Token
 TELEGRAM_CHAT_ID=123456789
 ```
 
-### execute mass simulation with config file
+### Execute mass simulation with config file
 run with mode and config file info
 ```
 python -m smtm --mode 4 --config /data/sma0_simulation.json
 ```
 
-### make config file for mass simulation
+### Make config file for mass simulation
 run with mode and simulation setting parameters
 ```
 python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
@@ -133,7 +133,7 @@ Layered architecture
 
 ### Sequence Diagram
 
-![Sequence Diagram](./doc/smtm_sequence_kr.png)
+![Sequence Diagram](./doc/smtm_sequence.png)
 
 
 ## How to test
