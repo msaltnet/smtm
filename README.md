@@ -25,14 +25,12 @@
 
 ![intro](https://user-images.githubusercontent.com/9311990/140635409-93e4b678-5a6b-40b8-8e28-5c8f819aa88c.jpg)
 
-## Architecture
-계층화된 아키텍쳐 Layered architecture
-
-| Layer | Role |
-|:---:|:---:|
-| Controller | User Interface |
-| Operator | Operating Manager |
-| Analyzer, Trader, Strategy, Data Provider | Core Feature |
+## 주요기능
+- 시뮬레이션
+- 멀티프로세스 대량시뮬레이션
+- CLI 모드 자동 거래
+- JupyterNotebook을 활용한 원격컨트롤
+- 텔레그램으로 컨트롤 하는 자동거래
 
 ### 텔레그램 챗봇 모드
 텔레그램 챗봇 모드를 사용하면 자동매매 프로그램을 텔레그램 메신저를 사용해서 컨트롤 할 수 있습니다.
@@ -48,12 +46,7 @@ Telegram Controller 모듈은 제공된 정보를 바탕으로 사용자와 텔�
 ### 시뮬레이션 모드
 시뮬레이션 모드을 통해 과거 거래 데이터를 바탕으로 시뮬레이션을 수행해서 결과를 확인할 수도 있습니다. 간단한 시뮬레이션부터 대량시뮬레이션까지 가능합니다.
 
-![simulator](https://user-images.githubusercontent.com/9311990/140635388-5ced5e05-23ad-44df-a14f-8492f489cfd9.jpg)
-
-## 사용방법
-일반적인 파이썬 패키지와 같이 설치하고 실행하면 됩니다.
-
-### 설치방법
+## 설치방법
 소스 코드를 다운로드하고 관련된 패키지를 설치하세요.
 
 ```
@@ -66,7 +59,7 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-### 실행방법
+## 사용방법
 시뮬레이션, 대량 시뮬레이션, 챗봇 모드를 포함하여 아래 6개의 기능을 제공합니다.
 
 - 0: 인터렉티브 모드로 시뮬레이터
@@ -76,21 +69,21 @@ pip install -r requirements-dev.txt
 - 4: 컨피그 파일을 사용한 대량 시뮬레이션
 - 5: 대량 시뮬레이션을 위한 컨피그 파일 생성
 
-#### 인터렉티브 모드 시뮬레이터
+### 인터렉티브 모드 시뮬레이터
 아래 명령어로 인터렉티브 모드 시뮬레이터 실행.
 
 ```
 python -m smtm --mode 0
 ```
 
-#### 싱글 시뮬레이션
+### 싱글 시뮬레이션
 시뮬레이션 파라미터와 아래 명령어로 단일 시뮬레이션을 바로 실행 후 결과 반환.
 
 ```
 python -m smtm --mode 1 --budget 500000 --from_dash_to 201220.080000-201221 --term 0.001 --strategy 1 --currency BTC
 ```
 
-#### 기본 실전 매매 프로그램
+## 기본 실전 매매 프로그램
 초기값과 함께 기본 실전 매매 프로그램을 실행. 기본 실전 매매 프로그램은 인터렉티브 모드로 실행되어 입력에 따라 거래 시작, 중지, 결과 조회가 가능합니다.
 
 ```
@@ -105,7 +98,7 @@ UPBIT_OPEN_API_SECRET_KEY=Your API KEY
 UPBIT_OPEN_API_SERVER_URL=https://api.upbit.com
 ```
 
-#### 텔레그램 챗봇 모드 실전 매매 프로그램
+### 텔레그램 챗봇 모드 실전 매매 프로그램
 아래 명령어로 텔레그램 챗봇 모드 실전 매매 프로그램을 실행. 텔레그램 챗봇 모드 실전 매매 프로그램은 입력받은 텔레그램 챗봇 API 토큰과 대화방 정보를 사용하여 텔레그램 챗봇 메세지를 통해서 거래 시작, 중지, 결과 조회가 가능합니다.
 
 ```
@@ -119,22 +112,44 @@ TELEGRAM_BOT_TOKEN=bot123456789:YOUR bot Token
 TELEGRAM_CHAT_ID=123456789
 ```
 
-#### 대량 시뮬레이션
+### 대량 시뮬레이션
 대량 시뮬레이션 설정 파일과 함께 실행. 설정 파일을 json 형식이며 텍스트 편집기를 통해서 직접 생성해도 되고, 명령어를 통해 생성도 가능합니다.
 
 ```
 python -m smtm --mode 4 --config /data/sma0_simulation.json
 ```
 
-#### 대량 시뮬레이션 설정 파일 생성
+### 대량 시뮬레이션 설정 파일 생성
 파라미터와 함께 아래 명령어로 대량 시뮬레이션에 사용될 설정 파일을 생성할 수 있습니다.
 
 ```
 python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
 ```
 
-### 테스트 방법
-#### 단위 테스트
+## 설계구조
+계층화된 아키텍쳐 Layered architecture
+
+| Layer | Module | Role |
+|:---:|:---:|:---:|
+| Controller Layer | Simulator, Controller, TelegramController| User Interface |
+| Operator Layer | Operator, SimulationOperator |Operating Manager |
+| Core Layer |Analyzer, Trader, Strategy, Data Provider | Core Feature |
+
+### Component Diagram
+
+![Component Diagram](./doc/smtm_component.png)
+
+### Class Diagram
+
+![Class Diagram](./doc/smtm_class.png)
+
+### Sequence Diagram
+
+![Sequence Diagram](./doc/smtm_sequence_kr.png)
+
+
+## 테스트 방법
+### 단위 테스트
 unittest를 사용해서 프로젝트의 단위 테스트를 실행.
 
 ```
@@ -142,7 +157,7 @@ unittest를 사용해서 프로젝트의 단위 테스트를 실행.
 python -m unittest discover ./tests *test.py -v
 ```
 
-#### 통합 테스트
+### 통합 테스트
 통합 테스트는 실제 거래소를 사용해서 테스트가 진행됩니다. 몇몇 테스트는 주피터 노트북을 사용해서 테스트가 가능하도록 하였습니다. `notebook` 폴더를 확인해 보세요.
 
 ```
@@ -153,7 +168,7 @@ python -m unittest integration_tests
 python -m unittest integration_tests.simulation_ITG_test
 ```
 
-#### 개발팁
+### 개발팁
 커밋을 생성하기 전에 아래 명령어를 사용하여 Jupyter notebook의 출력을 삭제하세요.
 
 ```
