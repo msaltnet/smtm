@@ -165,3 +165,7 @@ clear jupyter notebook output before make commit
 jupyter nbconvert --clear-output --inplace {file.ipynb}
 #jupyter nbconvert --clear-output --inplace .\notebook\*.ipynb
 ```
+
+## Related Book
+
+[![smtm-book](https://user-images.githubusercontent.com/9311990/157685437-dcedd2c0-9f0c-400c-a3d4-017354279b60.png)](http://www.kyobobook.co.kr/product/detailViewKor.laf?mallGb=KOR&ejkGb=KOR&barcode=9788997924967)

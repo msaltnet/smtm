@@ -8,6 +8,12 @@
 
 파이썬 알고리즘기반 암호화폐 자동매매 프로그램. https://smtm.msalt.net
 
+[교보문고 - 암호화폐 자동매매 시스템 만들기 with 파이썬](http://www.kyobobook.co.kr/product/detailViewKor.laf?mallGb=KOR&ejkGb=KOR&barcode=9788997924967)
+
+[예스24 - 암호화폐 자동매매 시스템 만들기 with 파이썬](http://www.yes24.com/Product/Goods/107635612)
+
+[알라딘 - 암호화폐 자동매매 시스템 만들기 with 파이썬](https://www.aladin.co.kr/shop/wproduct.aspx?ItemId=289526248)
+
 [English](https://github.com/msaltnet/smtm/blob/master/README-en_us.md) 👈
 
 [![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
@@ -175,3 +181,7 @@ python -m unittest integration_tests.simulation_ITG_test
 jupyter nbconvert --clear-output --inplace {file.ipynb}
 #jupyter nbconvert --clear-output --inplace .\notebook\*.ipynb
 ```
+
+## 관련 도서
+
+[![smtm-book](https://user-images.githubusercontent.com/9311990/157685437-dcedd2c0-9f0c-400c-a3d4-017354279b60.png)](http://www.kyobobook.co.kr/product/detailViewKor.laf?mallGb=KOR&ejkGb=KOR&barcode=9788997924967)
