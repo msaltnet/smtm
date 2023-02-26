@@ -125,15 +125,15 @@ Layered architecture
 
 ### Component Diagram
 
-![Component Diagram](./doc/smtm_component.png)
+![Component Diagram](https://user-images.githubusercontent.com/9311990/221420624-9807ca39-31c7-4bb6-b3de-3a4114f22430.png)
 
 ### Class Diagram
 
-![Class Diagram](./doc/smtm_class.png)
+![Class Diagram](https://user-images.githubusercontent.com/9311990/221420583-6b335aec-1547-47b3-8b64-6a6313127890.png)
 
 ### Sequence Diagram
 
-![Sequence Diagram](./doc/smtm_sequence.png)
+![Sequence Diagram](https://user-images.githubusercontent.com/9311990/221420599-301e0463-ad36-424b-a356-4ef83fa9e88e.png)
 
 
 ## How to test
