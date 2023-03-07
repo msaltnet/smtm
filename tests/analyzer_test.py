@@ -997,6 +997,7 @@ class AnalyzerTests(unittest.TestCase):
         self, mock_file, mock_plot, mock_make_addplot
     ):
         analyzer = Analyzer()
+        analyzer.RSI_ENABLE = True
         analyzer.RSI = (30, 70, 2)
         analyzer._get_rss_memory = MagicMock(return_value=123.45678)
         analyzer.initialize("mango")
