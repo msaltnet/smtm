@@ -205,7 +205,7 @@ class Analyzer:
         """
 
         try:
-            start_total = self.__get_start_property_value(self.start_asset_info)
+            start_total = self.__get_property_total_value(self.start_asset_info)
             start_quote = self.start_asset_info["quote"]
             current_total = float(new_info["balance"])
             current_quote = new_info["quote"]
@@ -398,8 +398,8 @@ class Analyzer:
     ):
         try:
             graph = None
-            start_value = Analyzer.__get_start_property_value(asset_info_list[0])
-            last_value = Analyzer.__get_last_property_value(asset_info_list[-1])
+            start_value = Analyzer.__get_property_total_value(asset_info_list[0])
+            last_value = Analyzer.__get_property_total_value(asset_info_list[-1])
             last_return = score_list[-1]["cumulative_return"]
             change_ratio = score_list[-1]["price_change_ratio"]
             min_max = self._get_min_max_return(score_list)
@@ -705,20 +705,12 @@ class Analyzer:
         return destination
 
     @staticmethod
-    def __get_start_property_value(start_asset_info):
-        return round(Analyzer.__get_property_total_value(start_asset_info))
-
-    @staticmethod
-    def __get_last_property_value(asset_info):
-        return round(Analyzer.__get_property_total_value(asset_info))
-
-    @staticmethod
-    def __get_property_total_value(asset_info_list):
-        total = float(asset_info_list["balance"])
-        quote = asset_info_list["quote"]
-        for name, item in asset_info_list["asset"].items():
+    def __get_property_total_value(asset_info):
+        total = float(asset_info["balance"])
+        quote = asset_info["quote"]
+        for name, item in asset_info["asset"].items():
             total += float(item[1]) * float(quote[name])
-        return total
+        return round(total)
 
     @staticmethod
     def _write_to_file(filename, target_list):
