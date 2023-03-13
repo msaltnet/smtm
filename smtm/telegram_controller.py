@@ -38,6 +38,19 @@ class TelegramController:
     AVAILABLE_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     UPBIT_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     BITHUMB_CURRENCY = ["BTC", "ETH"]
+    STRATEGY = [
+        {
+            "name": "1. Buy and Hold",
+            "selector": ["1. BUY AND HOLD", "1", "BNH"],
+            "builder": StrategyBuyAndHold,
+        },
+        {
+            "name": "2. Simple Moving Average",
+            "selector": ["2. SIMPLE MOVING AVERAGE", "2", "SMA"],
+            "builder": StrategySma0,
+        },
+        {"name": "3. RSI", "selector": ["3. RSI", "3", "RSI"], "builder": StrategyRsi},
+    ]
 
     def __init__(self):
         LogManager.set_stream_level(30)
@@ -99,11 +112,17 @@ class TelegramController:
         }
         main_keyboard = json.dumps(main_keyboard)
         self.main_keyboard = parse.quote(main_keyboard)
+        strategy_list = []
+        for s_item in self.STRATEGY:
+            strategy_list.append(s_item["name"])
         self.setup_list = [
             {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000", "1000000"]},
             {"guide": "거래할 화폐를 정해주세요", "keyboard": self.AVAILABLE_CURRENCY},
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
-            {"guide": "전략을 선택해 주세요", "keyboard": ["1. Buy and Hold", "2. Simple Moving Average", "3. RSI"]},
+            {
+                "guide": "전략을 선택해 주세요",
+                "keyboard": strategy_list,
+            },
             {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
         ]
         self._convert_keyboard_markup(self.setup_list)
@@ -282,24 +301,11 @@ class TelegramController:
         elif self.in_progress_step == 3:
             not_ok = self._on_start_step3(command)
         elif self.in_progress_step == 4:
-            if command.upper() in ["1. BUY AND HOLD", "1", "BUY AND HOLD", "BNH"]:
-                self.strategy = StrategyBuyAndHold()
-                not_ok = False
-            elif command.upper() in [
-                "2. SIMPLE MOVING AVERAGE",
-                "2",
-                "SIMPLE MOVING AVERAGE",
-                "SMA",
-            ]:
-                self.strategy = StrategySma0()
-                not_ok = False
-            elif command.upper() in [
-                "3. RSI",
-                "3",
-                "RSI",
-            ]:
-                self.strategy = StrategyRsi()
-                not_ok = False
+            for s_item in self.STRATEGY:
+                if command.upper() in s_item["selector"]:
+                    self.strategy = s_item["builder"]()
+                    not_ok = False
+                    break
 
             if not not_ok:
                 message = "".join(
@@ -316,8 +322,10 @@ class TelegramController:
             "Y",
             "YES",
         ]:
+
             def _on_exception(msg):
                 self.on_exception(msg)
+
             self.operator = Operator(on_exception=_on_exception)
             self.operator.initialize(
                 self.data_provider,
@@ -382,7 +390,7 @@ class TelegramController:
             self._send_text_message("자동 거래가 중지되었습니다", self.main_keyboard)
         else:
             score_message = [
-                f"자동 거래가 중지되었습니다\n",
+                "자동 거래가 중지되었습니다\n",
                 f"{last_report['summary'][8][1]} - {last_report['summary'][8][2]}\n",
                 f"자산 {last_report['summary'][0]} -> {last_report['summary'][1]}\n",
                 f"수익률 {last_report['summary'][2]}\n",
@@ -496,4 +504,5 @@ class TelegramController:
         print("Good Bye~")
 
     def on_exception(self, msg):
+        """예외 상황 처리"""
         self._send_text_message(f"트레이딩 중 문제가 발생하여 트레이딩이 중단되었습니다! {msg}", self.main_keyboard)
