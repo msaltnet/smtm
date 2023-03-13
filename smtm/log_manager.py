@@ -10,62 +10,64 @@ class LogManager:
     """
 
     LOG_FOLDER = "log"
-    log_filename = LOG_FOLDER + "/smtm.log"
-    log_file_size = 2097152
-    log_file_backup = 10
+    LOG_FILE = LOG_FOLDER + "/smtm.log"
+    LOG_FILE_SIZE = 2097152
+    BACKUP_COUNT = 10
     try:
         if not os.path.exists(LOG_FOLDER):
             os.makedirs(LOG_FOLDER)
     except OSError:
         print("Error: Creating directory. " + LOG_FOLDER)
 
-    file_formatter = logging.Formatter(
+    FORMATTER = logging.Formatter(
         fmt="%(asctime)s %(levelname)5.5s %(name)20.20s %(lineno)5d - %(message)s"
     )
-    file_handler = RotatingFileHandler(
-        filename=log_filename, maxBytes=log_file_size, backupCount=log_file_backup
+    HANDLER = RotatingFileHandler(
+        filename=LOG_FILE, maxBytes=LOG_FILE_SIZE, backupCount=BACKUP_COUNT
     )
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(file_formatter)
-    stream_formatter = logging.Formatter(
+    HANDLER.setLevel(logging.DEBUG)
+    HANDLER.setFormatter(FORMATTER)
+    STREAM_FORMATTER = logging.Formatter(
         fmt="%(asctime)s %(levelname)5.5s %(name)20.20s - %(message)s"
     )
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
-    stream_handler.setFormatter(stream_formatter)
-    logger_map = {}
+    STREAM_HANDLER = logging.StreamHandler()
+    STREAM_HANDLER.setLevel(logging.DEBUG)
+    STREAM_HANDLER.setFormatter(STREAM_FORMATTER)
+    REGISTERED_LOGGER = {}
 
     @classmethod
     def get_logger(cls, name):
         """파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공한다"""
         logger = logging.getLogger(name)
-        if name in cls.logger_map:
+        if name in cls.REGISTERED_LOGGER:
             return logger
 
-        logger.addHandler(cls.stream_handler)
-        logger.addHandler(cls.file_handler)
+        logger.addHandler(cls.STREAM_HANDLER)
+        logger.addHandler(cls.HANDLER)
         logger.setLevel(logging.DEBUG)
-        cls.logger_map[name] = logger
+        cls.REGISTERED_LOGGER[name] = logger
         return logger
 
     @classmethod
     def set_stream_level(cls, level):
         """스트림 핸들러의 레벨을 설정한다"""
-        cls.stream_handler.setLevel(level)
+        cls.STREAM_HANDLER.setLevel(level)
 
     @classmethod
     def change_log_file(cls, log_file="smtm.log"):
         """파일 핸들러의 로그 파일을 변경한다"""
-        if log_file == cls.log_filename:
+        if log_file == cls.LOG_FILE:
             return
 
-        new_file_handler = RotatingFileHandler(filename=log_file, maxBytes=1000000, backupCount=10)
+        new_file_handler = RotatingFileHandler(
+            filename=log_file, maxBytes=cls.LOG_FILE_SIZE, backupCount=cls.BACKUP_COUNT
+        )
         new_file_handler.setLevel(logging.DEBUG)
-        new_file_handler.setFormatter(cls.file_formatter)
+        new_file_handler.setFormatter(cls.FORMATTER)
 
-        for logger in cls.logger_map.values():
-            logger.removeHandler(cls.file_handler)
+        for logger in cls.REGISTERED_LOGGER.values():
+            logger.removeHandler(cls.HANDLER)
             logger.addHandler(new_file_handler)
 
-        cls.log_filename = log_file
-        cls.file_handler = new_file_handler
+        cls.LOG_FILE = log_file
+        cls.HANDLER = new_file_handler

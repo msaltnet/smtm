@@ -16,18 +16,18 @@ class LogManagerTests(unittest.TestCase):
         self.assertTrue(os.path.exists(LogManager.LOG_FOLDER))
 
     def test_get_logger_return_logger_with_handler(self):
-        self.assertEqual("mango" in LogManager.logger_map, False)
+        self.assertEqual("mango" in LogManager.REGISTERED_LOGGER, False)
         logger = LogManager.get_logger("mango")
-        self.assertEqual("mango" in LogManager.logger_map, True)
+        self.assertEqual("mango" in LogManager.REGISTERED_LOGGER, True)
         logger2 = LogManager.get_logger("mango")
         self.assertEqual(logger, logger2)
 
     def test_set_stream_level_call_stream_handler_setLevel(self):
-        original = LogManager.stream_handler
-        LogManager.stream_handler = MagicMock()
+        original = LogManager.STREAM_HANDLER
+        LogManager.STREAM_HANDLER = MagicMock()
         LogManager.set_stream_level(50)
-        LogManager.stream_handler.setLevel.assert_called_once_with(50)
-        LogManager.stream_handler = original
+        LogManager.STREAM_HANDLER.setLevel.assert_called_once_with(50)
+        LogManager.STREAM_HANDLER = original
 
     def test_change_log_file_should_change_file_handler(self):
         logger = LogManager.get_logger("orange")
