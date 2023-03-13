@@ -1,5 +1,5 @@
 """file, stream handler를 공유하는 logger 인스턴스를 제공하는 LogManager 클래스"""
-
+import os
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -9,9 +9,16 @@ class LogManager:
     파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공하는 클래스
     """
 
-    log_filename = "smtm.log"
+    LOG_FOLDER = "log"
+    log_filename = LOG_FOLDER + "/smtm.log"
     log_file_size = 2097152
     log_file_backup = 10
+    try:
+        if not os.path.exists(LOG_FOLDER):
+            os.makedirs(LOG_FOLDER)
+    except OSError:
+        print("Error: Creating directory. " + LOG_FOLDER)
+
     file_formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)5.5s %(name)20.20s %(lineno)5d - %(message)s"
     )

@@ -1,3 +1,4 @@
+import os
 import logging.handlers
 import unittest
 from smtm import LogManager
@@ -10,6 +11,9 @@ class LogManagerTests(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_create_log_directory_correctly(self):
+        self.assertTrue(os.path.exists(LogManager.LOG_FOLDER))
 
     def test_get_logger_return_logger_with_handler(self):
         self.assertEqual("mango" in LogManager.logger_map, False)
