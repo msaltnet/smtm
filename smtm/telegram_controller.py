@@ -20,6 +20,7 @@ from . import (
     StrategySma0,
     StrategyRsi,
     Operator,
+    DemoTrader,
 )
 
 load_dotenv()
@@ -74,6 +75,7 @@ class TelegramController:
         self.command_list = []
         self._create_command()
         self.currency = None
+        self.is_demo = False
 
     def _create_command(self):
         """명령어 정보를 생성한다"""
@@ -149,13 +151,15 @@ class TelegramController:
             markup = json.dumps(markup)
             item["keyboard"] = parse.quote(markup)
 
-    def main(self):
+    def main(self, demo=False):
         """main 함수"""
         print("##### smtm telegram controller is started #####")
+        self.is_demo = demo
+        if self.is_demo:
+            print("$$$ THIS IS DEMO MODE $$$")
 
         signal.signal(signal.SIGINT, self._terminate)
         signal.signal(signal.SIGTERM, self._terminate)
-
         self._start_get_updates_loop()
         while not self.terminating:
             try:
@@ -269,14 +273,20 @@ class TelegramController:
         if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
             if self.currency in self.UPBIT_CURRENCY:
                 self.data_provider = UpbitDataProvider(currency=self.currency)
-                self.trader = UpbitTrader(budget=self.budget, currency=self.currency)
+                if self.is_demo:
+                    self.trader = DemoTrader(budget=self.budget, currency=self.currency)
+                else:
+                    self.trader = UpbitTrader(budget=self.budget, currency=self.currency)
                 not_ok = False
             else:
                 self._send_text_message("현재 지원하지 않는 코인입니다.")
         elif command.upper() in ["2. BITHUMB", "2", "BITHUMB"]:
             if self.currency in self.BITHUMB_CURRENCY:
                 self.data_provider = BithumbDataProvider(currency=self.currency)
-                self.trader = BithumbTrader(budget=self.budget, currency=self.currency)
+                if self.is_demo:
+                    self.trader = DemoTrader(budget=self.budget, currency=self.currency)
+                else:
+                    self.trader = BithumbTrader(budget=self.budget, currency=self.currency)
                 not_ok = False
             else:
                 self._send_text_message("현재 지원하지 않는 코인입니다.")

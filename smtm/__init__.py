@@ -14,6 +14,7 @@ from .strategy_rsi import StrategyRsi
 from .virtual_market import VirtualMarket
 from .worker import Worker
 from .simulator import Simulator
+from .demo_trader import DemoTrader
 from .upbit_trader import UpbitTrader
 from .bithumb_trader import BithumbTrader
 from .upbit_data_provider import UpbitDataProvider
@@ -40,6 +41,7 @@ __all__ = [
     "Simulator",
     "UpbitTrader",
     "BithumbTrader",
+    "DemoTrader",
     "UpbitDataProvider",
     "MassSimulator",
 ]
