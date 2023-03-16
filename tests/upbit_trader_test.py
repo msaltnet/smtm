@@ -1034,7 +1034,7 @@ class UpditTraderBalanceTests(unittest.TestCase):
         trader._call_callback(dummy_callback, dummy_result)
 
         self.assertEqual(trader.balance, 473423)
-        self.assertEqual(trader.asset, (66993868.57231318, 1.001235))
+        self.assertEqual(trader.asset, (66993868.572313, 1.001235))
         dummy_callback.assert_called_once_with(dummy_result)
 
     def test__call_callback_update_balance_correctly_when_sell(self):

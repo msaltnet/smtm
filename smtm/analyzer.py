@@ -437,8 +437,9 @@ class Analyzer:
             self.logger.info(f"Price_change_ratio {change_ratio}")
             self.logger.info(f"Period {period}")
             return summary
-        except (IndexError, AttributeError):
+        except (IndexError, AttributeError) as err:
             self.logger.error("get return report FAIL")
+            self.logger.error(err)
 
     def get_trading_results(self):
         """거래 결과 목록을 반환한다"""
