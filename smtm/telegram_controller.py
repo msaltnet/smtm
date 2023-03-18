@@ -162,10 +162,7 @@ class TelegramController:
         signal.signal(signal.SIGTERM, self._terminate)
         self._start_get_updates_loop()
         while not self.terminating:
-            try:
-                time.sleep(0.5)
-            except EOFError:
-                break
+            time.sleep(0.5)
 
     def _start_get_updates_loop(self):
         """반복적 텔레그램 메세지를 확인하는 쓰레드 관리"""
