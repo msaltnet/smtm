@@ -161,9 +161,20 @@ python -m unittest integration_tests.simulation_ITG_test
 ### Tip
 clear jupyter notebook output before make commit
 
-```
+```bash
 jupyter nbconvert --clear-output --inplace {file.ipynb}
 #jupyter nbconvert --clear-output --inplace .\notebook\*.ipynb
+```
+
+If you run simulation or demo mode, you should set timezone to 'Asia/Seoul' because smtm use Upbit trading information for simulation and demo. For Linux, below command is available.
+
+```bash
+timedatectl set-timezone 'Asia/Seoul'
+```
+
+For keeping smtm program process after terminating ssh connection, using `nohup` is recommended as below. Standard, error ouput is redirected to specific files.
+```bash
+nohup python -m smtm --mode 3 --demo 1 > nohup.out 2> nohup.err < /dev/null &
 ```
 
 ## Related Book
