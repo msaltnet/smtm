@@ -41,6 +41,7 @@ python -m smtm --mode 0
 python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy 0 --currency BTC
 python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 python -m smtm --mode 3
+python -m smtm --mode 3 --demo 1 --token <telegram chat-bot token> --chatid <chat id>
 python -m smtm --mode 4 --config /data/sma0_simulation.json
 python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
 """,
@@ -63,6 +64,8 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --curren
     parser.add_argument("--offset", help="mass simulation period offset", type=int, default=120)
     parser.add_argument("--log", help="log file name", default=None)
     parser.add_argument("--demo", help="use demo trader", type=int, default=0)
+    parser.add_argument("--token", help="telegram chat-bot token", default=None)
+    parser.add_argument("--chatid", help="telegram chat id", default=None)
     parser.add_argument(
         "--mode",
         help="0: interactive simulator, 1: single simulation, 2: real trading",
@@ -105,7 +108,11 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --curren
         )
         controller.main()
     elif args.mode == 3:
-        tcb = TelegramController()
+        tcb = TelegramController(token=args.token, chatid=args.chatid)
+        if tcb.TOKEN == "telegram_token" and args.token is None:
+            print("Please check your telegram chat-bot token")
+            sys.exit(0)
+
         tcb.main(demo=args.demo == 1)
     elif args.mode == 4:
         if args.config == "":

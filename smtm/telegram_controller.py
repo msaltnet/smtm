@@ -53,7 +53,7 @@ class TelegramController:
         {"name": "3. RSI", "selector": ["3. RSI", "3", "RSI"], "builder": StrategyRsi},
     ]
 
-    def __init__(self):
+    def __init__(self, token=None, chatid=None):
         LogManager.set_stream_level(30)
         self.logger = LogManager.get_logger("TelegramController")
         self.post_worker = Worker("Chatbot-Post-Worker")
@@ -76,6 +76,10 @@ class TelegramController:
         self._create_command()
         self.currency = None
         self.is_demo = False
+        if token is not None:
+            self.TOKEN = token
+        if chatid is not None:
+            self.CHAT_ID = int(chatid)
 
     def _create_command(self):
         """명령어 정보를 생성한다"""

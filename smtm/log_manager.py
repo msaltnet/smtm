@@ -50,7 +50,14 @@ class LogManager:
 
     @classmethod
     def set_stream_level(cls, level):
-        """스트림 핸들러의 레벨을 설정한다"""
+        """스트림 핸들러의 레벨을 설정한다
+        CRITICAL  50
+        ERROR     40
+        WARNING   30
+        INFO      20
+        DEBUG     10
+        NOTSET    0
+        """
         cls.STREAM_HANDLER.setLevel(level)
 
     @classmethod
