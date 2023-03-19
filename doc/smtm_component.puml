@@ -1,0 +1,30 @@
+@startuml
+package "Core Layer" {
+    [Analyzer]
+    [Strategy]
+    [Trader]
+    [DataProvider]
+}
+
+package "Operation Layer" {
+    [Operator]
+}
+
+package "Controller Layer" {
+    [TelegramController]
+    [JptController]
+    [Controller]
+    [Simulator]
+}
+
+Operator --> DataProvider
+Operator --> Strategy
+Operator --> Trader
+Operator --> Analyzer
+
+Simulator --> Operator
+Controller --> Operator
+JptController --> Operator
+TelegramController --> Operator
+
+@enduml

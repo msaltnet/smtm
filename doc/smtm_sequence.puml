@@ -1,0 +1,54 @@
+@startuml
+title Automatic Trading Process
+
+participant Controller
+participant Operator
+participant DataProvider
+participant Strategy
+participant Trader
+participant Analyzer
+
+Controller -> Operator: Start
+loop ["Interval Repeat until Stop"]
+    group Data Gathering 
+        Operator -> DataProvider: Tick Data Request
+        note right of Analyzer: DataProvider provides data for trading judgment e.g. OHLC
+        activate DataProvider
+        DataProvider --> Operator: Tick Data Response
+        deactivate DataProvider
+        activate Operator
+        Operator -> Analyzer: Tick Data Update
+        deactivate Operator
+    end
+    group Trading Judgment
+        Operator -> Strategy: Tick Data Update
+        note right of Analyzer: Strategy makes trading decision using tick data according to the situation
+        Operator -> Strategy: Trading Decision Request 
+        activate Strategy
+        Strategy --> Operator: Trading Decision Response
+        deactivate Strategy
+        activate Operator
+        Operator -> Analyzer: Trading Decision Update
+        deactivate Operator
+    end
+    group Trading Execution
+        Operator -> Trader: Trading Request with Trading Decision
+        Trader --> Operator: Trading Response
+        note right of Analyzer: Trader try to close trade in the market
+        Trader --> Operator: Trading Result Response
+        activate Operator
+        Operator -> Analyzer: Trading Result Update
+        deactivate Operator
+    end
+end
+Controller -> Operator: Stop
+activate Operator
+Operator -> Analyzer: Trading Report Request
+note right of Analyzer: Analyzer create a report with data from each stage
+deactivate Operator
+activate Analyzer
+Analyzer --> Operator: Trading Report Response
+deactivate Analyzer
+Operator --> Controller: Trading Report
+
+@enduml

@@ -1,0 +1,65 @@
+@startuml
+
+interface DataProvider {
+    get_info()
+}
+interface Strategy {
+    initialize()
+    get_request()
+    update_trading_info()
+    update_result()
+}
+interface Trader {
+    send_request()
+    cancel_request()
+    cancel_all_requests()
+    get_account_info()
+}
+class Operator {
+    initialize()
+    start()
+    stop()
+    get_score()
+    get_trading_results()
+}
+class Analyzer {
+    put_trading_info()
+    put_requests()
+    put_result()
+    update_asset_info()
+    create_report()
+}
+
+DataProvider <|.. SimulationDataProvider
+DataProvider <|.. UpbitDataProvider
+DataProvider <|.. BithumbDataProvider
+
+SimulationDataProvider *-- DataRepository
+DataRepository *-- Database
+
+Strategy <|.. StrategyBuyAndHold
+Strategy <|.. StrategySma
+
+Trader <|.. SimulationTrader
+Trader <|.. UpbitTrader
+Trader <|.. BithumbTrader
+
+SimulationTrader *-- VirtualMartket
+
+Operator <|-r- SimulatorOperator
+
+Operator --> DataProvider
+Operator --> Strategy
+Operator --> Trader
+Operator --> Analyzer
+
+Simulator --> Operator
+Controller --> Operator
+JptController --> Operator
+TelegramController --> Operator
+
+StrategyBuyAndHold -[hidden]-> LogManager
+StrategyBuyAndHold -[hidden]-> Worker
+StrategyBuyAndHold -[hidden]-> DateConverter
+
+@enduml

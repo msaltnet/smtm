@@ -1,0 +1,54 @@
+@startuml
+title Automatic Trading Process
+
+participant Controller
+participant Operator
+participant DataProvider
+participant Strategy
+participant Trader
+participant Analyzer
+
+Controller -> Operator: Start
+loop ["Interval Repeat until Stop"]
+    group Data Gathering 
+        Operator -> DataProvider: 거래현황 데이터 요청
+        note right of Analyzer: DataProvider는 OHLC 캔들 데이터와 같은 거래현황 데이터를 제공한다
+        activate DataProvider
+        DataProvider --> Operator: 거래현황 데이터 응답
+        deactivate DataProvider
+        activate Operator
+        Operator -> Analyzer: 거래현황 데이터 업데이트
+        deactivate Operator
+    end
+    group Trading Judgment
+        Operator -> Strategy: 거래현황 데이터 업데이트
+        note right of Analyzer: Strategy는 거래현황과 상황에 따라 매매 거래 진행 의사 결정을 한다
+        Operator -> Strategy: 거래 진행 의사 결정 요청
+        activate Strategy
+        Strategy --> Operator: 거래 진행 의사 결정 응답
+        deactivate Strategy
+        activate Operator
+        Operator -> Analyzer: 거래 진행 의사 결정 업데이트
+        deactivate Operator
+    end
+    group Trading Execution
+        Operator -> Trader: 거래 진행 요청
+        Trader --> Operator: 거래 진행 응답
+        note right of Analyzer: Trader는 거래 진행 요청을 받아서 거래소에 거래를 진행시키고 결과를 알려준다
+        Trader --> Operator: 거래 진행 결과 응답
+        activate Operator
+        Operator -> Analyzer: 거래 진행 결과 업데이트
+        deactivate Operator
+    end
+end
+Controller -> Operator: Stop
+activate Operator
+Operator -> Analyzer: 자동 거래 결과 보고서 요청
+note right of Analyzer: Analyzer는 각 단계에서 수집한 데이터로 자동 거래 결과 보고서를 생성한다
+deactivate Operator
+activate Analyzer
+Analyzer --> Operator: 자동 거래 결과 보고서 응답
+deactivate Analyzer
+Operator --> Controller: 자동 거래 결과 보고서
+
+@enduml
