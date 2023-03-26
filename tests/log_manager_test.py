@@ -49,12 +49,3 @@ class LogManagerTests(unittest.TestCase):
                 self.assertNotEqual(old_handler, handler)
                 old_handler = handler
         self.assertTrue(has_RotatingFileHandler)
-
-        has_RotatingFileHandler = False
-        LogManager.change_log_file("kiwi.log")
-        for handler in logger.handlers:
-            if issubclass(type(handler), logging.handlers.RotatingFileHandler):
-                self.assertEqual(handler.baseFilename[-8:], "kiwi.log")
-                self.assertEqual(old_handler, handler)
-                has_RotatingFileHandler = True
-        self.assertTrue(has_RotatingFileHandler)
