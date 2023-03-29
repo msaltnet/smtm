@@ -1,4 +1,3 @@
-import os
 import unittest
 from smtm import BithumbTrader
 from unittest.mock import *

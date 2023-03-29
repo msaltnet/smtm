@@ -1,7 +1,6 @@
 import unittest
 from smtm import SimulationDataProvider
 from unittest.mock import *
-import requests
 
 
 class SimulationDataProviderTests(unittest.TestCase):

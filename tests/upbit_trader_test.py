@@ -1,4 +1,3 @@
-import os
 import unittest
 import requests
 from urllib.parse import urlencode

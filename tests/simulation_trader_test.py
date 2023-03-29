@@ -1,7 +1,6 @@
 import unittest
 from smtm import SimulationTrader
 from unittest.mock import *
-import requests
 
 
 class SimulationTraderTests(unittest.TestCase):

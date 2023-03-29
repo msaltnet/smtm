@@ -1,6 +1,4 @@
-import requests
 import unittest
-from datetime import datetime
 from smtm import Database
 from unittest.mock import *
 

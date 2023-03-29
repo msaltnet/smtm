@@ -8,7 +8,6 @@ from smtm import (
     BithumbDataProvider,
     StrategyBuyAndHold,
     StrategySma0,
-    Operator,
 )
 from unittest.mock import *
 

@@ -1,6 +1,4 @@
-import os
 import unittest
-import requests
 from smtm import VirtualMarket
 from unittest.mock import *
 

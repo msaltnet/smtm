@@ -1,8 +1,6 @@
 import unittest
 from smtm import SimulationOperator
 from unittest.mock import *
-import requests
-import threading
 
 
 class SimulationOperatorTests(unittest.TestCase):

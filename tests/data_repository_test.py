@@ -1,6 +1,5 @@
 import requests
 import unittest
-from datetime import datetime
 from smtm import DataRepository
 from unittest.mock import *
 

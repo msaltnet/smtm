@@ -1,7 +1,6 @@
-import os
 import copy
 import unittest
-from smtm import Analyzer, analyzer
+from smtm import Analyzer
 from unittest.mock import *
 from datetime import datetime, timedelta
 

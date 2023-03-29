@@ -1,7 +1,6 @@
 import unittest
 from smtm import Worker
 from unittest.mock import *
-import requests
 
 
 class WorkerTests(unittest.TestCase):

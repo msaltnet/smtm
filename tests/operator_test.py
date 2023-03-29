@@ -2,8 +2,6 @@ import unittest
 from datetime import datetime, timedelta
 from smtm import Operator
 from unittest.mock import *
-import requests
-import threading
 
 
 class OperatorInitializeTests(unittest.TestCase):
@@ -179,6 +177,7 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         self.assertEqual(str(exception.exception), "Something bad happened during trading")
 
         self.operator.on_exception.assert_called_once_with("Something bad happened during trading")
+
 
 class OperatorStopTests(unittest.TestCase):
     def setUp(self):
