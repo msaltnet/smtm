@@ -319,7 +319,9 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
 
         tcb._stop_trading("2")
-        tcb._send_text_message.assert_called_once_with("자동 거래가 중지되었습니다\n12-05 - 12-08\n자산 100 -> 200\n수익률 0.5\n비교 수익률 0.9\n", tcb.main_keyboard)
+        tcb._send_text_message.assert_called_once_with(
+            "자동 거래가 중지되었습니다\n12-05 - 12-08\n자산 100 -> 200\n수익률 0.5\n비교 수익률 0.9\n", tcb.main_keyboard
+        )
         self.assertEqual(tcb.operator, None)
         self.assertEqual(tcb.strategy, None)
         self.assertEqual(tcb.data_provider, None)

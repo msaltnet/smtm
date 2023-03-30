@@ -37,7 +37,7 @@ class MassSimulatorAnalyzeTests(unittest.TestCase):
         dummy_config = {
             "title": "BnH-2Hour",
             "budget": 50000,
-            "strategy": 0,
+            "strategy": "BNH",
             "interval": 1,
             "currency": "BTC",
             "description": "mass-simluation-unit-test",
@@ -111,14 +111,14 @@ class MassSimulatorInitializeTests(unittest.TestCase):
         self, mock_interval, mock_op_init, mock_tr_init, mock_dp_init
     ):
         budget = 50000
-        strategy_num = 1
+        strategy_code = "BNH"
         interval = 60
         currency = "BTC"
         start = "2020-04-30T17:00:00"
         end = "2020-04-30T18:00:00"
         tag = "mango-test"
         operator = MassSimulator.get_initialized_operator(
-            budget, strategy_num, interval, currency, start, end, tag
+            budget, strategy_code, interval, currency, start, end, tag
         )
         mock_dp_init.assert_called_once_with(end=end, count=60)
         mock_tr_init.assert_called_once_with(end=end, count=60, budget=budget)

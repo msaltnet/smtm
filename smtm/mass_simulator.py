@@ -17,9 +17,7 @@ from . import (
     LogManager,
     DateConverter,
     SimulationDataProvider,
-    StrategyBuyAndHold,
-    StrategySma0,
-    StrategyRsi,
+    StrategyFactory,
     SimulationOperator,
     SimulationTrader,
     Analyzer,
@@ -119,7 +117,7 @@ class MassSimulator:
         return last_report
 
     @staticmethod
-    def get_initialized_operator(budget, strategy_num, interval, currency, start, end, tag):
+    def get_initialized_operator(budget, strategy_code, interval, currency, start, end, tag):
         """시뮬레이션 오퍼레이션 생성 후 주어진 설정 값으로 초기화 하여 반환"""
         dt = DateConverter.to_end_min(start_iso=start, end_iso=end)
         end = dt[0][1]
@@ -128,18 +126,11 @@ class MassSimulator:
         data_provider = SimulationDataProvider(currency=currency)
         data_provider.initialize_simulation(end=end, count=count)
 
-        strategy_number = int(strategy_num)
-        if strategy_number == 0:
-            strategy = StrategyBuyAndHold()
-        elif strategy_number == 1:
-            strategy = StrategySma0()
-        elif strategy_number == 2:
-            strategy = StrategyRsi()
-        else:
-            raise UserWarning(f"Invalid Strategy! {strategy_number}")
+        strategy = StrategyFactory.create(strategy_code)
+        if strategy == None:
+            raise UserWarning(f"Invalid Strategy! {strategy_code}")
 
         strategy.is_simulation = True
-
         trader = SimulationTrader(currency=currency)
         trader.initialize_simulation(end=end, count=count, budget=budget)
 
@@ -261,15 +252,10 @@ class MassSimulator:
         title = config["title"]
         period_list = config["period_list"]
 
-        strategy_number = int(config["strategy"])
-        if strategy_number == 0:
-            strategy_name = StrategyBuyAndHold.NAME
-        elif strategy_number == 1:
-            strategy_name = StrategySma0.NAME
-        elif strategy_number == 2:
-            strategy_name = StrategyRsi.NAME
-        else:
-            raise UserWarning(f"Invalid Strategy! {strategy_number}")
+        strategy_code = config["strategy"]
+        strategy_name = StrategyFactory.get_name(strategy_code)
+        if strategy_name == None:
+            raise UserWarning(f"Invalid Strategy! {strategy_code}")
 
         final_return_list = []
         min_return_list = []

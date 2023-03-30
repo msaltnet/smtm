@@ -6,9 +6,7 @@ from . import (
     Analyzer,
     SimulationTrader,
     SimulationDataProvider,
-    StrategyBuyAndHold,
-    StrategySma0,
-    StrategyRsi,
+    StrategyFactory,
     SimulationOperator,
     DateConverter,
 )
@@ -38,7 +36,7 @@ class Simulator:
         self,
         budget=50000,
         interval=2,
-        strategy=0,
+        strategy="BNH",
         from_dash_to="201220.170000-201220.180000",
         currency="BTC",
     ):
@@ -48,7 +46,7 @@ class Simulator:
         self.end_str = "200430.180000"
         self.interval = interval
         self.operator = None
-        self.strategy = int(strategy)
+        self.strategy = strategy
         self.budget = int(budget)
         self.need_init = True
         self.currency = currency
@@ -102,6 +100,12 @@ class Simulator:
             },
         ]
 
+        all = StrategyFactory.get_all_strategy_info()
+        strategy_guide = []
+        for strategy in all:
+            strategy_guide.append(strategy["code"])
+        strategy_guide = ", ".join(strategy_guide)
+        strategy_guide = "전략 코드 입력. " + strategy_guide
         self.config_list = [
             {
                 "guide": "년월일.시분초 형식으로 시작 시점 입력. 예. 201220.162300",
@@ -124,7 +128,7 @@ class Simulator:
                 "action": self._set_budget,
             },
             {
-                "guide": "전략 번호 입력. 0: Buy and Hold, 1: SMA-0, 2: RSI",
+                "guide": strategy_guide,
                 "value": self.strategy,
                 "action": self._set_strategy,
             },
@@ -142,13 +146,8 @@ class Simulator:
         end = dt[0][1]
         count = dt[0][2]
 
-        if self.strategy == 0:
-            strategy = StrategyBuyAndHold()
-        elif self.strategy == 1:
-            strategy = StrategySma0()
-        elif self.strategy == 2:
-            strategy = StrategyRsi()
-        else:
+        strategy = StrategyFactory.create(self.strategy)
+        if strategy == None:
             raise UserWarning(f"Invalid Strategy! {self.strategy}")
 
         strategy.is_simulation = True
@@ -271,7 +270,7 @@ class Simulator:
             self.budget = next_value
 
     def _set_strategy(self, value):
-        self.strategy = int(value)
+        self.strategy = value
 
     def _set_currency(self, value):
         self.currency = value

@@ -11,6 +11,7 @@ from .simulation_operator import SimulationOperator
 from .strategy_bnh import StrategyBuyAndHold
 from .strategy_sma_0 import StrategySma0
 from .strategy_rsi import StrategyRsi
+from .strategy_factory import StrategyFactory
 from .virtual_market import VirtualMarket
 from .worker import Worker
 from .simulator import Simulator
@@ -27,6 +28,7 @@ from .database import Database
 from .mass_simulator import MassSimulator
 
 __all__ = [
+    "DateConverter",
     "Operator",
     "LogManager",
     "Analyzer",
@@ -36,13 +38,20 @@ __all__ = [
     "StrategyBuyAndHold",
     "StrategySma0",
     "StrategyRsi",
+    "StrategyFactory",
     "VirtualMarket",
     "Worker",
     "Simulator",
     "UpbitTrader",
     "BithumbTrader",
+    "BithumbDataProvider",
     "DemoTrader",
     "UpbitDataProvider",
     "MassSimulator",
+    "Controller",
+    "JptController",
+    "TelegramController",
+    "DataRepository",
+    "Database",
 ]
 __version__ = "1.1.0"

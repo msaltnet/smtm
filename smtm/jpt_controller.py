@@ -10,8 +10,7 @@ from . import (
     UpbitDataProvider,
     BithumbTrader,
     BithumbDataProvider,
-    StrategyBuyAndHold,
-    StrategySma0,
+    StrategyFactory,
     Operator,
 )
 
@@ -29,7 +28,7 @@ class JptController:
     ):
         self.interval = interval
         self.budget = budget
-        self.strategy_num = strategy
+        self.strategy_code = strategy
         self.strategy = None
         self.market = market
         self.commission_ratio = commission_ratio
@@ -40,9 +39,13 @@ class JptController:
     def initialize(self, interval=10, strategy=0, budget=50000, is_bithumb=False):
         """설정 값으로 초기화"""
         self.interval = interval
-        self.strategy_num = strategy
+        self.strategy_code = strategy
         self.budget = budget
-        self.strategy = StrategyBuyAndHold() if self.strategy_num == 0 else StrategySma0()
+
+        self.strategy = StrategyFactory.create(self.strategy_code)
+        if self.strategy == None:
+            raise UserWarning(f"Invalid Strategy! {self.strategy_code}")
+
         self.operator = Operator()
         if is_bithumb:
             data_provider = BithumbDataProvider(currency=self.market)

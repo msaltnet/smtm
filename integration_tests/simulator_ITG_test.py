@@ -20,7 +20,7 @@ class SimulatorIntegrationTests(unittest.TestCase):
         simulator = Simulator(
             budget=1000000,
             interval=interval,
-            strategy=0,
+            strategy="BNH",
             from_dash_to=from_dash_to,
             currency="BTC",
         )
@@ -38,7 +38,7 @@ class SimulatorIntegrationTests(unittest.TestCase):
             "200430.073000",  # 시뮬레이션 기간 종료점
             "0.1",  # interval
             "1000000",  # budget
-            "0",  # strategy
+            "BNH",  # strategy
             "ETH",  # currency
             "1",  # 상태 출력
             "r",  # 시뮬레이션 시작

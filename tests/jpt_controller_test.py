@@ -26,7 +26,7 @@ class JptControllerTests(unittest.TestCase):
     ):
         controller = JptController()
         self.assertEqual(controller.need_init, True)
-        controller.initialize(interval=7, strategy=0, budget=300)
+        controller.initialize(interval=7, strategy="BNH", budget=300)
         self.assertEqual(controller.need_init, False)
         mock_set_interval.assert_called_with(7)
         mock_initialize.assert_called()
@@ -36,7 +36,7 @@ class JptControllerTests(unittest.TestCase):
         self.assertTrue(isinstance(mock_initialize.call_args_list[0][0][3], Analyzer))
         self.assertEqual(mock_initialize.call_args_list[0][1]["budget"], 300)
 
-        controller.initialize(interval=5, strategy=1, budget=700)
+        controller.initialize(interval=5, strategy="SMA", budget=700)
         mock_set_interval.assert_called_with(5)
         self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][0], UpbitDataProvider))
         self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][1], StrategySma0))
@@ -44,7 +44,7 @@ class JptControllerTests(unittest.TestCase):
         self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][3], Analyzer))
         self.assertEqual(mock_initialize.call_args_list[1][1]["budget"], 700)
 
-        controller.initialize(interval=5, strategy=1, budget=888, is_bithumb=True)
+        controller.initialize(interval=5, strategy="SMA", budget=888, is_bithumb=True)
         mock_set_interval.assert_called_with(5)
         self.assertTrue(isinstance(mock_initialize.call_args_list[2][0][0], BithumbDataProvider))
         self.assertTrue(isinstance(mock_initialize.call_args_list[2][0][1], StrategySma0))
@@ -55,7 +55,7 @@ class JptControllerTests(unittest.TestCase):
     @patch("smtm.Operator.start")
     def test_start_should_call_operator_start_after_initialized(self, mock_start):
         controller = JptController()
-        controller.initialize(interval=5, strategy=1, budget=700)
+        controller.initialize(interval=5, strategy="SMA", budget=700)
         controller.start()
         mock_start.assert_called_once()
 
@@ -68,7 +68,7 @@ class JptControllerTests(unittest.TestCase):
     @patch("smtm.Operator.stop")
     def test_stop_should_call_operator_stop_after_initialized(self, mock_stop):
         controller = JptController()
-        controller.initialize(interval=5, strategy=1, budget=700)
+        controller.initialize(interval=5, strategy="SMA", budget=700)
         self.assertEqual(controller.need_init, False)
         controller.stop()
         mock_stop.assert_called_once()

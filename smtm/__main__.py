@@ -10,13 +10,13 @@ mode:
 Example)
 python -m smtm --mode 0
 python -m smtm --mode 1
-python -m smtm --mode 1 --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy 0 --currency BTC
-python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
-python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH --demo 1
+python -m smtm --mode 1 --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy BNH --currency BTC
+python -m smtm --mode 2 --budget 50000 --term 60 --strategy BNH --currency ETH
+python -m smtm --mode 2 --budget 50000 --term 60 --strategy BNH --currency ETH --demo 1
 python -m smtm --mode 3
 python -m smtm --mode 3 --demo 1
 python -m smtm --mode 4 --config /data/sma0_simulation.json
-python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120 --file generated_config.json
+python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy SMA --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120 --file generated_config.json
 """
 import argparse
 from argparse import RawTextHelpFormatter
@@ -38,18 +38,18 @@ mode:
 
 Example)
 python -m smtm --mode 0
-python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy 0 --currency BTC
-python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
+python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy BNH --currency BTC
+python -m smtm --mode 2 --budget 50000 --term 60 --strategy BNH --currency ETH
 python -m smtm --mode 3
 python -m smtm --mode 3 --demo 1 --token <telegram chat-bot token> --chatid <chat id>
 python -m smtm --mode 4 --config /data/sma0_simulation.json
-python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
+python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
 """,
         formatter_class=RawTextHelpFormatter,
     )
     parser.add_argument("--budget", help="budget", type=int, default=10000)
     parser.add_argument("--term", help="trading tick interval (seconds)", type=float, default="60")
-    parser.add_argument("--strategy", help="strategy 0: buy and hold, 1: sma0, 2: rsi", default="0")
+    parser.add_argument("--strategy", help="BNH: buy and hold, SMA: sma, RSI: rsi", default="BNH")
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
     parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
     parser.add_argument("--config", help="mass simulation config file", default="")

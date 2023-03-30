@@ -32,6 +32,7 @@ class StrategySma0(Strategy):
     LONG = 60
     STEP = 1
     NAME = "SMA0-I"
+    CODE = "SMA"
     STD_K = 25
     STD_RATIO = 0.00015
     PREDICT_N = 3

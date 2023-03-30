@@ -16,9 +16,7 @@ from . import (
     BithumbTrader,
     BithumbDataProvider,
     Worker,
-    StrategyBuyAndHold,
-    StrategySma0,
-    StrategyRsi,
+    StrategyFactory,
     Operator,
     DemoTrader,
 )
@@ -39,19 +37,7 @@ class TelegramController:
     AVAILABLE_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     UPBIT_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     BITHUMB_CURRENCY = ["BTC", "ETH"]
-    STRATEGY = [
-        {
-            "name": "1. Buy and Hold",
-            "selector": ["1. BUY AND HOLD", "1", "BNH"],
-            "builder": StrategyBuyAndHold,
-        },
-        {
-            "name": "2. Simple Moving Average",
-            "selector": ["2. SIMPLE MOVING AVERAGE", "2", "SMA"],
-            "builder": StrategySma0,
-        },
-        {"name": "3. RSI", "selector": ["3. RSI", "3", "RSI"], "builder": StrategyRsi},
-    ]
+    STRATEGY = []
 
     def __init__(self, token=None, chatid=None):
         LogManager.set_stream_level(30)
@@ -74,12 +60,29 @@ class TelegramController:
         self.trader = None
         self.command_list = []
         self._create_command()
+        self._update_strategy()
         self.currency = None
         self.is_demo = False
         if token is not None:
             self.TOKEN = token
         if chatid is not None:
             self.CHAT_ID = int(chatid)
+
+    def _update_strategy(self):
+        self.STRATEGY = []
+        for idx, strategy in enumerate(StrategyFactory.get_all_strategy_info()):
+            self.STRATEGY.append(
+                {
+                    "name": f"{idx}. {strategy['name']}",
+                    "selector": [
+                        f"{idx}. {strategy['name']}",
+                        f"{idx}",
+                        f"{strategy['name']}",
+                        f"{strategy['code']}",
+                    ],
+                    "builder": strategy["class"],
+                }
+            )
 
     def _create_command(self):
         """명령어 정보를 생성한다"""

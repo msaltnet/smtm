@@ -1,7 +1,7 @@
 {
     "title": "SMA-1Hour",
     "budget": 50000,
-    "strategy": 1,
+    "strategy": "BNH",
     "interval": 0.5,
     "currency": "BTC",
     "description": "mass-simulation-integration-test",

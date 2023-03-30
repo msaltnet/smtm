@@ -20,6 +20,7 @@ class StrategyRsi(Strategy):
     RSI_HIGH = 70
     RSI_COUNT = 14
     NAME = "RSI"
+    CODE = "RSI"
 
     def __init__(self):
         self.is_intialized = False

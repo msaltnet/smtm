@@ -8,9 +8,7 @@ from . import (
     UpbitDataProvider,
     BithumbTrader,
     BithumbDataProvider,
-    StrategyBuyAndHold,
-    StrategySma0,
-    StrategyRsi,
+    StrategyFactory,
     Operator,
 )
 
@@ -23,7 +21,7 @@ class Controller:
     def __init__(
         self,
         interval=10,
-        strategy=0,
+        strategy="BNH",
         budget=50000,
         currency="BTC",
         is_bithumb=False,
@@ -41,15 +39,9 @@ class Controller:
         self.currency = currency
         LogManager.set_stream_level(30)
 
-        strategy_num = int(strategy)
-        if strategy_num == 0:
-            self.strategy = StrategyBuyAndHold()
-        elif strategy_num == 1:
-            self.strategy = StrategySma0()
-        elif strategy_num == 2:
-            self.strategy = StrategyRsi()
-        else:
-            raise UserWarning(f"Invalid Strategy! {self.strategy}")
+        self.strategy = StrategyFactory.create(strategy)
+        if self.strategy == None:
+            raise UserWarning(f"Invalid Strategy! {strategy}")
 
     def create_command(self):
         """명령어 정보를 생성한다"""

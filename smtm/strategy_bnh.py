@@ -24,6 +24,7 @@ class StrategyBuyAndHold(Strategy):
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     COMMISSION_RATIO = 0.0005
     NAME = "BnH"
+    CODE = "BNH"
 
     def __init__(self):
         self.is_intialized = False
