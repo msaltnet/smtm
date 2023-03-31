@@ -59,8 +59,8 @@ class TelegramController:
         self.data_provider = None
         self.trader = None
         self.command_list = []
-        self._create_command()
         self._update_strategy()
+        self._create_command()
         self.currency = None
         self.is_demo = False
         if token is not None:

@@ -360,7 +360,7 @@ class MassSimulator:
     def make_config_json(
         title="",
         budget=50000,
-        strategy_num=0,
+        strategy_code="BNH",
         interval=0.000001,
         currency="BTC",
         from_dash_to="210804.000000-210811.000000",
@@ -388,7 +388,7 @@ class MassSimulator:
             "title": title,
             "description": "write descriptionf here",
             "budget": budget,
-            "strategy": int(strategy_num),
+            "strategy": strategy_code,
             "interval": interval,
             "currency": currency,
             "period_list": [],

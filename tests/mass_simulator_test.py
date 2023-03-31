@@ -61,7 +61,7 @@ class MassSimulatorAnalyzeTests(unittest.TestCase):
         expected = [
             "Title: BnH-2Hour\n",
             "Description: mass-simluation-unit-test\n",
-            "Strategy: BnH, Budget: 50000, Currency: BTC\n",
+            "Strategy: Buy and Hold, Budget: 50000, Currency: BTC\n",
             "2020-04-30T17:00:00 ~ 2020-04-30T20:00:00 (3)\n",
             "수익률 평균:    1.793\n",
             "수익률 편차:    0.595\n",
@@ -220,7 +220,7 @@ class MassSimulatorTests(unittest.TestCase):
         result = MassSimulator.make_config_json(
             title="get_money",
             budget=50000000000,
-            strategy_num=7,
+            strategy_code="SMA",
             interval=0.777,
             currency="USD",
             from_dash_to="210804.000000-210804.030000",
@@ -230,7 +230,7 @@ class MassSimulatorTests(unittest.TestCase):
         config = mock_json.call_args[0][0]
         self.assertEqual(config["title"], "get_money")
         self.assertEqual(config["budget"], 50000000000)
-        self.assertEqual(config["strategy"], 7)
+        self.assertEqual(config["strategy"], "SMA")
         self.assertEqual(config["interval"], 0.777)
         self.assertEqual(config["currency"], "USD")
         self.assertEqual(len(config["period_list"]), 2)

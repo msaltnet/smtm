@@ -170,8 +170,8 @@ class SimulatorTests(unittest.TestCase):
 
     def test__set_strategy_should_set_value(self):
         simulator = Simulator()
-        simulator._set_strategy("2")
-        self.assertEqual(simulator.strategy, 2)
+        simulator._set_strategy("BNH")
+        self.assertEqual(simulator.strategy, "BNH")
         self.assertEqual(type(simulator.budget), int)
 
     def test__print_score_should_call_operator_get_score(self):

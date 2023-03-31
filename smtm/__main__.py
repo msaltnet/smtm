@@ -125,7 +125,7 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
         result = MassSimulator.make_config_json(
             title=args.title,
             budget=args.budget,
-            strategy_num=args.strategy,
+            strategy_code=args.strategy,
             currency=args.currency,
             from_dash_to=args.from_dash_to,
             offset_min=args.offset,
