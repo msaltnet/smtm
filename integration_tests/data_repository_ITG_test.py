@@ -2,7 +2,7 @@ import time
 import random
 from datetime import datetime, timedelta
 import unittest
-import os.path
+import os
 import requests
 from smtm import DataRepository, DateConverter
 from unittest.mock import *
@@ -70,6 +70,9 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
             checked = self._check_equal(result, upbit)
             self.assertTrue(checked + len(broken_list), dt[2])
             time.sleep(1)
+        del repo
+        if os.path.isfile("test.db"):
+            os.remove("test.db")
 
     def _check_equal(self, repo_data, upbit_data):
         idx = 0
