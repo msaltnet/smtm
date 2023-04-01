@@ -8,7 +8,7 @@ DESCRIPTION = "A algorithm crypto trading system."
 URL = "https://github.com/msaltnet/smtm"
 EMAIL = "salt.jeong@gmail.com"
 AUTHOR = "msalt"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -46,7 +46,7 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     license="MIT",
-    packages=find_packages(),
+    packages=["smtm"],
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.6",
