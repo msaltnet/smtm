@@ -1,4 +1,35 @@
 ####
+
+---
+
+### v1.1.1
+StrategyFactory 추가 및 integration_tests를 패키지에서 제거
+
+#### 기능 추가
+- 전략을 쉽게 추가/제거 할 수 있도록 StrategyFactory 추가. 전략을 추가할 때 StrategyFactory에만 추가해주면 됨
+  - 3403c6918a18bd6fedf5606fe7726ce080fdd941
+  - 4bdc03e8214b7d172aa73ca1680b44a3e61f6386
+- 로그 파일을 log 폴더에 저장
+  - e74e91095425228038344ced0484416b00ea787a
+
+#### 버그 수정
+- integration_tests가 별도의 패키지로 top_level에 추가되고 있는 문제 수정. smtm 패키지 설치시 smtm과 integration_tests 두 개의 패키지가 따로 설치되는 문제
+  - bf5b925dc6aa4cd5cc9dc10218bdf30b1d308f6f
+
+### v1.1.1 (English)
+Add StrategyFactory and remove integration_tests from package
+
+#### New Features
+- Add StrategyFactory to add/remove a strategy easily.
+  - 3403c6918a18bd6fedf5606fe7726ce080fdd941
+  - 4bdc03e8214b7d172aa73ca1680b44a3e61f6386
+- Add log directory to write log files
+  - e74e91095425228038344ced0484416b00ea787a
+
+#### Fixed Bugs
+- Remove integration_tests package in the top_level of packages.
+  - bf5b925dc6aa4cd5cc9dc10218bdf30b1d308f6f
+
 ---
 
 ### v1.1.0
@@ -27,7 +58,7 @@ Demo 모드와 RSI 전략 추가
   - ab54bfa5f42dab87e1efc53c8e792f66397ba744
   - 032fac2df35de05c3d9b516d076277bb6b8222f0
 
-### v1.1.0
+### v1.1.0 (English)
 Demo feature and RSI strategy
 
 #### New Features
@@ -65,7 +96,7 @@ Demo feature and RSI strategy
 4. 텔레그램봇 모드
 5. 주피터 노트북 컨트롤러
 
-### v1.0.0
+### v1.0.0 (English)
 First release with main features
 
 #### Main Features
