@@ -10,6 +10,7 @@ from .simulation_data_provider import SimulationDataProvider
 from .simulation_operator import SimulationOperator
 from .strategy_bnh import StrategyBuyAndHold
 from .strategy_sma_0 import StrategySma0
+from .strategy_sma_ml import StrategySmaMl
 from .strategy_rsi import StrategyRsi
 from .strategy_factory import StrategyFactory
 from .virtual_market import VirtualMarket
@@ -37,6 +38,7 @@ __all__ = [
     "SimulationOperator",
     "StrategyBuyAndHold",
     "StrategySma0",
+    "StrategySmaMl",
     "StrategyRsi",
     "StrategyFactory",
     "VirtualMarket",
