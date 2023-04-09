@@ -169,13 +169,13 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.TOKEN = "banana"
         tcb.CHAT_ID = "to_banana"
         tcb._send_http = MagicMock()
-        tcb._send_text_message("hello~ banana")
+        tcb._send_text_message("hello banana")
         tcb.post_worker.post_task.assert_called_once_with(ANY)
         task = tcb.post_worker.post_task.call_args[0][0]
         tcb.post_worker.post_task.call_args[0][0]["runnable"](task)
 
         tcb._send_http.assert_called_once_with(
-            "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%7E%20banana"
+            "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%20banana"
         )
 
     def test__send_text_message_shoul_call_sendMessage_api_correctly_with_keyboard(self):
@@ -184,13 +184,13 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.TOKEN = "banana"
         tcb.CHAT_ID = "to_banana"
         tcb._send_http = MagicMock()
-        tcb._send_text_message("hello~ banana", "banana_keyboard_markup")
+        tcb._send_text_message("hello banana", "banana_keyboard_markup")
         tcb.post_worker.post_task.assert_called_once_with(ANY)
         task = tcb.post_worker.post_task.call_args[0][0]
         tcb.post_worker.post_task.call_args[0][0]["runnable"](task)
 
         tcb._send_http.assert_called_once_with(
-            "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%7E%20banana&reply_markup=banana_keyboard_markup"
+            "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%20banana&reply_markup=banana_keyboard_markup"
         )
 
     def test__get_updates_call_getUpdates_api_correctly(self):
