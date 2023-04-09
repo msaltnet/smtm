@@ -75,9 +75,9 @@ class TelegramController:
                 {
                     "name": f"{idx}. {strategy['name']}",
                     "selector": [
-                        f"{idx}. {strategy['name']}",
+                        f"{idx}. {strategy['name']}".upper(),
                         f"{idx}",
-                        f"{strategy['name']}",
+                        f"{strategy['name']}".upper(),
                         f"{strategy['code']}",
                     ],
                     "builder": strategy["class"],
