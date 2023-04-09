@@ -109,6 +109,12 @@ class Operator:
             self.timer_expired_time = datetime.now()
             self.worker.post_task({"runnable": self._execute_trading})
 
+        if self.interval < 1:
+            # call the handler directly to enhance performance. Timer create new thread always.
+            self.is_timer_running = True
+            on_timer_expired()
+            return
+
         adjusted_interval = self.interval
         if self.interval > 1 and self.timer_expired_time is not None:
             time_delta = datetime.now() - self.timer_expired_time
