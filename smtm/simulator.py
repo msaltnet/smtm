@@ -167,13 +167,13 @@ class Simulator:
             analyzer,
             budget=self.budget,
         )
-        self.operator.tag = self._make_tag(self.start_str, self.end_str, strategy.NAME)
+        self.operator.tag = self._make_tag(self.start_str, self.end_str, strategy.CODE)
         self.operator.set_interval(self.interval)
         self.need_init = False
 
     @staticmethod
-    def _make_tag(start_str, end_str, strategy_name):
-        return "SIM-" + strategy_name + "-" + start_str + "-" + end_str
+    def _make_tag(start_str, end_str, strategy_code):
+        return "SIM-" + strategy_code + "-" + start_str + "-" + end_str
 
     def start(self):
         """시뮬레이션 시작, 재시작"""

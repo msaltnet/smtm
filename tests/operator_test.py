@@ -51,8 +51,8 @@ class OperatorInitializeTests(unittest.TestCase):
 
     def test_initialize_should_update_tag_correctly(self):
         self.trader_mock.NAME = "mango_tr"
-        self.strategy_mock.NAME = "super_st"
-        expected_tag = "-mango_tr-super_st"
+        self.strategy_mock.CODE = "SPR"
+        expected_tag = "-mango_tr-SPR"
         self.operator.initialize(
             "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
         )

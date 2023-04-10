@@ -24,7 +24,7 @@ class SimulationOperatorTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
-        strategy_mock.NAME = "mango_st"
+        strategy_mock.CODE = "MAG"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
         trader_mock = Mock()
@@ -49,7 +49,7 @@ class SimulationOperatorTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
-        strategy_mock.NAME = "mango_st"
+        strategy_mock.CODE = "MAG"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.update_result = MagicMock()
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
@@ -80,7 +80,7 @@ class SimulationOperatorTests(unittest.TestCase):
 
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         strategy_mock = Mock()
-        strategy_mock.NAME = "mango_st"
+        strategy_mock.CODE = "MAG"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.update_result = MagicMock()
         strategy_mock.get_request = MagicMock(return_value=dummy_request)
@@ -108,7 +108,7 @@ class SimulationOperatorTests(unittest.TestCase):
         dp_mock.initialize = MagicMock(return_value="")
         dp_mock.get_info = MagicMock(return_value="mango")
         strategy_mock = Mock()
-        strategy_mock.NAME = "mango_st"
+        strategy_mock.CODE = "MAG"
         strategy_mock.update_trading_info = MagicMock(return_value="orange")
         strategy_mock.get_request = MagicMock(return_value=None)
         trader_mock = Mock()

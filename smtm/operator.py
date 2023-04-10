@@ -68,7 +68,7 @@ class Operator:
         self.analyzer.initialize(trader.get_account_info)
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         try:
-            self.tag += "-" + self.trader.NAME + "-" + self.strategy.NAME
+            self.tag += "-" + self.trader.NAME + "-" + self.strategy.CODE
         except AttributeError as err:
             self.logger.warning(f"can't get additional info form strategy and trader: {err}")
 
