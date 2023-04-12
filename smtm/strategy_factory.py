@@ -1,12 +1,12 @@
 """Strategy 정보 조회 및 생성을 담당하는 Factory 클래스"""
 
-from . import StrategyBuyAndHold, StrategySma0, StrategyRsi
+from . import StrategyBuyAndHold, StrategySma0, StrategyRsi, StrategySmaMl
 
 
 class StrategyFactory:
     """Strategy 정보 조회 및 생성을 담당하는 Factory 클래스"""
 
-    STRATEGY_LIST = [StrategyBuyAndHold, StrategySma0, StrategyRsi]
+    STRATEGY_LIST = [StrategyBuyAndHold, StrategySma0, StrategyRsi, StrategySmaMl]
 
     @staticmethod
     def create(code):

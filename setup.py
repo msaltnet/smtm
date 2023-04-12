@@ -1,6 +1,6 @@
 import io
 import unittest
-from setuptools import find_packages, setup
+from setuptools import setup
 
 # Package meta-data.
 NAME = "smtm"
@@ -21,6 +21,7 @@ REQUIRED = [
     "python-dotenv",
     "jupyter",
     "psutil",
+    "scikit-learn",
 ]
 
 
