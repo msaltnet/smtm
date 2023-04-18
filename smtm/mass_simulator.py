@@ -206,8 +206,10 @@ class MassSimulator:
                 for result in result_list:
                     self._update_result(result)
             except KeyboardInterrupt:
-                print("Terminating......")
-                sys.exit(0)
+                print("Terminating...")
+
+        if is_running is True:
+            sys.exit(0)
 
     def _update_result(self, partial_result):
         for result in partial_result:
@@ -223,23 +225,24 @@ class MassSimulator:
         MassSimulator.memory_usage()
         print(f"partial simulation start @{current_process().name}")
         for period in period_list:
-            tag = f"MASS-{config['title']}-{period['idx']}"
-            operator = MassSimulator.get_initialized_operator(
-                config["budget"],
-                config["strategy"],
-                config["interval"],
-                config["currency"],
-                period["period"]["start"],
-                period["period"]["end"],
-                tag,
-            )
             try:
+                tag = f"MASS-{config['title']}-{period['idx']}"
+                operator = MassSimulator.get_initialized_operator(
+                    config["budget"],
+                    config["strategy"],
+                    config["interval"],
+                    config["currency"],
+                    period["period"]["start"],
+                    period["period"]["end"],
+                    tag,
+                )
                 report = MassSimulator.run_single(operator)
                 result_list.append({"idx": period["idx"], "result": report})
                 print(f"     #{period['idx']} return: {report[2]}")
             except KeyboardInterrupt:
-                print(f"Terminating......@{current_process().name}")
-                operator.stop()
+                print(f"Terminating...@{current_process().name}")
+                if operator is not None:
+                    operator.stop()
 
         return result_list
 

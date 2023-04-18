@@ -172,11 +172,9 @@ class Operator:
         if self.state != "running":
             return None
 
-        try:
-            self.logger.info("cancel timer first")
+        self.logger.info("cancel timer first")
+        if self.timer is not None:
             self.timer.cancel()
-        except AttributeError:
-            self.logger.error("stop operation fail")
         self.is_timer_running = False
 
         self.trader.cancel_all_requests()
