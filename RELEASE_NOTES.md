@@ -19,7 +19,7 @@ CI를 Travis -> github action으로 변경
 - 텔레그램 컨트롤러에서 전략 선택 문자 비교 버그 수정
   - 7101eedd81bafa746ab21ff64c7f9a82ed4a2f2a
 
-### v1.1.1 (English)
+### v1.2.0 (English)
 Enhance simulation performance (about 3x more speedup)
   - when interval is under 1sec, call handler directly instead of using `threading.Timer`
   - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
