@@ -2,6 +2,42 @@
 
 ---
 
+### v1.2.0
+Simulation 속도 개선 (약 3배이상 향상)
+  - interval이 1초 미만일 때, `threading.Timer`를 사용하지 않고 바로 핸들러 호출하도록 수정
+  - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
+CI를 Travis -> github action으로 변경
+  - 50faecd5d1c83cd9af3f04b274d018d1f9f08e64
+전략 이름 대신 코드를 사용
+  - 5ea80279ca64f78f536f139ef615035ab1e5de57
+
+#### 기능 추가
+- 이동 평균선을 이용한 기본 전략에 간단한 ML을 추가한 StrategySmaMl 전략 추가
+  - aad85ce841b90505017d94a6034f7f3b5b12965f
+
+#### 버그 수정
+- 텔레그램 컨트롤러에서 전략 선택 문자 비교 버그 수정
+  - 7101eedd81bafa746ab21ff64c7f9a82ed4a2f2a
+
+### v1.1.1 (English)
+Enhance simulation performance (about 3x more speedup)
+  - when interval is under 1sec, call handler directly instead of using `threading.Timer`
+  - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
+Change CI Travis -> github action
+  - 50faecd5d1c83cd9af3f04b274d018d1f9f08e64
+Use strategy code instead of names
+  - 5ea80279ca64f78f536f139ef615035ab1e5de57
+
+#### New Features
+- add StrategySmaMl
+  - aad85ce841b90505017d94a6034f7f3b5b12965f
+
+#### Fixed Bugs
+- fix a bug for telegram controller strategy selector
+  - 7101eedd81bafa746ab21ff64c7f9a82ed4a2f2a
+
+---
+
 ### v1.1.1
 StrategyFactory 추가 및 integration_tests를 패키지에서 제거
 
