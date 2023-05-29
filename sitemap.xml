@@ -4,4 +4,16 @@
   <loc>https://smtm.msalt.net/</loc>
   <priority>1.0</priority>
 </url>
+<url>
+  <loc>https://smtm.msalt.net/codelab</loc>
+  <priority>1.0</priority>
+</url>
+<url>
+  <loc>https://smtm.msalt.net/codelab/smtm-simulation</loc>
+  <priority>1.0</priority>
+</url>
+<url>
+  <loc>https://smtm.msalt.net/codelab/smtm-demo</loc>
+  <priority>1.0</priority>
+</url>
 </urlset>
