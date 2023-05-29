@@ -194,6 +194,10 @@ timedatectl set-timezone 'Asia/Seoul'
 nohup python -m smtm --mode 3 --demo 1 > nohup.out 2> nohup.err < /dev/null &
 ```
 
+## Code Lab
+- [시뮬레이션 Code Lab](https://smtm.msalt.net/codelab/smtm-simulation/)
+- [모의 투자 Code Lab](https://smtm.msalt.net/codelab/smtm-demo/)
+
 ## 관련 도서
 
 [![smtm-book](https://user-images.githubusercontent.com/9311990/157685437-dcedd2c0-9f0c-400c-a3d4-017354279b60.png)](http://www.kyobobook.co.kr/product/detailViewKor.laf?mallGb=KOR&ejkGb=KOR&barcode=9788997924967)
