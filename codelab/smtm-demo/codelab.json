@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2023-05-29T13:21:47+09:00",
+  "id": "smtm-demo",
+  "duration": 15,
+  "title": "smtm 설치 및 실시간 모의 투자",
+  "summary": "smtm 설치 및 실시간 모의 투자",
+  "source": ".\\smtm-demo.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "codelab",
+    "smtm"
+  ],
+  "tags": [
+    "web"
+  ],
+  "feedback": "https://github.com/msaltnet/smtm",
+  "url": "smtm-demo"
+}
