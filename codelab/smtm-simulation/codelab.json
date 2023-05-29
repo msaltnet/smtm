@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2023-05-29T10:51:47+09:00",
+  "id": "smtm-simulation",
+  "duration": 11,
+  "title": "CodeLab to Install smtm and Run a trading simulation",
+  "summary": "Install smtm and run a trading simulation",
+  "source": ".\\smtm-simulation.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "codelab",
+    "smtm"
+  ],
+  "tags": [
+    "web"
+  ],
+  "feedback": "https://github.com/msaltnet/smtm",
+  "url": "smtm-simulation"
+}
