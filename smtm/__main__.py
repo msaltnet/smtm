@@ -21,7 +21,11 @@ python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy SMA --curr
 import argparse
 from argparse import RawTextHelpFormatter
 import sys
-from . import Simulator, Controller, TelegramController, MassSimulator, LogManager
+from .simulator import Simulator
+from .controller import Controller
+from .telegram_controller import TelegramController
+from .mass_simulator import MassSimulator
+from .log_manager import LogManager
 
 if __name__ == "__main__":
     DEFAULT_MODE = 6

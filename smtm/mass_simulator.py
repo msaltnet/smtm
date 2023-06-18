@@ -13,15 +13,14 @@ from datetime import timedelta
 import psutil
 import pandas as pd
 import matplotlib.pyplot as plt
-from . import (
-    LogManager,
-    DateConverter,
-    SimulationDataProvider,
-    StrategyFactory,
-    SimulationOperator,
-    SimulationTrader,
-    Analyzer,
-)
+
+from .log_manager import LogManager
+from .analyzer import Analyzer
+from .strategy_factory import StrategyFactory
+from .simulation_operator import SimulationOperator
+from .simulation_trader import SimulationTrader
+from .date_converter import DateConverter
+from .simulation_data_provider import SimulationDataProvider
 
 
 class MassSimulator:
@@ -127,7 +126,7 @@ class MassSimulator:
         data_provider.initialize_simulation(end=end, count=count)
 
         strategy = StrategyFactory.create(strategy_code)
-        if strategy == None:
+        if strategy is None:
             raise UserWarning(f"Invalid Strategy! {strategy_code}")
 
         strategy.is_simulation = True
@@ -257,7 +256,7 @@ class MassSimulator:
 
         strategy_code = config["strategy"]
         strategy_name = StrategyFactory.get_name(strategy_code)
-        if strategy_name == None:
+        if strategy_name is None:
             raise UserWarning(f"Invalid Strategy! {strategy_code}")
 
         final_return_list = []

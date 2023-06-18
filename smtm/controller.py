@@ -1,16 +1,14 @@
 """시스템 운영 인터페이스로서 Operator를 사용해서 자동 거래 시스템을 컨트롤하는 Controller 클래스"""
 
 import signal
-from . import (
-    LogManager,
-    Analyzer,
-    UpbitTrader,
-    UpbitDataProvider,
-    BithumbTrader,
-    BithumbDataProvider,
-    StrategyFactory,
-    Operator,
-)
+from .log_manager import LogManager
+from .analyzer import Analyzer
+from .upbit_trader import UpbitTrader
+from .upbit_data_provider import UpbitDataProvider
+from .bithumb_trader import BithumbTrader
+from .bithumb_data_provider import BithumbDataProvider
+from .strategy_factory import StrategyFactory
+from .operator import Operator
 
 
 class Controller:
@@ -40,7 +38,7 @@ class Controller:
         LogManager.set_stream_level(30)
 
         self.strategy = StrategyFactory.create(strategy)
-        if self.strategy == None:
+        if self.strategy is None:
             raise UserWarning(f"Invalid Strategy! {strategy}")
 
     def create_command(self):

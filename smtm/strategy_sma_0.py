@@ -93,7 +93,7 @@ class StrategySma0(Strategy):
             self.logger.info(f"# update process :: {current_idx}")
             self.closing_price_list.append(current_price)
             feeded_list = copy.deepcopy(self.closing_price_list)
-            for i in range(self.PREDICT_N):
+            for _ in range(self.PREDICT_N):
                 feeded_list.append(current_price)
 
             sma_short = pd.Series(feeded_list).rolling(self.SHORT).mean().values[-1]
@@ -106,7 +106,6 @@ class StrategySma0(Strategy):
                 return
 
             if sma_short > sma_mid > sma_long and self.current_process != "buy":
-                is_skip = False
                 self.current_process = "buy"
                 self.process_unit = (round(self.balance / self.STEP), 0)
 
@@ -125,7 +124,6 @@ class StrategySma0(Strategy):
                     if std_ratio > self.STD_RATIO:
                         self.cross_info[1] = {"price": 0, "index": current_idx}
                         self.logger.debug(f"[SMA] SKIP BUY !!! === Stand deviation:{std_ratio:.6f}")
-                        is_skip = True
 
                 self.__add_drawing_spot(info["date_time"], current_price)
             elif sma_short < sma_mid < sma_long and self.current_process != "sell":

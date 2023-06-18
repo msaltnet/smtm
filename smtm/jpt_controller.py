@@ -3,16 +3,14 @@
 Jupyter notebook에서 사용하기 좋게 만든 자동 거래 시스템 컨트롤 모듈
 """
 from IPython.display import Image, display
-from . import (
-    LogManager,
-    Analyzer,
-    UpbitTrader,
-    UpbitDataProvider,
-    BithumbTrader,
-    BithumbDataProvider,
-    StrategyFactory,
-    Operator,
-)
+from .log_manager import LogManager
+from .analyzer import Analyzer
+from .upbit_trader import UpbitTrader
+from .upbit_data_provider import UpbitDataProvider
+from .bithumb_trader import BithumbTrader
+from .bithumb_data_provider import BithumbDataProvider
+from .strategy_factory import StrategyFactory
+from .operator import Operator
 
 
 class JptController:
@@ -43,7 +41,7 @@ class JptController:
         self.budget = budget
 
         self.strategy = StrategyFactory.create(self.strategy_code)
-        if self.strategy == None:
+        if self.strategy is None:
             raise UserWarning(f"Invalid Strategy! {self.strategy_code}")
 
         self.operator = Operator()

@@ -1,15 +1,14 @@
 """SimulationOperator를 사용해서 시뮬레이션을 컨트롤하는 Simulator 클래스"""
 import signal
 import time
-from . import (
-    LogManager,
-    Analyzer,
-    SimulationTrader,
-    SimulationDataProvider,
-    StrategyFactory,
-    SimulationOperator,
-    DateConverter,
-)
+
+from .log_manager import LogManager
+from .analyzer import Analyzer
+from .simulation_operator import SimulationOperator
+from .simulation_trader import SimulationTrader
+from .date_converter import DateConverter
+from .simulation_data_provider import SimulationDataProvider
+from .strategy_factory import StrategyFactory
 
 
 class Simulator:
@@ -100,10 +99,10 @@ class Simulator:
             },
         ]
 
-        all = StrategyFactory.get_all_strategy_info()
+        all_strategy = StrategyFactory.get_all_strategy_info()
         strategy_guide = []
-        for strategy in all:
-            strategy_guide.append(strategy["code"])
+        for item in all_strategy:
+            strategy_guide.append(item["code"])
         strategy_guide = ", ".join(strategy_guide)
         strategy_guide = "전략 코드 입력. " + strategy_guide
         self.config_list = [
@@ -147,7 +146,7 @@ class Simulator:
         count = dt[0][2]
 
         strategy = StrategyFactory.create(self.strategy)
-        if strategy == None:
+        if strategy is None:
             raise UserWarning(f"Invalid Strategy! {self.strategy}")
 
         strategy.is_simulation = True

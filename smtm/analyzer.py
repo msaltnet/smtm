@@ -96,6 +96,7 @@ class Analyzer:
             2: 매매 결과
             3: 수익률 정보
         """
+
         for request in requests:
             new = copy.deepcopy(request)
             if request["type"] == "cancel":

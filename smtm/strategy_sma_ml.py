@@ -1,10 +1,9 @@
 """이동 평균선을 이용한 기본 전략 StrategySma에 ML을 접목한 전략 클래스"""
 
 import copy
-from datetime import datetime
-from datetime import timedelta
-from sklearn.linear_model import LinearRegression
 import math
+from datetime import datetime
+from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
@@ -287,7 +286,7 @@ class StrategySmaMl(Strategy):
                 prev_sell_idx = self.cross_info[1]["index"]
                 if linear_model is not None and linear_model.coef_ <= 0:
                     self.cross_info[1] = {"price": 0, "index": current_idx}
-                    self.logger.debug(f"[SML] SKIP BUY !!! === Linear Regression Slope")
+                    self.logger.debug("[SML] SKIP BUY !!! === Linear Regression Slope")
                 elif prev_sell_idx + self.WAITING_STABLE > current_idx:
                     self.cross_info[1] = {"price": 0, "index": current_idx}
                     self.logger.debug(

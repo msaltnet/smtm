@@ -8,18 +8,16 @@ import json
 from urllib import parse
 import requests
 from dotenv import load_dotenv
-from . import (
-    LogManager,
-    Analyzer,
-    UpbitTrader,
-    UpbitDataProvider,
-    BithumbTrader,
-    BithumbDataProvider,
-    Worker,
-    StrategyFactory,
-    Operator,
-    DemoTrader,
-)
+from .log_manager import LogManager
+from .analyzer import Analyzer
+from .upbit_trader import UpbitTrader
+from .upbit_data_provider import UpbitDataProvider
+from .bithumb_trader import BithumbTrader
+from .bithumb_data_provider import BithumbDataProvider
+from .strategy_factory import StrategyFactory
+from .operator import Operator
+from .worker import Worker
+from .demo_trader import DemoTrader
 
 load_dotenv()
 
@@ -37,7 +35,6 @@ class TelegramController:
     AVAILABLE_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     UPBIT_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     BITHUMB_CURRENCY = ["BTC", "ETH"]
-    STRATEGY = []
 
     def __init__(self, token=None, chatid=None):
         LogManager.set_stream_level(30)
@@ -59,6 +56,7 @@ class TelegramController:
         self.data_provider = None
         self.trader = None
         self.command_list = []
+        self.strategies = []
         self._update_strategy()
         self._create_command()
         self.currency = None
@@ -69,9 +67,9 @@ class TelegramController:
             self.CHAT_ID = int(chatid)
 
     def _update_strategy(self):
-        self.STRATEGY = []
+        self.strategies = []
         for idx, strategy in enumerate(StrategyFactory.get_all_strategy_info()):
-            self.STRATEGY.append(
+            self.strategies.append(
                 {
                     "name": f"{idx}. {strategy['name']}",
                     "selector": [
@@ -122,7 +120,7 @@ class TelegramController:
         main_keyboard = json.dumps(main_keyboard)
         self.main_keyboard = parse.quote(main_keyboard)
         strategy_list = []
-        for s_item in self.STRATEGY:
+        for s_item in self.strategies:
             strategy_list.append(s_item["name"])
         self.setup_list = [
             {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000", "1000000"]},
@@ -315,7 +313,7 @@ class TelegramController:
         elif self.in_progress_step == 3:
             not_ok = self._on_start_step3(command)
         elif self.in_progress_step == 4:
-            for s_item in self.STRATEGY:
+            for s_item in self.strategies:
                 if command.upper() in s_item["selector"]:
                     self.strategy = s_item["builder"]()
                     not_ok = False
