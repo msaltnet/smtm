@@ -25,7 +25,7 @@ class LogManagerTests(unittest.TestCase):
     def test_set_stream_level_call_stream_handler_setLevel(self):
         original = LogManager.STREAM_HANDLER
         LogManager.STREAM_HANDLER = MagicMock()
-        LogManager.set_stream_level(50)
+        LogManager.set_stream_level(LogManager.CRITICAL)
         LogManager.STREAM_HANDLER.setLevel.assert_called_once_with(50)
         LogManager.STREAM_HANDLER = original
 

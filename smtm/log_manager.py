@@ -10,9 +10,16 @@ class LogManager:
     """
 
     LOG_FOLDER = "log"
-    LOG_FILE = LOG_FOLDER + "/smtm.log"
+    DEFAULT_FILE_NAME = "smtm.log"
+    LOG_FILE = f"{LOG_FOLDER}/{DEFAULT_FILE_NAME}"
     LOG_FILE_SIZE = 2097152
     BACKUP_COUNT = 10
+    CRITICAL = 50
+    ERROR = 40
+    WARNING = 30
+    INFO = 20
+    DEBUG = 10
+    NOTSET = 0
     try:
         if not os.path.exists(LOG_FOLDER):
             os.makedirs(LOG_FOLDER)
@@ -61,7 +68,7 @@ class LogManager:
         cls.STREAM_HANDLER.setLevel(level)
 
     @classmethod
-    def change_log_file(cls, log_file="smtm.log"):
+    def change_log_file(cls, log_file=DEFAULT_FILE_NAME):
         """파일 핸들러의 로그 파일을 변경한다"""
         cls.LOG_FILE = f"{cls.LOG_FOLDER}/{log_file}"
         new_file_handler = RotatingFileHandler(
