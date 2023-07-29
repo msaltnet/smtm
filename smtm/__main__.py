@@ -26,6 +26,7 @@ from .controller import Controller
 from .telegram_controller import TelegramController
 from .mass_simulator import MassSimulator
 from .log_manager import LogManager
+from .__init__ import __version__
 
 if __name__ == "__main__":
     DEFAULT_MODE = 6
@@ -81,6 +82,7 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
         help="simulation period ex) 201220.170000-201220.180000",
         default="201220.170000-201220.180000",
     )
+    parser.add_argument("--version", action="version", version=f'smtm version: {__version__}')
     args = parser.parse_args()
     if args.log is not None:
         LogManager.change_log_file(args.log)
