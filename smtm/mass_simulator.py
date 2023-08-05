@@ -14,6 +14,7 @@ import psutil
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from .config import Config
 from .log_manager import LogManager
 from .analyzer import Analyzer
 from .strategy_factory import StrategyFactory
@@ -52,7 +53,7 @@ class MassSimulator:
         """현재 프로세스의 이름과 메모리 사용양을 화면에 출력"""
         # current process RAM usage
         process = psutil.Process()
-        rss = process.memory_info().rss / 2 ** 20  # Bytes to MB
+        rss = process.memory_info().rss / 2**20  # Bytes to MB
         print(f"[{current_process().name}] memory usage: {rss: 10.5f} MB")
         # print(f"[{current_process().name}] memory usage: {p.memory_info().rss} MB")
 
@@ -118,11 +119,12 @@ class MassSimulator:
     @staticmethod
     def get_initialized_operator(budget, strategy_code, interval, currency, start, end, tag):
         """시뮬레이션 오퍼레이션 생성 후 주어진 설정 값으로 초기화 하여 반환"""
-        dt = DateConverter.to_end_min(start_iso=start, end_iso=end)
+        dt = DateConverter.to_end_min(
+            start_iso=start, end_iso=end, interval_min=Config.candle_interval / 60
+        )
         end = dt[0][1]
         count = dt[0][2]
-
-        data_provider = SimulationDataProvider(currency=currency)
+        data_provider = SimulationDataProvider(currency=currency, interval=Config.candle_interval)
         data_provider.initialize_simulation(end=end, count=count)
 
         strategy = StrategyFactory.create(strategy_code)
@@ -130,7 +132,7 @@ class MassSimulator:
             raise UserWarning(f"Invalid Strategy! {strategy_code}")
 
         strategy.is_simulation = True
-        trader = SimulationTrader(currency=currency)
+        trader = SimulationTrader(currency=currency, interval=Config.candle_interval)
         trader.initialize_simulation(end=end, count=count, budget=budget)
 
         analyzer = Analyzer()

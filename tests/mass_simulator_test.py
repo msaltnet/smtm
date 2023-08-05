@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from datetime import timedelta
-from smtm import MassSimulator
+from smtm import MassSimulator, Config
 from unittest.mock import *
 
 
@@ -25,12 +25,6 @@ class MassSimulatorUtilTests(unittest.TestCase):
 
 
 class MassSimulatorAnalyzeTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     @patch("builtins.open", new_callable=mock_open)
     def test_analyze_result_should_call_file_write_correctly(self, mock_file):
         mass = MassSimulator()
@@ -98,10 +92,11 @@ class MassSimulatorAnalyzeTests(unittest.TestCase):
 
 class MassSimulatorInitializeTests(unittest.TestCase):
     def setUp(self):
-        pass
+        self.interval = Config.candle_interval
+        Config.candle_interval = 60
 
     def tearDown(self):
-        pass
+        Config.candle_interval = self.interval
 
     @patch("smtm.SimulationDataProvider.initialize_simulation")
     @patch("smtm.SimulationTrader.initialize_simulation")
@@ -128,12 +123,6 @@ class MassSimulatorInitializeTests(unittest.TestCase):
 
 
 class MassSimulatorRunTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     @patch("smtm.LogManager.set_stream_level")
     def test_run_should_call_run_simulation_correctly(self, mock_set_stream_level):
         mass = MassSimulator()

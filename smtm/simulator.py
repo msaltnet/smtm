@@ -2,6 +2,7 @@
 import signal
 import time
 
+from .config import Config
 from .log_manager import LogManager
 from .analyzer import Analyzer
 from .simulation_operator import SimulationOperator
@@ -142,7 +143,9 @@ class Simulator:
     def initialize(self):
         """시뮬레이션 초기화"""
 
-        dt = DateConverter.to_end_min(self.start_str + "-" + self.end_str)
+        dt = DateConverter.to_end_min(
+            self.start_str + "-" + self.end_str, interval_min=Config.candle_interval / 60
+        )
         end = dt[0][1]
         count = dt[0][2]
 
@@ -154,9 +157,11 @@ class Simulator:
         self.operator = SimulationOperator()
         self._print_configuration(strategy.NAME)
 
-        data_provider = SimulationDataProvider(currency=self.currency)
+        data_provider = SimulationDataProvider(
+            currency=self.currency, interval=Config.candle_interval
+        )
         data_provider.initialize_simulation(end=end, count=count)
-        trader = SimulationTrader(currency=self.currency)
+        trader = SimulationTrader(currency=self.currency, interval=Config.candle_interval)
         trader.initialize_simulation(end=end, count=count, budget=self.budget)
         analyzer = Analyzer()
         analyzer.is_simulation = True

@@ -25,6 +25,20 @@ class VirtualMarketInitializeTests(unittest.TestCase):
             "2020-04-29T15:40:00", "2020-04-30T00:00:00", market="mango_market"
         )
 
+    def test_intialize_should_update_data_from_data_repository_with_3m_interval(self):
+        market = VirtualMarket(interval=180)
+        market.repo = MagicMock()
+        market.repo.get_data.return_value = ["mango", "orange"]
+        market.market = "mango_market"
+        market.initialize(end="2020-04-30T00:00:00", count=250, budget=7777777)
+        self.assertEqual(market.data[0], "mango")
+        self.assertEqual(market.data[1], "orange")
+        self.assertEqual(market.is_initialized, True)
+        self.assertEqual(market.balance, 7777777)
+        market.repo.get_data.assert_called_once_with(
+            "2020-04-29T11:30:00", "2020-04-30T00:00:00", market="mango_market"
+        )
+
 
 class VirtualMarketTests(unittest.TestCase):
     def setUp(self):

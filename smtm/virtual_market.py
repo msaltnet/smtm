@@ -1,5 +1,6 @@
 """업비트 거래소의 과거 거래 정보를 이용한 가상 거래소 역할의 VirtualMarket 클래스"""
 from datetime import datetime, timedelta
+from .config import Config
 from .data_repository import DataRepository
 from .log_manager import LogManager
 
@@ -19,9 +20,9 @@ class VirtualMarket:
 
     URL = "https://api.upbit.com/v1/candles/minutes/1"
 
-    def __init__(self, market="KRW-BTC"):
+    def __init__(self, market="KRW-BTC", interval=60):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.repo = DataRepository("smtm.db")
+        self.repo = DataRepository("smtm.db", interval=interval)
         self.data = None
         self.turn_count = 0
         self.balance = 0
@@ -29,6 +30,7 @@ class VirtualMarket:
         self.asset = {}
         self.is_initialized = False
         self.market = market
+        self.interval = interval
 
     def initialize(self, end=None, count=100, budget=0):
         """
@@ -38,7 +40,7 @@ class VirtualMarket:
         count: 거래기간까지 가져올 데이터의 갯수
         """
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
-        start_dt = end_dt - timedelta(minutes=count)
+        start_dt = end_dt - timedelta(minutes=count * (self.interval / 60))
         start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
         self.data = self.repo.get_data(start, end, market=self.market)
         self.balance = budget

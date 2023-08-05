@@ -1,14 +1,15 @@
 import unittest
-from smtm import SimulationTrader
+from smtm import SimulationTrader, Config
 from unittest.mock import *
 
 
 class SimulationTraderIntegrationTests(unittest.TestCase):
     def setUp(self):
-        pass
+        self.interval = Config.candle_interval
+        Config.candle_interval = 60
 
     def tearDown(self):
-        pass
+        Config.candle_interval = self.interval
 
     def test_ITG_simulation_trader_full(self):
         trader = SimulationTrader()

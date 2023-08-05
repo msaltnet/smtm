@@ -1,9 +1,99 @@
 def get_data(name):
     if name == "bnh_snapshot":
         return bnh_snapshot
+    elif name == "bnh_3m_snapshot":
+        return bnh_3m_snapshot
     elif name == "sma0_snapshot":
         return sma0_snapshot
 
+
+bnh_3m_snapshot = [
+    {
+        "request": {
+            "id": "1691237535945.211215",
+            "type": "buy",
+            "price": 11288000.0,
+            "amount": 0.0017,
+            "date_time": "2020-04-30T14:48:00",
+        },
+        "type": "buy",
+        "price": 11288000.0,
+        "amount": 0.0017,
+        "msg": "success",
+        "balance": 80801,
+        "state": "done",
+        "date_time": "2020-04-30T15:56:00",
+        "kind": 2,
+    },
+    {
+        "request": {
+            "id": "1691237535948.211215",
+            "type": "buy",
+            "price": 11313000.0,
+            "amount": 0.0017,
+            "date_time": "2020-04-30T14:51:00",
+        },
+        "type": "buy",
+        "price": 11313000.0,
+        "amount": 0.0017,
+        "msg": "success",
+        "balance": 61559,
+        "state": "done",
+        "date_time": "2020-04-30T15:57:00",
+        "kind": 2,
+    },
+    {
+        "request": {
+            "id": "1691237535952.211215",
+            "type": "buy",
+            "price": 11351000.0,
+            "amount": 0.0017,
+            "date_time": "2020-04-30T14:54:00",
+        },
+        "type": "buy",
+        "price": 11351000.0,
+        "amount": 0.0017,
+        "msg": "success",
+        "balance": 42253,
+        "state": "done",
+        "date_time": "2020-04-30T15:58:00",
+        "kind": 2,
+    },
+    {
+        "request": {
+            "id": "1691237535956.211215",
+            "type": "buy",
+            "price": 11341000.0,
+            "amount": 0.0017,
+            "date_time": "2020-04-30T14:57:00",
+        },
+        "type": "buy",
+        "price": 11341000.0,
+        "amount": 0.0017,
+        "msg": "success",
+        "balance": 22964,
+        "state": "done",
+        "date_time": "2020-04-30T15:59:00",
+        "kind": 2,
+    },
+    {
+        "request": {
+            "id": "1691237535962.211215",
+            "type": "buy",
+            "price": 11325000.0,
+            "amount": 0.0017,
+            "date_time": "2020-04-30T15:00:00",
+        },
+        "type": "buy",
+        "price": 11325000.0,
+        "amount": 0.0017,
+        "msg": "success",
+        "balance": 3702,
+        "state": "done",
+        "date_time": "2020-04-30T16:00:00",
+        "kind": 2,
+    },
+]
 
 bnh_snapshot = [
     {

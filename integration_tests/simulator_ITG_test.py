@@ -1,16 +1,17 @@
 import time
 import unittest
-from smtm import Simulator
+from smtm import Simulator, Config
 from .data import simulation_data
 from unittest.mock import *
 
 
 class SimulatorIntegrationTests(unittest.TestCase):
     def setUp(self):
-        pass
+        self.interval = Config.candle_interval
+        Config.candle_interval = 60
 
     def tearDown(self):
-        pass
+        Config.candle_interval = self.interval
 
     @patch("builtins.print")
     def test_ITG_run_single_simulation(self, mock_print):

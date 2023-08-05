@@ -1,6 +1,7 @@
 """
 Description for Package
 """
+from .config import Config
 from .date_converter import DateConverter
 from .operator import Operator
 from .log_manager import LogManager

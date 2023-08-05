@@ -4,12 +4,6 @@ from unittest.mock import *
 
 
 class SimulationDataProviderTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_initialize_simulation_should_call_repo_get_data_correctly(self):
         dp = SimulationDataProvider()
         dp.index = 10

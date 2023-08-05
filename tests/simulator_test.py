@@ -1,14 +1,15 @@
 import unittest
-from smtm import Simulator
+from smtm import Simulator, Config
 from unittest.mock import *
 
 
 class SimulatorTests(unittest.TestCase):
     def setUp(self):
-        pass
+        self.interval = Config.candle_interval
+        Config.candle_interval = 60
 
     def tearDown(self):
-        pass
+        Config.candle_interval = self.interval
 
     @patch("signal.signal")
     @patch("builtins.input", side_effect=EOFError)

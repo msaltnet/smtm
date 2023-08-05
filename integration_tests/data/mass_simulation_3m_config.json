@@ -1,0 +1,18 @@
+{
+    "title": "SMA-1Hour-3min-interval",
+    "budget": 500000,
+    "strategy": "BNH",
+    "interval": 0.5,
+    "currency": "BTC",
+    "description": "mass-simulation-integration-test",
+    "period_list": [
+        {
+            "start": "2020-04-30T17:00:00",
+            "end": "2020-04-30T18:00:00"
+        },
+        {
+            "start": "2020-04-30T17:30:00",
+            "end": "2020-04-30T18:30:00"
+        }
+    ]
+}

@@ -11,11 +11,12 @@ class SimulationDataProvider(DataProvider):
 
     AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"}
 
-    def __init__(self, currency="BTC"):
+    def __init__(self, currency="BTC", interval=60):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.repo = DataRepository("smtm.db")
+        self.repo = DataRepository("smtm.db", interval=interval)
+        self.interval_min = interval / 60
         self.data = []
         self.index = 0
 
@@ -26,7 +27,7 @@ class SimulationDataProvider(DataProvider):
 
         self.index = 0
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")
-        start_dt = end_dt - timedelta(minutes=count)
+        start_dt = end_dt - timedelta(minutes=count * self.interval_min)
         start = start_dt.strftime("%Y-%m-%dT%H:%M:%S")
         self.data = self.repo.get_data(start, end, market=self.market)
 
