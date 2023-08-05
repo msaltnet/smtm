@@ -13,11 +13,23 @@ from .database import Database
 class DataRepository:
     """데이터를 서버 또는 데이터베이스에서 가져와서 반환해주는 클래스"""
 
-    def __init__(self, db_file=None):
+    def __init__(self, db_file=None, interval=60):
         self.logger = LogManager.get_logger(__class__.__name__)
         db = db_file if db_file is not None else "smtm.db"
         self.database = Database(db)
         self.verify_mode = False
+        self.interval = interval
+        self.interval_min = interval / 60
+        if interval == 60:
+            self.url = "https://api.upbit.com/v1/candles/minutes/1"
+        elif interval == 180:
+            self.url = "https://api.upbit.com/v1/candles/minutes/3"
+        elif interval == 300:
+            self.url = "https://api.upbit.com/v1/candles/minutes/5"
+        elif interval == 600:
+            self.url = "https://api.upbit.com/v1/candles/minutes/10"
+        else:
+            raise UserWarning(f"not supported interval: {interval}")
 
     def get_data(self, start, end, market="KRW-BTC"):
         """거래 데이터를 제공
@@ -26,9 +38,13 @@ class DataRepository:
         서버에서 가져온 데이터는 데이터베이스에 업데이트
         """
         self.logger.info(f"get data from repo: {start} to {end}, {market}")
-        count_info = DateConverter.to_end_min(start_iso=start, end_iso=end)
+        target_start = DateConverter.floor_min(start, self.interval_min)
+        target_end = DateConverter.floor_min(end, self.interval_min)
+        count_info = DateConverter.to_end_min(
+            start_iso=target_start, end_iso=target_end, interval_min=self.interval_min
+        )
         total_count = count_info[0][2]
-        db_data = self._query(start, end, market)
+        db_data = self._query(target_start, target_end, market)
 
         self.logger.info(f"total vs database: {total_count} vs {len(db_data)}")
         if len(db_data) > total_count:
@@ -39,7 +55,7 @@ class DataRepository:
             self._convert_to_upbit_datetime_string(db_data)
             return db_data
 
-        server_data = self._fetch_from_upbit(start, end, market)
+        server_data = self._fetch_from_upbit(target_start, target_end, market)
         self._convert_to_upbit_datetime_string(server_data)
         return server_data
 
@@ -84,11 +100,11 @@ class DataRepository:
     def _query(self, start, end, market):
         start_datetime = start.replace("T", " ")
         end_datetime = end.replace("T", " ")
-        return self.database.query(start_datetime, end_datetime, market)
+        return self.database.query(start_datetime, end_datetime, market, period=self.interval)
 
     def _update(self, data):
         self._convert_to_datetime(data)
-        self.database.update(data)
+        self.database.update(data, period=self.interval)
         self.logger.info(f"update database: {len(data)}")
 
     def _fetch_from_upbit(self, start, end, market):
@@ -97,7 +113,9 @@ class DataRepository:
         업비트는 현재 공식적으로 최대 200개까지 조회 가능
         """
         total_data = []
-        dt_list = DateConverter.to_end_min(start_iso=start, end_iso=end, max_count=200)
+        dt_list = DateConverter.to_end_min(
+            start_iso=start, end_iso=end, max_count=200, interval_min=self.interval_min
+        )
         for dt in dt_list:
             self.logger.info(f"fetch from {dt[0]} to {dt[1]}, count: {dt[2]}")
             query_data = self._query(dt[0], dt[1], market)
@@ -117,7 +135,7 @@ class DataRepository:
             total_data += fetch_data
         return total_data
 
-    def _recovery_upbit_data(self, data, start, count, market, period=60):
+    def _recovery_upbit_data(self, data, start, count, market):
         """업비트 거래 데이터가 없는 경우 바로 앞의 데이터를 복사해서 채워준다"""
         new_data = []
         current_dt = self._convert_to_dt(start)
@@ -128,6 +146,7 @@ class DataRepository:
 
         while len(new_data) < count:
             if len(data) <= idx:
+                # 주어진 데이터에 유효한 데이터가 부족한 경우 마지막 데이터로 채울 수 있게 조정
                 item_dt = self._convert_to_dt("2099-01-01T00:00:00")
             else:
                 item_dt = self._convert_to_dt(data[idx]["date_time"])
@@ -156,14 +175,14 @@ class DataRepository:
                 self._report_broken_block(current_datetime, market)
                 broken_count += 1
 
-            current_dt = current_dt + timedelta(seconds=period)
+            current_dt = current_dt + timedelta(seconds=self.interval)
             current_datetime = self._convert_to_string(current_dt)
         if broken_count > 0:
             self.logger.info(f"Recovered broken data: {broken_count}")
         return new_data
 
-    def _report_broken_block(self, dt, market, period=60):
-        self.logger.error(f"Broken data {dt}, {market}, {period}")
+    def _report_broken_block(self, dt, market):
+        self.logger.error(f"Broken data {dt}, {market}, {self.interval}")
 
     def _fetch_from_upbit_up_to_200(self, end, count, market):
         result = None
@@ -186,12 +205,11 @@ class DataRepository:
         https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
         """
 
-        url = "https://api.upbit.com/v1/candles/minutes/1"
         to_datetime = DateConverter.from_kst_to_utc_str(end) + "Z"
         query_string = {"market": market, "to": to_datetime, "count": count}
         self.logger.debug(f"query_string {query_string}")
         try:
-            response = requests.get(url, params=query_string)
+            response = requests.get(self.url, params=query_string)
             response.raise_for_status()
             data = response.json()
             data.reverse()

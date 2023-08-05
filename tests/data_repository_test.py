@@ -1,3 +1,4 @@
+import json
 import requests
 import unittest
 from smtm import DataRepository
@@ -10,6 +11,24 @@ class DataRepositoryTests(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_init_should_set_interval_and_url_correctly(self):
+        repo = DataRepository()
+        self.assertEqual(repo.interval_min, 1)
+        self.assertEqual(repo.url, "https://api.upbit.com/v1/candles/minutes/1")
+        repo = DataRepository(interval=180)
+        self.assertEqual(repo.interval_min, 3)
+        self.assertEqual(repo.url, "https://api.upbit.com/v1/candles/minutes/3")
+        repo = DataRepository(interval=300)
+        self.assertEqual(repo.interval_min, 5)
+        self.assertEqual(repo.url, "https://api.upbit.com/v1/candles/minutes/5")
+        repo = DataRepository(interval=600)
+        self.assertEqual(repo.interval_min, 10)
+        self.assertEqual(repo.url, "https://api.upbit.com/v1/candles/minutes/10")
+
+    def test_init_should_raise_UserWarning_when_interval_not_supported(self):
+        with self.assertRaises(UserWarning):
+            repo = DataRepository(interval=1)
 
     @patch("requests.get")
     def test__fetch_from_upbit_up_to_200_should_call_get_correctly(self, mock_get):
@@ -111,7 +130,9 @@ class DataRepositoryTests(unittest.TestCase):
         repo._recovery_upbit_data = MagicMock(side_effect=[["orange"]])
         result = repo._fetch_from_upbit(start, end, "mango_market")
 
-        mock_to_end_min.assert_called_once_with(start_iso=start, end_iso=end, max_count=200)
+        mock_to_end_min.assert_called_once_with(
+            start_iso=start, end_iso=end, max_count=200, interval_min=1.0
+        )
         self.assertEqual(repo._query.call_args_list[0][0][0], "2020-03-20T00:00:00")
         self.assertEqual(repo._query.call_args_list[1][0][0], "2020-03-20T00:10:00")
         self.assertEqual(repo._query.call_args_list[2][0][0], "2020-03-20T00:20:00")
@@ -147,7 +168,9 @@ class DataRepositoryTests(unittest.TestCase):
         repo._recovery_upbit_data = MagicMock(side_effect=[["kiwi"], ["pear"], ["orange"]])
         result = repo._fetch_from_upbit(start, end, "mango_market")
 
-        mock_to_end_min.assert_called_once_with(start_iso=start, end_iso=end, max_count=200)
+        mock_to_end_min.assert_called_once_with(
+            start_iso=start, end_iso=end, max_count=200, interval_min=1.0
+        )
         self.assertEqual(
             repo._fetch_from_upbit_up_to_200.call_args_list[0][0][0], "2020-03-21T00:10:00"
         )
@@ -202,7 +225,7 @@ class DataRepositoryTests(unittest.TestCase):
         repo.database.update.assert_not_called()
         repo._convert_to_datetime.assert_not_called()
         mock_to_end_min.assert_called_once_with(
-            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15"
+            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15", interval_min=1.0
         )
 
     @patch("smtm.DateConverter.to_end_min")
@@ -229,7 +252,7 @@ class DataRepositoryTests(unittest.TestCase):
             ],
         )
         mock_to_end_min.assert_called_once_with(
-            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15"
+            start_iso="2020-02-20T17:00:15", end_iso="2020-02-20T22:00:15", interval_min=1.0
         )
         repo._fetch_from_upbit.assert_called_once_with(
             "2020-02-20T17:00:15", "2020-02-20T22:00:15", "mango"
@@ -263,7 +286,7 @@ class DataRepositoryTests(unittest.TestCase):
         repo.database = MagicMock()
         repo._query("2020-02-20T17:00:15", "2020-02-20T18:00:15", "orange_market")
         repo.database.query.assert_called_once_with(
-            "2020-02-20 17:00:15", "2020-02-20 18:00:15", "orange_market"
+            "2020-02-20 17:00:15", "2020-02-20 18:00:15", "orange_market", period=60
         )
 
     def test__update_should_call_database_update_correctly(self):
@@ -278,7 +301,7 @@ class DataRepositoryTests(unittest.TestCase):
         repo = DataRepository()
         repo.database = MagicMock()
         repo._update(dummy_data)
-        repo.database.update.assert_called_once_with(expected_data)
+        repo.database.update.assert_called_once_with(expected_data, period=60)
 
     def test__recovery_upbit_data_should_return_recovered_data(self):
         repo = DataRepository()
@@ -474,23 +497,6 @@ class DataRepositoryTests(unittest.TestCase):
         self.assertEqual(recovered[0]["closing_price"], 11546000)
         self.assertEqual(recovered[1]["closing_price"], 11546000)
 
-        broken_data_last_2_skipped = [
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-02-22T03:52:00",
-                "closing_price": 11542000.0,
-            },
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-02-22T03:53:00",
-                "closing_price": 11547000.0,
-            },
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-02-22T03:54:00",
-                "closing_price": 11546000.0,
-            },
-        ]
         repo._report_broken_block = MagicMock()
         recovered = repo._recovery_upbit_data(
             broken_data_last_skipped, "2020-02-22T03:54:00", 3, "mango"
@@ -506,3 +512,77 @@ class DataRepositoryTests(unittest.TestCase):
         self.assertEqual(recovered[0]["closing_price"], 11546000)
         self.assertEqual(recovered[1]["closing_price"], 11546000)
         self.assertEqual(recovered[2]["closing_price"], 11546000)
+
+    @patch("requests.get")
+    def test_get_data_should_return_data_fetched_from_server_with_1m_interval(self, get_mock):
+        with open("tests/data/upbit_1m_20200220_170000-20200220_202000.json", "r") as f:
+            get_mock.return_value.json.return_value = json.load(f)
+        repo = DataRepository(interval=60)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:20:00", "KRW-BTC")
+        self.assertEqual(len(result), 200)
+        repo.database.update.assert_called_with(ANY, period=60)
+        repo.database.query.assert_called_with(
+            "2020-02-20 17:00:00", "2020-02-20 20:20:00", "KRW-BTC", period=60
+        )
+
+    @patch("requests.get")
+    def test_get_data_should_return_big_data_fetched_from_server_with_1m_interval(self, get_mock):
+        dummy_data = []
+        with open("tests/data/upbit_1m_20200220_170000-20200220_202000.json", "r") as f:
+            dummy_data.append(json.load(f))
+        with open("tests/data/upbit_1m_20200220_202000-20200220_210000.json", "r") as f:
+            dummy_data.append(json.load(f))
+        get_mock.return_value.json.side_effect = dummy_data
+
+        repo = DataRepository(interval=60)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T21:00:00", "KRW-BTC")
+        self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[1]["date_time"], "2020-02-20T17:01:00")
+        self.assertEqual(result[2]["date_time"], "2020-02-20T17:02:00")
+        self.assertEqual(result[3]["date_time"], "2020-02-20T17:03:00")
+        repo.database.update.assert_called_with(ANY, period=60)
+
+    @patch("requests.get")
+    def test_get_data_should_return_data_fetched_from_server_with_3m_interval(self, get_mock):
+        with open("tests/data/upbit_3m_20200220_170000-20200220_200000.json", "r") as f:
+            get_mock.return_value.json.return_value = json.load(f)
+
+        repo = DataRepository(interval=180)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:01:00", "2020-02-20T20:02:00", "KRW-BTC")
+        self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[1]["date_time"], "2020-02-20T17:03:00")
+        self.assertEqual(result[2]["date_time"], "2020-02-20T17:06:00")
+        self.assertEqual(result[3]["date_time"], "2020-02-20T17:09:00")
+        repo.database.update.assert_called_with(ANY, period=180)
+
+    @patch("requests.get")
+    def test_get_data_should_return_big_data_fetched_from_server_with_3m_interval(self, get_mock):
+        dummy_data = []
+        with open("tests/data/upbit_3m_20200220_000000-20200220_100000.json", "r") as f:
+            dummy_data.append(json.load(f))
+        with open("tests/data/upbit_3m_20200220_100000-20200220_120000.json", "r") as f:
+            dummy_data.append(json.load(f))
+        get_mock.return_value.json.side_effect = dummy_data
+
+        repo = DataRepository(interval=180)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T12:00:00", "KRW-BTC")
+        self.assertEqual(len(result), 240)
+        repo.database.update.assert_called_with(ANY, period=180)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[1]["date_time"], "2020-02-20T00:03:00")
+        self.assertEqual(result[2]["date_time"], "2020-02-20T00:06:00")
+        self.assertEqual(result[3]["date_time"], "2020-02-20T00:09:00")
+        self.assertEqual(result[199]["date_time"], "2020-02-20T09:57:00")
+        self.assertEqual(result[200]["date_time"], "2020-02-20T10:00:00")
+        self.assertEqual(result[201]["date_time"], "2020-02-20T10:03:00")
+        self.assertEqual(result[202]["date_time"], "2020-02-20T10:06:00")

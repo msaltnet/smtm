@@ -18,8 +18,18 @@ class DateConverter:
         start_iso=None,
         end_iso=None,
         max_count=9999999999,
+        interval_min=1,
     ):
         """숫자로 주어진 기간을 분으로 계산해서 시작, 끝, 분의 배열로 반환
+
+        Args:
+            from_dash_to: yymmdd-yymmdd 형태의 문자열
+            start_dt: datetime 객체
+            end_dt: datetime 객체
+            start_iso: %Y-%m-%dT%H:%M:%S 형태의 문자열
+            end_iso: %Y-%m-%dT%H:%M:%S 형태의 문자열
+            max_count: 자르고자 하는 최대 분
+            interval_min: 분 단위
 
         Returns:
             (
@@ -48,14 +58,19 @@ class DateConverter:
 
         result_list = []
         delta = to_dt - from_dt
+
+        total_count = delta.total_seconds() / (60.0 * interval_min)
+        if not total_count.is_integer():
+            raise UserWarning(f"{delta.total_seconds()} sec is not multiple of {interval_min} min")
+
         while delta.total_seconds() > 0:
-            count = round(delta.total_seconds() / 60.0)
+            count = round(delta.total_seconds() / (60.0 * interval_min))
             start_str = cls.to_iso_string(from_dt)
             if count <= max_count:
                 from_dt = to_dt
                 result = (start_str, cls.to_iso_string(to_dt), count)
             else:
-                from_dt = from_dt + timedelta(minutes=max_count)
+                from_dt = from_dt + timedelta(minutes=(max_count * interval_min))
                 result = (start_str, cls.to_iso_string(from_dt), max_count)
 
             delta = to_dt - from_dt
@@ -98,3 +113,9 @@ class DateConverter:
         now = datetime.now()
         now_time = now.strftime("%H%M%S")
         return f"{time_prefix}.{now_time}"
+
+    @classmethod
+    def floor_min(cls, datetime_str, factor):
+        """%Y-%m-%dT%H:%M:%S 형태의 문자열에서 factor 분 단위로 내림해서 반환"""
+        dt = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S")
+        return (dt - timedelta(minutes=dt.minute % factor)).strftime(cls.ISO_DATEFORMAT)
