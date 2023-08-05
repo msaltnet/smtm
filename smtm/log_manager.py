@@ -80,5 +80,6 @@ class LogManager:
         for logger in cls.REGISTERED_LOGGER.values():
             logger.removeHandler(cls.HANDLER)
             logger.addHandler(new_file_handler)
+            cls.HANDLER.close()
 
         cls.HANDLER = new_file_handler
