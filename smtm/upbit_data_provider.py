@@ -16,13 +16,24 @@ class UpbitDataProvider(DataProvider):
     URL = "https://api.upbit.com/v1/candles/minutes/1"
     AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"}
 
-    def __init__(self, currency="BTC"):
+    def __init__(self, currency="BTC", interval=60):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
         self.logger = LogManager.get_logger(__class__.__name__)
         self.query_string = {"market": self.AVAILABLE_CURRENCY[currency], "count": 1}
         self.market = currency
+        self.interval = interval
+        if self.interval == 60:
+            self.URL = "https://api.upbit.com/v1/candles/minutes/1"
+        elif self.interval == 180:
+            self.URL = "https://api.upbit.com/v1/candles/minutes/3"
+        elif self.interval == 300:
+            self.URL = "https://api.upbit.com/v1/candles/minutes/5"
+        elif self.interval == 600:
+            self.URL = "https://api.upbit.com/v1/candles/minutes/10"
+        else:
+            raise UserWarning(f"not supported interval: {interval}")
 
     def get_info(self):
         """실시간 거래 정보 전달한다

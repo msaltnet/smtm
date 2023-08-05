@@ -79,3 +79,39 @@ class UpbitDataProviderTests(unittest.TestCase):
 
         with self.assertRaises(UserWarning):
             dp.get_info()
+
+    def test_initialize_should_set_correct_url_with_interval(self):
+        dp = UpbitDataProvider("BTC", 60)
+        self.assertEqual(dp.URL, "https://api.upbit.com/v1/candles/minutes/1")
+        dp = UpbitDataProvider("BTC", 180)
+        self.assertEqual(dp.URL, "https://api.upbit.com/v1/candles/minutes/3")
+        dp = UpbitDataProvider("BTC", 300)
+        self.assertEqual(dp.URL, "https://api.upbit.com/v1/candles/minutes/5")
+        self.assertEqual(UpbitDataProvider.URL, "https://api.upbit.com/v1/candles/minutes/1")
+        dp = UpbitDataProvider("BTC", 600)
+        self.assertEqual(dp.URL, "https://api.upbit.com/v1/candles/minutes/10")
+
+        with self.assertRaises(UserWarning):
+            dp = UpbitDataProvider("BTC", 1)
+
+    @patch("requests.get")
+    def test_get_info_should_call_correct_url_with_different_interval(self, mock_get):
+        dp = UpbitDataProvider("BTC", 60)
+        dp.get_info()
+        expected_url = "https://api.upbit.com/v1/candles/minutes/1"
+        mock_get.assert_called_once_with(expected_url, params={"market": "KRW-BTC", "count": 1})
+
+        dp = UpbitDataProvider("BTC", 180)
+        dp.get_info()
+        expected_url = "https://api.upbit.com/v1/candles/minutes/3"
+        mock_get.assert_called_with(expected_url, params={"market": "KRW-BTC", "count": 1})
+
+        dp = UpbitDataProvider("BTC", 300)
+        dp.get_info()
+        expected_url = "https://api.upbit.com/v1/candles/minutes/5"
+        mock_get.assert_called_with(expected_url, params={"market": "KRW-BTC", "count": 1})
+
+        dp = UpbitDataProvider("BTC", 600)
+        dp.get_info()
+        expected_url = "https://api.upbit.com/v1/candles/minutes/10"
+        mock_get.assert_called_with(expected_url, params={"market": "KRW-BTC", "count": 1})
