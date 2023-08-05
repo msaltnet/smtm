@@ -1,6 +1,7 @@
 """시스템 운영 인터페이스로서 Operator를 사용해서 자동 거래 시스템을 컨트롤하는 Controller 클래스"""
 
 import signal
+from .config import Config
 from .log_manager import LogManager
 from .analyzer import Analyzer
 from .upbit_trader import UpbitTrader
@@ -35,7 +36,7 @@ class Controller:
         self.is_bithumb = is_bithumb
         self.strategy = None
         self.currency = currency
-        LogManager.set_stream_level(30)
+        LogManager.set_stream_level(Config.operation_log_level)
 
         self.strategy = StrategyFactory.create(strategy)
         if self.strategy is None:

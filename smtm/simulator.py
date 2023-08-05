@@ -41,7 +41,7 @@ class Simulator:
         currency="BTC",
     ):
         self.logger = LogManager.get_logger("Simulator")
-        LogManager.set_stream_level(LogManager.WARNING)
+        LogManager.set_stream_level(Config.operation_log_level)
         self.__terminating = False
         self.start_str = "200430.170000"
         self.end_str = "200430.180000"

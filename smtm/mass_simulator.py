@@ -219,7 +219,7 @@ class MassSimulator:
 
     @staticmethod
     def _execute_single_process_simulation(config):
-        LogManager.set_stream_level(30)
+        LogManager.set_stream_level(Config.operation_log_level)
         LogManager.change_log_file(f"mass-simulation-{config['partial_idx']}.log")
         period_list = config["partial_period_list"]
         result_list = []

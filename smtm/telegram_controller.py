@@ -8,6 +8,7 @@ import json
 from urllib import parse
 import requests
 from dotenv import load_dotenv
+from .config import Config
 from .log_manager import LogManager
 from .analyzer import Analyzer
 from .upbit_trader import UpbitTrader
@@ -37,7 +38,7 @@ class TelegramController:
     BITHUMB_CURRENCY = ["BTC", "ETH"]
 
     def __init__(self, token=None, chatid=None):
-        LogManager.set_stream_level(30)
+        LogManager.set_stream_level(Config.operation_log_level)
         self.logger = LogManager.get_logger("TelegramController")
         self.post_worker = Worker("Chatbot-Post-Worker")
         self.post_worker.start()
