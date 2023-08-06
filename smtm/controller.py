@@ -79,7 +79,7 @@ class Controller:
             data_provider = BithumbDataProvider(currency=self.currency)
             trader = BithumbTrader(currency=self.currency, budget=self.budget)
         else:
-            data_provider = UpbitDataProvider(currency=self.currency)
+            data_provider = UpbitDataProvider(currency=self.currency, interval=Config.candle_interval)
             trader = UpbitTrader(currency=self.currency, budget=self.budget)
 
         self.operator.initialize(

@@ -3,6 +3,7 @@
 Jupyter notebook에서 사용하기 좋게 만든 자동 거래 시스템 컨트롤 모듈
 """
 from IPython.display import Image, display
+from .config import Config
 from .log_manager import LogManager
 from .analyzer import Analyzer
 from .upbit_trader import UpbitTrader
@@ -51,7 +52,7 @@ class JptController:
                 currency=self.market, commission_ratio=0.0005, budget=self.budget
             )
         else:
-            data_provider = UpbitDataProvider(currency=self.market)
+            data_provider = UpbitDataProvider(currency=self.market, interval=Config.candle_interval)
             trader = UpbitTrader(currency=self.market, commission_ratio=0.0005, budget=self.budget)
 
         self.operator.initialize(

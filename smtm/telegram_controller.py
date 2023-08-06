@@ -275,7 +275,9 @@ class TelegramController:
         not_ok = True
         if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
             if self.currency in self.UPBIT_CURRENCY:
-                self.data_provider = UpbitDataProvider(currency=self.currency)
+                self.data_provider = UpbitDataProvider(
+                    currency=self.currency, interval=Config.candle_interval
+                )
                 if self.is_demo:
                     self.trader = DemoTrader(budget=self.budget, currency=self.currency)
                 else:
