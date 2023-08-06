@@ -30,7 +30,6 @@ class TelegramController:
     TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
     CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "123456"))
     POLLING_TIMEOUT = 10
-    INTERVAL = 60
     GUIDE_READY = "자동 거래 시작 전입니다.\n명령어를 입력해주세요.\n\n"
     GUIDE_RUNNING = "자동 거래 운영 중입니다.\n명령어를 입력해주세요.\n\n"
     AVAILABLE_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
@@ -349,7 +348,7 @@ class TelegramController:
                 Analyzer(),
                 budget=self.budget,
             )
-            self.operator.set_interval(self.INTERVAL)
+            self.operator.set_interval(Config.candle_interval)
             if self.operator.start():
                 start_message = [
                     "자동 거래가 시작되었습니다!\n",
@@ -357,7 +356,7 @@ class TelegramController:
                     f"전략: {self.strategy.NAME}\n",
                     f"거래소: {self.trader.NAME}\n",
                     f"예산: {self.budget}\n",
-                    f"거래 간격: {self.INTERVAL}",
+                    f"거래 간격: {Config.candle_interval}",
                 ]
                 self._send_text_message("".join(start_message), self.main_keyboard)
                 self.logger.info(
