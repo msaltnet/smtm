@@ -6,40 +6,42 @@
 
 > It's a game to get money. 
 
-An algorithm-based cryptocurrency automatic trading system made in Python. https://smtm.msalt.net
+An algorithm-based automated cryptocurrency trading system made in Python. https://smtm.msalt.net
 
 [한국어](https://github.com/msaltnet/smtm/blob/master/README.md) 👈
 
 [![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
 
-It has a very simple routine and repeat periodically.
-Performance critical approach is NOT suitable. e.g. multiple tradings in seconds. If you want, find another solution.
+The basic idea is to repeat a simple process of data collection -> algorithmic analysis -> transaction at set intervals, and it's been proven to basically handle one process per minute.
 
-1. Get data from Data Provider
-2. Make a decision using Strategy
-3. Execute a trading via Trader  
+1. The Data Provider module aggregates data  
+2. Make a decision using the Strategy module  
+3. Execute a trading via the Trader module  
  --- repeat ---
-4. Create analyzing result by Analyzer
+4. Create analyzing result by the Analyzer module  
 
 ![intro](https://user-images.githubusercontent.com/9311990/140635409-93e4b678-5a6b-40b8-8e28-5c8f819aa88c.jpg)
 
+❗ It is not suitable for high-performance trading machines that need to process many trades in a short timeframe of seconds, and should be given due consideration if processing time is a critical performance requirement.
 
 ## Features
-- Simulation
+- Parameterizable Simulations
 - Mass-Simulation with Multi-process
-- CLI mode Auto Trading
+- CLI Mode Automated Trading Program
 - Remote Control with Jupyter Notebook
-- Telegram Message App Trading Control
+- Automated trading programs controlled by Telegram
 
 ### Telegram Chat-bot Mode
-User can launch the program with Telegram chat-bot mode which provide user interface via Telegram chat-bot.
+The Telegram Chatbot mode allows you to control your automated trading program using the Telegram messenger.
+
+For Telegram Chatbot mode, you need to create a chatbot, enter the API token and chat room information, and run it.
 
 ![smtm_bot](https://user-images.githubusercontent.com/9311990/150667094-95139bfb-03e0-41d5-bad9-6be05ec6c9df.png)
 
 ![telegram_chatbot](https://user-images.githubusercontent.com/9311990/150663864-c5a7ed27-f1c6-4b87-8220-e31b8ccce368.PNG)
 
 ### Simulation Mode
-User can execute simulation with Simulator or MassSimulator, which run simulations using past trading records.
+The simulation mode also allows you to run simulations based on historical trade data to see the results. You can run simple simulations or mass simulations.
 
 ## How to install
 Install all packages using requirements.txt
@@ -58,25 +60,28 @@ pip install -r requirements-dev.txt
 There are 6 mode for each features.
 - 0: simulator with interative mode
 - 1: execute single simulation
-- 2: controller for real trading
+- 2: interactive mode controller for real trading
 - 3: telegram chatbot controller
 - 4: mass simulation with config file
 - 5: make config file for mass simulation
 
 ### Interactive mode simulator
-run with only mode
+Run the interactive mode simulator with the command below.
+
 ```
 python -m smtm --mode 0
 ```
 
 ### Execute single simulation
-run with mode and simulation setting parameters
+Running a single simulation with the command below with the simulation parameters will return the results.
+
 ```
 python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy 0 --currency BTC
 ```
 
 ### Run controller for trading
-run with mode and initial setting parameters
+Use the command below to run the default demo trading program with initial values. The demo runs in interactive mode, allowing you to start, stop, and view results based on your inputs.
+
 ```
 python -m smtm --mode 2 --budget 50000 --term 60 --strategy 0 --currency ETH
 ```
@@ -90,7 +95,8 @@ UPBIT_OPEN_API_SERVER_URL=https://api.upbit.com
 ```
 
 ### Run telegram chatbot controller for trading
-run with only mode 
+Execute the command below to run the Telegram Chatbot mode live trading program. The Telegram Chatbot mode live trading program uses the Telegram Chatbot API token and chat room information to start, stop, and view results via Telegram Chatbot messages.
+
 ```
 python -m smtm --mode 3
 ```
@@ -109,12 +115,13 @@ python -m smtm --mode 4 --config /data/sma0_simulation.json
 ```
 
 ### Make config file for mass simulation
-run with mode and simulation setting parameters
+Run with a mass simulation configuration file. The configuration file is in JSON format and can be generated directly through a text editor or via a command.
+
 ```
 python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy 1 --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
 ```
 
-## Architecture
+## Software Architecture
 Layered architecture
 
 | Layer | Module | Role |
