@@ -61,6 +61,19 @@ class TelegramController:
         self._create_command()
         self.currency = None
         self.is_demo = False
+        an_hour_tick = (60 / Config.candle_interval) * 60
+        self.score_query_tick = {
+            "1. 최근 6시간": (an_hour_tick * 6, -1),
+            "2. 최근 12시간": (an_hour_tick * 12, -1),
+            "3. 최근 24시간": (an_hour_tick * 24, -1),
+            "4. 24시간 전부터 12시간": (an_hour_tick * 12, -2),
+            "5. 48시간 전부터 24시간": (an_hour_tick * 24, -2),
+            "1": (an_hour_tick * 6, -1),
+            "2": (an_hour_tick * 12, -1),
+            "3": (an_hour_tick * 24, -1),
+            "4": (an_hour_tick * 12, -2),
+            "5": (an_hour_tick * 24, -2),
+        }
         if token is not None:
             self.TOKEN = token
         if chatid is not None:
@@ -429,18 +442,6 @@ class TelegramController:
         "4. 24시간 전부터 12시간"
         "5. 48시간 전부터 24시간"
         """
-        query_list = {
-            "1. 최근 6시간": (60 * 6, -1),
-            "2. 최근 12시간": (60 * 12, -1),
-            "3. 최근 24시간": (60 * 24, -1),
-            "4. 24시간 전부터 12시간": (60 * 12, -2),
-            "5. 48시간 전부터 24시간": (60 * 24, -2),
-            "1": (60 * 6, -1),
-            "2": (60 * 12, -1),
-            "3": (60 * 24, -1),
-            "4": (60 * 12, -2),
-            "5": (60 * 24, -2),
-        }
         not_ok = True
         if self.operator is None:
             self._send_text_message("자동 거래 운영중이 아닙니다", self.main_keyboard)
@@ -448,7 +449,7 @@ class TelegramController:
 
         message = ""
         if self.in_progress_step == 1:
-            if command in query_list.keys():
+            if command in self.score_query_tick.keys():
 
                 def print_score_and_main_statement(score):
                     if score is None:
@@ -470,7 +471,9 @@ class TelegramController:
                     if len(score) > 4 and score[4] is not None:
                         self._send_image_message(score[4])
 
-                self.operator.get_score(print_score_and_main_statement, query_list[command])
+                self.operator.get_score(
+                    print_score_and_main_statement, self.score_query_tick[command]
+                )
                 not_ok = False
 
         if self.in_progress_step >= len(self.score_query_list):
