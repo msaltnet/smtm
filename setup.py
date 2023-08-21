@@ -8,7 +8,7 @@ DESCRIPTION = "A algorithm crypto trading system."
 URL = "https://github.com/msaltnet/smtm"
 EMAIL = "salt.jeong@gmail.com"
 AUTHOR = "msalt"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
