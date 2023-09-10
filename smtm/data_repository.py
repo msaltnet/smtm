@@ -82,7 +82,6 @@ class DataRepository:
         target_db_data = copy.deepcopy(db_data)
         target_fetch_data = copy.deepcopy(fetch_data)
         if len(target_db_data) != len(target_fetch_data):
-            print("### _is_equal: False, size")
             return False
 
         for data in target_db_data:
@@ -94,7 +93,6 @@ class DataRepository:
                 del data["recovered"]
 
         DataRepository._convert_to_upbit_datetime_string(target_db_data)
-        print(f"### _is_equal: {target_db_data == target_fetch_data}")
         return target_db_data == target_fetch_data
 
     def _query(self, start, end, market):
