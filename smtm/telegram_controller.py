@@ -61,7 +61,7 @@ class TelegramController:
         self._create_command()
         self.currency = None
         self.is_demo = False
-        an_hour_tick = (60 / Config.candle_interval) * 60
+        an_hour_tick = int(60 / Config.candle_interval) * 60
         self.score_query_tick = {
             "1. 최근 6시간": (an_hour_tick * 6, -1),
             "2. 최근 12시간": (an_hour_tick * 12, -1),
