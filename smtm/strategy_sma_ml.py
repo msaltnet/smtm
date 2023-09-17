@@ -3,6 +3,7 @@
 import copy
 import math
 from datetime import datetime
+from decimal import Decimal, ROUND_DOWN
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
@@ -315,10 +316,10 @@ class StrategySmaMl(Strategy):
         budget -= budget * self.COMMISSION_RATIO
         price = float(self.data[-1]["closing_price"])
         amount = budget / price
+        final_value = amount * price
 
         # 소숫점 4자리 아래 버림
-        amount = math.floor(amount * 10000) / 10000
-        final_value = amount * price
+        amount = Decimal(str(amount)).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
 
         if self.min_price > budget or self.process_unit[0] <= 0 or final_value > self.balance:
             self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
@@ -334,8 +335,8 @@ class StrategySmaMl(Strategy):
         return {
             "id": DateConverter.timestamp_id(),
             "type": "buy",
-            "price": price,
-            "amount": amount,
+            "price": str(price),
+            "amount": str(amount.normalize()),
         }
 
     def __create_sell(self):
@@ -344,9 +345,9 @@ class StrategySmaMl(Strategy):
             amount = self.asset_amount
 
         # 소숫점 4자리 아래 버림
-        amount = math.floor(amount * 10000) / 10000
+        amount = Decimal(str(amount)).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
 
-        price = float(self.data[-1]["closing_price"])
+        price = Decimal(self.data[-1]["closing_price"])
         total_value = price * amount
 
         if amount <= 0 or total_value < self.min_price:
@@ -363,6 +364,6 @@ class StrategySmaMl(Strategy):
         return {
             "id": DateConverter.timestamp_id(),
             "type": "sell",
-            "price": price,
-            "amount": amount,
+            "price": str(price.normalize()),
+            "amount": str(amount.normalize()),
         }
