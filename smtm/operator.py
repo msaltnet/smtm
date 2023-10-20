@@ -59,12 +59,17 @@ class Operator:
         def add_spot_callback(date_time, value):
             analyzer.add_drawing_spot(date_time, value)
 
+        def add_line_callback(date_time, value):
+            analyzer.add_value_for_line_graph(date_time, value)
+
         self.data_provider = data_provider
         self.strategy = strategy
         self.trader = trader
         self.analyzer = analyzer
         self.state = "ready"
-        self.strategy.initialize(budget, add_spot_callback=add_spot_callback)
+        self.strategy.initialize(
+            budget, add_spot_callback=add_spot_callback, add_line_callback=add_line_callback
+        )
         self.analyzer.initialize(trader.get_account_info)
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         try:

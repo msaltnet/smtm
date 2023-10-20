@@ -22,7 +22,9 @@ class OperatorInitializeTests(unittest.TestCase):
         self.assertEqual(self.operator.strategy, self.strategy_mock)
         self.assertEqual(self.operator.trader, self.trader_mock)
         self.assertEqual(self.operator.analyzer, self.analyzer_mock)
-        self.strategy_mock.initialize.assert_called_once_with("banana", add_spot_callback=ANY)
+        self.strategy_mock.initialize.assert_called_once_with(
+            "banana", add_spot_callback=ANY, add_line_callback=ANY
+        )
 
     def test_initialize_should_call_analyzer_initialize_with_trader(self):
         self.trader_mock.get_account_info = "orange"
@@ -30,14 +32,18 @@ class OperatorInitializeTests(unittest.TestCase):
             "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
         )
         self.analyzer_mock.initialize.assert_called_once_with("orange")
-        self.strategy_mock.initialize.assert_called_once_with("banana", add_spot_callback=ANY)
+        self.strategy_mock.initialize.assert_called_once_with(
+            "banana", add_spot_callback=ANY, add_line_callback=ANY
+        )
 
     def test_initialize_should_call_strategy_initialize_with_add_spot_callback(self):
         self.trader_mock.get_account_info = "orange"
         self.operator.initialize(
             "mango", self.strategy_mock, self.trader_mock, self.analyzer_mock, "banana"
         )
-        self.strategy_mock.initialize.assert_called_once_with("banana", add_spot_callback=ANY)
+        self.strategy_mock.initialize.assert_called_once_with(
+            "banana", add_spot_callback=ANY, add_line_callback=ANY
+        )
         self.strategy_mock.initialize.call_args[1]["add_spot_callback"]("spot_date_time", 777)
         self.analyzer_mock.add_drawing_spot.assert_called_once_with("spot_date_time", 777)
 

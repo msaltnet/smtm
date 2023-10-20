@@ -63,8 +63,9 @@ class StrategySmaMl(Strategy):
         self.waiting_requests = {}
         self.cross_info = [{"price": 0, "index": 0}, {"price": 0, "index": 0}]
         self.add_spot_callback = None
+        self.add_line_callback = None
 
-    def initialize(self, budget, min_price=5000, add_spot_callback=None):
+    def initialize(self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
@@ -76,6 +77,7 @@ class StrategySmaMl(Strategy):
         self.balance = budget
         self.min_price = min_price
         self.add_spot_callback = add_spot_callback
+        self.add_line_callback = add_line_callback
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트
@@ -96,6 +98,8 @@ class StrategySmaMl(Strategy):
             return
         self.data.append(copy.deepcopy(info))
         self.__update_process(info)
+        if self.add_line_callback is not None:
+            self.add_line_callback(info["date_time"], info["closing_price"])
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트
