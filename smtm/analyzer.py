@@ -41,6 +41,7 @@ class Analyzer:
         self.asset_info_list = []
         self.score_list = []
         self.spot_list = []
+        self.line_graph_list = []
         self.start_asset_info = None
         self.get_asset_info_func = None
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -64,6 +65,14 @@ class Analyzer:
         value: 그래프의 y축에 해당하는 정보로 price 정보와 비슷한 수준의 값을 갖는 것이 좋다
         """
         self.spot_list.append({"date_time": date_time, "value": value})
+
+    def add_value_for_line_graph(self, date_time, value):
+        """그래프에 그려질 추가 선 그래프의 값을 입력받아서 저장한다
+
+        date_time: 그래프의 시간축 정보로 info_list의 date_time과 같은 형식
+        value: 그래프의 y축에 해당하는 정보로 price 정보와 비슷한 수준의 값을 갖는 것이 좋다
+        """
+        self.line_graph_list.append({"date_time": date_time, "value": value})
 
     def put_trading_info(self, info):
         """거래 정보를 저장한다
@@ -289,6 +298,7 @@ class Analyzer:
         info_list = self.info_list
         result_list = self.result_list
         spot_list = self.spot_list
+        line_graph_list = self.line_graph_list
 
         if index_info is not None:
             interval_data = self.__make_interval_data(index_info)
@@ -297,6 +307,7 @@ class Analyzer:
             info_list = interval_data[2]
             result_list = interval_data[3]
             spot_list = interval_data[4]
+            line_graph_list = interval_data[5]
 
         return self.__get_return_report(
             asset_info_list,
@@ -305,6 +316,7 @@ class Analyzer:
             result_list,
             graph_filename=graph_filename,
             spot_list=spot_list,
+            line_graph_list=line_graph_list,
         )
 
     @staticmethod
@@ -367,12 +379,15 @@ class Analyzer:
         asset_info_list = []
         result_list = []
         spot_list = []
+        line_graph_list = []
+
         self.__make_filtered_list(start_dt, end_dt, score_list, self.score_list)
         self.__make_filtered_list(start_dt, end_dt, asset_info_list, self.asset_info_list)
         self.__make_filtered_list(start_dt, end_dt, result_list, self.result_list)
         self.__make_filtered_list(start_dt, end_dt, spot_list, self.spot_list)
+        self.__make_filtered_list(start_dt, end_dt, line_graph_list, self.line_graph_list)
 
-        return (asset_info_list, score_list, info_list, result_list, spot_list)
+        return (asset_info_list, score_list, info_list, result_list, spot_list, line_graph_list)
 
     @staticmethod
     def _get_min_max_return(score_list):
@@ -396,6 +411,7 @@ class Analyzer:
         result_list,
         graph_filename=None,
         spot_list=None,
+        line_graph_list=None,
     ):
         try:
             graph = None
@@ -412,6 +428,7 @@ class Analyzer:
                     graph_filename,
                     is_fullpath=True,
                     spot_list=spot_list,
+                    line_graph_list=line_graph_list,
                 )
             period = info_list[0]["date_time"] + " - " + info_list[-1]["date_time"]
             summary = (
@@ -489,7 +506,12 @@ class Analyzer:
             )
             self.__create_report_file(tag, summary, trading_table)
             self.__draw_graph(
-                self.info_list, self.result_list, self.score_list, tag, spot_list=self.spot_list
+                self.info_list,
+                self.result_list,
+                self.score_list,
+                tag,
+                spot_list=self.spot_list,
+                line_graph_list=self.line_graph_list,
             )
             return {"summary": summary, "trading_table": trading_table}
         except (IndexError, AttributeError):
@@ -562,24 +584,27 @@ class Analyzer:
     @staticmethod
     def _get_rss_memory():
         process = psutil.Process()
-        return process.memory_info().rss / 2 ** 20  # Bytes to MB
+        return process.memory_info().rss / 2**20  # Bytes to MB
 
-    def __get_spot_info(self, spot_list, start_pos, ref_time):
-        spot_pos = start_pos
-        spot_info = None
-        while spot_pos < len(spot_list):
-            spot = spot_list[spot_pos]
-            spot_time = datetime.strptime(spot["date_time"], self.ISO_DATEFORMAT)
-            if ref_time < spot_time:
+    def __get_single_info(self, target_list, start_pos, ref_time):
+        target_pos = start_pos
+        target_info = None
+        while target_pos < len(target_list):
+            item = target_list[target_pos]
+            target_item_time = datetime.strptime(item["date_time"], self.ISO_DATEFORMAT)
+            if ref_time < target_item_time:
                 break
-            spot_info = spot["value"]
-            spot_pos += 1
-        return spot_info, spot_pos
+            target_info = item["value"]
+            target_pos += 1
+        return target_info, target_pos
 
-    def __create_plot_data(self, info_list, result_list, score_list, spot_list=None):
+    def __create_plot_data(
+        self, info_list, result_list, score_list, spot_list=None, line_graph_list=None
+    ):
         result_pos = 0
         score_pos = 0
         spot_pos = 0
+        line_pos = 0
         last_avr_price = None
         last_acc_return = 0
         plot_data = []
@@ -604,10 +629,17 @@ class Analyzer:
 
             # 추가 spot 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
             if spot_list is not None:
-                spot_info = self.__get_spot_info(spot_list, spot_pos, info_time)
+                spot_info = self.__get_single_info(spot_list, spot_pos, info_time)
                 if spot_info[0] is not None:
                     new["spot"] = spot_info[0]
                 spot_pos = spot_info[1]
+
+            # 추가 line graph 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
+            if line_graph_list is not None:
+                line_graph_info = self.__get_single_info(line_graph_list, line_pos, info_time)
+                if line_graph_info[0] is not None:
+                    new["line_graph"] = line_graph_info[0]
+                line_pos = line_graph_info[1]
 
             # 수익률 정보를 추가. 정보가 없는 경우 최근 정보로 채움
             while score_pos < len(score_list):
@@ -635,7 +667,14 @@ class Analyzer:
         return pd.DataFrame(plot_data)[-self.GRAPH_MAX_COUNT :]
 
     def __draw_graph(
-        self, info_list, result_list, score_list, filename, is_fullpath=False, spot_list=None
+        self,
+        info_list,
+        result_list,
+        score_list,
+        filename,
+        is_fullpath=False,
+        spot_list=None,
+        line_graph_list=None,
     ):
         spots = None
         if spot_list is not None:
@@ -644,7 +683,16 @@ class Analyzer:
                 key=lambda x: (datetime.strptime(x["date_time"], self.ISO_DATEFORMAT),),
             )
 
-        total = self.__create_plot_data(info_list, result_list, score_list, spot_list=spots)
+        line_values = None
+        if line_graph_list is not None:
+            line_values = sorted(
+                line_graph_list,
+                key=lambda x: (datetime.strptime(x["date_time"], self.ISO_DATEFORMAT),),
+            )
+
+        total = self.__create_plot_data(
+            info_list, result_list, score_list, spot_list=spots, line_graph_list=line_values
+        )
         total = total.rename(
             columns={
                 "date_time": "Date",
@@ -688,6 +736,8 @@ class Analyzer:
                     (total["spot"]), type="scatter", markersize=50, marker=".", color="g"
                 )
             )
+        if "line_graph" in total.columns:
+            apds.append(mpf.make_addplot((total["line_graph"])))
 
         destination = self.OUTPUT_FOLDER + filename + ".jpg"
         if is_fullpath:

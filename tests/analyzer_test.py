@@ -12,6 +12,15 @@ class AnalyzerTests(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_add_value_for_line_graph_append_value_info(self):
+        analyzer = Analyzer()
+        analyzer.add_value_for_line_graph("2020-02-27T23:00:00", 12345)
+        analyzer.add_value_for_line_graph("2020-02-27T24:00:00", 700)
+        self.assertEqual(analyzer.line_graph_list[0]["date_time"], "2020-02-27T23:00:00")
+        self.assertEqual(analyzer.line_graph_list[0]["value"], 12345)
+        self.assertEqual(analyzer.line_graph_list[1]["date_time"], "2020-02-27T24:00:00")
+        self.assertEqual(analyzer.line_graph_list[1]["value"], 700)
+
     def test_add_drawing_spot_append_spot_info(self):
         analyzer = Analyzer()
         analyzer.add_drawing_spot("2020-02-27T23:00:00", 12345)

@@ -11,6 +11,8 @@ def get_data(name):
         return score_list
     elif name == "spot_list":
         return spot_list
+    elif name == "line_graph_list":
+        return line_graph_list
 
 
 spot_list = [
@@ -29,6 +31,57 @@ spot_list = [
     {
         "date_time": "2020-12-20T17:07:00",
         "value": 26039000.0,
+    },
+]
+
+line_graph_list = [
+    {
+        "date_time": "2020-12-20T17:00:00",
+        "value": 25997000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:01:00",
+        "value": 25982000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:02:00",
+        "value": 25985000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:03:00",
+        "value": 25987000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:04:00",
+        "value": 25993000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:05:00",
+        "value": 25994000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:06:00",
+        "value": 25977000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:07:00",
+        "value": 25934000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:15:00",
+        "value": 25954000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:16:00",
+        "value": 25954000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:17:00",
+        "value": 25999000.0,
+    },
+    {
+        "date_time": "2020-12-20T17:19:00",
+        "value": 26025000.0,
     },
 ]
 

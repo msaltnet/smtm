@@ -41,6 +41,8 @@ class AnalyzerIntegrationTests(unittest.TestCase):
             "acc_volume": 4.45311465,
         }
         analyzer.put_trading_info(info)
+        analyzer.add_value_for_line_graph("2020-12-21T01:13:00", 26132000.0)
+        analyzer.add_value_for_line_graph("2020-12-21T01:13:01", 26158000.0)
 
         requests = [
             {
@@ -94,6 +96,9 @@ class AnalyzerIntegrationTests(unittest.TestCase):
 
         analyzer.add_drawing_spot("2020-12-21T01:14:00", 26020000.0)
         analyzer.add_drawing_spot("2020-12-21T01:14:01", 26182000.0)
+
+        analyzer.add_value_for_line_graph("2020-12-21T01:14:00", 26132000.0)
+        analyzer.add_value_for_line_graph("2020-12-21T01:14:01", 26153000.0)
 
         requests = [
             {
@@ -247,6 +252,9 @@ class AnalyzerIntegrationTests(unittest.TestCase):
 
         analyzer.add_drawing_spot("2020-12-21T01:17:00", 25061000.0)
 
+        analyzer.add_value_for_line_graph("2020-12-21T01:17:00", 26132000.0)
+        analyzer.add_value_for_line_graph("2020-12-21T01:17:01", 26085000.0)
+
         requests = [
             {
                 "id": "1621767067.473",
@@ -311,6 +319,7 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.asset_info_list = analyzer_data.get_data("asset_info_list")
         analyzer.score_list = analyzer_data.get_data("score_list")
         analyzer.spot_list = analyzer_data.get_data("spot_list")
+        analyzer.line_graph_list = analyzer_data.get_data("line_graph_list")
         analyzer.start_asset_info = analyzer.asset_info_list[0]
 
         if os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"):
