@@ -17,3 +17,4 @@ from .mass_simulator_ITG_test import (
     MassSimulatorIntegrationTests,
     MassSimulator3mIntervalIntegrationTests,
 )
+from .binance_data_provider_ITG_test import BinanceDataProviderIntegrationTests

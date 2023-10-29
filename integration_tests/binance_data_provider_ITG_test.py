@@ -1,9 +1,9 @@
 import unittest
-from smtm import UpbitDataProvider
+from smtm import BinanceDataProvider
 from unittest.mock import *
 
 
-class UpbitDataProviderIntegrationTests(unittest.TestCase):
+class BinanceDataProviderIntegrationTests(unittest.TestCase):
     def setUp(self):
         pass
 
@@ -11,7 +11,7 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         pass
 
     def test_ITG_get_info_return_correct_data(self):
-        dp = UpbitDataProvider()
+        dp = BinanceDataProvider()
         info = dp.get_info()
         self.assertEqual("market" in info, True)
         self.assertEqual("date_time" in info, True)
@@ -23,7 +23,7 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("acc_volume" in info, True)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_BTC(self):
-        dp = UpbitDataProvider("BTC")
+        dp = BinanceDataProvider("BTC")
         info = dp.get_info()
         self.assertEqual(info["market"], "BTC")
         self.assertEqual("date_time" in info, True)
@@ -35,7 +35,7 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("acc_volume" in info, True)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_ETH(self):
-        dp = UpbitDataProvider("ETH")
+        dp = BinanceDataProvider("ETH")
         info = dp.get_info()
         self.assertEqual(info["market"], "ETH")
         self.assertEqual("date_time" in info, True)
@@ -47,7 +47,7 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("acc_volume" in info, True)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_DOGE(self):
-        dp = UpbitDataProvider("DOGE")
+        dp = BinanceDataProvider("DOGE")
         info = dp.get_info()
         self.assertEqual(info["market"], "DOGE")
         self.assertEqual("date_time" in info, True)
@@ -59,7 +59,7 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("acc_volume" in info, True)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_XRP(self):
-        dp = UpbitDataProvider("XRP")
+        dp = BinanceDataProvider("XRP")
         info = dp.get_info()
         self.assertEqual(info["market"], "XRP")
         self.assertEqual("date_time" in info, True)
