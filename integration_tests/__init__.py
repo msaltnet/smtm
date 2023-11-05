@@ -5,7 +5,10 @@ from .analyzer_ITG_test import AnalyzerIntegrationTests
 from .bithumb_data_provider_ITG_test import BithumbDataProviderIntegrationTests
 from .binance_data_provider_ITG_test import BinanceDataProviderIntegrationTests
 from .upbit_data_provider_ITG_test import UpbitDataProviderIntegrationTests
-from .data_repository_ITG_test import DataRepositoryIntegrationTests
+from .data_repository_ITG_test import (
+    DataRepositoryUpbitIntegrationTests,
+    DataRepositoryBinanceIntegrationTests,
+)
 from .operator_ITG_test import OperatorIntegrationTests
 from .strategy_bnh_ITG_test import StrategyBuyAndHoldIntegrationTests
 from .simulation_trader_ITG_test import SimulationTraderIntegrationTests

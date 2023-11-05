@@ -1,12 +1,13 @@
 """거래 데이터를 클라우드에서 가져오고, 저장해서 제공하는 DataRepository 클래스
-현재는 업비트의 1분단위 거래 내역만 사용 가능
+Config에서 업비트와 바이낸스 데이터를 선택할 수 있음
 """
 import copy
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import requests
 from ..log_manager import LogManager
 from ..date_converter import DateConverter
+from ..config import Config
 from .database import Database
 
 
@@ -17,19 +18,29 @@ class DataRepository:
         self.logger = LogManager.get_logger(__class__.__name__)
         db = db_file if db_file is not None else "smtm.db"
         self.database = Database(db)
-        self.verify_mode = False
         self.interval = interval
-        self.interval_min = interval / 60
-        if interval == 60:
-            self.url = "https://api.upbit.com/v1/candles/minutes/1"
-        elif interval == 180:
-            self.url = "https://api.upbit.com/v1/candles/minutes/3"
-        elif interval == 300:
-            self.url = "https://api.upbit.com/v1/candles/minutes/5"
-        elif interval == 600:
-            self.url = "https://api.upbit.com/v1/candles/minutes/10"
+        self.interval_min = interval // 60
+        self.is_upbit = True
+        if Config.simulation_source == "upbit":
+            if interval == 60:
+                self.url = "https://api.upbit.com/v1/candles/minutes/1"
+            elif interval == 180:
+                self.url = "https://api.upbit.com/v1/candles/minutes/3"
+            elif interval == 300:
+                self.url = "https://api.upbit.com/v1/candles/minutes/5"
+            elif interval == 600:
+                self.url = "https://api.upbit.com/v1/candles/minutes/10"
+            else:
+                raise UserWarning(f"not supported interval: {interval}")
+        elif Config.simulation_source == "binance":
+            self.url = "https://api.binance.com/api/v3/klines"
+            self.is_upbit = False
+            if self.interval_min not in [1, 3, 5, 15, 30]:
+                raise UserWarning(f"not supported interval: {interval}")
         else:
-            raise UserWarning(f"not supported interval: {interval}")
+            raise UserWarning(
+                f"not supported simulation data: {Config.simulation_source}"
+            )
 
     def get_data(self, start, end, market="KRW-BTC"):
         """거래 데이터를 제공
@@ -50,22 +61,22 @@ class DataRepository:
         if len(db_data) > total_count:
             raise UserWarning("Something wrong in DB")
 
-        if not self.verify_mode and total_count == len(db_data):
+        if total_count == len(db_data):
             self.logger.info(f"from database: {total_count}")
-            self._convert_to_upbit_datetime_string(db_data)
+            self._convert_to_iso_datetime_string(db_data)
             return db_data
 
-        server_data = self._fetch_from_upbit(target_start, target_end, market)
-        self._convert_to_upbit_datetime_string(server_data)
+        server_data = self._fetch_from_server(target_start, target_end, market)
+        self._convert_to_iso_datetime_string(server_data)
         return server_data
 
     @staticmethod
-    def _convert_to_upbit_datetime_string(data_list):
+    def _convert_to_iso_datetime_string(data_list):
         for data in data_list:
             data["date_time"] = data["date_time"].replace(" ", "T")
 
     @staticmethod
-    def _convert_to_datetime(data_list):
+    def _convert_to_sqlite_datetime_string(data_list):
         for data in data_list:
             data["date_time"] = data["date_time"].replace("T", " ")
 
@@ -92,18 +103,164 @@ class DataRepository:
             if "recovered" in data:
                 del data["recovered"]
 
-        DataRepository._convert_to_upbit_datetime_string(target_db_data)
+        DataRepository._convert_to_iso_datetime_string(target_db_data)
         return target_db_data == target_fetch_data
 
     def _query(self, start, end, market):
         start_datetime = start.replace("T", " ")
         end_datetime = end.replace("T", " ")
-        return self.database.query(start_datetime, end_datetime, market, period=self.interval)
+        return self.database.query(
+            start_datetime,
+            end_datetime,
+            market,
+            period=self.interval,
+            is_upbit=self.is_upbit,
+        )
 
     def _update(self, data):
-        self._convert_to_datetime(data)
-        self.database.update(data, period=self.interval)
-        self.logger.info(f"update database: {len(data)}")
+        self._convert_to_sqlite_datetime_string(data)
+        self.database.update(data, period=self.interval, is_upbit=self.is_upbit)
+        self.logger.info("update database: %d", len(data))
+
+    def _fetch_from_server(self, start, end, market):
+        if self.is_upbit is True:
+            return self._fetch_from_upbit(start, end, market)
+
+        return self._fetch_from_binance(start, end, market)
+
+    def _fetch_from_binance(self, start, end, market):
+        """바이낸스 서버에서 n번 데이터 조회해서 최종 결과를 반환
+        1회 조회시 갯수 제한이 있기 때문에 여러번 조회해서 합쳐야함
+        바이낸스는 현재 공식적으로 최대 1000개까지 조회 가능
+        """
+        total_data = []
+        dt_list = DateConverter.to_end_min(
+            start_iso=start, end_iso=end, max_count=1000, interval_min=self.interval_min
+        )
+        for dt in dt_list:
+            self.logger.info(f"query from {dt[0]} to {dt[1]}, count: {dt[2]}")
+            query_data = self._query(dt[0], dt[1], market)
+            if len(query_data) >= dt[2]:
+                fetch_data = query_data
+            else:
+                self.logger.info("fetch from binance")
+                fetch_data = self._fetch_from_binance_up_to_1000(
+                    dt[0], dt[1], dt[2], market
+                )
+                if len(fetch_data) != dt[2]:
+                    fetch_data = self._recovery_binance_head_broken_data(
+                        fetch_data, dt[0], dt[1], market
+                    )
+                fetch_data = self._recovery_broken_data(
+                    fetch_data, dt[0], dt[2], market
+                )
+                if len(fetch_data) != dt[2]:
+                    raise UserWarning(
+                        f"something wrong in binance data {len(fetch_data)} vs {dt[2]}"
+                    )
+                self._update(fetch_data)
+
+            total_data += fetch_data
+        return total_data
+
+    def _recovery_binance_head_broken_data(self, fetch_data, start, end, market):
+        """바이낸스 데이터의 앞부분이 깨진 경우
+        1000개를 더 가져와서 시작부분까지 역으로 복사해서 채워준다
+        업비트에서는 발생하지 않는 문제
+        """
+        new_data = []
+        broken_count = 0
+
+        # 데이터가 하나도 없는 경우 앞부분 데이터를 채워줄 1000개 데이터를 추가로 가져옴
+        if len(fetch_data) == 0:
+            new_start = self._convert_to_string(
+                self._convert_to_dt(start) + timedelta(seconds=self.interval * 1000)
+            )
+            new_end = self._convert_to_string(
+                self._convert_to_dt(end) + timedelta(seconds=self.interval * 1000)
+            )
+            recovery_data = self._fetch_from_binance_up_to_1000(
+                new_start, new_end, 1000, market
+            )
+            if len(recovery_data) == 0:
+                raise UserWarning(f"critical error in binance data recovery process")
+            new_data.append(copy.deepcopy(recovery_data[0]))
+        else:
+            new_data.append(copy.deepcopy(fetch_data[0]))
+
+        # 시작부분까지 데이터를 복사해서 채워줌
+        while True:
+            current_dt = self._convert_to_dt(new_data[0]["date_time"])
+            start_dt = self._convert_to_dt(start)
+            delta = current_dt - start_dt
+            if delta.total_seconds() > 0:
+                recovery_item = copy.deepcopy(new_data[0])
+                current_dt = current_dt - timedelta(seconds=self.interval)
+                current_datetime = self._convert_to_string(current_dt)
+                recovery_item["date_time"] = current_datetime
+                recovery_item["recovered"] = 1
+                new_data.insert(0, recovery_item)
+                self._report_broken_block(current_datetime, market)
+                broken_count += 1
+            else:
+                break
+
+        if broken_count > 0:
+            self.logger.info(f"Recovered broken head data: {broken_count}")
+
+        return new_data + fetch_data
+
+    @staticmethod
+    def _get_kst_time_from_unix_time_ms(unix_time_ms):
+        """밀리세컨드 단위의 유닉스 시간을 한국 시간으로 변환해서 반환한다"""
+        return DateConverter.to_iso_string(
+            datetime.fromtimestamp(unix_time_ms / 1000, tz=timezone(timedelta(hours=9)))
+        )
+
+    def _fetch_from_binance_up_to_1000(self, start, end, count, market):
+        """바이낸스 서버에서 최대 1000개까지 데이터 조회해서 반환
+        바이낸스의 경우 throttling이 대해 관대함
+        https://www.binance.com/en/support/faq/frequently-asked-questions-on-api-360004492232
+        """
+        start_ms = self._convert_to_dt(start).timestamp() * 1000
+        end_ms = self._convert_to_dt(end).timestamp() * 1000
+        query_string = {
+            "symbol": market,
+            "startTime": int(start_ms),
+            "endTime": int(end_ms),
+            "limit": count,
+            "interval": f"{self.interval_min}m",
+        }
+        self.logger.debug(f"query_string {query_string}")
+        try:
+            response = requests.get(self.url, params=query_string)
+            response.raise_for_status()
+            data = response.json()
+            final_data = []
+            for item in data:
+                final_data.append(
+                    {
+                        "market": market,
+                        "date_time": self._get_kst_time_from_unix_time_ms(item[0]),
+                        "opening_price": float(item[1]),
+                        "high_price": float(item[2]),
+                        "low_price": float(item[3]),
+                        "closing_price": float(item[4]),
+                        "acc_price": float(item[7]),
+                        "acc_volume": float(item[5]),
+                    }
+                )
+            return final_data
+
+        except ValueError as error:
+            self.logger.error(f"Invalid data from server: {error}")
+            raise UserWarning("Fail get data from sever") from error
+        except requests.exceptions.HTTPError as error:
+            self.logger.error(error)
+            raise UserWarning(f"{error}") from error
+        except requests.exceptions.RequestException as error:
+            self.logger.error(error)
+            raise UserWarning("Fail get data from sever") from error
 
     def _fetch_from_upbit(self, start, end, market):
         """업비트 서버에서 n번 데이터 조회해서 최종 결과를 반환
@@ -115,33 +272,29 @@ class DataRepository:
             start_iso=start, end_iso=end, max_count=200, interval_min=self.interval_min
         )
         for dt in dt_list:
-            self.logger.info(f"fetch from {dt[0]} to {dt[1]}, count: {dt[2]}")
+            self.logger.info(f"query from {dt[0]} to {dt[1]}, count: {dt[2]}")
             query_data = self._query(dt[0], dt[1], market)
             if len(query_data) >= dt[2]:
-                if self.verify_mode:
-                    fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
-                    recovered_data = self._recovery_upbit_data(fetch_data, dt[0], dt[2], market)
-                    self._is_equal(query_data, recovered_data)
-                else:
-                    fetch_data = query_data
+                fetch_data = query_data
             else:
                 self.logger.info("fetch from upbit")
                 fetch_data = self._fetch_from_upbit_up_to_200(dt[1], dt[2], market)
-                fetch_data = self._recovery_upbit_data(fetch_data, dt[0], dt[2], market)
+                fetch_data = self._recovery_broken_data(
+                    fetch_data, dt[0], dt[2], market
+                )
                 self._update(fetch_data)
 
             total_data += fetch_data
         return total_data
 
-    def _recovery_upbit_data(self, data, start, count, market):
-        """업비트 거래 데이터가 없는 경우 바로 앞의 데이터를 복사해서 채워준다"""
+    def _recovery_broken_data(self, data, start, count, market):
+        """서버에서 가져온 데이터가 중간에 거래 데이터가 없는 경우 바로 앞의 데이터를 복사해서 채워준다"""
         new_data = []
         current_dt = self._convert_to_dt(start)
         current_datetime = start
         last_item = None
         idx = 0
         broken_count = 0
-
         while len(new_data) < count:
             if len(data) <= idx:
                 # 주어진 데이터에 유효한 데이터가 부족한 경우 마지막 데이터로 채울 수 있게 조정
@@ -149,9 +302,10 @@ class DataRepository:
             else:
                 item_dt = self._convert_to_dt(data[idx]["date_time"])
             delta = current_dt - item_dt
+
             if delta.total_seconds() > 0:
                 # 기준보다 과거의 데이터 저장, 첫 데이터가 깨진 경우 사용
-                self.logger.debug(f"pass data:  {idx}")
+                self.logger.debug(f"pass data: {idx}")
                 last_item = copy.deepcopy(data[idx])
                 idx += 1
                 continue

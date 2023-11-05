@@ -194,9 +194,13 @@ class Analyzer:
         """
         now = datetime.now()
         if self.is_simulation:
-            now = datetime.strptime(self.info_list[-1]["date_time"], self.ISO_DATEFORMAT)
+            now = datetime.strptime(
+                self.info_list[-1]["date_time"], self.ISO_DATEFORMAT
+            )
 
-        last = datetime.strptime(self.asset_info_list[-1]["date_time"], self.ISO_DATEFORMAT)
+        last = datetime.strptime(
+            self.asset_info_list[-1]["date_time"], self.ISO_DATEFORMAT
+        )
         delta = now - last
 
         if delta.total_seconds() > self.RECORD_INTERVAL:
@@ -382,12 +386,23 @@ class Analyzer:
         line_graph_list = []
 
         self.__make_filtered_list(start_dt, end_dt, score_list, self.score_list)
-        self.__make_filtered_list(start_dt, end_dt, asset_info_list, self.asset_info_list)
+        self.__make_filtered_list(
+            start_dt, end_dt, asset_info_list, self.asset_info_list
+        )
         self.__make_filtered_list(start_dt, end_dt, result_list, self.result_list)
         self.__make_filtered_list(start_dt, end_dt, spot_list, self.spot_list)
-        self.__make_filtered_list(start_dt, end_dt, line_graph_list, self.line_graph_list)
+        self.__make_filtered_list(
+            start_dt, end_dt, line_graph_list, self.line_graph_list
+        )
 
-        return (asset_info_list, score_list, info_list, result_list, spot_list, line_graph_list)
+        return (
+            asset_info_list,
+            score_list,
+            info_list,
+            result_list,
+            spot_list,
+            line_graph_list,
+        )
 
     @staticmethod
     def _get_min_max_return(score_list):
@@ -447,7 +462,9 @@ class Analyzer:
                 ),
             )
             self.logger.info("### Return Report ===============================")
-            self.logger.info(f"Property                 {start_value:10} -> {last_value:10}")
+            self.logger.info(
+                f"Property                 {start_value:10} -> {last_value:10}"
+            )
             self.logger.info(
                 f"Gap                                    {last_value - start_value:10}"
             )
@@ -496,7 +513,9 @@ class Analyzer:
                 self.logger.error("invalid return report")
                 return None
 
-            list_sum = self.request_list + self.info_list + self.score_list + self.result_list
+            list_sum = (
+                self.request_list + self.info_list + self.score_list + self.result_list
+            )
             trading_table = sorted(
                 list_sum,
                 key=lambda x: (
@@ -543,7 +562,9 @@ class Analyzer:
         final_path = self.OUTPUT_FOLDER + filepath + ".txt"
         with open(final_path, "w") as report_file:
             if len(trading_table) > 0:
-                report_file.write("### TRADING TABLE =================================\n")
+                report_file.write(
+                    "### TRADING TABLE =================================\n"
+                )
 
             for item in trading_table:
                 if item["kind"] == 0:
@@ -564,16 +585,22 @@ class Analyzer:
                     )
 
             report_file.write("### SUMMARY =======================================\n")
-            report_file.write(f"Property                 {summary[0]:10} -> {summary[1]:10}\n")
+            report_file.write(
+                f"Property                 {summary[0]:10} -> {summary[1]:10}\n"
+            )
             report_file.write(
                 f"Gap                                    {summary[1] - summary[0]:10}\n"
             )
-            report_file.write(f"Cumulative return                    {summary[2]:10} %\n")
+            report_file.write(
+                f"Cumulative return                    {summary[2]:10} %\n"
+            )
             report_file.write(f"Price_change_ratio {summary[3]}\n")
 
             if self.DEBUG_MODE is True:
                 rss = self._get_rss_memory()
-                report_file.write("### DEBUG INFO ====================================\n")
+                report_file.write(
+                    "### DEBUG INFO ====================================\n"
+                )
                 report_file.write(f"memory usage: {rss: 10.5f} MB\n")
                 report_file.write(f"request_list: {len(self.request_list)}\n")
                 report_file.write(f"result_list: {len(self.result_list)}\n")
@@ -617,7 +644,9 @@ class Analyzer:
             # 매매 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 매매별 하나씩만 추가됨
             while result_pos < len(result_list):
                 result = result_list[result_pos]
-                result_time = datetime.strptime(result["date_time"], self.ISO_DATEFORMAT)
+                result_time = datetime.strptime(
+                    result["date_time"], self.ISO_DATEFORMAT
+                )
                 if info_time < result_time:
                     break
 
@@ -636,7 +665,9 @@ class Analyzer:
 
             # 추가 line graph 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
             if line_graph_list is not None:
-                line_graph_info = self.__get_single_info(line_graph_list, line_pos, info_time)
+                line_graph_info = self.__get_single_info(
+                    line_graph_list, line_pos, info_time
+                )
                 if line_graph_info[0] is not None:
                     new["line_graph"] = line_graph_info[0]
                 line_pos = line_graph_info[1]
@@ -691,7 +722,11 @@ class Analyzer:
             )
 
         total = self.__create_plot_data(
-            info_list, result_list, score_list, spot_list=spots, line_graph_list=line_values
+            info_list,
+            result_list,
+            score_list,
+            spot_list=spots,
+            line_graph_list=line_values,
         )
         total = total.rename(
             columns={
@@ -713,27 +748,49 @@ class Analyzer:
                 rsi_low = np.full(len(rsi), self.RSI[0])
                 rsi_high = np.full(len(rsi), self.RSI[1])
                 apds.append(
-                    mpf.make_addplot(rsi, panel=2, color="lime", ylim=(10, 90), secondary_y=False)
+                    mpf.make_addplot(
+                        rsi, panel=2, color="lime", ylim=(10, 90), secondary_y=False
+                    )
                 )
                 apds.append(
-                    mpf.make_addplot(rsi_low, panel=2, color="red", width=0.5, secondary_y=False)
+                    mpf.make_addplot(
+                        rsi_low, panel=2, color="red", width=0.5, secondary_y=False
+                    )
                 )
                 apds.append(
-                    mpf.make_addplot(rsi_high, panel=2, color="red", width=0.5, secondary_y=False)
+                    mpf.make_addplot(
+                        rsi_high, panel=2, color="red", width=0.5, secondary_y=False
+                    )
                 )
 
         if "buy" in total.columns:
-            apds.append(mpf.make_addplot(total["buy"], type="scatter", markersize=100, marker="^"))
+            apds.append(
+                mpf.make_addplot(
+                    total["buy"], type="scatter", markersize=100, marker="^"
+                )
+            )
         if "sell" in total.columns:
-            apds.append(mpf.make_addplot(total["sell"], type="scatter", markersize=100, marker="v"))
+            apds.append(
+                mpf.make_addplot(
+                    total["sell"], type="scatter", markersize=100, marker="v"
+                )
+            )
         if "avr_price" in total.columns:
             apds.append(mpf.make_addplot(total["avr_price"]))
         if "return" in total.columns:
-            apds.append(mpf.make_addplot((total["return"]), panel=1, color="g", secondary_y=True))
+            apds.append(
+                mpf.make_addplot(
+                    (total["return"]), panel=1, color="g", secondary_y=True
+                )
+            )
         if "spot" in total.columns:
             apds.append(
                 mpf.make_addplot(
-                    (total["spot"]), type="scatter", markersize=50, marker=".", color="g"
+                    (total["spot"]),
+                    type="scatter",
+                    markersize=50,
+                    marker=".",
+                    color="g",
                 )
             )
         if "line_graph" in total.columns:

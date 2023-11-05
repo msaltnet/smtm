@@ -1,4 +1,5 @@
 class Config:
+    simulation_source = "upbit"
     candle_interval = 60
     """스트림 핸들러의 레벨
     CRITICAL  50

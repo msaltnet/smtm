@@ -25,9 +25,7 @@ class BithumbDataProvider(DataProvider):
             raise UserWarning(f"not supported currency: {currency}")
 
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.url = (
-            f"https://api.bithumb.com/public/candlestick/{self.AVAILABLE_CURRENCY[currency]}/1m"
-        )
+        self.url = f"https://api.bithumb.com/public/candlestick/{self.AVAILABLE_CURRENCY[currency]}/1m"
         self.market = currency
 
     def get_info(self):
@@ -55,9 +53,9 @@ class BithumbDataProvider(DataProvider):
         try:
             return {
                 "market": self.market,
-                "date_time": datetime.fromtimestamp(data[0] / 1000.0, tz=self.KST).strftime(
-                    self.ISO_DATEFORMAT
-                ),
+                "date_time": datetime.fromtimestamp(
+                    data[0] / 1000.0, tz=self.KST
+                ).strftime(self.ISO_DATEFORMAT),
                 "opening_price": float(data[1]),
                 "high_price": float(data[3]),
                 "low_price": float(data[4]),

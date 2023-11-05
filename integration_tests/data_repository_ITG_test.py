@@ -4,11 +4,18 @@ from datetime import datetime, timedelta
 import unittest
 import os
 import requests
-from smtm import DataRepository, DateConverter
+from smtm import DataRepository, DateConverter, Config
 from unittest.mock import *
 
 
-class DataRepositoryIntegrationTests(unittest.TestCase):
+class DataRepositoryUpbitIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        self.simulation_source_backup = Config.simulation_source
+        Config.simulation_source = "upbit"
+
+    def tearDown(self):
+        Config.simulation_source = self.simulation_source_backup
+
     @staticmethod
     def _convert_to_dt(string):
         return datetime.strptime(string, "%Y-%m-%dT%H:%M:%S")
@@ -24,7 +31,11 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         random_count = random.randrange(1, 201)
         end_dt = start_dt + timedelta(minutes=random_count)
 
-        return (self._convert_to_string(start_dt), self._convert_to_string(end_dt), random_count)
+        return (
+            self._convert_to_string(start_dt),
+            self._convert_to_string(end_dt),
+            random_count,
+        )
 
     def test_ITG_data_repository_fetch_and_verify_with_random_period(self):
         repo = DataRepository(":memory:", interval=60)
@@ -63,7 +74,7 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
             upbit = self._fetch_from_upbit_up_to_200(dt[1], dt[2], "KRW-BTC")
             checked = self._check_equal(result, upbit)
             self.assertTrue(checked + len(broken_list), dt[2])
-            time.sleep(1)
+            time.sleep(0.5)
 
     def _check_equal(self, repo_data, upbit_data):
         idx = 0
@@ -134,6 +145,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:20:00", "KRW-BTC")
         self.assertEqual(len(result), 200)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T20:19:00")
         repo.database.update.assert_called()
 
     def test_get_data_should_return_big_data_fetched_from_server_with_1m_interval(self):
@@ -142,6 +155,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T21:00:00", "KRW-BTC")
         self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T20:59:00")
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_server_with_3m_interval(self):
@@ -150,6 +165,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "KRW-BTC")
         self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
         repo.database.update.assert_called()
 
         repo = DataRepository(":memory:", interval=180)
@@ -157,6 +174,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:02:00", "2020-02-20T20:01:00", "KRW-BTC")
         self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
         repo.database.update.assert_called()
 
     def test_get_data_should_return_big_data_fetched_from_server_with_3m_interval(self):
@@ -165,6 +184,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T12:00:00", "KRW-BTC")
         self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T11:57:00")
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_server_with_5m_interval(self):
@@ -173,6 +194,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "KRW-BTC")
         self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
         repo.database.update.assert_called()
 
         repo = DataRepository(":memory:", interval=300)
@@ -180,6 +203,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:04:00", "2020-02-20T20:01:00", "KRW-BTC")
         self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
         repo.database.update.assert_called()
 
     def test_get_data_should_return_big_data_fetched_from_server_with_5m_interval(self):
@@ -188,6 +213,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-21T00:00:00", "KRW-BTC")
         self.assertEqual(len(result), 288)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T23:55:00")
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_server_with_10m_interval(self):
@@ -196,6 +223,8 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "KRW-BTC")
         self.assertEqual(len(result), 18)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:50:00")
         repo.database.update.assert_called()
 
         repo = DataRepository(":memory:", interval=600)
@@ -203,64 +232,343 @@ class DataRepositoryIntegrationTests(unittest.TestCase):
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:08:00", "2020-02-20T20:06:00", "KRW-BTC")
         self.assertEqual(len(result), 18)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:50:00")
         repo.database.update.assert_called()
 
-    def test_get_data_should_return_big_data_fetched_from_server_with_10m_interval(self):
+    def test_get_data_should_return_big_data_fetched_from_server_with_10m_interval(
+        self,
+    ):
         repo = DataRepository(":memory:", interval=600)
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-22T00:00:00", "KRW-BTC")
         self.assertEqual(len(result), 288)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-21T23:50:00")
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_database_with_1m_interval(self):
         repo = DataRepository(":memory:", interval=60)
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:20:00", "KRW-BTC")
         self.assertEqual(len(result), 200)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
 
-    def test_get_data_should_return_big_data_fetched_from_database_with_1m_interval(self):
+    def test_get_data_should_return_big_data_fetched_from_database_with_1m_interval(
+        self,
+    ):
         repo = DataRepository(":memory:", interval=60)
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T21:00:00", "KRW-BTC")
         self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T20:59:00")
 
     def test_get_data_should_return_data_fetched_from_database_with_3m_interval(self):
         repo = DataRepository(":memory:", interval=180)
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "KRW-BTC")
         self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
 
         repo = DataRepository(":memory:", interval=180)
         result = repo.get_data("2020-02-20T17:02:00", "2020-02-20T20:01:00", "KRW-BTC")
         self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
 
-    def test_get_data_should_return_big_data_fetched_from_database_with_3m_interval(self):
+    def test_get_data_should_return_big_data_fetched_from_database_with_3m_interval(
+        self,
+    ):
         repo = DataRepository(":memory:", interval=180)
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T12:00:00", "KRW-BTC")
         self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T11:57:00")
 
     def test_get_data_should_return_data_fetched_from_database_with_5m_interval(self):
         repo = DataRepository(":memory:", interval=300)
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "KRW-BTC")
         self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
 
         repo = DataRepository(":memory:", interval=300)
         result = repo.get_data("2020-02-20T17:04:00", "2020-02-20T20:01:00", "KRW-BTC")
         self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
 
-    def test_get_data_should_return_big_data_fetched_from_database_with_5m_interval(self):
+    def test_get_data_should_return_big_data_fetched_from_database_with_5m_interval(
+        self,
+    ):
         repo = DataRepository(":memory:", interval=300)
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-21T00:00:00", "KRW-BTC")
         self.assertEqual(len(result), 288)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T23:55:00")
 
     def test_get_data_should_return_data_fetched_from_database_with_10m_interval(self):
         repo = DataRepository(":memory:", interval=600)
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "KRW-BTC")
         self.assertEqual(len(result), 18)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:50:00")
 
         repo = DataRepository(":memory:", interval=600)
         result = repo.get_data("2020-02-20T17:08:00", "2020-02-20T20:06:00", "KRW-BTC")
         self.assertEqual(len(result), 18)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:50:00")
 
-    def test_get_data_should_return_big_data_fetched_from_database_with_10m_interval(self):
+    def test_get_data_should_return_big_data_fetched_from_database_with_10m_interval(
+        self,
+    ):
         repo = DataRepository(":memory:", interval=600)
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-22T00:00:00", "KRW-BTC")
         self.assertEqual(len(result), 288)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-21T23:50:00")
+
+
+class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        self.simulation_source_backup = Config.simulation_source
+        Config.simulation_source = "binance"
+
+    def tearDown(self):
+        Config.simulation_source = self.simulation_source_backup
+
+    @staticmethod
+    def _convert_to_dt(string):
+        return datetime.strptime(string, "%Y-%m-%dT%H:%M:%S")
+
+    @staticmethod
+    def _convert_to_string(dt):
+        return dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+    def _get_random_period(self, base_datetime):
+        random_day = random.randrange(1, 200)
+        base_dt = self._convert_to_dt(base_datetime)
+        start_dt = base_dt + timedelta(days=random_day)
+        random_count = random.randrange(1, 201)
+        end_dt = start_dt + timedelta(minutes=random_count)
+
+        return (
+            self._convert_to_string(start_dt),
+            self._convert_to_string(end_dt),
+            random_count,
+        )
+
+    def test_ITG_data_repository_fetch_and_verify_with_random_period(self):
+        repo = DataRepository(":memory:", interval=60)
+        dt_list = []
+        base_datetime = [
+            "2019-01-01T00:00:00",
+            "2019-03-01T00:00:00",
+            "2019-05-01T00:00:00",
+            "2019-07-01T00:00:00",
+            "2019-09-01T00:00:00",
+            "2019-11-01T00:00:00",
+            "2020-01-01T00:00:00",
+            "2020-03-01T00:00:00",
+            "2020-05-01T00:00:00",
+            "2020-07-01T00:00:00",
+            "2020-09-01T00:00:00",
+            "2020-11-01T00:00:00",
+            "2021-01-01T00:00:00",
+            "2019-03-01T00:00:00",
+            "2020-05-01T00:00:00",
+            "2020-07-01T00:00:00",
+            "2021-01-01T00:00:00",
+        ]
+
+        for item in base_datetime:
+            dt_list.append(self._get_random_period(item))
+
+        for dt in dt_list:
+            print(f"### Check {dt[0]} to {dt[1]}, count: {dt[2]}")
+            result = repo.get_data(dt[0], dt[1], "BTCUSDT")
+            self.assertTrue(len(result), dt[2])
+
+    def test_get_data_should_return_data_fetched_from_server_with_1m_interval(self):
+        repo = DataRepository(":memory:", interval=60)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:20:00", "BTCUSDT")
+        self.assertEqual(len(result), 200)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T20:19:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_big_data_fetched_from_server_with_1m_interval(self):
+        repo = DataRepository(":memory:", interval=60)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T21:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T20:59:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_data_fetched_from_server_with_3m_interval(self):
+        repo = DataRepository(":memory:", interval=180)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
+        repo.database.update.assert_called()
+
+        repo = DataRepository(":memory:", interval=180)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:02:00", "2020-02-20T20:01:00", "BTCUSDT")
+        self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_big_data_fetched_from_server_with_3m_interval(self):
+        repo = DataRepository(":memory:", interval=180)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T12:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T11:57:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_data_fetched_from_server_with_5m_interval(self):
+        repo = DataRepository(":memory:", interval=300)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
+        repo.database.update.assert_called()
+
+        repo = DataRepository(":memory:", interval=300)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T17:04:00", "2020-02-20T20:01:00", "BTCUSDT")
+        self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_big_data_fetched_from_server_with_5m_interval(self):
+        repo = DataRepository(":memory:", interval=300)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-21T00:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 288)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T23:55:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_data_fetched_from_server_with_15m_interval(self):
+        repo = DataRepository(":memory:", interval=900)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        # broken data
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T02:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 8)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T01:45:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_big_data_fetched_from_server_with_15m_interval(
+        self,
+    ):
+        repo = DataRepository(":memory:", interval=900)
+        repo.database = MagicMock()
+        repo.database.query.return_value = []
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-22T00:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 192)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-21T23:45:00")
+        repo.database.update.assert_called()
+
+    def test_get_data_should_return_data_fetched_from_database_with_1m_interval(self):
+        repo = DataRepository(":memory:", interval=60)
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:20:00", "BTCUSDT")
+        self.assertEqual(len(result), 200)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T20:19:00")
+
+    def test_get_data_should_return_big_data_fetched_from_database_with_1m_interval(
+        self,
+    ):
+        repo = DataRepository(":memory:", interval=60)
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T21:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T20:59:00")
+
+    def test_get_data_should_return_data_fetched_from_database_with_3m_interval(self):
+        repo = DataRepository(":memory:", interval=180)
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
+
+        repo = DataRepository(":memory:", interval=180)
+        result = repo.get_data("2020-02-20T17:02:00", "2020-02-20T20:01:00", "BTCUSDT")
+        self.assertEqual(len(result), 60)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
+
+    def test_get_data_should_return_big_data_fetched_from_database_with_3m_interval(
+        self,
+    ):
+        repo = DataRepository(":memory:", interval=180)
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T12:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 240)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T11:57:00")
+
+    def test_get_data_should_return_data_fetched_from_database_with_5m_interval(self):
+        repo = DataRepository(":memory:", interval=300)
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
+
+        repo = DataRepository(":memory:", interval=300)
+        result = repo.get_data("2020-02-20T17:04:00", "2020-02-20T20:01:00", "BTCUSDT")
+        self.assertEqual(len(result), 36)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
+
+    def test_get_data_should_return_big_data_fetched_from_database_with_5m_interval(
+        self,
+    ):
+        repo = DataRepository(":memory:", interval=300)
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-21T00:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 288)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T23:55:00")
+
+    def test_get_data_should_return_data_fetched_from_database_with_15m_interval(self):
+        repo = DataRepository(":memory:", interval=900)
+        result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 12)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:45:00")
+
+        repo = DataRepository(":memory:", interval=900)
+        result = repo.get_data("2020-02-20T17:08:00", "2020-02-20T20:06:00", "BTCUSDT")
+        self.assertEqual(len(result), 12)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-20T19:45:00")
+
+    def test_get_data_should_return_big_data_fetched_from_database_with_15m_interval(
+        self,
+    ):
+        repo = DataRepository(":memory:", interval=900)
+        result = repo.get_data("2020-02-20T00:00:00", "2020-02-22T00:00:00", "BTCUSDT")
+        self.assertEqual(len(result), 192)
+        self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
+        self.assertEqual(result[-1]["date_time"], "2020-02-21T23:45:00")
