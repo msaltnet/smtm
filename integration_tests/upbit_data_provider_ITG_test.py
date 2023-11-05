@@ -1,15 +1,10 @@
+import time
 import unittest
 from smtm import UpbitDataProvider
 from unittest.mock import *
 
 
 class UpbitDataProviderIntegrationTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_ITG_get_info_return_correct_data(self):
         dp = UpbitDataProvider()
         info = dp.get_info()
@@ -21,6 +16,8 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("closing_price" in info, True)
         self.assertEqual("acc_price" in info, True)
         self.assertEqual("acc_volume" in info, True)
+        # avoid throttling
+        time.sleep(0.5)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_BTC(self):
         dp = UpbitDataProvider("BTC")
@@ -33,6 +30,8 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("closing_price" in info, True)
         self.assertEqual("acc_price" in info, True)
         self.assertEqual("acc_volume" in info, True)
+        # avoid throttling
+        time.sleep(0.5)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_ETH(self):
         dp = UpbitDataProvider("ETH")
@@ -45,6 +44,8 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("closing_price" in info, True)
         self.assertEqual("acc_price" in info, True)
         self.assertEqual("acc_volume" in info, True)
+        # avoid throttling
+        time.sleep(0.5)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_DOGE(self):
         dp = UpbitDataProvider("DOGE")
@@ -57,6 +58,8 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("closing_price" in info, True)
         self.assertEqual("acc_price" in info, True)
         self.assertEqual("acc_volume" in info, True)
+        # avoid throttling
+        time.sleep(0.5)
 
     def test_ITG_get_info_return_correct_data_when_currency_is_XRP(self):
         dp = UpbitDataProvider("XRP")
@@ -69,3 +72,5 @@ class UpbitDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("closing_price" in info, True)
         self.assertEqual("acc_price" in info, True)
         self.assertEqual("acc_volume" in info, True)
+        # avoid throttling
+        time.sleep(0.5)

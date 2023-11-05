@@ -2,16 +2,10 @@ import unittest
 import os.path
 from smtm import Analyzer
 from unittest.mock import *
-from .data import analyzer_data
+from .data.analyzer_data import get_dummy_data
 
 
 class AnalyzerIntegrationTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_ITG_analyze_trading(self):
         analyzer = Analyzer()
         asset_info = {
@@ -293,7 +287,6 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.update_asset_info()
 
         report = analyzer.get_return_report()
-        print(report)
         self.assertEqual(
             report,
             (
@@ -313,13 +306,13 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer = Analyzer()
 
         # fill info list with dummy data
-        analyzer.request_list = analyzer_data.get_data("request_list")
-        analyzer.result_list = analyzer_data.get_data("result_list")
-        analyzer.info_list = analyzer_data.get_data("info_list")
-        analyzer.asset_info_list = analyzer_data.get_data("asset_info_list")
-        analyzer.score_list = analyzer_data.get_data("score_list")
-        analyzer.spot_list = analyzer_data.get_data("spot_list")
-        analyzer.line_graph_list = analyzer_data.get_data("line_graph_list")
+        analyzer.request_list = get_dummy_data("request_list")
+        analyzer.result_list = get_dummy_data("result_list")
+        analyzer.info_list = get_dummy_data("info_list")
+        analyzer.asset_info_list = get_dummy_data("asset_info_list")
+        analyzer.score_list = get_dummy_data("score_list")
+        analyzer.spot_list = get_dummy_data("spot_list")
+        analyzer.line_graph_list = get_dummy_data("line_graph_list")
         analyzer.start_asset_info = analyzer.asset_info_list[0]
 
         if os.path.isfile(analyzer.OUTPUT_FOLDER + "test_report.jpg"):

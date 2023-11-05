@@ -234,7 +234,7 @@ class VirtualMarketTests(unittest.TestCase):
         # 2000 * 0.048 = 96은 잔고로 가능하지만 수수료를 포함하면 부족한 금액
         dummy_request2 = {"id": "orange", "type": "buy", "price": 2000, "amount": 0.048}
         result = market.handle_request(dummy_request2)
-        self.assertEqual(result, "error!")
+        self.assertEqual(result, "pass")
 
     def test_handle_request_handle_update_balance_correctly(self):
         market = VirtualMarket()

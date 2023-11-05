@@ -133,7 +133,7 @@ class VirtualMarket:
 
         if buy_total_value > self.balance:
             self.logger.info("no money")
-            return "error!"
+            return "pass"
 
         try:
             if request["price"] < self.data[next_index]["low_price"]:

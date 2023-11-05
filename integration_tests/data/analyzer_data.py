@@ -1,4 +1,4 @@
-def get_data(name):
+def get_dummy_data(name):
     if name == "request_list":
         return request_list
     elif name == "result_list":

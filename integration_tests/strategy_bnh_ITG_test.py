@@ -4,12 +4,6 @@ from unittest.mock import *
 
 
 class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_ITG_strategy_buy_and_hold_full(self):
         strategy = StrategyBuyAndHold()
         self.assertEqual(strategy.get_request(), None)

@@ -5,12 +5,6 @@ import requests
 
 
 class BithumbDataProviderIntegrationTests(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_ITG_get_info_return_correct_data(self):
         dp = BithumbDataProvider()
         info = dp.get_info()
@@ -22,4 +16,3 @@ class BithumbDataProviderIntegrationTests(unittest.TestCase):
         self.assertEqual("closing_price" in info, True)
         self.assertEqual("acc_price" in info, True)
         self.assertEqual("acc_volume" in info, True)
-        print(info)

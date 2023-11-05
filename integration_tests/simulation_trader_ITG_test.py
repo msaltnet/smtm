@@ -5,11 +5,11 @@ from unittest.mock import *
 
 class SimulationTraderIntegrationTests(unittest.TestCase):
     def setUp(self):
-        self.interval = Config.candle_interval
+        self.interval_backup = Config.candle_interval
         Config.candle_interval = 60
 
     def tearDown(self):
-        Config.candle_interval = self.interval
+        Config.candle_interval = self.interval_backup
 
     def test_ITG_simulation_trader_full(self):
         trader = SimulationTrader()
