@@ -1,18 +1,28 @@
-"""이동 평균선을 이용한 기본 전략 StrategySma0 클래스"""
+"""이동 평균선을 이용한 기본 전략 StrategySma에 ML을 접목한 전략 클래스"""
 
 import copy
-from datetime import datetime
 import math
+from datetime import datetime
+from decimal import Decimal, ROUND_DOWN
+from sklearn.linear_model import LinearRegression
 import pandas as pd
 import numpy as np
 from .strategy import Strategy
-from .log_manager import LogManager
-from .date_converter import DateConverter
+from ..log_manager import LogManager
+from ..date_converter import DateConverter
 
 
-class StrategySma0(Strategy):
+class StrategySmaMl(Strategy):
     """
-    이동 평균선을 이용한 기본 전략
+    이동 평균선을 이용한 기본 전략에 간단한 ML을 추가
+
+    SHORT, MID, LONG 세개의 이동 평균선을 계산한다
+
+    매수 조건
+    SHORT > MID > LONG 조건을 만족하고, 기울기가 양수일때, 직전 매도 후 WAITING_STABLE 만큼 지났을때
+
+    매도 조건
+    SHORT < MID < LONG 조건을 만족할 때
 
     is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
@@ -31,11 +41,10 @@ class StrategySma0(Strategy):
     MID = 40
     LONG = 60
     STEP = 1
-    NAME = "SMA0-I"
-    CODE = "SMA"
-    STD_K = 25
-    STD_RATIO = 0.00015
-    PREDICT_N = 3
+    NAME = "SMA with ML"
+    CODE = "SML"
+    LR_COUNT = 20
+    WAITING_STABLE = 20
 
     def __init__(self):
         self.is_intialized = False
@@ -54,6 +63,21 @@ class StrategySma0(Strategy):
         self.waiting_requests = {}
         self.cross_info = [{"price": 0, "index": 0}, {"price": 0, "index": 0}]
         self.add_spot_callback = None
+        self.add_line_callback = None
+
+    def initialize(self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None):
+        """
+        예산과 최소 거래 가능 금액을 설정한다
+        """
+        if self.is_intialized:
+            return
+
+        self.is_intialized = True
+        self.budget = budget
+        self.balance = budget
+        self.min_price = min_price
+        self.add_spot_callback = add_spot_callback
+        self.add_line_callback = add_line_callback
 
     def update_trading_info(self, info):
         """새로운 거래 정보를 업데이트
@@ -74,72 +98,8 @@ class StrategySma0(Strategy):
             return
         self.data.append(copy.deepcopy(info))
         self.__update_process(info)
-
-    @staticmethod
-    def _get_deviation_ratio(std, last):
-        if last == 0:
-            return 0
-        ratio = std / last * 1000000
-        return math.floor(ratio) / 1000000
-
-    def __add_drawing_spot(self, date_time, value):
-        if self.add_spot_callback is not None:
-            self.add_spot_callback(date_time, value)
-
-    def __update_process(self, info):
-        try:
-            current_price = info["closing_price"]
-            current_idx = len(self.closing_price_list)
-            self.logger.info(f"# update process :: {current_idx}")
-            self.closing_price_list.append(current_price)
-            feeded_list = copy.deepcopy(self.closing_price_list)
-            for _ in range(self.PREDICT_N):
-                feeded_list.append(current_price)
-
-            sma_short = pd.Series(feeded_list).rolling(self.SHORT).mean().values[-1]
-            sma_mid = pd.Series(feeded_list).rolling(self.MID).mean().values[-1]
-            sma_long_list = pd.Series(feeded_list).rolling(self.LONG).mean().values
-            sma_long = sma_long_list[-1]
-
-            self.logger.debug(f"[SMA] Start current index {current_idx}")
-            if np.isnan(sma_long) or current_idx + 1 < self.LONG:
-                return
-
-            if sma_short > sma_mid > sma_long and self.current_process != "buy":
-                self.current_process = "buy"
-                self.process_unit = (round(self.balance / self.STEP), 0)
-
-                self.logger.debug(
-                    f"[SMA] Try to buy {sma_short} {sma_mid} {sma_long}, price: {self.process_unit[0]}"
-                )
-                if current_idx > self.LONG:
-                    deviation_count = current_idx - self.LONG
-                    if deviation_count > self.STD_K:
-                        deviation_count = self.STD_K
-
-                    std_ratio = self._get_deviation_ratio(
-                        np.std(sma_long_list[-deviation_count:]), sma_long_list[-1]
-                    )
-
-                    if std_ratio > self.STD_RATIO:
-                        self.cross_info[1] = {"price": 0, "index": current_idx}
-                        self.logger.debug(f"[SMA] SKIP BUY !!! === Stand deviation:{std_ratio:.6f}")
-
-                self.__add_drawing_spot(info["date_time"], current_price)
-            elif sma_short < sma_mid < sma_long and self.current_process != "sell":
-                self.current_process = "sell"
-                self.process_unit = (0, self.asset_amount / self.STEP)
-                self.logger.debug(
-                    f"[SMA] Try to sell {sma_short} {sma_mid} {sma_long}, amout: {self.process_unit[1]}"
-                )
-                self.__add_drawing_spot(info["date_time"], current_price)
-            else:
-                return
-            self.cross_info[0] = self.cross_info[1]
-            self.cross_info[1] = {"price": current_price, "index": current_idx}
-
-        except (KeyError, TypeError) as err:
-            self.logger.warning(f"invalid info: {err}")
+        if self.add_line_callback is not None:
+            self.add_line_callback(info["date_time"], info["closing_price"])
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트
@@ -274,6 +234,84 @@ class StrategySma0(Strategy):
         except AttributeError as msg:
             self.logger.error(msg)
 
+    @staticmethod
+    def _get_deviation_ratio(std, last):
+        if last == 0:
+            return 0
+        ratio = std / last * 1000000
+        return math.floor(ratio) / 1000000
+
+    def __add_drawing_spot(self, date_time, value):
+        if self.add_spot_callback is not None:
+            self.add_spot_callback(date_time, value)
+
+    def _get_linear_regression_model(self, price_list):
+        data = np.array(range(len(price_list))).reshape(-1, 1)
+        reg = LinearRegression().fit(data, price_list)
+        self.logger.debug(
+            f"[ML2] coef: {reg.coef_}, int: {reg.intercept_}, score: {reg.score(data, price_list)}"
+        )
+        return reg
+
+    def __update_process(self, info):
+        try:
+            current_price = info["closing_price"]
+            current_idx = len(self.closing_price_list)
+            self.logger.info(f"# update process :: {current_idx}")
+            self.closing_price_list.append(current_price)
+
+            sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
+            sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
+            sma_long_list = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            sma_long = sma_long_list[-1]
+
+            if np.isnan(sma_long) or current_idx <= self.LONG:
+                return
+
+            # linear regression
+            regression_count = self.LR_COUNT
+
+            if (current_idx - self.LONG) <= self.LR_COUNT:
+                regression_count = current_idx - self.LONG
+
+            if regression_count > 1:
+                linear_model = self._get_linear_regression_model(sma_long_list[-regression_count:])
+                self.logger.debug(f"[SML] Linear Regression Slope: {linear_model.coef_}")
+            else:
+                linear_model = None
+
+            if (sma_short > sma_long > sma_mid) and self.current_process != "buy":
+                self.current_process = "buy"
+                self.process_unit = (round(self.balance / self.STEP), 0)
+
+                self.logger.debug(
+                    f"[SML] Try to buy {sma_short} {sma_mid} {sma_long}, price: {self.process_unit[0]}, previous: {self.cross_info[0]}"
+                )
+
+                prev_sell_idx = self.cross_info[1]["index"]
+                if linear_model is not None and linear_model.coef_ <= 0:
+                    self.cross_info[1] = {"price": 0, "index": current_idx}
+                    self.logger.debug("[SML] SKIP BUY !!! === Linear Regression Slope")
+                elif prev_sell_idx + self.WAITING_STABLE > current_idx:
+                    self.cross_info[1] = {"price": 0, "index": current_idx}
+                    self.logger.debug(
+                        f"[SML] SKIP BUY !!! === Too early, before: {current_idx - prev_sell_idx}"
+                    )
+            elif sma_short < sma_mid < sma_long and self.current_process != "sell":
+                self.current_process = "sell"
+                self.process_unit = (0, self.asset_amount / self.STEP)
+                self.logger.debug(
+                    f"[SML] Try to sell {sma_short} {sma_mid} {sma_long}, amout: {self.process_unit[1]}"
+                )
+            else:
+                return
+            self.__add_drawing_spot(info["date_time"], current_price)
+            self.cross_info[0] = self.cross_info[1]
+            self.cross_info[1] = {"price": current_price, "index": current_idx}
+
+        except (KeyError, TypeError) as err:
+            self.logger.warning(f"invalid info: {err}")
+
     def __create_buy(self):
         budget = self.process_unit[0]
         if budget > self.balance:
@@ -282,10 +320,10 @@ class StrategySma0(Strategy):
         budget -= budget * self.COMMISSION_RATIO
         price = float(self.data[-1]["closing_price"])
         amount = budget / price
+        final_value = amount * price
 
         # 소숫점 4자리 아래 버림
-        amount = math.floor(amount * 10000) / 10000
-        final_value = amount * price
+        amount = Decimal(str(amount)).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
 
         if self.min_price > budget or self.process_unit[0] <= 0 or final_value > self.balance:
             self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
@@ -301,8 +339,8 @@ class StrategySma0(Strategy):
         return {
             "id": DateConverter.timestamp_id(),
             "type": "buy",
-            "price": price,
-            "amount": amount,
+            "price": str(price),
+            "amount": str(amount.normalize()),
         }
 
     def __create_sell(self):
@@ -311,9 +349,9 @@ class StrategySma0(Strategy):
             amount = self.asset_amount
 
         # 소숫점 4자리 아래 버림
-        amount = math.floor(amount * 10000) / 10000
+        amount = Decimal(str(amount)).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
 
-        price = float(self.data[-1]["closing_price"])
+        price = Decimal(self.data[-1]["closing_price"])
         total_value = price * amount
 
         if amount <= 0 or total_value < self.min_price:
@@ -330,19 +368,6 @@ class StrategySma0(Strategy):
         return {
             "id": DateConverter.timestamp_id(),
             "type": "sell",
-            "price": price,
-            "amount": amount,
+            "price": str(price.normalize()),
+            "amount": str(amount.normalize()),
         }
-
-    def initialize(self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None):
-        """
-        예산과 최소 거래 가능 금액을 설정한다
-        """
-        if self.is_intialized:
-            return
-
-        self.is_intialized = True
-        self.budget = budget
-        self.balance = budget
-        self.min_price = min_price
-        self.add_spot_callback = add_spot_callback

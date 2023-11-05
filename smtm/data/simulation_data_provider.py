@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from .data_provider import DataProvider
-from .log_manager import LogManager
+from ..log_manager import LogManager
 from .data_repository import DataRepository
 
 

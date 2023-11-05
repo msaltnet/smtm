@@ -12,9 +12,9 @@ import hmac
 import hashlib
 import requests
 from dotenv import load_dotenv
-from .log_manager import LogManager
+from ..log_manager import LogManager
 from .trader import Trader
-from .worker import Worker
+from ..worker import Worker
 
 load_dotenv()
 

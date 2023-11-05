@@ -4,8 +4,8 @@ import copy
 import math
 from datetime import datetime
 from .strategy import Strategy
-from .log_manager import LogManager
-from .date_converter import DateConverter
+from ..log_manager import LogManager
+from ..date_converter import DateConverter
 
 
 class StrategyBuyAndHold(Strategy):

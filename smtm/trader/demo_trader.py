@@ -2,9 +2,9 @@
 
 from datetime import datetime
 import requests
-from .log_manager import LogManager
+from ..log_manager import LogManager
 from .trader import Trader
-from .worker import Worker
+from ..worker import Worker
 
 
 class DemoTrader(Trader):

@@ -21,10 +21,10 @@ python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy SMA --curr
 import argparse
 from argparse import RawTextHelpFormatter
 import sys
-from .simulator import Simulator
-from .controller import Controller
-from .telegram_controller import TelegramController
-from .mass_simulator import MassSimulator
+from .controller.simulator import Simulator
+from .controller.controller import Controller
+from .controller.telegram_controller import TelegramController
+from .controller.mass_simulator import MassSimulator
 from .log_manager import LogManager
 from .__init__ import __version__
 

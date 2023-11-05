@@ -5,8 +5,8 @@ import copy
 import time
 from datetime import datetime, timedelta
 import requests
-from .log_manager import LogManager
-from .date_converter import DateConverter
+from ..log_manager import LogManager
+from ..date_converter import DateConverter
 from .database import Database
 
 

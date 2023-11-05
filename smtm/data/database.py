@@ -1,6 +1,6 @@
 """거래 데이터의 데이터베이스 역할의 Database 클래스"""
 import sqlite3
-from .log_manager import LogManager
+from ..log_manager import LogManager
 
 
 class Database:

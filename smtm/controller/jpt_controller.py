@@ -3,15 +3,15 @@
 Jupyter notebook에서 사용하기 좋게 만든 자동 거래 시스템 컨트롤 모듈
 """
 from IPython.display import Image, display
-from .config import Config
-from .log_manager import LogManager
-from .analyzer import Analyzer
-from .upbit_trader import UpbitTrader
-from .upbit_data_provider import UpbitDataProvider
-from .bithumb_trader import BithumbTrader
-from .bithumb_data_provider import BithumbDataProvider
-from .strategy_factory import StrategyFactory
-from .operator import Operator
+from ..config import Config
+from ..log_manager import LogManager
+from ..analyzer import Analyzer
+from ..trader.upbit_trader import UpbitTrader
+from ..data.upbit_data_provider import UpbitDataProvider
+from ..trader.bithumb_trader import BithumbTrader
+from ..data.bithumb_data_provider import BithumbDataProvider
+from ..strategy.strategy_factory import StrategyFactory
+from ..operator import Operator
 
 
 class JptController:

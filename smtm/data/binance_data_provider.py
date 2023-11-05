@@ -2,9 +2,9 @@
 
 from datetime import datetime, timezone, timedelta
 import requests
-from .date_converter import DateConverter
+from ..date_converter import DateConverter
 from .data_provider import DataProvider
-from .log_manager import LogManager
+from ..log_manager import LogManager
 
 
 class BinanceDataProvider(DataProvider):

@@ -1,6 +1,6 @@
 """시뮬레이션을 위한 가상 거래를 처리해주는 SimulationTrader 클래스"""
 
-from .log_manager import LogManager
+from ..log_manager import LogManager
 from .trader import Trader
 from .virtual_market import VirtualMarket
 

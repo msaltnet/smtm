@@ -8,17 +8,17 @@ import json
 from urllib import parse
 import requests
 from dotenv import load_dotenv
-from .config import Config
-from .log_manager import LogManager
-from .analyzer import Analyzer
-from .upbit_trader import UpbitTrader
-from .upbit_data_provider import UpbitDataProvider
-from .bithumb_trader import BithumbTrader
-from .bithumb_data_provider import BithumbDataProvider
-from .strategy_factory import StrategyFactory
-from .operator import Operator
-from .worker import Worker
-from .demo_trader import DemoTrader
+from ..config import Config
+from ..log_manager import LogManager
+from ..analyzer import Analyzer
+from ..trader.upbit_trader import UpbitTrader
+from ..data.upbit_data_provider import UpbitDataProvider
+from ..trader.bithumb_trader import BithumbTrader
+from ..data.bithumb_data_provider import BithumbDataProvider
+from ..strategy.strategy_factory import StrategyFactory
+from ..operator import Operator
+from ..worker import Worker
+from ..trader.demo_trader import DemoTrader
 
 load_dotenv()
 

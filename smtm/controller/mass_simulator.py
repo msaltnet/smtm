@@ -14,14 +14,14 @@ import psutil
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from .config import Config
-from .log_manager import LogManager
-from .analyzer import Analyzer
-from .strategy_factory import StrategyFactory
-from .simulation_operator import SimulationOperator
-from .simulation_trader import SimulationTrader
-from .date_converter import DateConverter
-from .simulation_data_provider import SimulationDataProvider
+from ..config import Config
+from ..log_manager import LogManager
+from ..analyzer import Analyzer
+from ..strategy.strategy_factory import StrategyFactory
+from ..simulation_operator import SimulationOperator
+from ..trader.simulation_trader import SimulationTrader
+from ..date_converter import DateConverter
+from ..data.simulation_data_provider import SimulationDataProvider
 
 
 class MassSimulator:

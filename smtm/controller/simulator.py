@@ -2,14 +2,14 @@
 import signal
 import time
 
-from .config import Config
-from .log_manager import LogManager
-from .analyzer import Analyzer
-from .simulation_operator import SimulationOperator
-from .simulation_trader import SimulationTrader
-from .date_converter import DateConverter
-from .simulation_data_provider import SimulationDataProvider
-from .strategy_factory import StrategyFactory
+from ..config import Config
+from ..log_manager import LogManager
+from ..analyzer import Analyzer
+from ..simulation_operator import SimulationOperator
+from ..trader.simulation_trader import SimulationTrader
+from ..date_converter import DateConverter
+from ..data.simulation_data_provider import SimulationDataProvider
+from ..strategy.strategy_factory import StrategyFactory
 
 
 class Simulator:

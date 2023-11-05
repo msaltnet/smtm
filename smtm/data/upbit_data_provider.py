@@ -2,7 +2,7 @@
 
 import requests
 from .data_provider import DataProvider
-from .log_manager import LogManager
+from ..log_manager import LogManager
 
 
 class UpbitDataProvider(DataProvider):
