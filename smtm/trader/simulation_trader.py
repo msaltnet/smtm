@@ -1,5 +1,6 @@
 """시뮬레이션을 위한 가상 거래를 처리해주는 SimulationTrader 클래스"""
 
+from ..config import Config
 from ..log_manager import LogManager
 from .trader import Trader
 from .virtual_market import VirtualMarket
@@ -15,19 +16,24 @@ class SimulationTrader(Trader):
     amount: 거래 수량
     """
 
-    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"}
+    AVAILABLE_CURRENCY = {
+        "upbit" : {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"},
+        "binance" : {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "DOGE": "DOGEUSDT", "XRP": "XRPUSDT"}
+    }
     NAME = "Simulation"
 
     def __init__(self, currency="BTC", interval=60):
-        if currency not in self.AVAILABLE_CURRENCY:
+        if Config.simulation_source not in self.AVAILABLE_CURRENCY.keys():
+            raise UserWarning(f"not supported source: {Config.simulation_source}")
+        if currency not in self.AVAILABLE_CURRENCY[Config.simulation_source]:
             raise UserWarning(f"not supported currency: {currency}")
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.market = VirtualMarket(market=self.AVAILABLE_CURRENCY[currency], interval=interval)
+        self.v_market = VirtualMarket(market=self.AVAILABLE_CURRENCY[Config.simulation_source][currency], interval=interval)
         self.is_initialized = False
 
     def initialize_simulation(self, end, count, budget):
         """시뮬레이션기간, 횟수, 예산을 초기화 한다"""
-        self.market.initialize(end, count, budget)
+        self.v_market.initialize(end, count, budget)
         self.is_initialized = True
 
     def send_request(self, request_list, callback):
@@ -59,7 +65,7 @@ class SimulationTrader(Trader):
             raise UserWarning("Not initialzed")
 
         try:
-            result = self.market.handle_request(request_list[0])
+            result = self.v_market.handle_request(request_list[0])
             if result is not None:
                 callback(result)
         except (TypeError, AttributeError) as msg:
@@ -82,7 +88,7 @@ class SimulationTrader(Trader):
             raise UserWarning("Not initialzed")
 
         try:
-            return self.market.get_balance()
+            return self.v_market.get_balance()
         except (TypeError, AttributeError) as msg:
             self.logger.error(f"invalid state {msg}")
             raise UserWarning("invalid state") from msg

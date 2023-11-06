@@ -1,6 +1,7 @@
 """시뮬레이션을 위한 DataProvider 구현체 SimulationDataProvider 클래스"""
 
 from datetime import datetime, timedelta
+from ..config import Config
 from .data_provider import DataProvider
 from ..log_manager import LogManager
 from .data_repository import DataRepository
@@ -9,18 +10,23 @@ from .data_repository import DataRepository
 class SimulationDataProvider(DataProvider):
     """거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스"""
 
-    AVAILABLE_CURRENCY = {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"}
+    AVAILABLE_CURRENCY = {
+        "upbit" : {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"},
+        "binance" : {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "DOGE": "DOGEUSDT", "XRP": "XRPUSDT"}
+    }
 
     def __init__(self, currency="BTC", interval=60):
-        if currency not in self.AVAILABLE_CURRENCY:
+        if Config.simulation_source not in self.AVAILABLE_CURRENCY.keys():
+            raise UserWarning(f"not supported source: {Config.simulation_source}")
+        if currency not in self.AVAILABLE_CURRENCY[Config.simulation_source]:
             raise UserWarning(f"not supported currency: {currency}")
+
         self.logger = LogManager.get_logger(__class__.__name__)
         self.repo = DataRepository("smtm.db", interval=interval)
         self.interval_min = interval / 60
         self.data = []
         self.index = 0
-
-        self.market = self.AVAILABLE_CURRENCY[currency]
+        self.market = self.AVAILABLE_CURRENCY[Config.simulation_source][currency]
 
     def initialize_simulation(self, end=None, count=100):
         """DataRepository를 통해서 데이터를 가져와서 초기화한다"""

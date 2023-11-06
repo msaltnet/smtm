@@ -1,4 +1,4 @@
-"""업비트 거래소의 과거 거래 정보를 이용한 가상 거래소 역할의 VirtualMarket 클래스"""
+"""Config에 설정된 거래소의 과거 거래 정보를 이용한 가상 거래소 역할의 VirtualMarket 클래스"""
 from datetime import datetime, timedelta
 from ..config import Config
 from ..log_manager import LogManager
@@ -17,8 +17,6 @@ class VirtualMarket:
     commission_ratio: 수수료율
     asset: 자산 목록, 마켓이름을 키값으로 갖고 (평균 매입 가격, 수량)을 갖는 딕셔너리
     """
-
-    URL = "https://api.upbit.com/v1/candles/minutes/1"
 
     def __init__(self, market="KRW-BTC", interval=60):
         self.logger = LogManager.get_logger(__class__.__name__)
