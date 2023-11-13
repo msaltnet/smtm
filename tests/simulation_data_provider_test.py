@@ -30,7 +30,7 @@ class SimulationDataProviderTests(unittest.TestCase):
         dp = SimulationDataProvider()
         dp.index = 0
         dp.data = dummy_data
-        self.assertEqual(dp.get_info(), dummy_data[0])
-        self.assertEqual(dp.get_info(), dummy_data[1])
-        self.assertEqual(dp.get_info(), dummy_data[2])
+        self.assertEqual(dp.get_info()[0], dummy_data[0])
+        self.assertEqual(dp.get_info()[0], dummy_data[1])
+        self.assertEqual(dp.get_info()[0], dummy_data[2])
         self.assertEqual(dp.get_info(), None)

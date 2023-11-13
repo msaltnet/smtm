@@ -57,7 +57,7 @@ class BinanceDataProvider(DataProvider):
         }
         """
         data = self._get_data_from_server()
-        return self._create_candle_info(data[0])
+        return [self._create_candle_info(data[0])]
 
     def _create_candle_info(self, data):
         """
@@ -81,6 +81,7 @@ class BinanceDataProvider(DataProvider):
         """
         try:
             return {
+                "type": "primary_candle",
                 "market": self.market,
                 "date_time": self._get_kst_time_from_unix_time_ms(data[0]),
                 "opening_price": float(data[1]),

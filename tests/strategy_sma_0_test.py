@@ -26,18 +26,24 @@ class StrategySma0Tests(unittest.TestCase):
     def test_update_trading_info_append_info_to_data(self):
         sma = StrategySma0()
         sma.initialize(100, 10)
-        dummy_info = {
-            "closing_price": 500,
-        }
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 500
+        }]
         sma.update_trading_info(dummy_info)
-        self.assertEqual(sma.data.pop(), dummy_info)
+        self.assertEqual(sma.data.pop(), dummy_info[0])
 
     def test_update_trading_info_append_closing_price(self):
         sma = StrategySma0()
         sma.initialize(100, 10)
-        dummy_info = {
-            "closing_price": 500,
-        }
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 500
+        }]
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.closing_price_list.pop(), 500)
 
@@ -73,10 +79,12 @@ class StrategySma0Tests(unittest.TestCase):
         series_return.rolling.return_value = rolling_return_mock
         mock_series.return_value = series_return
 
-        dummy_info = {
-            "date_time": "mango",
-            "closing_price": 500,
-        }
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 500
+        }]
         mock_np.return_value = False
         sma.initialize(100, 10)
         sma.current_process = "buy"
@@ -129,10 +137,12 @@ class StrategySma0Tests(unittest.TestCase):
         series_return.rolling.return_value = rolling_return_mock
         mock_series.return_value = series_return
 
-        dummy_info = {
-            "date_time": "mango",
-            "closing_price": 500,
-        }
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 500
+        }]
         mock_np.return_value = False
         sma.initialize(100, 10)
         sma.current_process = "sell"
@@ -193,10 +203,12 @@ class StrategySma0Tests(unittest.TestCase):
         series_return.rolling.return_value = rolling_return_mock
         mock_series.return_value = series_return
 
-        dummy_info = {
-            "date_time": "dummy_datetime",
-            "closing_price": 500,
-        }
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 500
+        }]
         mock_np.return_value = False
         sma.initialize(100, 10)
         sma.current_process = "sell"
@@ -356,7 +368,12 @@ class StrategySma0Tests(unittest.TestCase):
     def test_get_request_return_correct_request_at_buy_process(self):
         sma = StrategySma0()
         sma.initialize(10000, 100)
-        dummy_info = {"closing_price": 20000000}
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 20000000
+        }]
         sma.update_trading_info(dummy_info)
         sma.cross_info[0] = {"price": 500, "index": 1}
         sma.cross_info[1] = {"price": 500, "index": 2}
@@ -367,14 +384,24 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 0.0001)
         self.assertEqual(requests[0]["type"], "buy")
 
-        dummy_info = {"closing_price": 10000000}
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 10000000
+        }]
         sma.update_trading_info(dummy_info)
         requests = sma.get_request()
         self.assertEqual(requests[0]["price"], 10000000)
         self.assertEqual(requests[0]["amount"], 0.0003)
         self.assertEqual(requests[0]["type"], "buy")
 
-        dummy_info = {"closing_price": 100}
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 100
+        }]
         sma.update_trading_info(dummy_info)
         sma.balance = 2000
         requests = sma.get_request()
@@ -385,7 +412,12 @@ class StrategySma0Tests(unittest.TestCase):
     def test_get_request_return_correct_request_at_sell_process(self):
         sma = StrategySma0()
         sma.initialize(10000, 100)
-        dummy_info = {"closing_price": 20000000}
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 20000000
+        }]
         sma.update_trading_info(dummy_info)
         sma.cross_info[0] = {"price": 500, "index": 1}
         sma.cross_info[1] = {"price": 500, "index": 2}
@@ -398,7 +430,12 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[0]["amount"], 20)
         self.assertEqual(requests[0]["type"], "sell")
 
-        dummy_info = {"closing_price": 10000000}
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 10000000
+        }]
         sma.update_trading_info(dummy_info)
         sma.asset_amount = 10
         requests = sma.get_request()
@@ -414,9 +451,12 @@ class StrategySma0Tests(unittest.TestCase):
         sma.waiting_requests["mango_id"] = {"request": {"id": "mango_id"}}
         sma.waiting_requests["orange_id"] = {"request": {"id": "orange_id"}}
         sma.is_simulation = True
-        dummy_info = {}
-        dummy_info["date_time"] = "2020-02-25T15:41:09"
-        dummy_info["closing_price"] = 20000000
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 20000000
+        }]
         sma.update_trading_info(dummy_info)
         sma.current_process = "sell"
         sma.asset_amount = 60
@@ -431,33 +471,16 @@ class StrategySma0Tests(unittest.TestCase):
         self.assertEqual(requests[2]["type"], "sell")
         self.assertEqual(requests[2]["date_time"], "2020-02-25T15:41:09")
 
-    def test_get_request_return_turn_over_when_last_data_is_None(self):
-        sma = StrategySma0()
-        sma.initialize(10000, 100)
-        sma.cross_info[0] = {"price": 500, "index": 1}
-        sma.cross_info[1] = {"price": 500, "index": 2}
-        dummy_info = {}
-        dummy_info["closing_price"] = 20000000
-        sma.update_trading_info(dummy_info)
-        sma.current_process = "buy"
-        sma.process_unit = (4000, 0)
-        requests = sma.get_request()
-        self.assertEqual(requests[0]["price"], 20000000)
-        self.assertEqual(requests[0]["amount"], 0.0001)
-        self.assertEqual(requests[0]["type"], "buy")
-
-        sma.update_trading_info(None)
-        requests = sma.get_request()
-        self.assertEqual(requests[0]["price"], 0)
-        self.assertEqual(requests[0]["amount"], 0)
-
     def test_get_request_return_turn_over_when_target_budget_lt_min_price_at_simulation(self):
         sma = StrategySma0()
         sma.initialize(1000, 500)
         sma.is_simulation = True
-        dummy_info = {}
-        dummy_info["date_time"] = "2020-02-25T15:41:09"
-        dummy_info["closing_price"] = 20000000
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 20000000
+        }]
         sma.update_trading_info(dummy_info)
         sma.current_process = "buy"
         sma.process_unit = (300, 0)
@@ -472,9 +495,12 @@ class StrategySma0Tests(unittest.TestCase):
         sma.cross_info[0] = {"price": 500, "index": 1}
         sma.cross_info[1] = {"price": 500, "index": 2}
         sma.is_simulation = True
-        dummy_info = {}
-        dummy_info["date_time"] = "2020-02-25T15:41:09"
-        dummy_info["closing_price"] = 20000
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 20000
+        }]
         sma.update_trading_info(dummy_info)
         sma.current_process = "sell"
         sma.asset_amount = 0

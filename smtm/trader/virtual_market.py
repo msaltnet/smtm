@@ -111,7 +111,7 @@ class VirtualMarket:
                 "state": "done",
             }
 
-        if request["price"] == 0 or request["amount"] == 0:
+        if float(request["price"]) == 0 or float(request["amount"]) == 0:
             self.logger.info("turn over")
             return None
 
@@ -125,7 +125,9 @@ class VirtualMarket:
         return result
 
     def __handle_buy_request(self, request, next_index, dt):
-        buy_value = request["price"] * request["amount"]
+        price = float(request["price"])
+        amount = float(request["amount"])
+        buy_value = price * amount
         buy_total_value = buy_value * (1 + self.commission_ratio)
         old_balance = self.balance
 
@@ -134,19 +136,19 @@ class VirtualMarket:
             return "pass"
 
         try:
-            if request["price"] < self.data[next_index]["low_price"]:
+            if price < self.data[next_index]["low_price"]:
                 self.logger.info("not matched")
                 return "pass"
 
             name = self.data[next_index]["market"]
             if name in self.asset:
                 asset = self.asset[name]
-                new_amount = asset[1] + request["amount"]
+                new_amount = asset[1] + amount
                 new_amount = round(new_amount, 6)
-                new_value = (request["amount"] * request["price"]) + (asset[0] * asset[1])
+                new_value = (amount * price) + (asset[0] * asset[1])
                 self.asset[name] = (round(new_value / new_amount), new_amount)
             else:
-                self.asset[name] = (request["price"], request["amount"])
+                self.asset[name] = (price, amount)
 
             self.balance -= buy_total_value
             self.balance = round(self.balance)
@@ -166,6 +168,8 @@ class VirtualMarket:
             return "error!"
 
     def __handle_sell_request(self, request, next_index, dt):
+        price = float(request["price"])
+        amount = float(request["amount"])
         old_balance = self.balance
         try:
             name = self.data[next_index]["market"]
@@ -173,15 +177,15 @@ class VirtualMarket:
                 self.logger.info("asset empty")
                 return "error!"
 
-            if request["price"] >= self.data[next_index]["high_price"]:
+            if price >= self.data[next_index]["high_price"]:
                 self.logger.info("not matched")
                 return "pass"
 
-            sell_amount = request["amount"]
-            if request["amount"] > self.asset[name][1]:
+            sell_amount = amount
+            if amount > self.asset[name][1]:
                 sell_amount = self.asset[name][1]
                 self.logger.warning(
-                    f"sell request is bigger than asset {request['amount']} > {sell_amount}"
+                    f"sell request is bigger than asset {amount} > {sell_amount}"
                 )
                 del self.asset[name]
             else:
@@ -192,8 +196,8 @@ class VirtualMarket:
                     new_amount,
                 )
 
-            sell_value = sell_amount * request["price"]
-            self.balance += sell_amount * request["price"] * (1 - self.commission_ratio)
+            sell_value = sell_amount * price
+            self.balance += sell_amount * price * (1 - self.commission_ratio)
             self.balance = round(self.balance)
             self.__print_balance_info("sell", old_balance, self.balance, sell_value)
             return {

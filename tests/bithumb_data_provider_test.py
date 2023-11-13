@@ -23,14 +23,14 @@ class BithumbDataProviderTests(unittest.TestCase):
 
         info = dp.get_info()
 
-        self.assertEqual(info["market"], "BTC")
-        self.assertEqual(info["date_time"], "2021-05-01T22:08:00")
-        self.assertEqual(info["opening_price"], 68934000)
-        self.assertEqual(info["high_price"], 68980000)
-        self.assertEqual(info["low_price"], 68914000)
-        self.assertEqual(info["closing_price"], 68933000)
-        self.assertEqual(info["acc_price"], 0)
-        self.assertEqual(info["acc_volume"], 0.69114496)
+        self.assertEqual(info[0]["market"], "BTC")
+        self.assertEqual(info[0]["date_time"], "2021-05-01T22:08:00")
+        self.assertEqual(info[0]["opening_price"], 68934000)
+        self.assertEqual(info[0]["high_price"], 68980000)
+        self.assertEqual(info[0]["low_price"], 68914000)
+        self.assertEqual(info[0]["closing_price"], 68933000)
+        self.assertEqual(info[0]["acc_price"], 0)
+        self.assertEqual(info[0]["acc_volume"], 0.69114496)
         mock_get.assert_called_once_with(dp.url)
         self.assertEqual(dp.url, "https://api.bithumb.com/public/candlestick/BTC_KRW/1m")
 

@@ -83,7 +83,16 @@ class Analyzer:
             2: 매매 결과
             3: 수익률 정보
         """
-        new = copy.deepcopy(info)
+        target = None
+        for item in info:
+            if item["type"] == "primary_candle":
+                target = item
+                break
+
+        if target is None:
+            return
+
+        new = copy.deepcopy(target)
         new["kind"] = 0
         self.info_list.append(new)
         self.make_periodic_record()

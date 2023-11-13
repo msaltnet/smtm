@@ -7,7 +7,8 @@ import requests
 class BithumbDataProviderIntegrationTests(unittest.TestCase):
     def test_ITG_get_info_return_correct_data(self):
         dp = BithumbDataProvider()
-        info = dp.get_info()
+        info = dp.get_info()[0]
+        self.assertEqual(info["type"], "primary_candle")
         self.assertEqual("market" in info, True)
         self.assertEqual("date_time" in info, True)
         self.assertEqual("opening_price" in info, True)

@@ -2,7 +2,7 @@
     "title": "SMA_6H_week_mix",
     "description": "mass simulation test 0514-23, 0614-21, 0719-26, 0804-11",
     "budget": 5000000,
-    "strategy": "1",
+    "strategy": "SMA",
     "interval": 1e-06,
     "currency": "BTC",
     "period_list": [

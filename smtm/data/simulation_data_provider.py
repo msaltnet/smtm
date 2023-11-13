@@ -59,4 +59,5 @@ class SimulationDataProvider(DataProvider):
 
         self.index = now + 1
         self.logger.info(f'[DATA] @ {self.data[now]["date_time"]}')
-        return self.data[now]
+        self.data[now]["type"] = "primary_candle"
+        return [self.data[now]]

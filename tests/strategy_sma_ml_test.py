@@ -26,11 +26,14 @@ class StrategySmaMlTests(unittest.TestCase):
     def test_update_trading_info_append_info_to_data(self):
         sma = StrategySmaMl()
         sma.initialize(100, 10)
-        dummy_info = {
-            "closing_price": 500,
-        }
+        dummy_info = [{
+            "type": "primary_candle",
+            "market": "orange",
+            "date_time": "2020-02-25T15:41:09",
+            "closing_price": 500
+        }]
         sma.update_trading_info(dummy_info)
-        self.assertEqual(sma.data.pop(), dummy_info)
+        self.assertEqual(sma.data.pop(), dummy_info[0])
 
     def test_update_trading_info_ignore_info_when_not_yet_initialzed(self):
         sma = StrategySmaMl()

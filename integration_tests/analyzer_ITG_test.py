@@ -24,16 +24,19 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.make_start_point()
 
         # 1턴 정보 업데이트
-        info = {
-            "market": "KRW-BTC",
-            "date_time": "2020-12-21T01:13:00",
-            "opening_price": 26155000.0,
-            "high_price": 26158000.0,
-            "low_price": 26132000.0,
-            "closing_price": 26145000.0,
-            "acc_price": 116448937.40051,
-            "acc_volume": 4.45311465,
-        }
+        info = [
+            {
+                "type": "primary_candle",
+                "market": "KRW-BTC",
+                "date_time": "2020-12-21T01:13:00",
+                "opening_price": 26155000.0,
+                "high_price": 26158000.0,
+                "low_price": 26132000.0,
+                "closing_price": 26145000.0,
+                "acc_price": 116448937.40051,
+                "acc_volume": 4.45311465,
+            }
+        ]
         analyzer.put_trading_info(info)
         analyzer.add_value_for_line_graph("2020-12-21T01:13:00", 26132000.0)
         analyzer.add_value_for_line_graph("2020-12-21T01:13:01", 26158000.0)
@@ -76,16 +79,19 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.update_asset_info()
 
         # 2턴 정보 업데이트
-        info = {
-            "market": "KRW-BTC",
-            "date_time": "2020-12-21T01:14:00",
-            "opening_price": 26145000.0,
-            "high_price": 26153000.0,
-            "low_price": 26132000.0,
-            "closing_price": 26132000.0,
-            "acc_price": 57246220.95838,
-            "acc_volume": 2.18982408,
-        }
+        info = [
+            {
+                "type": "primary_candle",
+                "market": "KRW-BTC",
+                "date_time": "2020-12-21T01:14:00",
+                "opening_price": 26145000.0,
+                "high_price": 26153000.0,
+                "low_price": 26132000.0,
+                "closing_price": 26132000.0,
+                "acc_price": 57246220.95838,
+                "acc_volume": 2.18982408,
+            }
+        ]
         analyzer.put_trading_info(info)
 
         analyzer.add_drawing_spot("2020-12-21T01:14:00", 26020000.0)
@@ -132,16 +138,19 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.update_asset_info()
 
         # 3턴 정보 업데이트
-        info = {
-            "market": "KRW-BTC",
-            "date_time": "2020-12-21T01:15:00",
-            "opening_price": 26148000.0,
-            "high_price": 26153000.0,
-            "low_price": 26100000.0,
-            "closing_price": 26100000.0,
-            "acc_price": 213292694.20168,
-            "acc_volume": 8.16909933,
-        }
+        info = [
+            {
+                "type": "primary_candle",
+                "market": "KRW-BTC",
+                "date_time": "2020-12-21T01:15:00",
+                "opening_price": 26148000.0,
+                "high_price": 26153000.0,
+                "low_price": 26100000.0,
+                "closing_price": 26100000.0,
+                "acc_price": 213292694.20168,
+                "acc_volume": 8.16909933,
+            }
+        ]
         analyzer.put_trading_info(info)
 
         requests = [
@@ -182,16 +191,19 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.update_asset_info()
 
         # 4턴 정보 업데이트
-        info = {
-            "market": "KRW-BTC",
-            "date_time": "2020-12-21T01:16:00",
-            "opening_price": 26101000.0,
-            "high_price": 26114000.0,
-            "low_price": 26055000.0,
-            "closing_price": 26083000.0,
-            "acc_price": 164768010.7268,
-            "acc_volume": 6.31952174,
-        }
+        info = [
+            {
+                "type": "primary_candle",
+                "market": "KRW-BTC",
+                "date_time": "2020-12-21T01:16:00",
+                "opening_price": 26101000.0,
+                "high_price": 26114000.0,
+                "low_price": 26055000.0,
+                "closing_price": 26083000.0,
+                "acc_price": 164768010.7268,
+                "acc_volume": 6.31952174,
+            }
+        ]
         analyzer.put_trading_info(info)
 
         requests = [
@@ -232,16 +244,19 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.update_asset_info()
 
         # 5턴 정보 업데이트
-        info = {
-            "market": "KRW-BTC",
-            "date_time": "2020-12-21T01:17:00",
-            "opening_price": 26055000.0,
-            "high_price": 26085000.0,
-            "low_price": 26055000.0,
-            "closing_price": 26061000.0,
-            "acc_price": 42703199.9218,
-            "acc_volume": 1.63862358,
-        }
+        info = [
+            {
+                "type": "primary_candle",
+                "market": "KRW-BTC",
+                "date_time": "2020-12-21T01:17:00",
+                "opening_price": 26055000.0,
+                "high_price": 26085000.0,
+                "low_price": 26055000.0,
+                "closing_price": 26061000.0,
+                "acc_price": 42703199.9218,
+                "acc_volume": 1.63862358,
+            }
+        ]
         analyzer.put_trading_info(info)
 
         analyzer.add_drawing_spot("2020-12-21T01:17:00", 25061000.0)

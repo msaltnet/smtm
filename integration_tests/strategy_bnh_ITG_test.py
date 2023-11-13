@@ -10,16 +10,19 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
         strategy.initialize(50000, 5000)
         # 거래 정보 입력 - 1
         strategy.update_trading_info(
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-04-30T14:51:00",
-                "opening_price": 11288000.0,
-                "high_price": 11304000.0,
-                "low_price": 11282000.0,
-                "closing_price": 11304000.0,
-                "acc_price": 587101574.8949,
-                "acc_volume": 51.97606868,
-            }
+            [
+                {
+                    "type": "primary_candle",
+                    "market": "KRW-BTC",
+                    "date_time": "2020-04-30T14:51:00",
+                    "opening_price": 11288000.0,
+                    "high_price": 11304000.0,
+                    "low_price": 11282000.0,
+                    "closing_price": 11304000.0,
+                    "acc_price": 587101574.8949,
+                    "acc_volume": 51.97606868,
+                }
+            ]
         )
         # 거래 요청 정보 생성
         request = strategy.get_request()
@@ -54,16 +57,19 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
 
         # 거래 정보 입력 - 2
         strategy.update_trading_info(
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-04-30T14:52:00",
-                "opening_price": 11304000.0,
-                "high_price": 21304000.0,
-                "low_price": 11304000.0,
-                "closing_price": 21304000.0,
-                "acc_price": 587101574.8949,
-                "acc_volume": 51.97606868,
-            }
+            [
+                {
+                    "type": "primary_candle",
+                    "market": "KRW-BTC",
+                    "date_time": "2020-04-30T14:52:00",
+                    "opening_price": 11304000.0,
+                    "high_price": 21304000.0,
+                    "low_price": 11304000.0,
+                    "closing_price": 21304000.0,
+                    "acc_price": 587101574.8949,
+                    "acc_volume": 51.97606868,
+                }
+            ]
         )
         # 거래 요청 정보 생성
         request = strategy.get_request()
@@ -100,16 +106,19 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
 
         # 거래 정보 입력 - 3
         strategy.update_trading_info(
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-04-30T14:52:00",
-                "opening_price": 21304000.0,
-                "high_price": 21304000.0,
-                "low_price": 21304000.0,
-                "closing_price": 21304000.0,
-                "acc_price": 587101574.8949,
-                "acc_volume": 51.97606868,
-            }
+            [
+                {
+                    "type": "primary_candle",
+                    "market": "KRW-BTC",
+                    "date_time": "2020-04-30T14:52:00",
+                    "opening_price": 21304000.0,
+                    "high_price": 21304000.0,
+                    "low_price": 21304000.0,
+                    "closing_price": 21304000.0,
+                    "acc_price": 587101574.8949,
+                    "acc_volume": 51.97606868,
+                }
+            ]
         )
         # 거래 요청 정보 생성
         request = strategy.get_request()
@@ -147,16 +156,19 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
 
         # 거래 정보 입력 - 4
         strategy.update_trading_info(
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-04-30T14:52:00",
-                "opening_price": 21304000.0,
-                "high_price": 41304000.0,
-                "low_price": 21304000.0,
-                "closing_price": 41304000.0,
-                "acc_price": 587101574.8949,
-                "acc_volume": 51.97606868,
-            }
+            [
+                {
+                    "type": "primary_candle",
+                    "market": "KRW-BTC",
+                    "date_time": "2020-04-30T14:52:00",
+                    "opening_price": 21304000.0,
+                    "high_price": 41304000.0,
+                    "low_price": 21304000.0,
+                    "closing_price": 41304000.0,
+                    "acc_price": 587101574.8949,
+                    "acc_volume": 51.97606868,
+                }
+            ]
         )
         # 거래 요청 정보 생성
         request = strategy.get_request()
@@ -192,16 +204,19 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
 
         # 거래 정보 입력 - 5
         strategy.update_trading_info(
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-04-30T14:52:00",
-                "opening_price": 41304000.0,
-                "high_price": 61304000.0,
-                "low_price": 41304000.0,
-                "closing_price": 61304000.0,
-                "acc_price": 587101574.8949,
-                "acc_volume": 51.97606868,
-            }
+            [
+                {
+                    "type": "primary_candle",
+                    "market": "KRW-BTC",
+                    "date_time": "2020-04-30T14:52:00",
+                    "opening_price": 41304000.0,
+                    "high_price": 61304000.0,
+                    "low_price": 41304000.0,
+                    "closing_price": 61304000.0,
+                    "acc_price": 587101574.8949,
+                    "acc_volume": 51.97606868,
+                }
+            ]
         )
         # 거래 요청 정보 생성
         request = strategy.get_request()
@@ -237,16 +252,19 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
 
         # 거래 정보 입력 - 6
         strategy.update_trading_info(
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-04-30T14:52:00",
-                "opening_price": 61304000.0,
-                "high_price": 61304000.0,
-                "low_price": 61304000.0,
-                "closing_price": 61304000.0,
-                "acc_price": 587101574.8949,
-                "acc_volume": 51.97606868,
-            }
+            [
+                {
+                    "type": "primary_candle",
+                    "market": "KRW-BTC",
+                    "date_time": "2020-04-30T14:52:00",
+                    "opening_price": 61304000.0,
+                    "high_price": 61304000.0,
+                    "low_price": 61304000.0,
+                    "closing_price": 61304000.0,
+                    "acc_price": 587101574.8949,
+                    "acc_volume": 51.97606868,
+                }
+            ]
         )
         # 거래 요청 정보 생성
         request = strategy.get_request()
@@ -282,16 +300,19 @@ class StrategyBuyAndHoldIntegrationTests(unittest.TestCase):
 
         # 거래 정보 입력 - 7
         strategy.update_trading_info(
-            {
-                "market": "KRW-BTC",
-                "date_time": "2020-04-30T14:52:00",
-                "opening_price": 61304000.0,
-                "high_price": 61304000.0,
-                "low_price": 61304000.0,
-                "closing_price": 61304000.0,
-                "acc_price": 587101574.8949,
-                "acc_volume": 51.97606868,
-            }
+            [
+                {
+                    "type": "primary_candle",
+                    "market": "KRW-BTC",
+                    "date_time": "2020-04-30T14:52:00",
+                    "opening_price": 61304000.0,
+                    "high_price": 61304000.0,
+                    "low_price": 61304000.0,
+                    "closing_price": 61304000.0,
+                    "acc_price": 587101574.8949,
+                    "acc_volume": 51.97606868,
+                }
+            ]
         )
         # 거래 요청 정보 생성
         request = strategy.get_request()

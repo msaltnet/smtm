@@ -16,9 +16,13 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         analyzer.add_value_for_line_graph("2020-02-27T23:00:00", 12345)
         analyzer.add_value_for_line_graph("2020-02-27T24:00:00", 700)
-        self.assertEqual(analyzer.line_graph_list[0]["date_time"], "2020-02-27T23:00:00")
+        self.assertEqual(
+            analyzer.line_graph_list[0]["date_time"], "2020-02-27T23:00:00"
+        )
         self.assertEqual(analyzer.line_graph_list[0]["value"], 12345)
-        self.assertEqual(analyzer.line_graph_list[1]["date_time"], "2020-02-27T24:00:00")
+        self.assertEqual(
+            analyzer.line_graph_list[1]["date_time"], "2020-02-27T24:00:00"
+        )
         self.assertEqual(analyzer.line_graph_list[1]["value"], 700)
 
     def test_add_drawing_spot_append_spot_info(self):
@@ -65,13 +69,20 @@ class AnalyzerTests(unittest.TestCase):
         dummy_requests = [
             {"id": "papaya", "type": "sell", "price": 5000, "amount": 0.0007},
             {"id": "orange", "type": "cancel", "price": 500, "amount": 0.0001},
-            {"id": "pear", "type": "buy", "price": 500, "amount": 0.0000000000000000000000001},
+            {
+                "id": "pear",
+                "type": "buy",
+                "price": 500,
+                "amount": 0.0000000000000000000000001,
+            },
         ]
         analyzer.put_requests(dummy_requests)
         self.assertEqual(analyzer.request_list[-1]["id"], "pear")
         self.assertEqual(analyzer.request_list[-1]["type"], "buy")
         self.assertEqual(analyzer.request_list[-1]["price"], 500.0)
-        self.assertEqual(analyzer.request_list[-1]["amount"], 0.0000000000000000000000001)
+        self.assertEqual(
+            analyzer.request_list[-1]["amount"], 0.0000000000000000000000001
+        )
         self.assertEqual(analyzer.request_list[-1]["kind"], 1)
 
         self.assertEqual(analyzer.request_list[-2]["id"], "orange")
@@ -89,9 +100,12 @@ class AnalyzerTests(unittest.TestCase):
     def test_put_trading_info_append_trading_info(self):
         analyzer = Analyzer()
         analyzer.make_periodic_record = MagicMock()
-        dummy_info = {"name": "orange"}
+        dummy_info = [{"type": "primary_candle", "name": "orange"}]
         analyzer.put_trading_info(dummy_info)
-        self.assertEqual(analyzer.info_list[-1], {"name": "orange", "kind": 0})
+        self.assertEqual(
+            analyzer.info_list[-1],
+            {"type": "primary_candle", "name": "orange", "kind": 0},
+        )
         analyzer.make_periodic_record.assert_called_once()
 
     def test_make_periodic_record_should_call_update_asset_info_after_60s_from_last_asset_info(
@@ -163,7 +177,9 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.put_result(dummy_result)
         self.assertEqual(analyzer.result_list[-1]["request"]["id"], "kiwi")
         self.assertEqual(analyzer.result_list[-1]["price"], 500)
-        self.assertEqual(analyzer.result_list[-1]["amount"], 0.0000000000000000000000001)
+        self.assertEqual(
+            analyzer.result_list[-1]["amount"], 0.0000000000000000000000001
+        )
         self.assertEqual(analyzer.result_list[-1]["kind"], 2)
         analyzer.update_asset_info.assert_called()
 
@@ -227,13 +243,21 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(analyzer.asset_info_list), 0)
         analyzer.update_asset_info.assert_called_once()
 
-    def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(self):
+    def test_make_score_record_create_correct_score_record_when_asset_is_not_changed(
+        self,
+    ):
         analyzer = Analyzer()
         analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
             "balance": 50000,
             "asset": {"banana": (1500, 10), "mango": (1000, 4.5), "apple": (250, 2)},
-            "quote": {"banana": 1700, "mango": 700, "apple": 500, "pineapple": 300, "kiwi": 77000},
+            "quote": {
+                "banana": 1700,
+                "mango": 700,
+                "apple": 500,
+                "pineapple": 300,
+                "kiwi": 77000,
+            },
             "date_time": "2020-02-27T23:59:59",
         }
 
@@ -242,7 +266,9 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.asset_info_list.append(dummy_asset_info)
         analyzer.initialize(MagicMock())
         analyzer.is_simulation = True
-        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
+        analyzer.put_trading_info(
+            [{"type": "primary_candle", "date_time": "2020-02-27T23:59:59"}]
+        )
         # 유효하지 않은 정보 무시
         target_dummy_asset = {
             "balance": 50000,
@@ -253,7 +279,13 @@ class AnalyzerTests(unittest.TestCase):
                 "pineapple": (0, 2),
                 "kiwi": (77700, 0),
             },
-            "quote": {"banana": 2000, "mango": 1050, "apple": 400, "pineapple": 300, "kiwi": 77000},
+            "quote": {
+                "banana": 2000,
+                "mango": 1050,
+                "apple": 400,
+                "pineapple": 300,
+                "kiwi": 77000,
+            },
             "date_time": "2020-02-27T23:59:59",
         }
         analyzer.make_score_record(target_dummy_asset)
@@ -307,7 +339,9 @@ class AnalyzerTests(unittest.TestCase):
             "quote": {"banana": 2000, "mango": 500, "apple": 800},
             "date_time": "2020-02-27T23:59:59",
         }
-        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
+        analyzer.put_trading_info(
+            [{"type": "primary_candle", "date_time": "2020-02-27T23:59:59"}]
+        )
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_list), 1)
 
@@ -331,7 +365,9 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(score_record["price_change_ratio"]["apple"], 60)
         analyzer.make_periodic_record.assert_called_once()
 
-    def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(self):
+    def test_make_score_record_create_correct_score_record_when_start_asset_is_empty(
+        self,
+    ):
         analyzer = Analyzer()
         analyzer.make_periodic_record = MagicMock()
         dummy_asset_info = {
@@ -351,7 +387,9 @@ class AnalyzerTests(unittest.TestCase):
             "quote": {"banana": 2000, "mango": 300, "apple": 750},
             "date_time": "2020-02-27T23:59:59",
         }
-        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
+        analyzer.put_trading_info(
+            [{"type": "primary_candle", "date_time": "2020-02-27T23:59:59"}]
+        )
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_list), 1)
 
@@ -397,7 +435,9 @@ class AnalyzerTests(unittest.TestCase):
             "date_time": "2020-02-27T23:59:59",
         }
         analyzer.make_periodic_record = MagicMock()
-        analyzer.put_trading_info({"date_time": "2020-02-27T23:59:59"})
+        analyzer.put_trading_info(
+            [{"type": "primary_candle", "date_time": "2020-02-27T23:59:59"}]
+        )
         analyzer.make_score_record(target_dummy_asset)
         self.assertEqual(len(analyzer.score_list), 1)
 
@@ -476,7 +516,10 @@ class AnalyzerTests(unittest.TestCase):
                 "balance": 5000,
                 "cumulative_return": -65.248,
                 "price_change_ratio": {"mango": -50.0, "apple": 50.0},
-                "asset": [("mango", 500, 300, 5.23, -40.0), ("apple", 250, 750, 2.11, 200.0)],
+                "asset": [
+                    ("mango", 500, 300, 5.23, -40.0),
+                    ("apple", 250, 750, 2.11, 200.0),
+                ],
                 "date_time": "2020-02-23T00:00:00",
                 "kind": 3,
             }
@@ -551,7 +594,10 @@ class AnalyzerTests(unittest.TestCase):
                 "balance": 5000,
                 "cumulative_return": -75.067,
                 "price_change_ratio": {"mango": -66.667, "apple": -99.85},
-                "asset": [("mango", 600, 200, 4.23, -66.667), ("apple", 500, 0.75, 3.11, -99.85)],
+                "asset": [
+                    ("mango", 600, 200, 4.23, -66.667),
+                    ("apple", 500, 0.75, 3.11, -99.85),
+                ],
                 "date_time": "2020-02-23T00:01:00",
                 "kind": 3,
             }
@@ -617,7 +663,8 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[6], -75.067)
         self.assertEqual(report[7], -65.248)
         self.assertEqual(
-            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:02:00")
+            report[8],
+            ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:02:00"),
         )
 
         analyzer.update_asset_info.assert_called_once()
@@ -656,7 +703,8 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[7], 0.093)
         # 시간 정보
         self.assertEqual(
-            report[8], ("2020-04-30T05:50:00", "2020-04-30T05:51:00", "2020-04-30T05:53:00")
+            report[8],
+            ("2020-04-30T05:50:00", "2020-04-30T05:51:00", "2020-04-30T05:53:00"),
         )
 
         report = analyzer.get_return_report(index_info=(3, 2))
@@ -677,10 +725,13 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[7], 0.197)
         # 시간 정보
         self.assertEqual(
-            report[8], ("2020-04-30T05:50:00", "2020-04-30T05:56:00", "2020-04-30T05:58:00")
+            report[8],
+            ("2020-04-30T05:50:00", "2020-04-30T05:56:00", "2020-04-30T05:58:00"),
         )
 
-        report = analyzer.get_return_report(graph_filename="mango_graph.png", index_info=(3, -1))
+        report = analyzer.get_return_report(
+            graph_filename="mango_graph.png", index_info=(3, -1)
+        )
 
         self.assertEqual(len(report), 9)
         # 입금 자산
@@ -698,14 +749,17 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[7], 0.413)
         # 시간 정보
         self.assertEqual(
-            report[8], ("2020-04-30T05:50:00", "2020-04-30T05:57:00", "2020-04-30T05:59:00")
+            report[8],
+            ("2020-04-30T05:50:00", "2020-04-30T05:57:00", "2020-04-30T05:59:00"),
         )
 
         analyzer.update_asset_info.assert_called()
 
     @patch("mplfinance.make_addplot")
     @patch("mplfinance.plot")
-    def test_get_return_report_draw_graph_when_graph_filename_exist(self, mock_plot, mock_addplot):
+    def test_get_return_report_draw_graph_when_graph_filename_exist(
+        self, mock_plot, mock_addplot
+    ):
         """
         {
             cumulative_return: 기준 시점부터 누적 수익률
@@ -741,7 +795,8 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report[7], -65.248)
         # 시간 정보
         self.assertEqual(
-            report[8], ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:02:00")
+            report[8],
+            ("2020-02-23T00:00:00", "2020-02-23T00:00:00", "2020-02-23T00:02:00"),
         )
 
         analyzer.update_asset_info.assert_called_once()
@@ -833,7 +888,10 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 5000,
             "cumulative_return": -65.248,
             "price_change_ratio": {"mango": -50.0, "apple": 50.0},
-            "asset": [("mango", 500, 300, 5.23, -40.0), ("apple", 250, 750, 2.11, 200.0)],
+            "asset": [
+                ("mango", 500, 300, 5.23, -40.0),
+                ("apple", 250, 750, 2.11, 200.0),
+            ],
             "date_time": "2020-02-23T00:00:00",
             "kind": 3,
         }
@@ -841,7 +899,10 @@ class AnalyzerTests(unittest.TestCase):
             "balance": 5000,
             "cumulative_return": -75.067,
             "price_change_ratio": {"mango": -66.667, "apple": -99.85},
-            "asset": [("mango", 600, 200, 4.23, -66.667), ("apple", 500, 0.75, 3.11, -99.85)],
+            "asset": [
+                ("mango", 600, 200, 4.23, -66.667),
+                ("apple", 500, 0.75, 3.11, -99.85),
+            ],
             "date_time": "2020-02-23T00:01:00",
             "kind": 3,
         }
@@ -887,7 +948,9 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(report["summary"][3]["apple"], -99.85)
 
         self.assertEqual(report["summary"][4], None)
-        self.assertEqual(report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:02:00")
+        self.assertEqual(
+            report["summary"][5], "2020-02-23T00:00:00 - 2020-02-23T00:02:00"
+        )
         self.assertEqual(report["summary"][6], -75.067)
         self.assertEqual(report["summary"][7], -65.248)
         # 시간 정보
@@ -898,7 +961,9 @@ class AnalyzerTests(unittest.TestCase):
         analyzer._get_rss_memory.assert_called_once()
 
     @patch("mplfinance.plot")
-    def test_create_report_call_update_info_func_with_asset_type_and_callback(self, mock_plot):
+    def test_create_report_call_update_info_func_with_asset_type_and_callback(
+        self, mock_plot
+    ):
         analyzer = Analyzer()
         analyzer.initialize("mango")
         analyzer.update_asset_info = MagicMock()
@@ -922,7 +987,9 @@ class AnalyzerTests(unittest.TestCase):
         tag = "orange"
         filename = "mango"
         report = analyzer.create_report()
-        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + "untitled-report.txt", "w")
+        mock_file.assert_called_with(
+            analyzer.OUTPUT_FOLDER + "untitled-report.txt", "w"
+        )
         handle = mock_file()
         expected = [
             "### TRADING TABLE =================================\n",
@@ -958,7 +1025,9 @@ class AnalyzerTests(unittest.TestCase):
     @patch("mplfinance.make_addplot")
     @patch("mplfinance.plot")
     @patch("builtins.open", new_callable=mock_open)
-    def test_create_report_draw_correct_graph(self, mock_file, mock_plot, mock_make_addplot):
+    def test_create_report_draw_correct_graph(
+        self, mock_file, mock_plot, mock_make_addplot
+    ):
         analyzer = Analyzer()
         analyzer._get_rss_memory = MagicMock(return_value=123.45678)
         analyzer.initialize("mango")
@@ -991,7 +1060,9 @@ class AnalyzerTests(unittest.TestCase):
             mav=analyzer.sma_info,
             style="starsandstripes",
             savefig=dict(
-                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=300, pad_inches=0.25
+                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg",
+                dpi=300,
+                pad_inches=0.25,
             ),
             figscale=1.25,
         )
@@ -1038,7 +1109,9 @@ class AnalyzerTests(unittest.TestCase):
             mav=analyzer.sma_info,
             style="starsandstripes",
             savefig=dict(
-                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg", dpi=300, pad_inches=0.25
+                fname=analyzer.OUTPUT_FOLDER + filename + ".jpg",
+                dpi=300,
+                pad_inches=0.25,
             ),
             figscale=1.25,
         )

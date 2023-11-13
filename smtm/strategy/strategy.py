@@ -36,19 +36,22 @@ class Strategy(metaclass=ABCMeta):
 
     @abstractmethod
     def update_trading_info(self, info):
-        """새로운 거래 정보를 업데이트
+        """Data Provider에서 제공받은 새로운 거래 정보를 업데이트
 
         info:
-        {
-            "market": 거래 시장 종류 BTC
-            "date_time": 정보의 기준 시간
-            "opening_price": 시작 거래 가격
-            "high_price": 최고 거래 가격
-            "low_price": 최저 거래 가격
-            "closing_price": 마지막 거래 가격
-            "acc_price": 단위 시간내 누적 거래 금액
-            "acc_volume": 단위 시간내 누적 거래 양
-        }
+        [
+            {
+                "type": 데이터 종류, 소스에 따라 다름, 기본 데이터는 'primary_candle'
+                "market": 거래 시장 종류 BTC
+                "date_time": 정보의 기준 시간
+                "opening_price": 시작 거래 가격
+                "high_price": 최고 거래 가격
+                "low_price": 최저 거래 가격
+                "closing_price": 마지막 거래 가격
+                "acc_price": 단위 시간내 누적 거래 금액
+                "acc_volume": 단위 시간내 누적 거래 양
+            }
+        ]
         """
 
     @abstractmethod

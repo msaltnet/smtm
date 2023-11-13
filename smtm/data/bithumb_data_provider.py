@@ -47,11 +47,12 @@ class BithumbDataProvider(DataProvider):
         if data["status"] != "0000":
             raise UserWarning("Fail get data from sever")
 
-        return self.__create_candle_info(data["data"][-1])
+        return [self.__create_candle_info(data["data"][-1])]
 
     def __create_candle_info(self, data):
         try:
             return {
+                "type": "primary_candle",
                 "market": self.market,
                 "date_time": datetime.fromtimestamp(
                     data[0] / 1000.0, tz=self.KST

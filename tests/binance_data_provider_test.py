@@ -72,6 +72,7 @@ class BinanceDataProviderTests(unittest.TestCase):
             ]
         ]
         expected = {
+            "type": "primary_candle",
             "market": "BTC",
             "date_time": "2017-07-03T09:00:00",
             "opening_price": 0.0163479,
@@ -83,4 +84,4 @@ class BinanceDataProviderTests(unittest.TestCase):
         }
         data_provider = BinanceDataProvider("BTC", 60)
         data = data_provider.get_info()
-        self.assertEqual(data, expected)
+        self.assertEqual(data[0], expected)

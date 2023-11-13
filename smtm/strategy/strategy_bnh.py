@@ -55,7 +55,17 @@ class StrategyBuyAndHold(Strategy):
         """
         if self.is_intialized is not True:
             return
-        self.data.append(copy.deepcopy(info))
+
+        target = None
+        for item in info:
+            if item["type"] == "primary_candle":
+                target = item
+                break
+
+        if target is None:
+            return
+
+        self.data.append(copy.deepcopy(target))
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트

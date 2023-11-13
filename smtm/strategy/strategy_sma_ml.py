@@ -96,10 +96,19 @@ class StrategySmaMl(Strategy):
         """
         if self.is_intialized is not True:
             return
-        self.data.append(copy.deepcopy(info))
-        self.__update_process(info)
+        target = None
+        for item in info:
+            if item["type"] == "primary_candle":
+                target = item
+                break
+
+        if target is None:
+            return
+
+        self.data.append(copy.deepcopy(target))
+        self.__update_process(target)
         if self.add_line_callback is not None:
-            self.add_line_callback(info["date_time"], info["closing_price"])
+            self.add_line_callback(target["date_time"], target["closing_price"])
 
     def update_result(self, result):
         """요청한 거래의 결과를 업데이트

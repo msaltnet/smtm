@@ -51,11 +51,12 @@ class UpbitDataProvider(DataProvider):
         }
         """
         data = self.__get_data_from_server()
-        return self.__create_candle_info(data[0])
+        return [self.__create_candle_info(data[0])]
 
     def __create_candle_info(self, data):
         try:
             return {
+                "type": "primary_candle",
                 "market": self.market,
                 "date_time": data["candle_date_time_kst"],
                 "opening_price": float(data["opening_price"]),

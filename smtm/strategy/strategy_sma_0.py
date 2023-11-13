@@ -72,8 +72,17 @@ class StrategySma0(Strategy):
         """
         if self.is_intialized is not True:
             return
-        self.data.append(copy.deepcopy(info))
-        self.__update_process(info)
+        target = None
+        for item in info:
+            if item["type"] == "primary_candle":
+                target = item
+                break
+
+        if target is None:
+            return
+
+        self.data.append(copy.deepcopy(target))
+        self.__update_process(target)
 
     @staticmethod
     def _get_deviation_ratio(std, last):

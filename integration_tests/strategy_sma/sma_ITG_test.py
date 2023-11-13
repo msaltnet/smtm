@@ -62,9 +62,17 @@ class SmaIntegrationTests(unittest.TestCase):
         for result_idx, request_list in enumerate(result_list):
             for request_idx, requst in enumerate(request_list):
                 target = expected[result_idx][request_idx]
-                self.assertEqual(requst["type"], target["type"], f"{result_idx}-{request_idx}")
-                self.assertEqual(requst["price"], target["price"], f"{result_idx}-{request_idx}")
-                self.assertEqual(requst["amount"], target["amount"], f"{result_idx}-{request_idx}")
                 self.assertEqual(
-                    requst["date_time"], target["date_time"], f"{result_idx}-{request_idx}"
+                    requst["type"], target["type"], f"{result_idx}-{request_idx}"
+                )
+                self.assertEqual(
+                    requst["price"], target["price"], f"{result_idx}-{request_idx}"
+                )
+                self.assertEqual(
+                    requst["amount"], target["amount"], f"{result_idx}-{request_idx}"
+                )
+                self.assertEqual(
+                    requst["date_time"],
+                    target["date_time"],
+                    f"{result_idx}-{request_idx}",
                 )

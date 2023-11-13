@@ -34,14 +34,14 @@ class UpbitDataProviderTests(unittest.TestCase):
 
         info = dp.get_info()
 
-        self.assertEqual(info["market"], "BTC")
-        self.assertEqual(info["date_time"], "2020-03-10T22:52:00")
-        self.assertEqual(info["opening_price"], 9777000)
-        self.assertEqual(info["high_price"], 9778000)
-        self.assertEqual(info["low_price"], 9763000)
-        self.assertEqual(info["closing_price"], 9778000)
-        self.assertEqual(info["acc_price"], 11277224.71063000)
-        self.assertEqual(info["acc_volume"], 1.15377852)
+        self.assertEqual(info[0]["market"], "BTC")
+        self.assertEqual(info[0]["date_time"], "2020-03-10T22:52:00")
+        self.assertEqual(info[0]["opening_price"], 9777000)
+        self.assertEqual(info[0]["high_price"], 9778000)
+        self.assertEqual(info[0]["low_price"], 9763000)
+        self.assertEqual(info[0]["closing_price"], 9778000)
+        self.assertEqual(info[0]["acc_price"], 11277224.71063000)
+        self.assertEqual(info[0]["acc_volume"], 1.15377852)
         mock_get.assert_called_once_with(dp.URL, params={"market": "KRW-BTC", "count": 1})
 
     @patch("requests.get")

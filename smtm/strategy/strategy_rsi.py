@@ -153,8 +153,18 @@ class StrategyRsi(Strategy):
         """
         if self.is_intialized is not True or info is None:
             return
-        self.data.append(copy.deepcopy(info))
-        self._update_rsi(info["closing_price"])
+        target = None
+        for item in info:
+            if item["type"] == "primary_candle":
+                target = item
+                break
+
+        if target is None:
+            return
+
+        self.data.append(copy.deepcopy(target))
+
+        self._update_rsi(target["closing_price"])
         self._update_position()
 
     def _update_position(self):
