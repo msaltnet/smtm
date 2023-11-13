@@ -26,12 +26,14 @@ class StrategyRsiTests(unittest.TestCase):
     def test_update_trading_info_append_info_to_data(self):
         sma = StrategyRsi()
         sma.initialize(100, 10)
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "date_time": "2020-02-25T15:41:09",
-            "closing_price": 500
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+                "date_time": "2020-02-25T15:41:09",
+                "closing_price": 500,
+            }
+        ]
         sma.update_trading_info(dummy_info)
         self.assertEqual(sma.data.pop(), dummy_info[0])
 
@@ -165,12 +167,14 @@ class StrategyRsiTests(unittest.TestCase):
     def test_get_request_return_correct_request_at_buy_position(self):
         sma = StrategyRsi()
         sma.initialize(10000, 100)
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "date_time": "2020-02-25T15:41:09",
-            "closing_price": 20000000
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+                "date_time": "2020-02-25T15:41:09",
+                "closing_price": 20000000,
+            }
+        ]
         sma.update_trading_info(dummy_info)
         sma.position = "buy"
         requests = sma.get_request()
@@ -181,12 +185,14 @@ class StrategyRsiTests(unittest.TestCase):
     def test_get_request_return_correct_request_at_sell_position(self):
         sma = StrategyRsi()
         sma.initialize(10000, 100)
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "date_time": "2020-02-25T15:41:09",
-            "closing_price": 12345678
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+                "date_time": "2020-02-25T15:41:09",
+                "closing_price": 12345678,
+            }
+        ]
         sma.update_trading_info(dummy_info)
         sma.position = "sell"
         sma.asset_amount = 0.001
@@ -200,12 +206,14 @@ class StrategyRsiTests(unittest.TestCase):
         sma.initialize(10000, 100)
         sma.waiting_requests["mango_id"] = {"request": {"id": "mango_id"}}
         sma.waiting_requests["orange_id"] = {"request": {"id": "orange_id"}}
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "date_time": "2020-02-25T15:41:09",
-            "closing_price": 20000000
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+                "date_time": "2020-02-25T15:41:09",
+                "closing_price": 20000000,
+            }
+        ]
         sma.update_trading_info(dummy_info)
         sma.position = "sell"
         sma.asset_amount = 60

@@ -38,7 +38,9 @@ class SimulationOperatorTests(unittest.TestCase):
         self.assertEqual(operator.turn, 1)
         analyzer_mock.put_trading_info.assert_called_once_with("mango")
 
-    def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(self):
+    def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(
+        self,
+    ):
         operator = SimulationOperator()
         analyzer_mock = Mock()
         analyzer_mock.put_requests = MagicMock()
@@ -68,7 +70,9 @@ class SimulationOperatorTests(unittest.TestCase):
         strategy_mock.update_result.assert_called_once_with(dummy_result)
         analyzer_mock.put_result.assert_called_once_with(dummy_result)
 
-    def test_execute_trading_should_call_creat_report_and_call_stop_when_result_msg_game_over(self):
+    def test_execute_trading_should_call_creat_report_and_call_stop_when_result_msg_game_over(
+        self,
+    ):
         operator = SimulationOperator()
         analyzer_mock = Mock()
         analyzer_mock.put_requests = MagicMock()
@@ -101,7 +105,9 @@ class SimulationOperatorTests(unittest.TestCase):
         analyzer_mock.create_report.assert_called_once()
         self.assertEqual(operator.state, "simulation_terminated")
 
-    def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
+    def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(
+        self,
+    ):
         operator = SimulationOperator()
         analyzer_mock = Mock()
         dp_mock = Mock()
@@ -163,7 +169,9 @@ class SimulationOperatorTests(unittest.TestCase):
         operator._periodic_internal_get_score()
         operator.get_score.assert_not_called()
 
-        operator.current_turn = operator.last_periodic_turn + operator.PERIODIC_RECORD_INTERVAL_TURN
+        operator.current_turn = (
+            operator.last_periodic_turn + operator.PERIODIC_RECORD_INTERVAL_TURN
+        )
         operator._periodic_internal_get_score()
         operator.get_score.assert_called_with(
             ANY, index_info=operator.PERIODIC_RECORD_INFO, graph_tag=ANY

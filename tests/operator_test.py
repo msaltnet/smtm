@@ -44,12 +44,18 @@ class OperatorInitializeTests(unittest.TestCase):
         self.strategy_mock.initialize.assert_called_once_with(
             "banana", add_spot_callback=ANY, add_line_callback=ANY
         )
-        self.strategy_mock.initialize.call_args[1]["add_spot_callback"]("spot_date_time", 777)
-        self.analyzer_mock.add_drawing_spot.assert_called_once_with("spot_date_time", 777)
+        self.strategy_mock.initialize.call_args[1]["add_spot_callback"](
+            "spot_date_time", 777
+        )
+        self.analyzer_mock.add_drawing_spot.assert_called_once_with(
+            "spot_date_time", 777
+        )
 
     def test_initialize_do_nothing_when_state_is_NOT_None(self):
         self.operator.state = "mango"
-        self.operator.initialize("mango", self.strategy_mock, "orange", "grape", "banana")
+        self.operator.initialize(
+            "mango", self.strategy_mock, "orange", "grape", "banana"
+        )
         self.assertEqual(self.operator.data_provider, None)
         self.assertEqual(self.operator.strategy, None)
         self.assertEqual(self.operator.trader, None)
@@ -133,7 +139,9 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         else:
             self.operator._periodic_internal_get_score.assert_not_called()
 
-    def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(self):
+    def test_execute_trading_should_call_trader_send_request_and_strategy_update_result(
+        self,
+    ):
         self.dp_mock.get_info = MagicMock(return_value="mango")
         dummy_request = {"id": "mango", "type": "orange", "price": 500, "amount": 10}
         self.strategy_mock.update_result = MagicMock()
@@ -150,11 +158,17 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         self.strategy_mock.update_trading_info.assert_called_once_with(ANY)
         self.trader_mock.send_request.assert_called_once_with(ANY, ANY)
         self.trader_mock.send_request.call_args[0][1]({"id": "mango", "state": "done"})
-        self.trader_mock.send_request.call_args[0][1]({"id": "orange", "state": "requested"})
+        self.trader_mock.send_request.call_args[0][1](
+            {"id": "orange", "state": "requested"}
+        )
         self.strategy_mock.update_result.assert_called()
-        self.analyzer_mock.put_result.assert_called_once_with({"id": "mango", "state": "done"})
+        self.analyzer_mock.put_result.assert_called_once_with(
+            {"id": "mango", "state": "done"}
+        )
 
-    def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(self):
+    def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(
+        self,
+    ):
         self.strategy_mock.get_request = MagicMock(return_value=None)
 
         self.operator.initialize(
@@ -180,9 +194,13 @@ class OperatorExecuteTradingTests(unittest.TestCase):
 
         with self.assertRaises(Exception) as exception:
             self.operator._execute_trading(None)
-        self.assertEqual(str(exception.exception), "Something bad happened during trading")
+        self.assertEqual(
+            str(exception.exception), "Something bad happened during trading"
+        )
 
-        self.operator.on_exception.assert_called_once_with("Something bad happened during trading")
+        self.operator.on_exception.assert_called_once_with(
+            "Something bad happened during trading"
+        )
 
 
 class OperatorStopTests(unittest.TestCase):

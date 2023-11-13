@@ -83,7 +83,9 @@ class MassSimulatorAnalyzeTests(unittest.TestCase):
     @patch("matplotlib.pyplot.bar")
     @patch("matplotlib.pyplot.plot")
     @patch("matplotlib.pyplot.savefig")
-    def test_draw_graph_should_call_plt_correctly(self, mock_savefig, mock_plot, mock_bar):
+    def test_draw_graph_should_call_plt_correctly(
+        self, mock_savefig, mock_plot, mock_bar
+    ):
         MassSimulator.draw_graph([1.12, 2.25, 2.01], mean=1.793, filename="mango.jpg")
         mock_bar.assert_called_once_with([0, 1, 2], [1.12, 2.25, 2.01])
         mock_plot.assert_called_once_with([1.793, 1.793, 1.793], "r")
@@ -205,7 +207,9 @@ class MassSimulatorTests(unittest.TestCase):
 
     @patch("json.dump")
     @patch("builtins.open", new_callable=mock_open)
-    def test_make_config_json_should_make_json_file_correctly(self, mock_file, mock_json):
+    def test_make_config_json_should_make_json_file_correctly(
+        self, mock_file, mock_json
+    ):
         result = MassSimulator.make_config_json(
             title="get_money",
             budget=50000000000,
@@ -241,11 +245,15 @@ class MassSimulatorTests(unittest.TestCase):
         }
         mass.print_state(is_start=True)
         self.assertEqual(
-            mock_print.call_args_list[1][0][0], "Title: mass simulation test, Currency: ETH"
+            mock_print.call_args_list[1][0][0],
+            "Title: mass simulation test, Currency: ETH",
         )
-        self.assertEqual(mock_print.call_args_list[2][0][0], "Description: unit test config")
         self.assertEqual(
-            mock_print.call_args_list[3][0][0], "Budget: 5000000, Strategy: show me the money"
+            mock_print.call_args_list[2][0][0], "Description: unit test config"
+        )
+        self.assertEqual(
+            mock_print.call_args_list[3][0][0],
+            "Budget: 5000000, Strategy: show me the money",
         )
         self.assertEqual(mock_print.call_args_list[4][0][0], "today ~ tomorrow (1)")
         self.assertEqual(
@@ -266,7 +274,9 @@ class MassSimulatorTests(unittest.TestCase):
         mass.analyzed_result = (123.45, 456, 789, 10)
         mass.start = mass.last_print = datetime.now() - timedelta(seconds=4)
         mass.print_state(is_end=True)
-        self.assertEqual(mock_print.call_args_list[0][0][0].find("simulation completed"), 36)
+        self.assertEqual(
+            mock_print.call_args_list[0][0][0].find("simulation completed"), 36
+        )
         self.assertEqual(mock_print.call_args_list[2][0][0], "수익률 평균:   123.45")
         self.assertEqual(mock_print.call_args_list[3][0][0], "수익률 편차:      456")
         self.assertEqual(mock_print.call_args_list[4][0][0], "수익률 최대:      789")
@@ -297,11 +307,17 @@ class MassSimulatorTests(unittest.TestCase):
             "partial_period_list": [
                 {
                     "idx": 7,
-                    "period": {"start": "2020-04-30T17:00:00", "end": "2020-04-30T19:00:00"},
+                    "period": {
+                        "start": "2020-04-30T17:00:00",
+                        "end": "2020-04-30T19:00:00",
+                    },
                 },
                 {
                     "idx": 8,
-                    "period": {"start": "2020-04-30T18:00:00", "end": "2020-04-30T20:00:00"},
+                    "period": {
+                        "start": "2020-04-30T18:00:00",
+                        "end": "2020-04-30T20:00:00",
+                    },
                 },
             ],
         }
@@ -309,7 +325,9 @@ class MassSimulatorTests(unittest.TestCase):
         backup_memory_usage = MassSimulator.memory_usage
         MassSimulator.run_single = MagicMock(return_value="mango_result")
         MassSimulator.memory_usage = MagicMock()
-        MassSimulator.get_initialized_operator = MagicMock(return_value="dummy_operator")
+        MassSimulator.get_initialized_operator = MagicMock(
+            return_value="dummy_operator"
+        )
         result = MassSimulator._execute_single_process_simulation(dummy_config)
 
         MassSimulator.memory_usage.assert_called_once()
@@ -318,25 +336,45 @@ class MassSimulatorTests(unittest.TestCase):
         self.assertEqual(result[0]["result"], "mango_result")
         self.assertEqual(result[1]["idx"], 8)
         self.assertEqual(result[1]["result"], "mango_result")
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[0][0][0], 50000)
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[0][0][1], 0)
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[0][0][2], 1)
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[0][0][3], "BTC")
         self.assertEqual(
-            MassSimulator.get_initialized_operator.call_args_list[0][0][4], "2020-04-30T17:00:00"
+            MassSimulator.get_initialized_operator.call_args_list[0][0][0], 50000
         )
         self.assertEqual(
-            MassSimulator.get_initialized_operator.call_args_list[0][0][5], "2020-04-30T19:00:00"
-        )
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[1][0][0], 50000)
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[1][0][1], 0)
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[1][0][2], 1)
-        self.assertEqual(MassSimulator.get_initialized_operator.call_args_list[1][0][3], "BTC")
-        self.assertEqual(
-            MassSimulator.get_initialized_operator.call_args_list[1][0][4], "2020-04-30T18:00:00"
+            MassSimulator.get_initialized_operator.call_args_list[0][0][1], 0
         )
         self.assertEqual(
-            MassSimulator.get_initialized_operator.call_args_list[1][0][5], "2020-04-30T20:00:00"
+            MassSimulator.get_initialized_operator.call_args_list[0][0][2], 1
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[0][0][3], "BTC"
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[0][0][4],
+            "2020-04-30T17:00:00",
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[0][0][5],
+            "2020-04-30T19:00:00",
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[1][0][0], 50000
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[1][0][1], 0
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[1][0][2], 1
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[1][0][3], "BTC"
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[1][0][4],
+            "2020-04-30T18:00:00",
+        )
+        self.assertEqual(
+            MassSimulator.get_initialized_operator.call_args_list[1][0][5],
+            "2020-04-30T20:00:00",
         )
         MassSimulator.run_single = backup_run_single
         MassSimulator.memory_usage = backup_memory_usage

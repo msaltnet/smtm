@@ -17,7 +17,9 @@ class WorkerTests(unittest.TestCase):
         worker.task_queue.put.assert_called_once_with("mango")
 
     @patch("threading.Thread")
-    def test_start_make_new_thread_and_start_thread_when_thread_is_none(self, mock_thread):
+    def test_start_make_new_thread_and_start_thread_when_thread_is_none(
+        self, mock_thread
+    ):
         worker = Worker("robot")
         mock_return_thread = MagicMock()
         mock_thread.return_value = mock_return_thread

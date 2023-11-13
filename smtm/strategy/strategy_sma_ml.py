@@ -65,7 +65,9 @@ class StrategySmaMl(Strategy):
         self.add_spot_callback = None
         self.add_line_callback = None
 
-    def initialize(self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None):
+    def initialize(
+        self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None
+    ):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
@@ -155,7 +157,9 @@ class StrategySmaMl(Strategy):
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {price}, amount: {amount}")
-            self.logger.info(f"balance: {self.balance}, asset_amount: {self.asset_amount}")
+            self.logger.info(
+                f"balance: {self.balance}, asset_amount: {self.asset_amount}"
+            )
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
         except (AttributeError, TypeError) as msg:
@@ -184,7 +188,9 @@ class StrategySmaMl(Strategy):
             now = datetime.now().strftime(self.ISO_DATEFORMAT)
 
             if self.is_simulation:
-                last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
+                last_dt = datetime.strptime(
+                    self.data[-1]["date_time"], self.ISO_DATEFORMAT
+                )
                 now = last_dt.isoformat()
 
             if last_data is None:
@@ -219,7 +225,9 @@ class StrategySmaMl(Strategy):
                     ]
                 return None
             request["date_time"] = now
-            self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
+            self.logger.info(
+                f"[REQ] id: {request['id']} : {request['type']} =============="
+            )
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
             final_requests = []
@@ -269,9 +277,15 @@ class StrategySmaMl(Strategy):
             self.logger.info(f"# update process :: {current_idx}")
             self.closing_price_list.append(current_price)
 
-            sma_short = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
-            sma_mid = pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
-            sma_long_list = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            sma_short = (
+                pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values[-1]
+            )
+            sma_mid = (
+                pd.Series(self.closing_price_list).rolling(self.MID).mean().values[-1]
+            )
+            sma_long_list = (
+                pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            )
             sma_long = sma_long_list[-1]
 
             if np.isnan(sma_long) or current_idx <= self.LONG:
@@ -284,8 +298,12 @@ class StrategySmaMl(Strategy):
                 regression_count = current_idx - self.LONG
 
             if regression_count > 1:
-                linear_model = self._get_linear_regression_model(sma_long_list[-regression_count:])
-                self.logger.debug(f"[SML] Linear Regression Slope: {linear_model.coef_}")
+                linear_model = self._get_linear_regression_model(
+                    sma_long_list[-regression_count:]
+                )
+                self.logger.debug(
+                    f"[SML] Linear Regression Slope: {linear_model.coef_}"
+                )
             else:
                 linear_model = None
 
@@ -334,8 +352,14 @@ class StrategySmaMl(Strategy):
         # 소숫점 4자리 아래 버림
         amount = Decimal(str(amount)).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
 
-        if self.min_price > budget or self.process_unit[0] <= 0 or final_value > self.balance:
-            self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
+        if (
+            self.min_price > budget
+            or self.process_unit[0] <= 0
+            or final_value > self.balance
+        ):
+            self.logger.info(
+                f"target_budget is too small or invalid unit {self.process_unit}"
+            )
             if self.is_simulation:
                 return {
                     "id": DateConverter.timestamp_id(),

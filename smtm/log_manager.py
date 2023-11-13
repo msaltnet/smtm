@@ -72,7 +72,9 @@ class LogManager:
         """파일 핸들러의 로그 파일을 변경한다"""
         cls.LOG_FILE = f"{cls.LOG_FOLDER}/{log_file}"
         new_file_handler = RotatingFileHandler(
-            filename=cls.LOG_FILE, maxBytes=cls.LOG_FILE_SIZE, backupCount=cls.BACKUP_COUNT
+            filename=cls.LOG_FILE,
+            maxBytes=cls.LOG_FILE_SIZE,
+            backupCount=cls.BACKUP_COUNT,
         )
         new_file_handler.setLevel(logging.DEBUG)
         new_file_handler.setFormatter(cls.FORMATTER)

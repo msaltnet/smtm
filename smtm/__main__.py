@@ -53,8 +53,12 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
         formatter_class=RawTextHelpFormatter,
     )
     parser.add_argument("--budget", help="budget", type=int, default=10000)
-    parser.add_argument("--term", help="trading tick interval (seconds)", type=float, default="60")
-    parser.add_argument("--strategy", help="BNH: buy and hold, SMA: sma, RSI: rsi", default="BNH")
+    parser.add_argument(
+        "--term", help="trading tick interval (seconds)", type=float, default="60"
+    )
+    parser.add_argument(
+        "--strategy", help="BNH: buy and hold, SMA: sma, RSI: rsi", default="BNH"
+    )
     parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
     parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
     parser.add_argument("--config", help="mass simulation config file", default="")
@@ -66,7 +70,9 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
     )
     parser.add_argument("--title", help="mass simulation title", default="SMA_2H_week")
     parser.add_argument("--file", help="generated config file name", default=None)
-    parser.add_argument("--offset", help="mass simulation period offset", type=int, default=120)
+    parser.add_argument(
+        "--offset", help="mass simulation period offset", type=int, default=120
+    )
     parser.add_argument("--log", help="log file name", default=None)
     parser.add_argument("--demo", help="use demo trader", type=int, default=0)
     parser.add_argument("--token", help="telegram chat-bot token", default=None)
@@ -82,7 +88,9 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
         help="simulation period ex) 201220.170000-201220.180000",
         default="201220.170000-201220.180000",
     )
-    parser.add_argument("--version", action="version", version=f'smtm version: {__version__}')
+    parser.add_argument(
+        "--version", action="version", version=f"smtm version: {__version__}"
+    )
     args = parser.parse_args()
     if args.log is not None:
         LogManager.change_log_file(args.log)

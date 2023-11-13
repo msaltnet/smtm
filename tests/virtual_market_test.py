@@ -197,7 +197,9 @@ class VirtualMarketTests(unittest.TestCase):
         result = market.handle_request(dummy_request)
         self.assertEqual(result, "error!")
 
-    def test_handle_request_handle_sell_return_error_request_when_target_asset_empty(self):
+    def test_handle_request_handle_sell_return_error_request_when_target_asset_empty(
+        self,
+    ):
         market = VirtualMarket()
         market.is_initialized = True
         market.data = self.get_mango_data()

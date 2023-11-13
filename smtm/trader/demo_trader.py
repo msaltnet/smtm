@@ -27,7 +27,9 @@ class DemoTrader(Trader):
     }
     NAME = "DemoTrader"
 
-    def __init__(self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True):
+    def __init__(
+        self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True
+    ):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
@@ -114,7 +116,9 @@ class DemoTrader(Trader):
     def get_trade_tick(self):
         """최근 거래 정보 조회"""
         querystring = {"market": self.market, "count": "1"}
-        return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
+        return self._request_get(
+            self.SERVER_URL + "/v1/trades/ticks", params=querystring
+        )
 
     def _execute_order(self, task):
         request = task["request"]
@@ -130,7 +134,9 @@ class DemoTrader(Trader):
         is_buy = request["type"] == "buy"
         if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
             request_price = float(request["price"]) * float(request["amount"])
-            self.logger.warning(f"[REJECT] balance is too small! {request_price} > {self.balance}")
+            self.logger.warning(
+                f"[REJECT] balance is too small! {request_price} > {self.balance}"
+            )
             task["callback"]("error!")
             return
 

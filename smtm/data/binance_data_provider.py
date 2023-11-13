@@ -16,7 +16,12 @@ class BinanceDataProvider(DataProvider):
     """
 
     URL = "https://api.binance.com/api/v3/klines"
-    AVAILABLE_CURRENCY = {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "DOGE": "DOGEUSDT", "XRP": "XRPUSDT"}
+    AVAILABLE_CURRENCY = {
+        "BTC": "BTCUSDT",
+        "ETH": "ETHUSDT",
+        "DOGE": "DOGEUSDT",
+        "XRP": "XRPUSDT",
+    }
     KST = timezone(timedelta(hours=9))
 
     def __init__(self, currency="BTC", interval=60):

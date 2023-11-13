@@ -34,7 +34,9 @@ class BithumbTrader(Trader):
     AVAILABLE_CURRENCY = {"BTC": ("BTC", "KRW"), "ETH": ("ETH", "KRW")}
     NAME = "Bithumb"
 
-    def __init__(self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True):
+    def __init__(
+        self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True
+    ):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
@@ -101,7 +103,11 @@ class BithumbTrader(Trader):
         """
         for request in request_list:
             self.worker.post_task(
-                {"runnable": self._execute_order, "request": request, "callback": callback}
+                {
+                    "runnable": self._execute_order,
+                    "request": request,
+                    "callback": callback,
+                }
             )
 
     def get_account_info(self):
@@ -125,7 +131,9 @@ class BithumbTrader(Trader):
             result["quote"][self.market] = float(trade_info["data"][0]["price"])
         else:
             self.logger.error("fail query quote")
-        self.logger.debug(f"account {result['balance']}, {result['asset']}, {result['quote']}")
+        self.logger.debug(
+            f"account {result['balance']}, {result['asset']}, {result['quote']}"
+        )
         return result
 
     def cancel_request(self, request_id):
@@ -149,11 +157,15 @@ class BithumbTrader(Trader):
             response = self._query_order(order["order_id"])
             self.logger.debug(f"cancel query: {response}")
             if response is None or response["data"]["order_status"] != "Completed":
-                self.logger.warning(f"can't cancel and query {request_id}, {order['order_id']}")
+                self.logger.warning(
+                    f"can't cancel and query {request_id}, {order['order_id']}"
+                )
                 return
 
             result["amount"] = float(response["data"]["order_qty"])
-            result["date_time"] = self._convert_timestamp(int(response["data"]["transaction_date"]))
+            result["date_time"] = self._convert_timestamp(
+                int(response["data"]["transaction_date"])
+            )
             if "price" not in result or result["price"] is None:
                 result["price"] = float(response["data"]["order_price"])
 
@@ -187,7 +199,9 @@ class BithumbTrader(Trader):
             return
 
         if is_buy is False and float(request["amount"]) > self.asset[1]:
-            self.logger.warning("invalid price request. rest asset amount is less than request!")
+            self.logger.warning(
+                "invalid price request. rest asset amount is less than request!"
+            )
             task["callback"]("error!")
             return
 
@@ -234,7 +248,9 @@ class BithumbTrader(Trader):
         def post_query_result_task():
             self.worker.post_task({"runnable": self._update_order_result})
 
-        self.timer = threading.Timer(self.RESULT_CHECKING_INTERVAL, post_query_result_task)
+        self.timer = threading.Timer(
+            self.RESULT_CHECKING_INTERVAL, post_query_result_task
+        )
         self.timer.start()
 
     def _stop_timer(self):
@@ -339,7 +355,9 @@ class BithumbTrader(Trader):
 
         latest_price = float(latest["data"][0]["price"])
 
-        if (is_buy is True and latest_price < price) or (is_buy is False and latest_price > price):
+        if (is_buy is True and latest_price < price) or (
+            is_buy is False and latest_price > price
+        ):
             self.logger.info(f"price optimized! ##### {price} -> {latest_price}")
             return latest_price
 
@@ -429,7 +447,9 @@ class BithumbTrader(Trader):
         nonce: it is an arbitrary number that may only be used once.
         api_sign: API signature information created in various combinations values.
         """
-        uri_array = dict({"endpoint": endpoint}, **params)  # Concatenate the two arrays.
+        uri_array = dict(
+            {"endpoint": endpoint}, **params
+        )  # Concatenate the two arrays.
 
         str_data = urlencode(uri_array)
         nonce = self._timestamp_millisec()

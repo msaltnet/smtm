@@ -144,7 +144,8 @@ class Simulator:
         """시뮬레이션 초기화"""
 
         dt = DateConverter.to_end_min(
-            self.start_str + "-" + self.end_str, interval_min=Config.candle_interval / 60
+            self.start_str + "-" + self.end_str,
+            interval_min=Config.candle_interval / 60,
         )
         end = dt[0][1]
         count = dt[0][2]
@@ -161,7 +162,9 @@ class Simulator:
             currency=self.currency, interval=Config.candle_interval
         )
         data_provider.initialize_simulation(end=end, count=count)
-        trader = SimulationTrader(currency=self.currency, interval=Config.candle_interval)
+        trader = SimulationTrader(
+            currency=self.currency, interval=Config.candle_interval
+        )
         trader.initialize_simulation(end=end, count=count, budget=self.budget)
         analyzer = Analyzer()
         analyzer.is_simulation = True

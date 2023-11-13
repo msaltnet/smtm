@@ -34,7 +34,12 @@ class UpditTraderTests(unittest.TestCase):
 
     def test__execute_order_call_cancel_request_when_request_type_is_cancel(self):
         dummy_task = {
-            "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "cancel"},
+            "request": {
+                "id": "apple",
+                "price": 500,
+                "amount": 0.0001,
+                "type": "cancel",
+            },
             "callback": "kiwi",
         }
         trader = UpbitTrader()
@@ -50,7 +55,9 @@ class UpditTraderTests(unittest.TestCase):
         trader._start_timer.assert_not_called()
         trader.cancel_request.assert_called_once_with("apple")
 
-    def test__execute_order_should_call_callback_with_error_when__send_order_return_None(self):
+    def test__execute_order_should_call_callback_with_error_when__send_order_return_None(
+        self,
+    ):
         dummy_task = {
             "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "buy"},
             "callback": MagicMock(),
@@ -107,7 +114,12 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(len(trader.order_map), 0)
 
     def test__create_success_result_return_correct_result(self):
-        dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}
+        dummy_request = {
+            "id": "mango",
+            "type": "banana",
+            "price": 500,
+            "amount": 0.12345,
+        }
         trader = UpbitTrader()
         success_result = trader._create_success_result(dummy_request)
 
@@ -128,7 +140,9 @@ class UpditTraderTests(unittest.TestCase):
         mock_timer.assert_called_once_with(trader.RESULT_CHECKING_INTERVAL, ANY)
         callback = mock_timer.call_args[0][1]
         callback()
-        trader.worker.post_task.assert_called_once_with({"runnable": trader._update_order_result})
+        trader.worker.post_task.assert_called_once_with(
+            {"runnable": trader._update_order_result}
+        )
 
     def test_stop_timer_should_call_cancel(self):
         trader = UpbitTrader()
@@ -140,7 +154,9 @@ class UpditTraderTests(unittest.TestCase):
         timer_mock.cancel.assert_called_once()
         self.assertEqual(trader.timer, None)
 
-    def test__update_order_result_should_call__call_callback_and_keep_waiting_request(self):
+    def test__update_order_result_should_call__call_callback_and_keep_waiting_request(
+        self,
+    ):
         dummy_result = [
             {
                 "uuid": "mango",
@@ -194,7 +210,8 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(mango_result["state"], "done")
         self.assertEqual(mango_result["amount"], 0.007)
         self.assertEqual(
-            trader._call_callback.call_args_list[0][0][0], dummy_request_mango["callback"]
+            trader._call_callback.call_args_list[0][0][0],
+            dummy_request_mango["callback"],
         )
 
         apple_result = trader._call_callback.call_args_list[1][0][1]
@@ -205,7 +222,8 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(mango_result["state"], "done")
         self.assertEqual(apple_result["amount"], 0.54321)
         self.assertEqual(
-            trader._call_callback.call_args_list[1][0][0], dummy_request_apple["callback"]
+            trader._call_callback.call_args_list[1][0][0],
+            dummy_request_apple["callback"],
         )
 
         self.assertEqual(len(trader.order_map), 1)
@@ -263,7 +281,8 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(mango_result["state"], "done")
         self.assertEqual(mango_result["amount"], 0.00001)
         self.assertEqual(
-            trader._call_callback.call_args_list[0][0][0], dummy_request_mango["callback"]
+            trader._call_callback.call_args_list[0][0][0],
+            dummy_request_mango["callback"],
         )
 
         orange_result = trader._call_callback.call_args_list[1][0][1]
@@ -274,7 +293,8 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(orange_result["state"], "done")
         self.assertEqual(orange_result["amount"], 0.1234)
         self.assertEqual(
-            trader._call_callback.call_args_list[1][0][0], dummy_request_orange["callback"]
+            trader._call_callback.call_args_list[1][0][0],
+            dummy_request_orange["callback"],
         )
 
         self.assertEqual(len(trader.order_map), 0)
@@ -328,7 +348,9 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(query, None)
 
     @patch("requests.get")
-    def test__query_order_list_should_get_correctly_when_is_done_state_True(self, mock_requests):
+    def test__query_order_list_should_get_correctly_when_is_done_state_True(
+        self, mock_requests
+    ):
         query_states = ["done", "cancel"]
         uuids = ["mango", "orange"]
         expected_query_string = (
@@ -360,7 +382,9 @@ class UpditTraderTests(unittest.TestCase):
         )
 
     @patch("requests.get")
-    def test__query_order_list_should_get_correctly_when_is_done_state_False(self, mock_requests):
+    def test__query_order_list_should_get_correctly_when_is_done_state_False(
+        self, mock_requests
+    ):
         query_states = ["wait", "watch"]
         uuids = ["banana", "orange"]
         expected_query_string = (
@@ -408,7 +432,9 @@ class UpditTraderTests(unittest.TestCase):
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        trader._create_jwt_token.assert_called_once_with(trader.ACCESS_KEY, trader.SECRET_KEY)
+        trader._create_jwt_token.assert_called_once_with(
+            trader.ACCESS_KEY, trader.SECRET_KEY
+        )
         mock_requests.assert_called_once_with(
             trader.SERVER_URL + "/v1/accounts",
             headers={"Authorization": "Bearer mango_token"},
@@ -417,7 +443,9 @@ class UpditTraderTests(unittest.TestCase):
     @patch("uuid.uuid4")
     @patch("jwt.encode")
     @patch("hashlib.sha512")
-    def test__create_jwt_token_should_return_correct_token(self, mock_hash, mock_jwt, mock_uuid):
+    def test__create_jwt_token_should_return_correct_token(
+        self, mock_hash, mock_jwt, mock_uuid
+    ):
         trader = UpbitTrader()
         mock_m = MagicMock()
         mock_hash.return_value = mock_m
@@ -448,7 +476,9 @@ class UpditTraderTests(unittest.TestCase):
         mock_uuid.return_value = "uuid_mango"
         trader._create_jwt_token("ak", "sk")
 
-        mock_jwt.assert_called_once_with({"access_key": "ak", "nonce": "uuid_mango"}, "sk")
+        mock_jwt.assert_called_once_with(
+            {"access_key": "ak", "nonce": "uuid_mango"}, "sk"
+        )
 
     @patch("requests.get")
     def test__request_get_should_send_http_request_correctly(self, mock_get):
@@ -459,12 +489,16 @@ class UpditTraderTests(unittest.TestCase):
         mock_get.return_value = mock_response
         dummy_headers = "apple_headers"
 
-        self.assertEqual(trader._request_get("get/apple", headers=dummy_headers), "apple_result")
+        self.assertEqual(
+            trader._request_get("get/apple", headers=dummy_headers), "apple_result"
+        )
         mock_response.raise_for_status.assert_called_once()
         mock_get.assert_called_once_with(expected_url, headers=dummy_headers)
 
     @patch("requests.get")
-    def test__request_get_return_None_when_invalid_data_received_from_server(self, mock_get):
+    def test__request_get_return_None_when_invalid_data_received_from_server(
+        self, mock_get
+    ):
         def raise_exception():
             raise ValueError("RequestException dummy exception")
 
@@ -531,7 +565,9 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        trader._create_limit_order_query.assert_called_once_with("mango", True, 500, 0.555)
+        trader._create_limit_order_query.assert_called_once_with(
+            "mango", True, 500, 0.555
+        )
         trader._create_jwt_token.assert_called_once_with(
             trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
         )
@@ -565,7 +601,9 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        trader._create_limit_order_query.assert_called_once_with("mango", True, 450, 0.555)
+        trader._create_limit_order_query.assert_called_once_with(
+            "mango", True, 450, 0.555
+        )
         trader._create_jwt_token.assert_called_once_with(
             trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
         )
@@ -575,7 +613,9 @@ class UpditTraderSendOrderTests(unittest.TestCase):
             headers={"Authorization": "Bearer mango_token"},
         )
 
-    def test__send_order_should_send_correct_limit_order_with_opt_mode_when_query_failed(self):
+    def test__send_order_should_send_correct_limit_order_with_opt_mode_when_query_failed(
+        self,
+    ):
         trader = UpbitTrader()
 
         class DummyResponse:
@@ -596,7 +636,9 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         self.assertEqual(response, "mango_response")
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        trader._create_limit_order_query.assert_called_once_with("mango", True, 500, 0.555)
+        trader._create_limit_order_query.assert_called_once_with(
+            "mango", True, 500, 0.555
+        )
         trader._create_jwt_token.assert_called_once_with(
             trader.ACCESS_KEY, trader.SECRET_KEY, "mango_query"
         )
@@ -622,7 +664,9 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         response = trader._send_order("mango", True, 500)
 
         self.assertEqual(response, "mango_response")
-        trader._create_market_price_order_query.assert_called_once_with("mango", price=500)
+        trader._create_market_price_order_query.assert_called_once_with(
+            "mango", price=500
+        )
 
     def test__send_order_should_send_correct_market_sell_order(self):
         trader = UpbitTrader()
@@ -640,7 +684,9 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         response = trader._send_order("mango", False, volume=0.55)
 
         self.assertEqual(response, "mango_response")
-        trader._create_market_price_order_query.assert_called_once_with("mango", volume=0.55)
+        trader._create_market_price_order_query.assert_called_once_with(
+            "mango", volume=0.55
+        )
 
     def test__send_order_should_return_None_when_receive_error_from_server(self):
         trader = UpbitTrader()
@@ -738,7 +784,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         self.patcher_delete.stop()
         self.patcher_get.stop()
 
-    def test_cancel_request_should_call__call_callback_when_cancel_order_return_info(self):
+    def test_cancel_request_should_call__call_callback_when_cancel_order_return_info(
+        self,
+    ):
         trader = UpbitTrader()
         trader._call_callback = MagicMock()
         dummy_request = {
@@ -797,10 +845,14 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             params=expected_query_string,
             headers={"Authorization": "Bearer mango_token"},
         )
-        trader._call_callback.assert_called_once_with(dummy_request["callback"], expected_result)
+        trader._call_callback.assert_called_once_with(
+            dummy_request["callback"], expected_result
+        )
         self.assertFalse("mango_request_1234" in trader.order_map)
 
-    def test_cancel_request_should_call__call_callback_when_cancel_order_return_None(self):
+    def test_cancel_request_should_call__call_callback_when_cancel_order_return_None(
+        self,
+    ):
         trader = UpbitTrader()
         trader._call_callback = MagicMock()
         dummy_request = {
@@ -840,7 +892,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         }
         self.delete_mock.return_value = dummy_response
 
-        expected_query_string_get = "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
+        expected_query_string_get = (
+            "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
+        )
         dummy_response_get = MagicMock()
         dummy_response_get.json.return_value = [
             {
@@ -858,10 +912,15 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
 
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY)
         self.assertEqual(
-            trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete
+            trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY
+        )
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY
+        )
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[0][0][2],
+            expected_query_string_delete,
         )
         self.delete_mock.assert_called_once_with(
             trader.SERVER_URL + "/v1/order",
@@ -871,8 +930,12 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
 
         dummy_response_get.raise_for_status.assert_called_once()
         dummy_response_get.json.assert_called_once()
-        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY)
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY
+        )
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY
+        )
         self.assertEqual(
             trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get
         )
@@ -882,7 +945,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
             headers={"Authorization": "Bearer mango_token"},
         )
 
-        trader._call_callback.assert_called_once_with(dummy_request["callback"], expected_result)
+        trader._call_callback.assert_called_once_with(
+            dummy_request["callback"], expected_result
+        )
         self.assertFalse("mango_request_1234" in trader.order_map)
 
     def test_cancel_request_should_remove_request_even_when_cancel_nothing(self):
@@ -922,7 +987,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         }
         self.delete_mock.return_value = dummy_response
 
-        expected_query_string_get = "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
+        expected_query_string_get = (
+            "states[]=done&states[]=cancel&uuids[]=mango_uuid".encode()
+        )
         dummy_response_get = MagicMock()
         dummy_response_get.json.return_value = []
         self.get_mock.return_value = dummy_response_get
@@ -932,10 +999,15 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
 
         dummy_response.raise_for_status.assert_called_once()
         dummy_response.json.assert_called_once()
-        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY)
         self.assertEqual(
-            trader._create_jwt_token.call_args_list[0][0][2], expected_query_string_delete
+            trader._create_jwt_token.call_args_list[0][0][0], trader.ACCESS_KEY
+        )
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[0][0][1], trader.SECRET_KEY
+        )
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[0][0][2],
+            expected_query_string_delete,
         )
         self.delete_mock.assert_called_once_with(
             trader.SERVER_URL + "/v1/order",
@@ -945,8 +1017,12 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
 
         dummy_response_get.raise_for_status.assert_called_once()
         dummy_response_get.json.assert_called_once()
-        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY)
-        self.assertEqual(trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY)
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[1][0][0], trader.ACCESS_KEY
+        )
+        self.assertEqual(
+            trader._create_jwt_token.call_args_list[1][0][1], trader.SECRET_KEY
+        )
         self.assertEqual(
             trader._create_jwt_token.call_args_list[1][0][2], expected_query_string_get
         )
@@ -1001,8 +1077,12 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         trader.cancel_all_requests()
 
         trader.cancel_request.assert_called()
-        self.assertEqual(trader.cancel_request.call_args_list[0][0][0], "mango_request_1234")
-        self.assertEqual(trader.cancel_request.call_args_list[1][0][0], "mango_request_5678")
+        self.assertEqual(
+            trader.cancel_request.call_args_list[0][0][0], "mango_request_1234"
+        )
+        self.assertEqual(
+            trader.cancel_request.call_args_list[1][0][0], "mango_request_5678"
+        )
 
 
 class UpditTraderBalanceTests(unittest.TestCase):

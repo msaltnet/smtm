@@ -1,5 +1,6 @@
 class Config:
     """시뮬레이션에 사용할 거래소 데이터 simulation_source: upbit, binance"""
+
     simulation_source = "upbit"
     candle_interval = 60
     """스트림 핸들러의 레벨

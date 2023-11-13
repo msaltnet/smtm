@@ -1,5 +1,11 @@
 import unittest
-from smtm import StrategyFactory, StrategyBuyAndHold, StrategySma0, StrategyRsi, StrategySmaMl
+from smtm import (
+    StrategyFactory,
+    StrategyBuyAndHold,
+    StrategySma0,
+    StrategyRsi,
+    StrategySmaMl,
+)
 from unittest.mock import *
 
 

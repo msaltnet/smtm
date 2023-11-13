@@ -32,5 +32,7 @@ class StrategyFactory:
         """전체 Strategy 정보를 반환"""
         all_strategy = []
         for strategy in StrategyFactory.STRATEGY_LIST:
-            all_strategy.append({"name": strategy.NAME, "code": strategy.CODE, "class": strategy})
+            all_strategy.append(
+                {"name": strategy.NAME, "code": strategy.CODE, "class": strategy}
+            )
         return all_strategy

@@ -104,7 +104,11 @@ class TelegramControllerTests(unittest.TestCase):
                                 "first_name": "msaltnet",
                                 "language_code": "ko",
                             },
-                            "chat": {"id": 1234567890, "first_name": "msaltnet", "type": "private"},
+                            "chat": {
+                                "id": 1234567890,
+                                "first_name": "msaltnet",
+                                "type": "private",
+                            },
                             "date": 1627694419,
                             "text": "3",
                         },
@@ -119,7 +123,11 @@ class TelegramControllerTests(unittest.TestCase):
                                 "first_name": "msaltnet",
                                 "language_code": "ko",
                             },
-                            "chat": {"id": 1234567891, "first_name": "msaltnet", "type": "private"},
+                            "chat": {
+                                "id": 1234567891,
+                                "first_name": "msaltnet",
+                                "type": "private",
+                            },
                             "date": 1627694420,
                             "text": "4",
                         },
@@ -134,7 +142,11 @@ class TelegramControllerTests(unittest.TestCase):
                                 "first_name": "msaltnet",
                                 "language_code": "ko",
                             },
-                            "chat": {"id": 1234567890, "first_name": "msaltnet", "type": "private"},
+                            "chat": {
+                                "id": 1234567890,
+                                "first_name": "msaltnet",
+                                "type": "private",
+                            },
                             "date": 1627694420,
                             "text": "5",
                         },
@@ -160,7 +172,9 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.post_worker.post_task.call_args[0][0]["runnable"](task)
 
         tcb._send_http.assert_called_once_with(
-            "https://api.telegram.org/banana/sendPhoto?chat_id=to_banana", True, "banana_file"
+            "https://api.telegram.org/banana/sendPhoto?chat_id=to_banana",
+            True,
+            "banana_file",
         )
 
     def test__send_text_message_shoul_call_sendMessage_api_correctly(self):
@@ -178,7 +192,9 @@ class TelegramControllerTests(unittest.TestCase):
             "https://api.telegram.org/banana/sendMessage?chat_id=to_banana&text=hello%20banana"
         )
 
-    def test__send_text_message_shoul_call_sendMessage_api_correctly_with_keyboard(self):
+    def test__send_text_message_shoul_call_sendMessage_api_correctly_with_keyboard(
+        self,
+    ):
         tcb = TelegramController()
         tcb.post_worker = MagicMock()
         tcb.TOKEN = "banana"
@@ -270,8 +286,8 @@ class TelegramControllerTests(unittest.TestCase):
         tcb = TelegramController()
         dummy_response = MagicMock()
         dummy_response.json.return_value = "dummy_result"
-        dummy_response.raise_for_status.side_effect = requests.exceptions.RequestException(
-            "RequestException dummy exception"
+        dummy_response.raise_for_status.side_effect = (
+            requests.exceptions.RequestException("RequestException dummy exception")
         )
         mock_get.return_value = dummy_response
 
@@ -313,14 +329,25 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.budget = "mango_budget"
         tcb.operator.stop = MagicMock(
             return_value={
-                "summary": (100, 200, 0.5, 0.9, "test.jpg", 0, 0, 0, ("12-01", "12-05", "12-08"))
+                "summary": (
+                    100,
+                    200,
+                    0.5,
+                    0.9,
+                    "test.jpg",
+                    0,
+                    0,
+                    0,
+                    ("12-01", "12-05", "12-08"),
+                )
             }
         )
         tcb._send_text_message = MagicMock()
 
         tcb._stop_trading("2")
         tcb._send_text_message.assert_called_once_with(
-            "자동 거래가 중지되었습니다\n12-05 - 12-08\n자산 100 -> 200\n수익률 0.5\n비교 수익률 0.9\n", tcb.main_keyboard
+            "자동 거래가 중지되었습니다\n12-05 - 12-08\n자산 100 -> 200\n수익률 0.5\n비교 수익률 0.9\n",
+            tcb.main_keyboard,
         )
         self.assertEqual(tcb.operator, None)
         self.assertEqual(tcb.strategy, None)
@@ -489,7 +516,9 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb._query_score("1")
 
-        tcb._send_text_message.assert_called_once_with("자동 거래 운영중이 아닙니다", tcb.main_keyboard)
+        tcb._send_text_message.assert_called_once_with(
+            "자동 거래 운영중이 아닙니다", tcb.main_keyboard
+        )
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
 
@@ -521,7 +550,9 @@ class TelegramControllerTests(unittest.TestCase):
         self.assertEqual(tcb.operator.get_score.call_args[0][1], (60 * 6, -1))
         callback = tcb.operator.get_score.call_args[0][0]
         callback(None)
-        tcb._send_text_message.assert_called_with("수익률 조회중 문제가 발생하였습니다.", tcb.main_keyboard)
+        tcb._send_text_message.assert_called_with(
+            "수익률 조회중 문제가 발생하였습니다.", tcb.main_keyboard
+        )
         callback((100, 200, 0.5, 0.9, "test.jpg", 0, 0, 0, ("12-01", "12-05", "12-08")))
         tcb._send_text_message.assert_called_with(
             "12-05 - 12-08\n자산 100 -> 200\n구간 수익률 100.0\n12-01~\n누적 수익률 0.5\n비교 수익률 0.9\n",

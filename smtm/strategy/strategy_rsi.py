@@ -38,7 +38,9 @@ class StrategyRsi(Strategy):
         self.waiting_requests = {}
         self.position = None
 
-    def initialize(self, budget, min_price=100, add_spot_callback=None, add_line_callback=None):
+    def initialize(
+        self, budget, min_price=100, add_spot_callback=None, add_line_callback=None
+    ):
         """예산을 설정하고 초기화한다
 
         budget: 예산
@@ -75,7 +77,9 @@ class StrategyRsi(Strategy):
             now = datetime.now().strftime(self.ISO_DATEFORMAT)
 
             if self.is_simulation:
-                last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
+                last_dt = datetime.strptime(
+                    self.data[-1]["date_time"], self.ISO_DATEFORMAT
+                )
                 now = last_dt.isoformat()
 
             if last_data is None or self.position is None:
@@ -97,7 +101,9 @@ class StrategyRsi(Strategy):
                 request = self.__create_buy(self.data[-1]["closing_price"])
             elif self.position == "sell":
                 # 종가로 전량 매도
-                request = self.__create_sell(self.data[-1]["closing_price"], self.asset_amount)
+                request = self.__create_sell(
+                    self.data[-1]["closing_price"], self.asset_amount
+                )
 
             if request is None:
                 if self.is_simulation:
@@ -112,7 +118,9 @@ class StrategyRsi(Strategy):
                     ]
                 return None
             request["date_time"] = now
-            self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
+            self.logger.info(
+                f"[REQ] id: {request['id']} : {request['type']} =============="
+            )
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
             final_requests = []
@@ -214,7 +222,9 @@ class StrategyRsi(Strategy):
             else:
                 down_val = -delta
 
-            down_avg = (self.rsi_info[0] * (self.RSI_COUNT - 1) + down_val) / self.RSI_COUNT
+            down_avg = (
+                self.rsi_info[0] * (self.RSI_COUNT - 1) + down_val
+            ) / self.RSI_COUNT
             up_avg = (self.rsi_info[1] * (self.RSI_COUNT - 1) + up_val) / self.RSI_COUNT
 
             r_strength = up_avg / down_avg
@@ -268,7 +278,9 @@ class StrategyRsi(Strategy):
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {price}, amount: {amount}")
-            self.logger.info(f"balance: {self.balance}, asset_amount: {self.asset_amount}")
+            self.logger.info(
+                f"balance: {self.balance}, asset_amount: {self.asset_amount}"
+            )
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
         except (AttributeError, TypeError) as msg:

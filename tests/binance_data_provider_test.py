@@ -28,7 +28,9 @@ class BinanceDataProviderTests(unittest.TestCase):
     def test_get_info_should_call_get_with_correct_params(self, mock_get):
         data_provider = BinanceDataProvider("BTC", 60)
         data_provider.get_info()
-        self.assertEqual(mock_get.call_args_list[0][0][0], "https://api.binance.com/api/v3/klines")
+        self.assertEqual(
+            mock_get.call_args_list[0][0][0], "https://api.binance.com/api/v3/klines"
+        )
         self.assertEqual(
             mock_get.call_args_list[0][1]["params"],
             {"symbol": "BTCUSDT", "limit": 1, "interval": "1m"},
@@ -36,7 +38,9 @@ class BinanceDataProviderTests(unittest.TestCase):
 
         data_provider = BinanceDataProvider("ETH", 180)
         data_provider.get_info()
-        self.assertEqual(mock_get.call_args_list[1][0][0], "https://api.binance.com/api/v3/klines")
+        self.assertEqual(
+            mock_get.call_args_list[1][0][0], "https://api.binance.com/api/v3/klines"
+        )
         self.assertEqual(
             mock_get.call_args_list[1][1]["params"],
             {"symbol": "ETHUSDT", "limit": 1, "interval": "3m"},
@@ -44,7 +48,9 @@ class BinanceDataProviderTests(unittest.TestCase):
 
         data_provider = BinanceDataProvider("XRP", 600)
         data_provider.get_info()
-        self.assertEqual(mock_get.call_args_list[2][0][0], "https://api.binance.com/api/v3/klines")
+        self.assertEqual(
+            mock_get.call_args_list[2][0][0], "https://api.binance.com/api/v3/klines"
+        )
         self.assertEqual(
             mock_get.call_args_list[2][1]["params"],
             {"symbol": "XRPUSDT", "limit": 1, "interval": "10m"},

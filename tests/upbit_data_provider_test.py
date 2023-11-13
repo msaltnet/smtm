@@ -42,7 +42,9 @@ class UpbitDataProviderTests(unittest.TestCase):
         self.assertEqual(info[0]["closing_price"], 9778000)
         self.assertEqual(info[0]["acc_price"], 11277224.71063000)
         self.assertEqual(info[0]["acc_volume"], 1.15377852)
-        mock_get.assert_called_once_with(dp.URL, params={"market": "KRW-BTC", "count": 1})
+        mock_get.assert_called_once_with(
+            dp.URL, params={"market": "KRW-BTC", "count": 1}
+        )
 
     @patch("requests.get")
     def test_get_info_NOT_throw_UserWarning_when_receive_invalid_data(self, mock_get):
@@ -68,12 +70,14 @@ class UpbitDataProviderTests(unittest.TestCase):
             dp.get_info()
 
     @patch("requests.get")
-    def test_initialize_from_server_NOT_initialized_when_connection_fail(self, mock_get):
+    def test_initialize_from_server_NOT_initialized_when_connection_fail(
+        self, mock_get
+    ):
         dp = UpbitDataProvider()
         dummy_response = MagicMock()
         dummy_response.json.return_value = [{"market": "apple"}, {"market": "banana"}]
-        dummy_response.raise_for_status.side_effect = requests.exceptions.RequestException(
-            "RequestException dummy exception"
+        dummy_response.raise_for_status.side_effect = (
+            requests.exceptions.RequestException("RequestException dummy exception")
         )
         mock_get.return_value = dummy_response
 
@@ -87,7 +91,9 @@ class UpbitDataProviderTests(unittest.TestCase):
         self.assertEqual(dp.URL, "https://api.upbit.com/v1/candles/minutes/3")
         dp = UpbitDataProvider("BTC", 300)
         self.assertEqual(dp.URL, "https://api.upbit.com/v1/candles/minutes/5")
-        self.assertEqual(UpbitDataProvider.URL, "https://api.upbit.com/v1/candles/minutes/1")
+        self.assertEqual(
+            UpbitDataProvider.URL, "https://api.upbit.com/v1/candles/minutes/1"
+        )
         dp = UpbitDataProvider("BTC", 600)
         self.assertEqual(dp.URL, "https://api.upbit.com/v1/candles/minutes/10")
 
@@ -99,19 +105,27 @@ class UpbitDataProviderTests(unittest.TestCase):
         dp = UpbitDataProvider("BTC", 60)
         dp.get_info()
         expected_url = "https://api.upbit.com/v1/candles/minutes/1"
-        mock_get.assert_called_once_with(expected_url, params={"market": "KRW-BTC", "count": 1})
+        mock_get.assert_called_once_with(
+            expected_url, params={"market": "KRW-BTC", "count": 1}
+        )
 
         dp = UpbitDataProvider("BTC", 180)
         dp.get_info()
         expected_url = "https://api.upbit.com/v1/candles/minutes/3"
-        mock_get.assert_called_with(expected_url, params={"market": "KRW-BTC", "count": 1})
+        mock_get.assert_called_with(
+            expected_url, params={"market": "KRW-BTC", "count": 1}
+        )
 
         dp = UpbitDataProvider("BTC", 300)
         dp.get_info()
         expected_url = "https://api.upbit.com/v1/candles/minutes/5"
-        mock_get.assert_called_with(expected_url, params={"market": "KRW-BTC", "count": 1})
+        mock_get.assert_called_with(
+            expected_url, params={"market": "KRW-BTC", "count": 1}
+        )
 
         dp = UpbitDataProvider("BTC", 600)
         dp.get_info()
         expected_url = "https://api.upbit.com/v1/candles/minutes/10"
-        mock_get.assert_called_with(expected_url, params={"market": "KRW-BTC", "count": 1})
+        mock_get.assert_called_with(
+            expected_url, params={"market": "KRW-BTC", "count": 1}
+        )

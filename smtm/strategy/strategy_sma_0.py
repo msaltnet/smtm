@@ -132,7 +132,9 @@ class StrategySma0(Strategy):
 
                     if std_ratio > self.STD_RATIO:
                         self.cross_info[1] = {"price": 0, "index": current_idx}
-                        self.logger.debug(f"[SMA] SKIP BUY !!! === Stand deviation:{std_ratio:.6f}")
+                        self.logger.debug(
+                            f"[SMA] SKIP BUY !!! === Stand deviation:{std_ratio:.6f}"
+                        )
 
                 self.__add_drawing_spot(info["date_time"], current_price)
             elif sma_short < sma_mid < sma_long and self.current_process != "sell":
@@ -195,7 +197,9 @@ class StrategySma0(Strategy):
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
             self.logger.info(f"price: {price}, amount: {amount}")
-            self.logger.info(f"balance: {self.balance}, asset_amount: {self.asset_amount}")
+            self.logger.info(
+                f"balance: {self.balance}, asset_amount: {self.asset_amount}"
+            )
             self.logger.info("================================================")
             self.result.append(copy.deepcopy(result))
         except (AttributeError, TypeError) as msg:
@@ -224,7 +228,9 @@ class StrategySma0(Strategy):
             now = datetime.now().strftime(self.ISO_DATEFORMAT)
 
             if self.is_simulation:
-                last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
+                last_dt = datetime.strptime(
+                    self.data[-1]["date_time"], self.ISO_DATEFORMAT
+                )
                 now = last_dt.isoformat()
 
             if last_data is None:
@@ -259,7 +265,9 @@ class StrategySma0(Strategy):
                     ]
                 return None
             request["date_time"] = now
-            self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
+            self.logger.info(
+                f"[REQ] id: {request['id']} : {request['type']} =============="
+            )
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
             final_requests = []
@@ -296,8 +304,14 @@ class StrategySma0(Strategy):
         amount = math.floor(amount * 10000) / 10000
         final_value = amount * price
 
-        if self.min_price > budget or self.process_unit[0] <= 0 or final_value > self.balance:
-            self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
+        if (
+            self.min_price > budget
+            or self.process_unit[0] <= 0
+            or final_value > self.balance
+        ):
+            self.logger.info(
+                f"target_budget is too small or invalid unit {self.process_unit}"
+            )
             if self.is_simulation:
                 return {
                     "id": DateConverter.timestamp_id(),
@@ -343,7 +357,9 @@ class StrategySma0(Strategy):
             "amount": amount,
         }
 
-    def initialize(self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None):
+    def initialize(
+        self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None
+    ):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """

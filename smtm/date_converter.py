@@ -61,7 +61,9 @@ class DateConverter:
 
         total_count = delta.total_seconds() / (60.0 * interval_min)
         if not total_count.is_integer():
-            raise UserWarning(f"{delta.total_seconds()} sec is not multiple of {interval_min} min")
+            raise UserWarning(
+                f"{delta.total_seconds()} sec is not multiple of {interval_min} min"
+            )
 
         while delta.total_seconds() > 0:
             count = round(delta.total_seconds() / (60.0 * interval_min))

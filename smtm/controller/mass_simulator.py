@@ -72,7 +72,9 @@ class MassSimulator:
             print("Mass Simulation ========================================")
             print(f"Title: {self.config['title']}, Currency: {self.config['currency']}")
             print(f"Description: {self.config['description']}")
-            print(f"Budget: {self.config['budget']}, Strategy: {self.config['strategy']}")
+            print(
+                f"Budget: {self.config['budget']}, Strategy: {self.config['strategy']}"
+            )
             print(
                 f"{self.config['period_list'][0]['start']} ~ {self.config['period_list'][-1]['end']} ({len(self.config['period_list'])})"
             )
@@ -83,7 +85,9 @@ class MassSimulator:
 
         if is_end:
             total_diff = now - self.start
-            print(f"{now_string}     +{total_diff.total_seconds():<10} simulation completed")
+            print(
+                f"{now_string}     +{total_diff.total_seconds():<10} simulation completed"
+            )
             print("Result Summary =========================================")
             print(f"수익률 평균: {self.analyzed_result[0]:8}")
             print(f"수익률 편차: {self.analyzed_result[1]:8}")
@@ -97,7 +101,9 @@ class MassSimulator:
         if diff > self.MIN_PRINT_STATE_SEC:
             self.last_print = now
             total_diff = now - self.start
-            print(f"{now_string}     +{total_diff.total_seconds():<10} simulation is running")
+            print(
+                f"{now_string}     +{total_diff.total_seconds():<10} simulation is running"
+            )
 
     @staticmethod
     def run_single(operator):
@@ -117,14 +123,18 @@ class MassSimulator:
         return last_report
 
     @staticmethod
-    def get_initialized_operator(budget, strategy_code, interval, currency, start, end, tag):
+    def get_initialized_operator(
+        budget, strategy_code, interval, currency, start, end, tag
+    ):
         """시뮬레이션 오퍼레이션 생성 후 주어진 설정 값으로 초기화 하여 반환"""
         dt = DateConverter.to_end_min(
             start_iso=start, end_iso=end, interval_min=Config.candle_interval / 60
         )
         end = dt[0][1]
         count = dt[0][2]
-        data_provider = SimulationDataProvider(currency=currency, interval=Config.candle_interval)
+        data_provider = SimulationDataProvider(
+            currency=currency, interval=Config.candle_interval
+        )
         data_provider.initialize_simulation(end=end, count=count)
 
         strategy = StrategyFactory.create(strategy_code)
@@ -164,7 +174,9 @@ class MassSimulator:
         config_list = []
         period_object_list = []
         for i in range(len(self.config["period_list"])):
-            period_object_list.append({"idx": i, "period": self.config["period_list"][i]})
+            period_object_list.append(
+                {"idx": i, "period": self.config["period_list"][i]}
+            )
         separated_periods = self.make_chunk(period_object_list, process_num)
         for i in range(process_num):
             config_list.append(
@@ -291,7 +303,9 @@ class MassSimulator:
             self._round(df_final["final_return"].iloc[-1]),
         )
 
-        with open(f"{self.RESULT_FILE_OUTPUT}{title}.result", "w", encoding="utf-8") as result_file:
+        with open(
+            f"{self.RESULT_FILE_OUTPUT}{title}.result", "w", encoding="utf-8"
+        ) as result_file:
             # 기본 정보
             result_file.write(f"Title: {title}\n")
             result_file.write(f"Description: {config['description']}\n")
@@ -312,26 +326,34 @@ class MassSimulator:
             )
 
             if len(final_return_list) > 10:
-                result_file.write("수익률 TOP 10 ===============================================\n")
+                result_file.write(
+                    "수익률 TOP 10 ===============================================\n"
+                )
                 for i in range(10):
                     result_file.write(
                         f"{self._round(df_final['final_return'].iloc[i]):8}, {df_final['final_return'].index[i]:3}\n"
                     )
 
-                result_file.write("수익률 WORST 10 ===============================================\n")
+                result_file.write(
+                    "수익률 WORST 10 ===============================================\n"
+                )
                 for i in range(10):
                     idx = -1 * (i + 1)
                     result_file.write(
                         f"{self._round(df_final['final_return'].iloc[idx]):8}, {df_final['final_return'].index[idx]:3}\n"
                     )
 
-                result_file.write("순간 최대 수익률 BEST 10 =====================================\n")
+                result_file.write(
+                    "순간 최대 수익률 BEST 10 =====================================\n"
+                )
                 for i in range(10):
                     result_file.write(
                         f"{self._round(df_max['max_return'].iloc[i]):8}, {df_max['max_return'].index[i]:3}\n"
                     )
 
-                result_file.write("순간 최저 수익률 WORST 10 =====================================\n")
+                result_file.write(
+                    "순간 최저 수익률 WORST 10 =====================================\n"
+                )
                 for i in range(10):
                     result_file.write(
                         f"{self._round(df_mix['min_return'].iloc[i]):8}, {df_mix['min_return'].index[i]:3}\n"
@@ -407,7 +429,10 @@ class MassSimulator:
         while delta.total_seconds() > 0:
             inter_end_dt = start_dt + timedelta(minutes=offset_min)
             config["period_list"].append(
-                {"start": start_dt.strftime(iso_format), "end": inter_end_dt.strftime(iso_format)}
+                {
+                    "start": start_dt.strftime(iso_format),
+                    "end": inter_end_dt.strftime(iso_format),
+                }
             )
             start_dt = inter_end_dt
             delta = end_dt - start_dt

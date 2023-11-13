@@ -136,7 +136,10 @@ class TelegramController:
         for s_item in self.strategies:
             strategy_list.append(s_item["name"])
         self.setup_list = [
-            {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000", "1000000"]},
+            {
+                "guide": "운영 예산을 정해주세요",
+                "keyboard": ["50000", "100000", "500000", "1000000"],
+            },
             {"guide": "거래할 화폐를 정해주세요", "keyboard": self.AVAILABLE_CURRENCY},
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
             {
@@ -190,7 +193,9 @@ class TelegramController:
             while not self.terminating:
                 self._handle_message()
 
-        get_updates_thread = threading.Thread(target=looper, name="get updates", daemon=True)
+        get_updates_thread = threading.Thread(
+            target=looper, name="get updates", daemon=True
+        )
         get_updates_thread.start()
 
     def _handle_message(self):
@@ -199,7 +204,9 @@ class TelegramController:
         try:
             if updates is not None and updates["ok"]:
                 for result in updates["result"]:
-                    self.logger.debug(f'result: {result["message"]["chat"]["id"]} : {self.CHAT_ID}')
+                    self.logger.debug(
+                        f'result: {result["message"]["chat"]["id"]} : {self.CHAT_ID}'
+                    )
                     if result["message"]["chat"]["id"] != self.CHAT_ID:
                         continue
                     if "text" in result["message"]:
@@ -293,7 +300,9 @@ class TelegramController:
                 if self.is_demo:
                     self.trader = DemoTrader(budget=self.budget, currency=self.currency)
                 else:
-                    self.trader = UpbitTrader(budget=self.budget, currency=self.currency)
+                    self.trader = UpbitTrader(
+                        budget=self.budget, currency=self.currency
+                    )
                 not_ok = False
             else:
                 self._send_text_message("현재 지원하지 않는 코인입니다.")
@@ -303,7 +312,9 @@ class TelegramController:
                 if self.is_demo:
                     self.trader = DemoTrader(budget=self.budget, currency=self.currency)
                 else:
-                    self.trader = BithumbTrader(budget=self.budget, currency=self.currency)
+                    self.trader = BithumbTrader(
+                        budget=self.budget, currency=self.currency
+                    )
                 not_ok = False
             else:
                 self._send_text_message("현재 지원하지 않는 코인입니다.")
@@ -397,7 +408,9 @@ class TelegramController:
         self.strategy = None
         self.data_provider = None
         self.trader = None
-        self._send_text_message("자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요", self.main_keyboard)
+        self._send_text_message(
+            "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요", self.main_keyboard
+        )
 
     def _stop_trading(self, command):
         """자동 거래 중지"""
@@ -453,7 +466,9 @@ class TelegramController:
 
                 def print_score_and_main_statement(score):
                     if score is None:
-                        self._send_text_message("수익률 조회중 문제가 발생하였습니다.", self.main_keyboard)
+                        self._send_text_message(
+                            "수익률 조회중 문제가 발생하였습니다.", self.main_keyboard
+                        )
                         return
 
                     diff = score[1] - score[0]
@@ -522,4 +537,6 @@ class TelegramController:
 
     def on_exception(self, msg):
         """예외 상황 처리"""
-        self._send_text_message(f"트레이딩 중 문제가 발생하여 트레이딩이 중단되었습니다! {msg}", self.main_keyboard)
+        self._send_text_message(
+            f"트레이딩 중 문제가 발생하여 트레이딩이 중단되었습니다! {msg}", self.main_keyboard
+        )

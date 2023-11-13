@@ -39,7 +39,9 @@ class SimulationTraderTests(unittest.TestCase):
         trader.v_market.handle_request.assert_called_once_with(dummy_requests[0])
         callback.assert_called_once_with("banana")
 
-    def test_send_request_call_raise_exception_UserWarning_when_is_initialized_False(self):
+    def test_send_request_call_raise_exception_UserWarning_when_is_initialized_False(
+        self,
+    ):
         trader = SimulationTrader()
         trader.is_initialized = False
 
@@ -54,14 +56,18 @@ class SimulationTraderTests(unittest.TestCase):
         with self.assertRaises(UserWarning):
             trader.send_request(None, None)
 
-    def test_send_request_call_raise_exception_UserWarning_when_callback_make_TypeError(self):
+    def test_send_request_call_raise_exception_UserWarning_when_callback_make_TypeError(
+        self,
+    ):
         trader = SimulationTrader()
         trader.is_initialized = True
 
         with self.assertRaises(UserWarning):
             trader.send_request(None, None)
 
-    def test_get_account_info_call_callback_with_virtual_market_get_balance_result(self):
+    def test_get_account_info_call_callback_with_virtual_market_get_balance_result(
+        self,
+    ):
         trader = SimulationTrader()
         trader.is_initialized = True
         trader.v_market.get_balance = MagicMock(return_value="banana")

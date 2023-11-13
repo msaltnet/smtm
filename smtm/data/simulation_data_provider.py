@@ -11,8 +11,18 @@ class SimulationDataProvider(DataProvider):
     """거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스"""
 
     AVAILABLE_CURRENCY = {
-        "upbit" : {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"},
-        "binance" : {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "DOGE": "DOGEUSDT", "XRP": "XRPUSDT"}
+        "upbit": {
+            "BTC": "KRW-BTC",
+            "ETH": "KRW-ETH",
+            "DOGE": "KRW-DOGE",
+            "XRP": "KRW-XRP",
+        },
+        "binance": {
+            "BTC": "BTCUSDT",
+            "ETH": "ETHUSDT",
+            "DOGE": "DOGEUSDT",
+            "XRP": "XRPUSDT",
+        },
     }
 
     def __init__(self, currency="BTC", interval=60):

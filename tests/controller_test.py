@@ -49,7 +49,9 @@ class ControllerTests(unittest.TestCase):
         dummy_action.assert_called()
 
     @patch("builtins.print")
-    def test__on_command_just_print_error_message_when_invalid_command(self, mock_print):
+    def test__on_command_just_print_error_message_when_invalid_command(
+        self, mock_print
+    ):
         controller = Controller()
         controller.command_list = [
             {
@@ -73,7 +75,9 @@ class ControllerTests(unittest.TestCase):
 
     @patch("builtins.input", side_effect=["state"])
     @patch("builtins.print")
-    def test__on_query_command_should_handle_command_state(self, mock_print, mock_input):
+    def test__on_query_command_should_handle_command_state(
+        self, mock_print, mock_input
+    ):
         controller = Controller()
         controller.operator = MagicMock()
         controller.operator.state = "mango"
@@ -90,7 +94,9 @@ class ControllerTests(unittest.TestCase):
 
     @patch("builtins.input", side_effect=["score"])
     @patch("builtins.print")
-    def test__on_query_command_should_handle_command_score(self, mock_print, mock_input):
+    def test__on_query_command_should_handle_command_score(
+        self, mock_print, mock_input
+    ):
         controller = Controller()
         controller.operator = MagicMock()
         controller._on_query_command()
@@ -106,7 +112,9 @@ class ControllerTests(unittest.TestCase):
 
     @patch("builtins.input", side_effect=["result"])
     @patch("builtins.print")
-    def test__on_query_command_should_handle_command_result(self, mock_print, mock_input):
+    def test__on_query_command_should_handle_command_result(
+        self, mock_print, mock_input
+    ):
         controller = Controller()
         controller.operator = MagicMock()
         controller._on_query_command()

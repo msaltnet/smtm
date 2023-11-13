@@ -8,6 +8,7 @@ from .operator import Operator
 
 class SimulationOperator(Operator):
     """각 모듈을 연동해 시뮬레이션을 진행하는 클래스"""
+
     PERIODIC_RECORD_INFO = (360, -1)  # (turn, index) e.g. (360, -1) 최근 6시간
     PERIODIC_RECORD_INTERVAL_TURN = 300
 
@@ -27,7 +28,9 @@ class SimulationOperator(Operator):
         Operator는 중지되지 않은 상태. Operator의 시작과 중지는 외부부터 실행되어야 한다.
         """
         del task
-        self.logger.info(f"############# Simulation trading is started : {self.turn + 1}")
+        self.logger.info(
+            f"############# Simulation trading is started : {self.turn + 1}"
+        )
         self.is_timer_running = False
         try:
             self.current_turn += 1
@@ -100,7 +103,9 @@ class SimulationOperator(Operator):
         def get_score_callback(task):
             now = datetime.now()
             if graph_tag is not None:
-                graph_filename = f"{self.OUTPUT_FOLDER}gs{round(time.time())}-{graph_tag}.jpg"
+                graph_filename = (
+                    f"{self.OUTPUT_FOLDER}gs{round(time.time())}-{graph_tag}.jpg"
+                )
             else:
                 graph_filename = f"{self.OUTPUT_FOLDER}gs{round(time.time())}-{now.month:02d}{now.day:02d}T{now.hour:02d}{now.minute:02d}.jpg"
 
@@ -115,11 +120,18 @@ class SimulationOperator(Operator):
                 self.logger.error(f"invalid callback: {err}")
 
         self.worker.post_task(
-            {"runnable": get_score_callback, "callback": callback, "index_info": index_info}
+            {
+                "runnable": get_score_callback,
+                "callback": callback,
+                "index_info": index_info,
+            }
         )
 
     def _periodic_internal_get_score(self):
-        if self.current_turn - self.last_periodic_turn < self.PERIODIC_RECORD_INTERVAL_TURN:
+        if (
+            self.current_turn - self.last_periodic_turn
+            < self.PERIODIC_RECORD_INTERVAL_TURN
+        ):
             return
 
         def internal_get_score_callback(score):

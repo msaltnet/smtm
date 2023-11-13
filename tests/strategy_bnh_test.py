@@ -26,15 +26,20 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
     def test_update_trading_info_append_info_to_data(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 10)
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+            }
+        ]
         bnh.update_trading_info(dummy_info)
-        self.assertEqual(bnh.data.pop(), {
-            "type": "primary_candle",
-            "market": "orange",
-        })
+        self.assertEqual(
+            bnh.data.pop(),
+            {
+                "type": "primary_candle",
+                "market": "orange",
+            },
+        )
 
     def test_update_trading_info_ignore_info_when_not_yet_initialzed(self):
         bnh = StrategyBuyAndHold()
@@ -176,16 +181,20 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         request = bnh.get_request()
         self.assertEqual(request, None)
 
-    def test_get_request_return_turn_over_when_target_budget_is_too_small_at_simulation(self):
+    def test_get_request_return_turn_over_when_target_budget_is_too_small_at_simulation(
+        self,
+    ):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100, 100)
         bnh.is_simulation = True
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "date_time": "2020-02-25T15:41:09",
-            "closing_price": 20000
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+                "date_time": "2020-02-25T15:41:09",
+                "closing_price": 20000,
+            }
+        ]
         bnh.update_trading_info(dummy_info)
         requests = bnh.get_request()
         self.assertEqual(requests[0]["price"], 0)
@@ -194,11 +203,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
     def test_get_request_use_balance_when_balance_is_smaller_than_target_budget(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(1000, 10)
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "closing_price": 20000
-        }]
+        dummy_info = [
+            {"type": "primary_candle", "market": "orange", "closing_price": 20000}
+        ]
         bnh.update_trading_info(dummy_info)
         bnh.balance = 100
         requests = bnh.get_request()
@@ -208,11 +215,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
     def test_get_request_return_None_when_balance_is_smaller_than_total_value(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(5000, 10)
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "closing_price": 20000000
-        }]
+        dummy_info = [
+            {"type": "primary_candle", "market": "orange", "closing_price": 20000000}
+        ]
         bnh.update_trading_info(dummy_info)
         bnh.balance = 10000
         requests = bnh.get_request()
@@ -224,12 +229,14 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh = StrategyBuyAndHold()
         bnh.initialize(900, 10)
         bnh.is_simulation = True
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "date_time": "2020-02-25T15:41:09",
-            "closing_price": 20000
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+                "date_time": "2020-02-25T15:41:09",
+                "closing_price": 20000,
+            }
+        ]
         bnh.update_trading_info(dummy_info)
         bnh.balance = 9.5
         requests = bnh.get_request()
@@ -240,11 +247,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh = StrategyBuyAndHold()
         bnh.initialize(900, 10)
         bnh.is_simulation = False
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "closing_price": 20000
-        }]
+        dummy_info = [
+            {"type": "primary_candle", "market": "orange", "closing_price": 20000}
+        ]
         bnh.update_trading_info(dummy_info)
         bnh.balance = 9.5
         requests = bnh.get_request()
@@ -253,11 +258,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
     def test_get_request_return_correct_request(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(50000, 100)
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "closing_price": 20000000
-        }]
+        dummy_info = [
+            {"type": "primary_candle", "market": "orange", "closing_price": 20000000}
+        ]
         bnh.update_trading_info(dummy_info)
         requests = bnh.get_request()
         self.assertEqual(requests[0]["price"], 20000000)
@@ -269,11 +272,9 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh.initialize(50000, 100)
         bnh.waiting_requests["mango_id"] = {"request": {"id": "mango_id"}}
         bnh.waiting_requests["orange_id"] = {"request": {"id": "orange_id"}}
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "closing_price": 20000000
-        }]
+        dummy_info = [
+            {"type": "primary_candle", "market": "orange", "closing_price": 20000000}
+        ]
         bnh.update_trading_info(dummy_info)
         requests = bnh.get_request()
 
@@ -291,12 +292,14 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         bnh = StrategyBuyAndHold()
         bnh.initialize(1000, 100)
         bnh.is_simulation = True
-        dummy_info = [{
-            "type": "primary_candle",
-            "market": "orange",
-            "date_time": "2020-02-25T15:41:09",
-            "closing_price": 20000000
-        }]
+        dummy_info = [
+            {
+                "type": "primary_candle",
+                "market": "orange",
+                "date_time": "2020-02-25T15:41:09",
+                "closing_price": 20000000,
+            }
+        ]
         bnh.update_trading_info(dummy_info)
         requests = bnh.get_request()
         self.assertEqual(requests[0]["date_time"], "2020-02-25T15:41:09")

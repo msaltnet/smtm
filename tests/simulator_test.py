@@ -35,7 +35,9 @@ class SimulatorTests(unittest.TestCase):
         simulator = Simulator()
         simulator.command_list = [{"guide": "orange"}]
         simulator.print_help()
-        self.assertEqual(mock_print.call_args_list[0][0][0], "command list =================")
+        self.assertEqual(
+            mock_print.call_args_list[0][0][0], "command list ================="
+        )
         self.assertEqual(mock_print.call_args_list[1][0][0], "orange")
 
     @patch("builtins.print")
@@ -80,7 +82,9 @@ class SimulatorTests(unittest.TestCase):
         simulator.command_list[2]["action"].assert_called_once()
 
     @patch("builtins.input", side_effect=["", "", "5"])
-    def test_initialize_with_command_print_guide_and_call_action_correctly(self, mock_input):
+    def test_initialize_with_command_print_guide_and_call_action_correctly(
+        self, mock_input
+    ):
         simulator = Simulator()
         simulator.config_list = [
             {
@@ -108,7 +112,9 @@ class SimulatorTests(unittest.TestCase):
     @patch("smtm.SimulationDataProvider.initialize_simulation")
     @patch("smtm.SimulationOperator.set_interval")
     @patch("smtm.SimulationOperator.initialize")
-    def test_initialize_call_initialize(self, mock_initialize, mock_set_interval, mock_dp, mock_tr):
+    def test_initialize_call_initialize(
+        self, mock_initialize, mock_set_interval, mock_dp, mock_tr
+    ):
         simulator = Simulator(budget=7000, from_dash_to="201220.170000-201220.180000")
         simulator._make_tag = MagicMock(return_value="orange")
         simulator.interval = 0.1
@@ -117,7 +123,9 @@ class SimulatorTests(unittest.TestCase):
         mock_initialize.assert_called_once()
         mock_set_interval.assert_called_once_with(0.1)
         mock_dp.assert_called_once_with(end="2020-12-20T18:00:00", count=60)
-        mock_tr.assert_called_once_with(end="2020-12-20T18:00:00", count=60, budget=7000)
+        mock_tr.assert_called_once_with(
+            end="2020-12-20T18:00:00", count=60, budget=7000
+        )
         simulator._make_tag.assert_called_once()
         self.assertEqual(simulator.operator.tag, "orange")
 

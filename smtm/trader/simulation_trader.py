@@ -17,8 +17,18 @@ class SimulationTrader(Trader):
     """
 
     AVAILABLE_CURRENCY = {
-        "upbit" : {"BTC": "KRW-BTC", "ETH": "KRW-ETH", "DOGE": "KRW-DOGE", "XRP": "KRW-XRP"},
-        "binance" : {"BTC": "BTCUSDT", "ETH": "ETHUSDT", "DOGE": "DOGEUSDT", "XRP": "XRPUSDT"}
+        "upbit": {
+            "BTC": "KRW-BTC",
+            "ETH": "KRW-ETH",
+            "DOGE": "KRW-DOGE",
+            "XRP": "KRW-XRP",
+        },
+        "binance": {
+            "BTC": "BTCUSDT",
+            "ETH": "ETHUSDT",
+            "DOGE": "DOGEUSDT",
+            "XRP": "XRPUSDT",
+        },
     }
     NAME = "Simulation"
 
@@ -28,7 +38,10 @@ class SimulationTrader(Trader):
         if currency not in self.AVAILABLE_CURRENCY[Config.simulation_source]:
             raise UserWarning(f"not supported currency: {currency}")
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.v_market = VirtualMarket(market=self.AVAILABLE_CURRENCY[Config.simulation_source][currency], interval=interval)
+        self.v_market = VirtualMarket(
+            market=self.AVAILABLE_CURRENCY[Config.simulation_source][currency],
+            interval=interval,
+        )
         self.is_initialized = False
 
     def initialize_simulation(self, end, count, budget):

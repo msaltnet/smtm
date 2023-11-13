@@ -17,7 +17,16 @@ class BithumbDataProviderTests(unittest.TestCase):
         dummy_response = MagicMock()
         dummy_response.json.return_value = {
             "status": "0000",
-            "data": [[1619874480000, "68934000", "68933000", "68980000", "68914000", ".69114496"]],
+            "data": [
+                [
+                    1619874480000,
+                    "68934000",
+                    "68933000",
+                    "68980000",
+                    "68914000",
+                    ".69114496",
+                ]
+            ],
         }
         mock_get.return_value = dummy_response
 
@@ -32,7 +41,9 @@ class BithumbDataProviderTests(unittest.TestCase):
         self.assertEqual(info[0]["acc_price"], 0)
         self.assertEqual(info[0]["acc_volume"], 0.69114496)
         mock_get.assert_called_once_with(dp.url)
-        self.assertEqual(dp.url, "https://api.bithumb.com/public/candlestick/BTC_KRW/1m")
+        self.assertEqual(
+            dp.url, "https://api.bithumb.com/public/candlestick/BTC_KRW/1m"
+        )
 
     @patch("requests.get")
     def test_get_info_NOT_throw_UserWarning_when_receive_invalid_data(self, mock_get):
@@ -58,12 +69,14 @@ class BithumbDataProviderTests(unittest.TestCase):
             dp.get_info()
 
     @patch("requests.get")
-    def test_initialize_from_server_NOT_initialized_when_connection_fail(self, mock_get):
+    def test_initialize_from_server_NOT_initialized_when_connection_fail(
+        self, mock_get
+    ):
         dp = BithumbDataProvider()
         dummy_response = MagicMock()
         dummy_response.json.return_value = [{"market": "apple"}, {"market": "banana"}]
-        dummy_response.raise_for_status.side_effect = requests.exceptions.RequestException(
-            "RequestException dummy exception"
+        dummy_response.raise_for_status.side_effect = (
+            requests.exceptions.RequestException("RequestException dummy exception")
         )
         mock_get.return_value = dummy_response
 

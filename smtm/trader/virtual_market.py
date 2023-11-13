@@ -61,10 +61,14 @@ class VirtualMarket:
         quote = None
         try:
             quote = {
-                self.data[self.turn_count]["market"]: self.data[self.turn_count]["closing_price"]
+                self.data[self.turn_count]["market"]: self.data[self.turn_count][
+                    "closing_price"
+                ]
             }
             for name, item in self.asset.items():
-                self.logger.debug(f"asset item: {name}, item price: {item[0]}, amount: {item[1]}")
+                self.logger.debug(
+                    f"asset item: {name}, item price: {item[0]}, amount: {item[1]}"
+                )
         except (KeyError, IndexError) as msg:
             self.logger.error(f"invalid trading data {msg}")
             return None
@@ -217,8 +221,14 @@ class VirtualMarket:
     def __print_balance_info(self, trading_type, old, new, total_asset_value):
         self.logger.debug(f"[Balance] from {old}")
         if trading_type == "buy":
-            self.logger.debug(f"[Balance] - {trading_type}_asset_value {total_asset_value}")
+            self.logger.debug(
+                f"[Balance] - {trading_type}_asset_value {total_asset_value}"
+            )
         elif trading_type == "sell":
-            self.logger.debug(f"[Balance] + {trading_type}_asset_value {total_asset_value}")
-        self.logger.debug(f"[Balance] - commission {total_asset_value * self.commission_ratio}")
+            self.logger.debug(
+                f"[Balance] + {trading_type}_asset_value {total_asset_value}"
+            )
+        self.logger.debug(
+            f"[Balance] - commission {total_asset_value * self.commission_ratio}"
+        )
         self.logger.debug(f"[Balance] to {new}")

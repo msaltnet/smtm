@@ -52,8 +52,12 @@ class JptController:
                 currency=self.market, commission_ratio=0.0005, budget=self.budget
             )
         else:
-            data_provider = UpbitDataProvider(currency=self.market, interval=Config.candle_interval)
-            trader = UpbitTrader(currency=self.market, commission_ratio=0.0005, budget=self.budget)
+            data_provider = UpbitDataProvider(
+                currency=self.market, interval=Config.candle_interval
+            )
+            trader = UpbitTrader(
+                currency=self.market, commission_ratio=0.0005, budget=self.budget
+            )
 
         self.operator.initialize(
             data_provider,
@@ -65,7 +69,9 @@ class JptController:
         self.operator.set_interval(self.interval)
         self.need_init = False
         print("##### smtm is intialized #####")
-        print(f"interval: {self.interval}, strategy: {self.strategy.NAME}, budget: {self.budget}")
+        print(
+            f"interval: {self.interval}, strategy: {self.strategy.NAME}, budget: {self.budget}"
+        )
 
     def start(self):
         """프로그램 시작, 재시작"""

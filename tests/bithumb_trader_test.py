@@ -94,7 +94,9 @@ class BithumbTraderCancelRequestTests(unittest.TestCase):
         self.patcher_delete.stop()
         self.patcher_get.stop()
 
-    def test_cancel_request_should_call__call_callback_when_order_is_traded_already(self):
+    def test_cancel_request_should_call__call_callback_when_order_is_traded_already(
+        self,
+    ):
         trader = BithumbTrader()
         trader._call_callback = MagicMock()
         dummy_request = {
@@ -132,7 +134,9 @@ class BithumbTraderCancelRequestTests(unittest.TestCase):
         trader.cancel_request("mango_request_1234")
         trader._query_order.assert_called_once_with("mango_id")
 
-        self.assertEqual(trader._call_callback.call_args_list[0][0][0], dummy_request["callback"])
+        self.assertEqual(
+            trader._call_callback.call_args_list[0][0][0], dummy_request["callback"]
+        )
         mango_result = trader._call_callback.call_args_list[0][0][1]
         self.assertEqual(mango_result["date_time"], "2019-10-31T13:53:23")
         self.assertEqual(mango_result["price"], 888000)
@@ -175,8 +179,12 @@ class BithumbTraderCancelRequestTests(unittest.TestCase):
         trader.cancel_all_requests()
 
         trader.cancel_request.assert_called()
-        self.assertEqual(trader.cancel_request.call_args_list[0][0][0], "mango_request_1234")
-        self.assertEqual(trader.cancel_request.call_args_list[1][0][0], "mango_request_5678")
+        self.assertEqual(
+            trader.cancel_request.call_args_list[0][0][0], "mango_request_1234"
+        )
+        self.assertEqual(
+            trader.cancel_request.call_args_list[1][0][0], "mango_request_5678"
+        )
 
     def test__cancel_order_should_call_bithumb_api_call_correctly(self):
         trader = BithumbTrader("BTC")
@@ -200,7 +208,12 @@ class BithumbTraderBasicTests(unittest.TestCase):
         pass
 
     def test__create_success_result_return_correct_result(self):
-        dummy_request = {"id": "mango", "type": "banana", "price": 500, "amount": 0.12345}
+        dummy_request = {
+            "id": "mango",
+            "type": "banana",
+            "price": 500,
+            "amount": 0.12345,
+        }
         success_result = BithumbTrader._create_success_result(dummy_request)
 
         self.assertEqual(success_result["request"]["id"], dummy_request["id"])
@@ -244,7 +257,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
         trader.asset = (23456, 500)
         trader.market = "APPLE"
         trader.worker = MagicMock()
-        trader.get_trade_tick = MagicMock(return_value={"status": "0000", "data": [{"price": 777}]})
+        trader.get_trade_tick = MagicMock(
+            return_value={"status": "0000", "data": [{"price": 777}]}
+        )
         result = trader.get_account_info()
 
         self.assertEqual(result["balance"], 123456789)
@@ -277,7 +292,12 @@ class BithumbTraderBasicTests(unittest.TestCase):
 
     def test__execute_order_call_cancel_request_correctly(self):
         dummy_task = {
-            "request": {"id": "apple", "price": 500, "amount": 0.0001, "type": "cancel"},
+            "request": {
+                "id": "apple",
+                "price": 500,
+                "amount": 0.0001,
+                "type": "cancel",
+            },
             "callback": MagicMock(),
         }
         trader = BithumbTrader()
@@ -297,7 +317,12 @@ class BithumbTraderBasicTests(unittest.TestCase):
 
     def test__execute_order_call_callback_with_error_when_try_to_buy_over_balance(self):
         dummy_task = {
-            "request": {"id": "apple", "price": 50000000, "amount": 0.01, "type": "buy"},
+            "request": {
+                "id": "apple",
+                "price": 50000000,
+                "amount": 0.01,
+                "type": "buy",
+            },
             "callback": MagicMock(),
         }
         trader = BithumbTrader()
@@ -315,9 +340,16 @@ class BithumbTraderBasicTests(unittest.TestCase):
         trader._create_success_result.assert_not_called()
         trader._start_timer.assert_not_called()
 
-    def test__execute_order_call_callback_with_error_when_try_to_sell_over_balance(self):
+    def test__execute_order_call_callback_with_error_when_try_to_sell_over_balance(
+        self,
+    ):
         dummy_task = {
-            "request": {"id": "apple", "price": 500000, "amount": 0.0001, "type": "sell"},
+            "request": {
+                "id": "apple",
+                "price": 500000,
+                "amount": 0.0001,
+                "type": "sell",
+            },
             "callback": MagicMock(),
         }
         trader = BithumbTrader()
@@ -335,9 +367,16 @@ class BithumbTraderBasicTests(unittest.TestCase):
         trader._create_success_result.assert_not_called()
         trader._start_timer.assert_not_called()
 
-    def test__execute_order_call_callback_with_error_when__send_limit_order_return_None(self):
+    def test__execute_order_call_callback_with_error_when__send_limit_order_return_None(
+        self,
+    ):
         dummy_task = {
-            "request": {"id": "apple", "price": 500000, "amount": 0.0001, "type": "sell"},
+            "request": {
+                "id": "apple",
+                "price": 500000,
+                "amount": 0.0001,
+                "type": "sell",
+            },
             "callback": MagicMock(),
         }
         trader = BithumbTrader()
@@ -383,7 +422,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
         mock_timer.assert_called_once_with(trader.RESULT_CHECKING_INTERVAL, ANY)
         callback = mock_timer.call_args[0][1]
         callback()
-        trader.worker.post_task.assert_called_once_with({"runnable": trader._update_order_result})
+        trader.worker.post_task.assert_called_once_with(
+            {"runnable": trader._update_order_result}
+        )
 
     def test_stop_timer_should_call_cancel(self):
         trader = BithumbTrader()
@@ -395,7 +436,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
         timer_mock.cancel.assert_called_once()
         self.assertEqual(trader.timer, None)
 
-    def test__update_order_result_should_call__call_callback_and_keep_waiting_request(self):
+    def test__update_order_result_should_call__call_callback_and_keep_waiting_request(
+        self,
+    ):
         dummy_result = [
             {
                 "data": {
@@ -486,7 +529,8 @@ class BithumbTraderBasicTests(unittest.TestCase):
         self.assertEqual(mango_result["state"], "done")
         self.assertEqual(mango_result["amount"], 0.007)
         self.assertEqual(
-            trader._call_callback.call_args_list[0][0][0], dummy_request_mango["callback"]
+            trader._call_callback.call_args_list[0][0][0],
+            dummy_request_mango["callback"],
         )
 
         apple_result = trader._call_callback.call_args_list[1][0][1]
@@ -496,7 +540,8 @@ class BithumbTraderBasicTests(unittest.TestCase):
         self.assertEqual(mango_result["state"], "done")
         self.assertEqual(apple_result["amount"], 0.54321)
         self.assertEqual(
-            trader._call_callback.call_args_list[1][0][0], dummy_request_apple["callback"]
+            trader._call_callback.call_args_list[1][0][0],
+            dummy_request_apple["callback"],
         )
 
         self.assertEqual(len(trader.order_map), 1)
@@ -584,7 +629,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
 
         trader.bithumb_api_call = MagicMock()
         trader._query_order("apple-007")
-        trader.bithumb_api_call.assert_called_once_with("/info/order_detail", expected_query)
+        trader.bithumb_api_call.assert_called_once_with(
+            "/info/order_detail", expected_query
+        )
 
     def test__query_balance_should_call_bithumb_api_call_with_correct_query(self):
         trader = BithumbTrader()
@@ -620,17 +667,23 @@ class BithumbTraderBasicTests(unittest.TestCase):
         mock_response.json = MagicMock(return_value="apple_result")
         mock_post.return_value = mock_response
 
-        self.assertEqual(trader.bithumb_api_call("get/apple", dummy_query), "apple_result")
+        self.assertEqual(
+            trader.bithumb_api_call("get/apple", dummy_query), "apple_result"
+        )
         mock_response.raise_for_status.assert_called_once()
         mock_post.assert_called_once_with(expected_url, headers=ANY, data=expected_data)
         called_headers = mock_post.call_args[1]["headers"]
         self.assertEqual(called_headers["Api-Key"], trader.ACCESS_KEY)
         self.assertIsNotNone(called_headers["Api-Sign"])
         self.assertIsNotNone(called_headers["Api-Nonce"])
-        self.assertEqual(called_headers["Content-Type"], "application/x-www-form-urlencoded")
+        self.assertEqual(
+            called_headers["Content-Type"], "application/x-www-form-urlencoded"
+        )
 
     @patch("requests.post")
-    def test_bithumb_api_call_return_None_when_invalid_data_received_from_server(self, mock_post):
+    def test_bithumb_api_call_return_None_when_invalid_data_received_from_server(
+        self, mock_post
+    ):
         def raise_exception():
             raise ValueError("RequestException dummy exception")
 

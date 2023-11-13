@@ -15,7 +15,9 @@ class DatabaseTests(unittest.TestCase):
         dummy_connection = MagicMock()
         mock_connect.return_value = dummy_connection
         Database()
-        mock_connect.assert_called_once_with("smtm.db", check_same_thread=False, timeout=30.0)
+        mock_connect.assert_called_once_with(
+            "smtm.db", check_same_thread=False, timeout=30.0
+        )
         dummy_connection.cursor.assert_called_once()
 
     def test_create_table_should_execute_and_commit_correct_statement(self):
@@ -145,7 +147,9 @@ class DatabaseBinanceTests(unittest.TestCase):
         )
         db.cursor.fetchall.assert_called_once()
 
-    def test_update_should_execute_and_commit_correct_statement_with_binance_table(self):
+    def test_update_should_execute_and_commit_correct_statement_with_binance_table(
+        self,
+    ):
         db = Database()
         dummy_data = [
             {
@@ -234,11 +238,17 @@ class DatabaseBinanceTests(unittest.TestCase):
 
 
 class DatabaseInMemoryTests(unittest.TestCase):
-    def test_update_and_query_should_execute_and_commit_correct_statement_with_upbit_table(self):
+    def test_update_and_query_should_execute_and_commit_correct_statement_with_upbit_table(
+        self,
+    ):
         # create in-memory database
         db = Database(":memory:")
         data = db.query(
-            "2020-03-10T22:52:00", "2020-03-10T22:53:00", "mango", period=60, is_upbit=True
+            "2020-03-10T22:52:00",
+            "2020-03-10T22:53:00",
+            "mango",
+            period=60,
+            is_upbit=True,
         )
         self.assertEqual(data, [])
         dummy_data = [
@@ -272,7 +282,11 @@ class DatabaseInMemoryTests(unittest.TestCase):
         ]
         db.update(dummy_data, period=60, is_upbit=True)
         data = db.query(
-            "2020-03-10T22:52:00", "2020-03-10T22:54:00", "mango", period=60, is_upbit=True
+            "2020-03-10T22:52:00",
+            "2020-03-10T22:54:00",
+            "mango",
+            period=60,
+            is_upbit=True,
         )
         self.assertEqual(data[0], dummy_data[0])
         self.assertEqual(data[1], dummy_data[1])
@@ -293,15 +307,25 @@ class DatabaseInMemoryTests(unittest.TestCase):
         ]
         db.update(update_dummy_data, period=60, is_upbit=True)
         data = db.query(
-            "2020-03-10T22:53:00", "2020-03-10T22:54:00", "mango", period=60, is_upbit=True
+            "2020-03-10T22:53:00",
+            "2020-03-10T22:54:00",
+            "mango",
+            period=60,
+            is_upbit=True,
         )
         self.assertEqual(data, update_dummy_data)
 
-    def test_update_should_execute_and_commit_correct_statement_with_binance_table(self):
+    def test_update_should_execute_and_commit_correct_statement_with_binance_table(
+        self,
+    ):
         # create in-memory database
         db = Database(":memory:")
         data = db.query(
-            "2020-03-10T22:52:00", "2020-03-10T22:53:00", "mango", period=60, is_upbit=False
+            "2020-03-10T22:52:00",
+            "2020-03-10T22:53:00",
+            "mango",
+            period=60,
+            is_upbit=False,
         )
         self.assertEqual(data, [])
         dummy_data = [
@@ -335,7 +359,11 @@ class DatabaseInMemoryTests(unittest.TestCase):
         ]
         db.update(dummy_data, period=60, is_upbit=False)
         data = db.query(
-            "2020-03-10T22:52:00", "2020-03-10T22:54:00", "mango", period=60, is_upbit=False
+            "2020-03-10T22:52:00",
+            "2020-03-10T22:54:00",
+            "mango",
+            period=60,
+            is_upbit=False,
         )
         self.assertEqual(data[0], dummy_data[0])
         self.assertEqual(data[1], dummy_data[1])
@@ -356,6 +384,10 @@ class DatabaseInMemoryTests(unittest.TestCase):
         ]
         db.update(update_dummy_data, period=60, is_upbit=False)
         data = db.query(
-            "2020-03-10T22:53:00", "2020-03-10T22:54:00", "mango", period=60, is_upbit=False
+            "2020-03-10T22:53:00",
+            "2020-03-10T22:54:00",
+            "mango",
+            period=60,
+            is_upbit=False,
         )
         self.assertEqual(data, update_dummy_data)

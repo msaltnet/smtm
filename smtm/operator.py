@@ -68,14 +68,18 @@ class Operator:
         self.analyzer = analyzer
         self.state = "ready"
         self.strategy.initialize(
-            budget, add_spot_callback=add_spot_callback, add_line_callback=add_line_callback
+            budget,
+            add_spot_callback=add_spot_callback,
+            add_line_callback=add_line_callback,
         )
         self.analyzer.initialize(trader.get_account_info)
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")
         try:
             self.tag += "-" + self.trader.NAME + "-" + self.strategy.CODE
         except AttributeError as err:
-            self.logger.warning(f"can't get additional info form strategy and trader: {err}")
+            self.logger.warning(
+                f"can't get additional info form strategy and trader: {err}"
+            )
 
     def set_interval(self, interval):
         """자동 거래 시간 간격을 설정한다.
@@ -224,7 +228,9 @@ class Operator:
         def get_score_callback(task):
             now = datetime.now()
             if graph_tag is not None:
-                graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}-{graph_tag}.jpg"
+                graph_filename = (
+                    f"{self.OUTPUT_FOLDER}g{round(time.time())}-{graph_tag}.jpg"
+                )
             else:
                 graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}-{now.month:02d}{now.day:02d}T{now.hour:02d}{now.minute:02d}.jpg"
 
@@ -240,7 +246,11 @@ class Operator:
 
         self.logger.info(f"get_score: {index_info}")
         self.worker.post_task(
-            {"runnable": get_score_callback, "callback": callback, "index_info": index_info}
+            {
+                "runnable": get_score_callback,
+                "callback": callback,
+                "index_info": index_info,
+            }
         )
 
     def get_trading_results(self):

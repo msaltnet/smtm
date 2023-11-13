@@ -42,7 +42,9 @@ class Worker:
 
         def looper():
             while True:
-                self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] WAIT ==========")
+                self.logger.debug(
+                    f"Worker[{self.name}:{threading.get_ident()}] WAIT =========="
+                )
                 task = self.task_queue.get()
                 self.task_queue.task_done()
                 if task is None:
@@ -52,7 +54,9 @@ class Worker:
                     if self.on_terminated is not None:
                         self.on_terminated()
                     break
-                self.logger.debug(f"Worker[{self.name}:{threading.get_ident()}] GO ----------")
+                self.logger.debug(
+                    f"Worker[{self.name}:{threading.get_ident()}] GO ----------"
+                )
                 runnable = task["runnable"]
                 try:
                     runnable(task)

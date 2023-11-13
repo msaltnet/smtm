@@ -37,7 +37,9 @@ class UpbitTrader(Trader):
     }
     NAME = "Upbit"
 
-    def __init__(self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True):
+    def __init__(
+        self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True
+    ):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
@@ -46,9 +48,15 @@ class UpbitTrader(Trader):
         self.worker.start()
         self.timer = None
         self.order_map = {}
-        self.ACCESS_KEY = os.environ.get("UPBIT_OPEN_API_ACCESS_KEY", "upbit_access_key")
-        self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key")
-        self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "upbit_server_url")
+        self.ACCESS_KEY = os.environ.get(
+            "UPBIT_OPEN_API_ACCESS_KEY", "upbit_access_key"
+        )
+        self.SECRET_KEY = os.environ.get(
+            "UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key"
+        )
+        self.SERVER_URL = os.environ.get(
+            "UPBIT_OPEN_API_SERVER_URL", "upbit_server_url"
+        )
         self.is_opt_mode = opt_mode
         self.asset = (0, 0)  # avr_price, amount
         self.balance = budget
@@ -124,7 +132,11 @@ class UpbitTrader(Trader):
         """
         for request in request_list:
             self.worker.post_task(
-                {"runnable": self._execute_order, "request": request, "callback": callback}
+                {
+                    "runnable": self._execute_order,
+                    "request": request,
+                    "callback": callback,
+                }
             )
 
     def get_account_info(self):
@@ -171,7 +183,9 @@ class UpbitTrader(Trader):
         self.logger.debug(f"canceled order {response}")
         result["date_time"] = response["created_at"].replace("+09:00", "")
         # 최종 체결 가격, 수량으로 업데이트
-        result["price"] = float(response["price"]) if response["price"] is not None else 0
+        result["price"] = (
+            float(response["price"]) if response["price"] is not None else 0
+        )
         result["amount"] = float(response["executed_volume"])
         result["state"] = "done"
         self._call_callback(order["callback"], result)
@@ -187,7 +201,9 @@ class UpbitTrader(Trader):
     def get_trade_tick(self):
         """최근 거래 정보 조회"""
         querystring = {"market": self.market, "count": "1"}
-        return self._request_get(self.SERVER_URL + "/v1/trades/ticks", params=querystring)
+        return self._request_get(
+            self.SERVER_URL + "/v1/trades/ticks", params=querystring
+        )
 
     def _execute_order(self, task):
         request = task["request"]
@@ -202,7 +218,9 @@ class UpbitTrader(Trader):
         is_buy = request["type"] == "buy"
         if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
             request_price = float(request["price"]) * float(request["amount"])
-            self.logger.warning(f"[REJECT] balance is too small! {request_price} > {self.balance}")
+            self.logger.warning(
+                f"[REJECT] balance is too small! {request_price} > {self.balance}"
+            )
             task["callback"]("error!")
             return
 
@@ -213,7 +231,9 @@ class UpbitTrader(Trader):
             task["callback"]("error!")
             return
 
-        response = self._send_order(self.market, is_buy, request["price"], request["amount"])
+        response = self._send_order(
+            self.market, is_buy, request["price"], request["amount"]
+        )
         if response is None:
             task["callback"]("error!")
             return
@@ -235,7 +255,9 @@ class UpbitTrader(Trader):
         def post_query_result_task():
             self.worker.post_task({"runnable": self._update_order_result})
 
-        self.timer = threading.Timer(self.RESULT_CHECKING_INTERVAL, post_query_result_task)
+        self.timer = threading.Timer(
+            self.RESULT_CHECKING_INTERVAL, post_query_result_task
+        )
         self.timer.start()
 
     def _stop_timer(self):
@@ -268,10 +290,14 @@ class UpbitTrader(Trader):
                     self.logger.debug(order)
                     self.logger.debug(query_result)
                     result = order["result"]
-                    result["date_time"] = query_result["created_at"].replace("+09:00", "")
+                    result["date_time"] = query_result["created_at"].replace(
+                        "+09:00", ""
+                    )
                     # 최종 체결 가격, 수량으로 업데이트
                     result["price"] = (
-                        float(query_result["price"]) if query_result["price"] is not None else 0
+                        float(query_result["price"])
+                        if query_result["price"] is not None
+                        else 0
                     )
                     result["amount"] = float(query_result["executed_volume"])
                     result["state"] = "done"
@@ -359,7 +385,9 @@ class UpbitTrader(Trader):
             final_price = price
             if self.is_opt_mode:
                 final_price = self._optimize_price(price, is_buy)
-            query_string = self._create_limit_order_query(market, is_buy, final_price, volume)
+            query_string = self._create_limit_order_query(
+                market, is_buy, final_price, volume
+            )
         elif volume is not None and is_buy is False:
             # 시장가 매도
             self.logger.warning("### Marker price order is submitted ###")
@@ -373,7 +401,9 @@ class UpbitTrader(Trader):
             self.logger.error("Invalid order")
             return None
 
-        jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
+        jwt_token = self._create_jwt_token(
+            self.ACCESS_KEY, self.SECRET_KEY, query_string
+        )
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
@@ -402,7 +432,9 @@ class UpbitTrader(Trader):
 
         latest_price = latest[0]["trade_price"]
 
-        if (is_buy is True and latest_price < price) or (is_buy is False and latest_price > price):
+        if (is_buy is True and latest_price < price) or (
+            is_buy is False and latest_price > price
+        ):
             self.logger.info(f"price optimized! ##### {price} -> {latest_price}")
             return latest_price
 
@@ -434,11 +466,17 @@ class UpbitTrader(Trader):
         if is_done_state:
             query_states = ["done", "cancel"]
 
-        states_query_string = "&".join(["states[]={}".format(state) for state in query_states])
+        states_query_string = "&".join(
+            ["states[]={}".format(state) for state in query_states]
+        )
         uuids_query_string = "&".join(["uuids[]={}".format(uuid) for uuid in uuids])
-        query_string = "{0}&{1}".format(states_query_string, uuids_query_string).encode()
+        query_string = "{0}&{1}".format(
+            states_query_string, uuids_query_string
+        ).encode()
 
-        jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
+        jwt_token = self._create_jwt_token(
+            self.ACCESS_KEY, self.SECRET_KEY, query_string
+        )
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
@@ -531,7 +569,9 @@ class UpbitTrader(Trader):
         }
         query_string = urlencode(query).encode()
 
-        jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY, query_string)
+        jwt_token = self._create_jwt_token(
+            self.ACCESS_KEY, self.SECRET_KEY, query_string
+        )
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 

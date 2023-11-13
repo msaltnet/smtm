@@ -79,7 +79,9 @@ class Controller:
             data_provider = BithumbDataProvider(currency=self.currency)
             trader = BithumbTrader(currency=self.currency, budget=self.budget)
         else:
-            data_provider = UpbitDataProvider(currency=self.currency, interval=Config.candle_interval)
+            data_provider = UpbitDataProvider(
+                currency=self.currency, interval=Config.candle_interval
+            )
             trader = UpbitTrader(currency=self.currency, budget=self.budget)
 
         self.operator.initialize(
@@ -92,7 +94,9 @@ class Controller:
 
         self.operator.set_interval(self.interval)
         print("##### smtm is intialized #####")
-        print(f"interval: {self.interval}, strategy: {self.strategy.NAME} , trader: {trader.NAME}")
+        print(
+            f"interval: {self.interval}, strategy: {self.strategy.NAME} , trader: {trader.NAME}"
+        )
         print("==============================")
 
         self.logger.info(
