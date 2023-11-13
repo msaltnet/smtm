@@ -484,6 +484,7 @@ class Analyzer:
         except (IndexError, AttributeError) as err:
             self.logger.error("get return report FAIL")
             self.logger.error(err)
+            return None
 
     def get_trading_results(self):
         """거래 결과 목록을 반환한다"""
@@ -544,6 +545,7 @@ class Analyzer:
             return {"summary": summary, "trading_table": trading_table}
         except (IndexError, AttributeError):
             self.logger.error("create report FAIL")
+            return None
 
     def __create_report_file(self, filepath, summary, trading_table):
         """
@@ -569,7 +571,7 @@ class Analyzer:
         Price_change_ratio {'mango': -50.0, 'apple': 50.0}
         """
         final_path = self.OUTPUT_FOLDER + filepath + ".txt"
-        with open(final_path, "w") as report_file:
+        with open(final_path, "w", encoding="utf-8") as report_file:
             if len(trading_table) > 0:
                 report_file.write(
                     "### TRADING TABLE =================================\n"
@@ -667,19 +669,11 @@ class Analyzer:
 
             # 추가 spot 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
             if spot_list is not None:
-                spot_info = self.__get_single_info(spot_list, spot_pos, info_time)
-                if spot_info[0] is not None:
-                    new["spot"] = spot_info[0]
-                spot_pos = spot_info[1]
+                self._add_spot_plot_info(spot_list, spot_pos, new, info_time)
 
             # 추가 line graph 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
             if line_graph_list is not None:
-                line_graph_info = self.__get_single_info(
-                    line_graph_list, line_pos, info_time
-                )
-                if line_graph_info[0] is not None:
-                    new["line_graph"] = line_graph_info[0]
-                line_pos = line_graph_info[1]
+                self._add_line_plot_info(line_graph_list, line_pos, new, info_time)
 
             # 수익률 정보를 추가. 정보가 없는 경우 최근 정보로 채움
             while score_pos < len(score_list):
@@ -705,6 +699,18 @@ class Analyzer:
                     break
             plot_data.append(new)
         return pd.DataFrame(plot_data)[-self.GRAPH_MAX_COUNT :]
+
+    def _add_line_plot_info(self, line_graph_list, line_pos, new, info_time):
+        line_graph_info = self.__get_single_info(line_graph_list, line_pos, info_time)
+        if line_graph_info[0] is not None:
+            new["line_graph"] = line_graph_info[0]
+        line_pos = line_graph_info[1]
+
+    def _add_spot_plot_info(self, spot_list, spot_pos, new, info_time):
+        spot_info = self.__get_single_info(spot_list, spot_pos, info_time)
+        if spot_info[0] is not None:
+            new["spot"] = spot_info[0]
+        spot_pos = spot_info[1]
 
     def __draw_graph(
         self,
@@ -809,6 +815,7 @@ class Analyzer:
         if is_fullpath:
             destination = filename
 
+        fig_save_opt = {"fname": destination, "dpi": 300, "pad_inches": 0.25}
         mpf.plot(
             total,
             type="candle",
@@ -816,7 +823,7 @@ class Analyzer:
             addplot=apds,
             mav=self.sma_info,
             style="starsandstripes",
-            savefig=dict(fname=destination, dpi=300, pad_inches=0.25),
+            savefig=fig_save_opt,
             figscale=1.25,
         )
         self.logger.info(f'"{destination}" graph file created!')
@@ -832,7 +839,7 @@ class Analyzer:
 
     @staticmethod
     def _write_to_file(filename, target_list):
-        with open(filename, "w") as dump_file:
+        with open(filename, "w", encoding="utf-8") as dump_file:
             dump_file.write("[\n")
             for item in target_list:
                 dump_file.write(f"{item},\n")
@@ -840,7 +847,7 @@ class Analyzer:
 
     @staticmethod
     def _load_list_from_file(filename):
-        with open(filename) as dump_file:
+        with open(filename, "r", encoding="utf-8") as dump_file:
             data = dump_file.read()
             target_list = ast.literal_eval(data)
             return target_list

@@ -227,12 +227,14 @@ class Operator:
 
         def get_score_callback(task):
             now = datetime.now()
+
             if graph_tag is not None:
                 graph_filename = (
                     f"{self.OUTPUT_FOLDER}g{round(time.time())}-{graph_tag}.jpg"
                 )
             else:
-                graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}-{now.month:02d}{now.day:02d}T{now.hour:02d}{now.minute:02d}.jpg"
+                dt = now.strftime("%m%dT%H%M")
+                graph_filename = f"{self.OUTPUT_FOLDER}g{round(time.time())}-{dt}.jpg"
 
             try:
                 index_info = task["index_info"]

@@ -72,7 +72,7 @@ class DateConverter:
                 from_dt = to_dt
                 result = (start_str, cls.to_iso_string(to_dt), count)
             else:
-                from_dt = from_dt + timedelta(minutes=(max_count * interval_min))
+                from_dt = from_dt + timedelta(minutes=max_count * interval_min)
                 result = (start_str, cls.to_iso_string(from_dt), max_count)
 
             delta = to_dt - from_dt
