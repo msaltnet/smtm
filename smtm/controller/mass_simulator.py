@@ -130,6 +130,8 @@ class MassSimulator:
         dt = DateConverter.to_end_min(
             start_iso=start, end_iso=end, interval_min=Config.candle_interval / 60
         )
+        if dt is None:
+            raise UserWarning(f"Invalid Period! {start} ~ {end}")
         end = dt[0][1]
         count = dt[0][2]
         data_provider = SimulationDataProvider(

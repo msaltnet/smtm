@@ -816,9 +816,11 @@ class Analyzer:
             destination = filename
 
         fig_save_opt = {"fname": destination, "dpi": 300, "pad_inches": 0.25}
+        candle_type = "candle" if len(total["Close"]) < 500 else "line"
+
         mpf.plot(
             total,
-            type="candle",
+            type=candle_type,
             volume=True,
             addplot=apds,
             mav=self.sma_info,
