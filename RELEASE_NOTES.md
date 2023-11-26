@@ -1,31 +1,31 @@
 ### v1.3.0
 Candle Interval을 변경해서 시뮬레이션, 거래 진행 할 수 있도록 구조 개선
   - `Config` 모듈을 만들어서 전역적으로 interval 설정 가능하도록 변경
-  - 5542498c66804aa2f6dba3fa0e6a9002c628b79f
-  - 7de1ae1452346910819f2a96d4801832f62cea0a
-  - 40657f816366dd1b98fa3eaa975a813f41c97b40
-  - c3728b4a2b2e53dbfe0659563333d9bb6837e173
-  - c64c2215e073283baadbfad7e529c2da5137e9fd
-  - 6ffcee97f6d3fa13604d037e1da9b4eb9d660ad6
-  - 031fcdf789f4f4e0a43ec0ff7173772a1476df33
+    - 5542498c66804aa2f6dba3fa0e6a9002c628b79f
+    - 7de1ae1452346910819f2a96d4801832f62cea0a
+    - 40657f816366dd1b98fa3eaa975a813f41c97b40
+    - c3728b4a2b2e53dbfe0659563333d9bb6837e173
+    - c64c2215e073283baadbfad7e529c2da5137e9fd
+    - 6ffcee97f6d3fa13604d037e1da9b4eb9d660ad6
+    - 031fcdf789f4f4e0a43ec0ff7173772a1476df33
 
 ### v1.3.0 (English)
 Improve architecture to change candel interval for both simulation and real-trading
   - Make `Config` module for global interval setting
-  - 5542498c66804aa2f6dba3fa0e6a9002c628b79f
-  - 7de1ae1452346910819f2a96d4801832f62cea0a
-  - 40657f816366dd1b98fa3eaa975a813f41c97b40
-  - c3728b4a2b2e53dbfe0659563333d9bb6837e173
-  - c64c2215e073283baadbfad7e529c2da5137e9fd
-  - 6ffcee97f6d3fa13604d037e1da9b4eb9d660ad6
-  - 031fcdf789f4f4e0a43ec0ff7173772a1476df33
+    - 5542498c66804aa2f6dba3fa0e6a9002c628b79f
+    - 7de1ae1452346910819f2a96d4801832f62cea0a
+    - 40657f816366dd1b98fa3eaa975a813f41c97b40
+    - c3728b4a2b2e53dbfe0659563333d9bb6837e173
+    - c64c2215e073283baadbfad7e529c2da5137e9fd
+    - 6ffcee97f6d3fa13604d037e1da9b4eb9d660ad6
+    - 031fcdf789f4f4e0a43ec0ff7173772a1476df33
 
 ---
 
 ### v1.2.0
 Simulation 속도 개선 (약 3배이상 향상)
   - interval이 1초 미만일 때, `threading.Timer`를 사용하지 않고 바로 핸들러 호출하도록 수정
-  - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
+    - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
 CI를 Travis -> github action으로 변경
   - 50faecd5d1c83cd9af3f04b274d018d1f9f08e64
 전략 이름 대신 코드를 사용
@@ -42,7 +42,7 @@ CI를 Travis -> github action으로 변경
 ### v1.2.0 (English)
 Enhance simulation performance (about 3x more speedup)
   - when interval is under 1sec, call handler directly instead of using `threading.Timer`
-  - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
+    - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
 Change CI Travis -> github action
   - 50faecd5d1c83cd9af3f04b274d018d1f9f08e64
 Use strategy code instead of names
