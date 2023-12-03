@@ -988,7 +988,7 @@ class AnalyzerTests(unittest.TestCase):
         filename = "mango"
         report = analyzer.create_report()
         mock_file.assert_called_with(
-            analyzer.OUTPUT_FOLDER + "untitled-report.txt", "w", encoding='utf-8'
+            analyzer.OUTPUT_FOLDER + "untitled-report.txt", "w", encoding="utf-8"
         )
         handle = mock_file()
         expected = [
@@ -1017,7 +1017,9 @@ class AnalyzerTests(unittest.TestCase):
             )
 
         report = analyzer.create_report(tag=tag)
-        mock_file.assert_called_with(analyzer.OUTPUT_FOLDER + tag + ".txt", "w", encoding='utf-8')
+        mock_file.assert_called_with(
+            analyzer.OUTPUT_FOLDER + tag + ".txt", "w", encoding="utf-8"
+        )
 
         analyzer.update_asset_info.assert_called()
         analyzer._get_rss_memory.assert_called()
@@ -1513,7 +1515,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer = Analyzer()
         dummy_list = [{"mango": 500}, {"orange": 7.7}]
         analyzer._write_to_file("mango_dump_file", dummy_list)
-        mock_file.assert_called_with("mango_dump_file", "w", encoding='utf-8')
+        mock_file.assert_called_with("mango_dump_file", "w", encoding="utf-8")
         handle = mock_file()
         expected = ["[\n", "{'mango': 500},\n", "{'orange': 7.7},\n", "]\n"]
         for idx, val in enumerate(expected):
@@ -1528,7 +1530,7 @@ class AnalyzerTests(unittest.TestCase):
         handle = mock_file()
         handle.read.return_value = "[ {'mango': 500}, {'orange': 7.7},]"
         dummy_list = analyzer._load_list_from_file("mango_dump_file")
-        mock_file.assert_called_with("mango_dump_file", "r", encoding='utf-8')
+        mock_file.assert_called_with("mango_dump_file", "r", encoding="utf-8")
         self.assertEqual(dummy_list, [{"mango": 500}, {"orange": 7.7}])
 
     def test_dump_call_should_call__write_to_file_correctly(self):

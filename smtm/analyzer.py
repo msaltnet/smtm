@@ -673,7 +673,9 @@ class Analyzer:
 
             # 추가 line graph 정보를 생성해서 추가. 없는 경우 추가 안함. 기간내 하나만 추가됨
             if line_graph_list is not None:
-                line_pos = self._add_line_plot_info(line_graph_list, line_pos, new, info_time)
+                line_pos = self._add_line_plot_info(
+                    line_graph_list, line_pos, new, info_time
+                )
 
             # 수익률 정보를 추가. 정보가 없는 경우 최근 정보로 채움
             while score_pos < len(score_list):
@@ -809,7 +811,11 @@ class Analyzer:
                 )
             )
         if "line_graph" in total.columns:
-            apds.append(mpf.make_addplot((total["line_graph"]), color="red", width=0.7, secondary_y=True))
+            apds.append(
+                mpf.make_addplot(
+                    (total["line_graph"]), color="red", width=0.7, secondary_y=True
+                )
+            )
 
         destination = self.OUTPUT_FOLDER + filename + ".jpg"
         if is_fullpath:

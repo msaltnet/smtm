@@ -79,7 +79,9 @@ class StrategySmaMl(Strategy):
         self.last_lower = None
         self.last_upper = None
 
-    def initialize(self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None):
+    def initialize(
+        self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None
+    ):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
@@ -166,11 +168,17 @@ class StrategySmaMl(Strategy):
             self.logger.info(f"# update process :: {current_idx}")
             self.closing_price_list.append(current_price)
 
-            sma_short_list = pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values
+            sma_short_list = (
+                pd.Series(self.closing_price_list).rolling(self.SHORT).mean().values
+            )
             sma_short = sma_short_list[-1]
-            sma_mid_list = pd.Series(self.closing_price_list).rolling(self.MID).mean().values
+            sma_mid_list = (
+                pd.Series(self.closing_price_list).rolling(self.MID).mean().values
+            )
             sma_mid = sma_mid_list[-1]
-            sma_long_list = pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            sma_long_list = (
+                pd.Series(self.closing_price_list).rolling(self.LONG).mean().values
+            )
             sma_long = sma_long_list[-1]
 
             if np.isnan(sma_long) or current_idx <= self.LONG:
@@ -202,7 +210,9 @@ class StrategySmaMl(Strategy):
                 # if linear_model is not None and linear_model.coef_ > 0:
                 #     target_cd = 5
 
-                self.logger.debug(f"[SML] LONG LR coef: {long_lr[0]}, score: {long_lr[1]}")
+                self.logger.debug(
+                    f"[SML] LONG LR coef: {long_lr[0]}, score: {long_lr[1]}"
+                )
                 self.logger.debug(f"[SML] MID LR coef: {mid_lr[0]}, score: {mid_lr[1]}")
 
                 long_lr_ratio = long_lr[0] / current_price
@@ -215,7 +225,9 @@ class StrategySmaMl(Strategy):
                 elif long_lr_ratio < self.LR_MID_LIMIT and mid_lr_ratio < 0:
                     # long 하락 기울기이고, mid가 하락 기울기일때 매수 skip
                     self.cross_info[1] = {"price": 0, "index": current_idx}
-                    self.logger.debug(f"[SML] SKIP BUY === Long, Mid down term {long_lr[0]} {mid_lr[0]}")
+                    self.logger.debug(
+                        f"[SML] SKIP BUY === Long, Mid down term {long_lr[0]} {mid_lr[0]}"
+                    )
                 elif mid_lr_ratio < 0 and mid_lr[1] > self.LR_FIT_SCORE:
                     # mid 하락 기울기일때 무조건 매수 skip
                     self.cross_info[1] = {"price": 0, "index": current_idx}
@@ -224,12 +236,19 @@ class StrategySmaMl(Strategy):
                     # 매도 후 일정 기간 내에 재매수 방지
                     # self.cross_info[1] = {"price": 0, "index": current_idx}
                     # self.logger.debug(f"[SML] SKIP BUY === Too early {prev_sell_idx}")
-                    if long_lr_ratio > self.LR_UPPER_LIMIT and long_lr[1] > self.LR_FIT_SCORE:
+                    if (
+                        long_lr_ratio > self.LR_UPPER_LIMIT
+                        and long_lr[1] > self.LR_FIT_SCORE
+                    ):
                         # long 상승 기울기일때는 매수 skip 하지 않음
-                        self.logger.debug(f"[SML] no SKIP due to strong Long! {prev_sell_idx}")
+                        self.logger.debug(
+                            f"[SML] no SKIP due to strong Long! {prev_sell_idx}"
+                        )
                     else:
                         self.cross_info[1] = {"price": 0, "index": current_idx}
-                        self.logger.debug(f"[SML] SKIP BUY === Too early {prev_sell_idx}")
+                        self.logger.debug(
+                            f"[SML] SKIP BUY === Too early {prev_sell_idx}"
+                        )
             elif (
                 sma_short < sma_mid < sma_long
                 # sma_short < sma_long and sma_mid < sma_long
@@ -338,7 +357,9 @@ class StrategySmaMl(Strategy):
             now = datetime.now().strftime(self.ISO_DATEFORMAT)
 
             if self.is_simulation:
-                last_dt = datetime.strptime(self.data[-1]["date_time"], self.ISO_DATEFORMAT)
+                last_dt = datetime.strptime(
+                    self.data[-1]["date_time"], self.ISO_DATEFORMAT
+                )
                 now = last_dt.isoformat()
 
             if last_data is None:
@@ -374,7 +395,9 @@ class StrategySmaMl(Strategy):
                     ]
                 return None
             request["date_time"] = now
-            self.logger.info(f"[REQ] id: {request['id']} : {request['type']} ==============")
+            self.logger.info(
+                f"[REQ] id: {request['id']} : {request['type']} =============="
+            )
             self.logger.info(f"price: {request['price']}, amount: {request['amount']}")
             self.logger.info("================================================")
             final_requests = []
@@ -411,8 +434,14 @@ class StrategySmaMl(Strategy):
         # 소숫점 4자리 아래 버림
         amount = Decimal(str(amount)).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
 
-        if self.min_price > budget or self.process_unit[0] <= 0 or final_value > self.balance:
-            self.logger.info(f"target_budget is too small or invalid unit {self.process_unit}")
+        if (
+            self.min_price > budget
+            or self.process_unit[0] <= 0
+            or final_value > self.balance
+        ):
+            self.logger.info(
+                f"target_budget is too small or invalid unit {self.process_unit}"
+            )
             if self.is_simulation:
                 return {
                     "id": DateConverter.timestamp_id(),

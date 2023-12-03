@@ -20,7 +20,9 @@ class VirtualMarket:
 
     def __init__(self, market="KRW-BTC", interval=60):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.repo = DataRepository("smtm.db", interval=interval, source=Config.simulation_source)
+        self.repo = DataRepository(
+            "smtm.db", interval=interval, source=Config.simulation_source
+        )
         self.data = None
         self.turn_count = 0
         self.balance = 0
