@@ -7,6 +7,7 @@ from .date_converter import DateConverter
 from .log_manager import LogManager
 from .analyzer import Analyzer
 from .data.simulation_data_provider import SimulationDataProvider
+from .data.simulation_dual_data_provider import SimulationDualDataProvider
 from .data.upbit_data_provider import UpbitDataProvider
 from .data.bithumb_data_provider import BithumbDataProvider
 from .data.binance_data_provider import BinanceDataProvider
