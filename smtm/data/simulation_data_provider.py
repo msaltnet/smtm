@@ -32,7 +32,7 @@ class SimulationDataProvider(DataProvider):
             raise UserWarning(f"not supported currency: {currency}")
 
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.repo = DataRepository("smtm.db", interval=interval)
+        self.repo = DataRepository("smtm.db", interval=interval, source=Config.simulation_source)
         self.interval_min = interval / 60
         self.data = []
         self.index = 0

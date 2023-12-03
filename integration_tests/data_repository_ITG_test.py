@@ -360,7 +360,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         )
 
     def test_ITG_data_repository_fetch_and_verify_with_random_period(self):
-        repo = DataRepository(":memory:", interval=60)
+        repo = DataRepository(":memory:", interval=60, source="binance")
         dt_list = []
         base_datetime = [
             "2019-01-01T00:00:00",
@@ -391,7 +391,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
             self.assertTrue(len(result), dt[2])
 
     def test_get_data_should_return_data_fetched_from_server_with_1m_interval(self):
-        repo = DataRepository(":memory:", interval=60)
+        repo = DataRepository(":memory:", interval=60, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:20:00", "BTCUSDT")
@@ -401,7 +401,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         repo.database.update.assert_called()
 
     def test_get_data_should_return_big_data_fetched_from_server_with_1m_interval(self):
-        repo = DataRepository(":memory:", interval=60)
+        repo = DataRepository(":memory:", interval=60, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T21:00:00", "BTCUSDT")
@@ -411,7 +411,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_server_with_3m_interval(self):
-        repo = DataRepository(":memory:", interval=180)
+        repo = DataRepository(":memory:", interval=180, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
@@ -420,7 +420,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
         repo.database.update.assert_called()
 
-        repo = DataRepository(":memory:", interval=180)
+        repo = DataRepository(":memory:", interval=180, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:02:00", "2020-02-20T20:01:00", "BTCUSDT")
@@ -430,7 +430,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         repo.database.update.assert_called()
 
     def test_get_data_should_return_big_data_fetched_from_server_with_3m_interval(self):
-        repo = DataRepository(":memory:", interval=180)
+        repo = DataRepository(":memory:", interval=180, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T12:00:00", "BTCUSDT")
@@ -440,7 +440,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_server_with_5m_interval(self):
-        repo = DataRepository(":memory:", interval=300)
+        repo = DataRepository(":memory:", interval=300, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
@@ -449,7 +449,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
         repo.database.update.assert_called()
 
-        repo = DataRepository(":memory:", interval=300)
+        repo = DataRepository(":memory:", interval=300, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T17:04:00", "2020-02-20T20:01:00", "BTCUSDT")
@@ -459,7 +459,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         repo.database.update.assert_called()
 
     def test_get_data_should_return_big_data_fetched_from_server_with_5m_interval(self):
-        repo = DataRepository(":memory:", interval=300)
+        repo = DataRepository(":memory:", interval=300, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-21T00:00:00", "BTCUSDT")
@@ -469,7 +469,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_server_with_15m_interval(self):
-        repo = DataRepository(":memory:", interval=900)
+        repo = DataRepository(":memory:", interval=900, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         # broken data
@@ -482,7 +482,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
     def test_get_data_should_return_big_data_fetched_from_server_with_15m_interval(
         self,
     ):
-        repo = DataRepository(":memory:", interval=900)
+        repo = DataRepository(":memory:", interval=900, source="binance")
         repo.database = MagicMock()
         repo.database.query.return_value = []
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-22T00:00:00", "BTCUSDT")
@@ -492,7 +492,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
         repo.database.update.assert_called()
 
     def test_get_data_should_return_data_fetched_from_database_with_1m_interval(self):
-        repo = DataRepository(":memory:", interval=60)
+        repo = DataRepository(":memory:", interval=60, source="binance")
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:20:00", "BTCUSDT")
         self.assertEqual(len(result), 200)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
@@ -501,20 +501,20 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
     def test_get_data_should_return_big_data_fetched_from_database_with_1m_interval(
         self,
     ):
-        repo = DataRepository(":memory:", interval=60)
+        repo = DataRepository(":memory:", interval=60, source="binance")
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T21:00:00", "BTCUSDT")
         self.assertEqual(len(result), 240)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
         self.assertEqual(result[-1]["date_time"], "2020-02-20T20:59:00")
 
     def test_get_data_should_return_data_fetched_from_database_with_3m_interval(self):
-        repo = DataRepository(":memory:", interval=180)
+        repo = DataRepository(":memory:", interval=180, source="binance")
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
         self.assertEqual(len(result), 60)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
         self.assertEqual(result[-1]["date_time"], "2020-02-20T19:57:00")
 
-        repo = DataRepository(":memory:", interval=180)
+        repo = DataRepository(":memory:", interval=180, source="binance")
         result = repo.get_data("2020-02-20T17:02:00", "2020-02-20T20:01:00", "BTCUSDT")
         self.assertEqual(len(result), 60)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
@@ -523,20 +523,20 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
     def test_get_data_should_return_big_data_fetched_from_database_with_3m_interval(
         self,
     ):
-        repo = DataRepository(":memory:", interval=180)
+        repo = DataRepository(":memory:", interval=180, source="binance")
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-20T12:00:00", "BTCUSDT")
         self.assertEqual(len(result), 240)
         self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
         self.assertEqual(result[-1]["date_time"], "2020-02-20T11:57:00")
 
     def test_get_data_should_return_data_fetched_from_database_with_5m_interval(self):
-        repo = DataRepository(":memory:", interval=300)
+        repo = DataRepository(":memory:", interval=300, source="binance")
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
         self.assertEqual(len(result), 36)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
         self.assertEqual(result[-1]["date_time"], "2020-02-20T19:55:00")
 
-        repo = DataRepository(":memory:", interval=300)
+        repo = DataRepository(":memory:", interval=300, source="binance")
         result = repo.get_data("2020-02-20T17:04:00", "2020-02-20T20:01:00", "BTCUSDT")
         self.assertEqual(len(result), 36)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
@@ -545,20 +545,20 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
     def test_get_data_should_return_big_data_fetched_from_database_with_5m_interval(
         self,
     ):
-        repo = DataRepository(":memory:", interval=300)
+        repo = DataRepository(":memory:", interval=300, source="binance")
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-21T00:00:00", "BTCUSDT")
         self.assertEqual(len(result), 288)
         self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")
         self.assertEqual(result[-1]["date_time"], "2020-02-20T23:55:00")
 
     def test_get_data_should_return_data_fetched_from_database_with_15m_interval(self):
-        repo = DataRepository(":memory:", interval=900)
+        repo = DataRepository(":memory:", interval=900, source="binance")
         result = repo.get_data("2020-02-20T17:00:00", "2020-02-20T20:00:00", "BTCUSDT")
         self.assertEqual(len(result), 12)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
         self.assertEqual(result[-1]["date_time"], "2020-02-20T19:45:00")
 
-        repo = DataRepository(":memory:", interval=900)
+        repo = DataRepository(":memory:", interval=900, source="binance")
         result = repo.get_data("2020-02-20T17:08:00", "2020-02-20T20:06:00", "BTCUSDT")
         self.assertEqual(len(result), 12)
         self.assertEqual(result[0]["date_time"], "2020-02-20T17:00:00")
@@ -567,7 +567,7 @@ class DataRepositoryBinanceIntegrationTests(unittest.TestCase):
     def test_get_data_should_return_big_data_fetched_from_database_with_15m_interval(
         self,
     ):
-        repo = DataRepository(":memory:", interval=900)
+        repo = DataRepository(":memory:", interval=900, source="binance")
         result = repo.get_data("2020-02-20T00:00:00", "2020-02-22T00:00:00", "BTCUSDT")
         self.assertEqual(len(result), 192)
         self.assertEqual(result[0]["date_time"], "2020-02-20T00:00:00")

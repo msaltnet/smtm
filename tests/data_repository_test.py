@@ -6,13 +6,6 @@ from unittest.mock import *
 
 
 class DataRepositoryUpbitTests(unittest.TestCase):
-    def setUp(self):
-        self.data_source_backup = Config.simulation_source
-        Config.simulation_source = "upbit"
-
-    def tearDown(self):
-        Config.simulation_source = self.data_source_backup
-
     def test_init_should_set_interval_and_url_correctly(self):
         repo = DataRepository()
         self.assertEqual(repo.interval_min, 1)
@@ -561,21 +554,14 @@ class DataRepositoryUpbitTests(unittest.TestCase):
 
 
 class DataRepositoryBinanceTests(unittest.TestCase):
-    def setUp(self):
-        self.data_source_backup = Config.simulation_source
-        Config.simulation_source = "binance"
-
-    def tearDown(self):
-        Config.simulation_source = self.data_source_backup
-
     def test_init_should_set_interval_and_url_correctly(self):
-        repo = DataRepository()
+        repo = DataRepository(source="binance")
         self.assertEqual(repo.url, "https://api.binance.com/api/v3/klines")
         self.assertEqual(repo.is_upbit, False)
 
     @patch("requests.get")
     def test_get_data_should_return_correct_data(self, get_mock):
-        repo = DataRepository(db_file=":memory:")
+        repo = DataRepository(db_file=":memory:", source="binance")
         response_mock = MagicMock()
         get_mock.return_value = response_mock
         response_mock.json.return_value = [
@@ -659,7 +645,7 @@ class DataRepositoryBinanceTests(unittest.TestCase):
 
     @patch("requests.get")
     def test_get_data_should_return_recovered_data_with_mid_broken_data(self, get_mock):
-        repo = DataRepository(db_file=":memory:", interval=300)
+        repo = DataRepository(db_file=":memory:", interval=300, source="binance")
         response_mock = MagicMock()
         get_mock.return_value = response_mock
         response_mock.json.return_value = [
@@ -795,7 +781,7 @@ class DataRepositoryBinanceTests(unittest.TestCase):
 
     @patch("requests.get")
     def test_get_data_should_return_recovered_data_with_end_broken_data(self, get_mock):
-        repo = DataRepository(db_file=":memory:", interval=300)
+        repo = DataRepository(db_file=":memory:", interval=300, source="binance")
         response_mock = MagicMock()
         get_mock.return_value = response_mock
         response_mock.json.return_value = [
@@ -835,7 +821,7 @@ class DataRepositoryBinanceTests(unittest.TestCase):
     def test_get_data_should_return_recovered_data_with_head_broken_data(
         self, get_mock
     ):
-        repo = DataRepository(db_file=":memory:", interval=300)
+        repo = DataRepository(db_file=":memory:", interval=300, source="binance")
         response_mock = MagicMock()
         get_mock.return_value = response_mock
         response_mock.json.return_value = [
@@ -932,7 +918,7 @@ class DataRepositoryBinanceTests(unittest.TestCase):
 
     @patch("requests.get")
     def test_get_data_should_return_recovered_data_with_all_broken_data(self, get_mock):
-        repo = DataRepository(db_file=":memory:", interval=300)
+        repo = DataRepository(db_file=":memory:", interval=300, source="binance")
         response_mock = MagicMock()
         get_mock.return_value = response_mock
         response_mock.json.side_effect = [

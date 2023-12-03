@@ -7,21 +7,23 @@ from datetime import datetime, timedelta, timezone
 import requests
 from ..log_manager import LogManager
 from ..date_converter import DateConverter
-from ..config import Config
 from .database import Database
 
 
 class DataRepository:
     """데이터를 서버 또는 데이터베이스에서 가져와서 반환해주는 클래스"""
 
-    def __init__(self, db_file=None, interval=60):
+    def __init__(self, db_file=None, interval=60, source="upbit", database=None):
         self.logger = LogManager.get_logger(__class__.__name__)
-        db = db_file if db_file is not None else "smtm.db"
-        self.database = Database(db)
+        target_db_file = db_file if db_file is not None else "smtm.db"
+        if database is not None:
+            self.database = database
+        else:
+            self.database = Database(target_db_file)
         self.interval = interval
         self.interval_min = interval // 60
         self.is_upbit = True
-        if Config.simulation_source == "upbit":
+        if source == "upbit":
             if interval == 60:
                 self.url = "https://api.upbit.com/v1/candles/minutes/1"
             elif interval == 180:
@@ -32,15 +34,13 @@ class DataRepository:
                 self.url = "https://api.upbit.com/v1/candles/minutes/10"
             else:
                 raise UserWarning(f"not supported interval: {interval}")
-        elif Config.simulation_source == "binance":
+        elif source == "binance":
             self.url = "https://api.binance.com/api/v3/klines"
             self.is_upbit = False
             if self.interval_min not in [1, 3, 5, 15, 30]:
                 raise UserWarning(f"not supported interval: {interval}")
         else:
-            raise UserWarning(
-                f"not supported simulation data: {Config.simulation_source}"
-            )
+            raise UserWarning(f"not supported simulation data: {source}")
 
     def get_data(self, start, end, market="KRW-BTC"):
         """거래 데이터를 제공
