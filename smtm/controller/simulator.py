@@ -9,6 +9,7 @@ from ..simulation_operator import SimulationOperator
 from ..trader.simulation_trader import SimulationTrader
 from ..date_converter import DateConverter
 from ..data.simulation_data_provider import SimulationDataProvider
+from ..data.simulation_dual_data_provider import SimulationDualDataProvider
 from ..strategy.strategy_factory import StrategyFactory
 
 
@@ -158,9 +159,14 @@ class Simulator:
         self.operator = SimulationOperator()
         self._print_configuration(strategy.NAME)
 
-        data_provider = SimulationDataProvider(
-            currency=self.currency, interval=Config.candle_interval
-        )
+        if Config.simulation_data_provider_type == "dual":
+            data_provider = SimulationDualDataProvider(
+                currency=self.currency, interval=Config.candle_interval
+            )
+        else:
+            data_provider = SimulationDataProvider(
+                currency=self.currency, interval=Config.candle_interval
+            )
         data_provider.initialize_simulation(end=end, count=count)
         trader = SimulationTrader(
             currency=self.currency, interval=Config.candle_interval

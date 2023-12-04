@@ -22,7 +22,7 @@ from ..simulation_operator import SimulationOperator
 from ..trader.simulation_trader import SimulationTrader
 from ..date_converter import DateConverter
 from ..data.simulation_data_provider import SimulationDataProvider
-
+from ..data.simulation_dual_data_provider import SimulationDualDataProvider
 
 class MassSimulator:
     """대량시뮬레이터
@@ -134,9 +134,14 @@ class MassSimulator:
             raise UserWarning(f"Invalid Period! {start} ~ {end}")
         end = dt[0][1]
         count = dt[0][2]
-        data_provider = SimulationDataProvider(
-            currency=currency, interval=Config.candle_interval
-        )
+        if Config.simulation_data_provider_type == "dual":
+            data_provider = SimulationDualDataProvider(
+                currency=currency, interval=Config.candle_interval
+            )
+        else:
+            data_provider = SimulationDataProvider(
+                currency=currency, interval=Config.candle_interval
+            )
         data_provider.initialize_simulation(end=end, count=count)
 
         strategy = StrategyFactory.create(strategy_code)
