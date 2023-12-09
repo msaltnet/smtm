@@ -95,10 +95,13 @@ class MassSimulatorAnalyzeTests(unittest.TestCase):
 class MassSimulatorInitializeTests(unittest.TestCase):
     def setUp(self):
         self.interval = Config.candle_interval
+        self.dp_type = Config.simulation_data_provider_type
         Config.candle_interval = 60
+        Config.simulation_data_provider_type = "normal"
 
     def tearDown(self):
         Config.candle_interval = self.interval
+        Config.simulation_data_provider_type = self.dp_type
 
     @patch("smtm.SimulationDataProvider.initialize_simulation")
     @patch("smtm.SimulationTrader.initialize_simulation")

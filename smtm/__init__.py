@@ -15,6 +15,7 @@ from .data.data_repository import DataRepository
 from .data.database import Database
 from .strategy.strategy_bnh import StrategyBuyAndHold
 from .strategy.strategy_sma_0 import StrategySma0
+from .strategy.strategy_sma_dual_ml import StrategySmaDualMl
 from .strategy.strategy_sma_ml import StrategySmaMl
 from .strategy.strategy_rsi import StrategyRsi
 from .strategy.strategy_factory import StrategyFactory

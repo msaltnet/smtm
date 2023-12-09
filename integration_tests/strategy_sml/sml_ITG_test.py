@@ -1,3 +1,4 @@
+# python -m unittest discover .\integration_tests\strategy_sml  *test.py -v
 import json
 import unittest
 from smtm import Simulator

@@ -5,11 +5,14 @@ from unittest.mock import *
 
 class SimulatorTests(unittest.TestCase):
     def setUp(self):
+        self.dp_type = Config.simulation_data_provider_type
         self.interval = Config.candle_interval
         Config.candle_interval = 60
+        Config.simulation_data_provider_type = "normal"
 
     def tearDown(self):
         Config.candle_interval = self.interval
+        Config.simulation_data_provider_type = self.dp_type
 
     @patch("signal.signal")
     @patch("builtins.input", side_effect=EOFError)
