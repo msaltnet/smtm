@@ -2,7 +2,6 @@
 
 import copy
 from datetime import datetime, timedelta
-from ..config import Config
 from .data_provider import DataProvider
 from .database import Database
 from ..log_manager import LogManager

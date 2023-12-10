@@ -9,6 +9,7 @@ from .analyzer import Analyzer
 from .data.simulation_data_provider import SimulationDataProvider
 from .data.simulation_dual_data_provider import SimulationDualDataProvider
 from .data.upbit_data_provider import UpbitDataProvider
+from .data.upbit_binance_data_provider import UpbitBinanceDataProvider
 from .data.bithumb_data_provider import BithumbDataProvider
 from .data.binance_data_provider import BinanceDataProvider
 from .data.data_repository import DataRepository
