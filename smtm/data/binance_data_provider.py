@@ -22,6 +22,8 @@ class BinanceDataProvider(DataProvider):
         "DOGE": "DOGEUSDT",
         "XRP": "XRPUSDT",
     }
+    NAME = "BINANCE DP"
+    CODE = "BNC"
     KST = timezone(timedelta(hours=9))
 
     def __init__(self, currency="BTC", interval=60):

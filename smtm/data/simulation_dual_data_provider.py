@@ -28,6 +28,8 @@ class SimulationDualDataProvider(DataProvider):
             "XRP": "XRPUSDT",
         },
     }
+    NAME = "SIMULATION DUAL DP"
+    CODE = "SID"
 
     def __init__(self, currency="BTC", interval=60):
         if (

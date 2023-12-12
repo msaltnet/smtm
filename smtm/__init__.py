@@ -13,6 +13,7 @@ from .data.upbit_binance_data_provider import UpbitBinanceDataProvider
 from .data.bithumb_data_provider import BithumbDataProvider
 from .data.binance_data_provider import BinanceDataProvider
 from .data.data_repository import DataRepository
+from .data.data_provider_factory import DataProviderFactory
 from .data.database import Database
 from .strategy.strategy_bnh import StrategyBuyAndHold
 from .strategy.strategy_sma_0 import StrategySma0

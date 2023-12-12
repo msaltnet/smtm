@@ -20,6 +20,8 @@ class UpbitDataProvider(DataProvider):
         "DOGE": "KRW-DOGE",
         "XRP": "KRW-XRP",
     }
+    NAME = "UPBIT DP"
+    CODE = "UPB"
 
     def __init__(self, currency="BTC", interval=60):
         if currency not in self.AVAILABLE_CURRENCY:

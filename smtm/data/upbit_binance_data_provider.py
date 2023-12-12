@@ -12,6 +12,8 @@ class UpbitBinanceDataProvider(DataProvider):
     Upbit 데이터의 타입을 primary_candle로 설정, Binance 데이터를 binance로 설정
     어느 거래소의 데이터를 기준으로 거래할지는 DataProvider는 관여하지 않음
     """
+    NAME = "UPBIT BINANCE DP"
+    CODE = "UBD"
 
     def __init__(self, currency="BTC", interval=60):
         self.upbit_dp = UpbitDataProvider(currency, interval)

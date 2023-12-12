@@ -24,6 +24,9 @@ class SimulationDataProvider(DataProvider):
             "XRP": "XRPUSDT",
         },
     }
+    NAME = "SIMULATION DP"
+    CODE = "SIM"
+
 
     def __init__(self, currency="BTC", interval=60):
         if Config.simulation_source not in self.AVAILABLE_CURRENCY.keys():
