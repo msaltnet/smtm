@@ -425,24 +425,23 @@ class TelegramControllerTests(unittest.TestCase):
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
 
-    def test__start_trading_should_call_next_setup_message_correctly_when_step_3(self):
+    def test__start_trading_should_call_next_setup_message_correctly_when_select_exchange(self):
         tcb = TelegramController()
-        tcb.in_progress_step = 3
+        tcb.in_progress_step = 4
         tcb._send_text_message = MagicMock()
         tcb.currency = "BTC"
         tcb._start_trading("upbit")
 
         tcb._send_text_message.assert_called_once_with(
-            tcb.setup_list[3]["guide"], tcb.setup_list[3]["keyboard"]
+            tcb.setup_list[4]["guide"], tcb.setup_list[4]["keyboard"]
         )
         self.assertIsNotNone(tcb.trader)
-        self.assertIsNotNone(tcb.data_provider)
         self.assertEqual(tcb.in_progress, tcb._start_trading)
-        self.assertEqual(tcb.in_progress_step, 4)
+        self.assertEqual(tcb.in_progress_step, 5)
 
-    def test__start_trading_should_reset_with_wrong_input_when_step_3(self):
+    def test__start_trading_should_reset_with_wrong_input_when_select_exchange(self):
         tcb = TelegramController()
-        tcb.in_progress_step = 3
+        tcb.in_progress_step = 4
         tcb._send_text_message = MagicMock()
         tcb._start_trading("NH bank")
         wrong_message = "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요"
@@ -452,9 +451,9 @@ class TelegramControllerTests(unittest.TestCase):
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
 
-    def test__start_trading_should_call_next_setup_message_correctly_when_step_4(self):
+    def test__start_trading_should_call_next_setup_message_correctly_when_step_6(self):
         tcb = TelegramController()
-        tcb.in_progress_step = 4
+        tcb.in_progress_step = 6
         tcb._send_text_message = MagicMock()
         tcb.trader = MagicMock()
         tcb.currency = "mango"
@@ -470,11 +469,11 @@ class TelegramControllerTests(unittest.TestCase):
         )
         self.assertIsNotNone(tcb.strategy)
         self.assertEqual(tcb.in_progress, tcb._start_trading)
-        self.assertEqual(tcb.in_progress_step, 5)
+        self.assertEqual(tcb.in_progress_step, 6)
 
-    def test__start_trading_should_reset_with_wrong_input_when_step_4(self):
+    def test__start_trading_should_reset_with_wrong_input_when_step_5(self):
         tcb = TelegramController()
-        tcb.in_progress_step = 4
+        tcb.in_progress_step = 5
         tcb._send_text_message = MagicMock()
         tcb._start_trading("smtm")
         wrong_message = "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요"
@@ -485,11 +484,11 @@ class TelegramControllerTests(unittest.TestCase):
 
     @patch("smtm.Operator.start")
     @patch("smtm.Operator.initialize")
-    def test__start_trading_should_call_next_setup_message_correctly_when_step_5(
+    def test__start_trading_should_call_next_setup_message_correctly_when_step_6(
         self, mock_start, mock_initialize
     ):
         tcb = TelegramController()
-        tcb.in_progress_step = 5
+        tcb.in_progress_step = 6
         tcb._send_text_message = MagicMock()
         tcb.strategy = MagicMock()
         tcb.trader = MagicMock()

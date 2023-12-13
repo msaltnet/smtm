@@ -12,9 +12,8 @@ from ..config import Config
 from ..log_manager import LogManager
 from ..analyzer import Analyzer
 from ..trader.upbit_trader import UpbitTrader
-from ..data.upbit_data_provider import UpbitDataProvider
 from ..trader.bithumb_trader import BithumbTrader
-from ..data.bithumb_data_provider import BithumbDataProvider
+from ..data.data_provider_factory import DataProviderFactory
 from ..strategy.strategy_factory import StrategyFactory
 from ..operator import Operator
 from ..worker import Worker
@@ -57,7 +56,9 @@ class TelegramController:
         self.trader = None
         self.command_list = []
         self.strategies = []
+        self.data_providers = []
         self._update_strategy()
+        self._update_data_provider()
         self._create_command()
         self.currency = None
         self.is_demo = False
@@ -92,6 +93,22 @@ class TelegramController:
                         f"{strategy['code']}",
                     ],
                     "builder": strategy["class"],
+                }
+            )
+
+    def _update_data_provider(self):
+        self.data_providers = []
+        for idx, dp in enumerate(DataProviderFactory.get_all_strategy_info()):
+            self.data_providers.append(
+                {
+                    "name": f"{idx}. {dp['name']}",
+                    "selector": [
+                        f"{idx}. {dp['name']}".upper(),
+                        f"{idx}",
+                        f"{dp['name']}".upper(),
+                        f"{dp['code']}",
+                    ],
+                    "builder": dp["class"],
                 }
             )
 
@@ -135,12 +152,16 @@ class TelegramController:
         strategy_list = []
         for s_item in self.strategies:
             strategy_list.append(s_item["name"])
+        data_provider_list = []
+        for dp_item in self.data_providers:
+            data_provider_list.append(dp_item["name"])
         self.setup_list = [
             {
                 "guide": "운영 예산을 정해주세요",
                 "keyboard": ["50000", "100000", "500000", "1000000"],
             },
             {"guide": "거래할 화폐를 정해주세요", "keyboard": self.AVAILABLE_CURRENCY},
+            {"guide": "사용할 데이터를 선택해 주세요", "keyboard": data_provider_list},
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
             {
                 "guide": "전략을 선택해 주세요",
@@ -290,13 +311,10 @@ class TelegramController:
 
         return result
 
-    def _on_start_step3(self, command):
+    def _on_start_select_exchange(self, command):
         not_ok = True
         if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
             if self.currency in self.UPBIT_CURRENCY:
-                self.data_provider = UpbitDataProvider(
-                    currency=self.currency, interval=Config.candle_interval
-                )
                 if self.is_demo:
                     self.trader = DemoTrader(budget=self.budget, currency=self.currency)
                 else:
@@ -308,7 +326,6 @@ class TelegramController:
                 self._send_text_message("현재 지원하지 않는 코인입니다.")
         elif command.upper() in ["2. BITHUMB", "2", "BITHUMB"]:
             if self.currency in self.BITHUMB_CURRENCY:
-                self.data_provider = BithumbDataProvider(currency=self.currency)
                 if self.is_demo:
                     self.trader = DemoTrader(budget=self.budget, currency=self.currency)
                 else:
@@ -337,8 +354,14 @@ class TelegramController:
                 self.currency = command.upper()
                 not_ok = False
         elif self.in_progress_step == 3:
-            not_ok = self._on_start_step3(command)
+            for dp_item in self.data_providers:
+                if command.upper() in dp_item["selector"]:
+                    self.data_provider = dp_item["builder"]()
+                    not_ok = False
+                    break
         elif self.in_progress_step == 4:
+            not_ok = self._on_start_select_exchange(command)
+        elif self.in_progress_step == 5:
             for s_item in self.strategies:
                 if command.upper() in s_item["selector"]:
                     self.strategy = s_item["builder"]()
