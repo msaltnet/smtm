@@ -24,6 +24,7 @@ from ..date_converter import DateConverter
 from ..data.simulation_data_provider import SimulationDataProvider
 from ..data.simulation_dual_data_provider import SimulationDualDataProvider
 
+
 class MassSimulator:
     """대량시뮬레이터
     설정 파일을 사용하여 대량 시뮬레이션 진행

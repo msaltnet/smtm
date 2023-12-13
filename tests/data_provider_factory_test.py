@@ -1,7 +1,13 @@
 import unittest
 from smtm import (
-    DataProviderFactory, BinanceDataProvider, UpbitDataProvider, BithumbDataProvider, UpbitBinanceDataProvider)
+    DataProviderFactory,
+    BinanceDataProvider,
+    UpbitDataProvider,
+    BithumbDataProvider,
+    UpbitBinanceDataProvider,
+)
 from unittest.mock import *
+
 
 class DataProviderFactoryTests(unittest.TestCase):
     def setUp(self):
@@ -15,10 +21,18 @@ class DataProviderFactoryTests(unittest.TestCase):
         self.assertEqual(strategy, None)
 
     def test_create_return_correct_strategy(self):
-        self.assertTrue(isinstance(DataProviderFactory.create("BNC"), BinanceDataProvider))
-        self.assertTrue(isinstance(DataProviderFactory.create("BTH"), BithumbDataProvider))
-        self.assertTrue(isinstance(DataProviderFactory.create("UPB"), UpbitDataProvider))
-        self.assertTrue(isinstance(DataProviderFactory.create("UBD"), UpbitBinanceDataProvider))
+        self.assertTrue(
+            isinstance(DataProviderFactory.create("BNC"), BinanceDataProvider)
+        )
+        self.assertTrue(
+            isinstance(DataProviderFactory.create("BTH"), BithumbDataProvider)
+        )
+        self.assertTrue(
+            isinstance(DataProviderFactory.create("UPB"), UpbitDataProvider)
+        )
+        self.assertTrue(
+            isinstance(DataProviderFactory.create("UBD"), UpbitBinanceDataProvider)
+        )
 
     def test_get_name_return_None_when_called_with_invalid_code(self):
         strategy = DataProviderFactory.get_name("")
@@ -28,7 +42,9 @@ class DataProviderFactoryTests(unittest.TestCase):
         self.assertTrue(DataProviderFactory.get_name("BNC"), BinanceDataProvider.NAME)
         self.assertTrue(DataProviderFactory.get_name("BTH"), BithumbDataProvider.NAME)
         self.assertTrue(DataProviderFactory.get_name("UPB"), UpbitDataProvider.NAME)
-        self.assertTrue(DataProviderFactory.get_name("UBD"), UpbitBinanceDataProvider.NAME)
+        self.assertTrue(
+            DataProviderFactory.get_name("UBD"), UpbitBinanceDataProvider.NAME
+        )
 
     def test_get_all_strategy_info_return_correct_info(self):
         all = DataProviderFactory.get_all_strategy_info()

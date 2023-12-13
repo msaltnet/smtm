@@ -135,7 +135,9 @@ class StrategySmaDualMl(Strategy):
         self.data.append(copy.deepcopy(target))
         self.data_binance.append(copy.deepcopy(binance_data))
         if self.add_line_callback is not None:
-            self.add_line_callback(binance_data["date_time"], binance_data["closing_price"])
+            self.add_line_callback(
+                binance_data["date_time"], binance_data["closing_price"]
+            )
         self.__update_process(target)
 
     def __add_drawing_spot(self, date_time, value):

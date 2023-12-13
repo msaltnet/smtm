@@ -6,10 +6,17 @@ from .strategy_rsi import StrategyRsi
 from .strategy_sma_ml import StrategySmaMl
 from .strategy_sma_dual_ml import StrategySmaDualMl
 
+
 class StrategyFactory:
     """Strategy 정보 조회 및 생성을 담당하는 Factory 클래스"""
 
-    STRATEGY_LIST = [StrategyBuyAndHold, StrategySma0, StrategyRsi, StrategySmaMl, StrategySmaDualMl]
+    STRATEGY_LIST = [
+        StrategyBuyAndHold,
+        StrategySma0,
+        StrategyRsi,
+        StrategySmaMl,
+        StrategySmaDualMl,
+    ]
 
     @staticmethod
     def create(code):

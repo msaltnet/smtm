@@ -425,7 +425,9 @@ class TelegramControllerTests(unittest.TestCase):
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
 
-    def test__start_trading_should_call_next_setup_message_correctly_when_select_exchange(self):
+    def test__start_trading_should_call_next_setup_message_correctly_when_select_exchange(
+        self,
+    ):
         tcb = TelegramController()
         tcb.in_progress_step = 4
         tcb._send_text_message = MagicMock()
