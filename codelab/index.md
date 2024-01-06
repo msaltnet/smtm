@@ -4,3 +4,4 @@
 
 - [smtm - Simulation](./smtm-simulation/)
 - [smtm - Demo Trading](./smtm-demo/)
+- [암호화폐 자동매매 시스템 만들기 with 파이썬 - 보충 수업](./smtm-after-school/)

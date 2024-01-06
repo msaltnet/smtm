@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2024-01-06T22:10:17+09:00",
+  "id": "smtm-after-school",
+  "duration": 26,
+  "title": "암호화폐 자동매매 시스템 만들기 with 파이썬 - 보충 수업",
+  "summary": "암호화폐 자동매매 시스템 만들기 with 파이썬 - 보충 수업",
+  "source": ".\\smtm-book\\after-school\\after-school.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "codelab",
+    "smtm"
+  ],
+  "tags": [
+    "web"
+  ],
+  "feedback": "https://github.com/msaltnet/smtm",
+  "url": "smtm-after-school"
+}
