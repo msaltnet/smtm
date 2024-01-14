@@ -38,6 +38,7 @@
 ## Code Lab
 - [시뮬레이션 Code Lab](https://smtm.msalt.net/codelab/smtm-simulation/)
 - [모의 투자 Code Lab](https://smtm.msalt.net/codelab/smtm-demo/)
+- [암호화폐 자동매매 시스템 만들기 with 파이썬 - 보충 수업](https://smtm.msalt.net/codelab/smtm-after-school/)
 
 ## 관련 도서
 
