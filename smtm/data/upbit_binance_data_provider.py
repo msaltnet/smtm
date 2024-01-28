@@ -9,7 +9,7 @@ from .binance_data_provider import BinanceDataProvider
 
 
 class UpbitBinanceDataProvider(DataProvider):
-    """Upbit, Binance 2개의 거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
+    """Upbit, Binance 2개의 거래소로부터 실시간 데이터를 수집해서 제공하는 클래스
     Upbit 데이터의 타입을 primary_candle로 설정, Binance 데이터를 binance로 설정
     어느 거래소의 데이터를 기준으로 거래할지는 DataProvider는 관여하지 않음
     """
