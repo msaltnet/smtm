@@ -35,9 +35,16 @@
 
 ![smtm-telegram-mode](https://github.com/msaltnet/smtm/assets/9311990/22ba2ebd-13e6-4eee-a829-94209c5618a9)
 
-## Code Lab
-- [시뮬레이션 Code Lab](https://smtm.msalt.net/codelab/smtm-simulation/)
-- [모의 투자 Code Lab](https://smtm.msalt.net/codelab/smtm-demo/)
+## Architecture
+확장성과 유지보수성을 갖춘 Layered Architecture
+
+더 자세한 내용은 👉[smtm wiki](https://github.com/msaltnet/smtm/wiki/2.-%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98)
+
+![smtm component](./doc/smtm_component.png)
+
+## CodeLabs for smtm
+- [시뮬레이션 CodeLab](https://smtm.msalt.net/codelab/smtm-simulation/)
+- [모의 투자 CodeLab](https://smtm.msalt.net/codelab/smtm-demo/)
 - [암호화폐 자동매매 시스템 만들기 with 파이썬 - 보충 수업](https://smtm.msalt.net/codelab/smtm-after-school/)
 
 ## 관련 도서
@@ -46,4 +53,4 @@
 
 [![smtm-book](https://user-images.githubusercontent.com/9311990/157685437-dcedd2c0-9f0c-400c-a3d4-017354279b60.png)](http://www.kyobobook.co.kr/product/detailViewKor.laf?mallGb=KOR&ejkGb=KOR&barcode=9788997924967)
 
-**더 많은 정보는 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
+**더 많은 정보는 👉[smtm wiki](https://github.com/msaltnet/smtm/wiki)**

@@ -35,4 +35,9 @@ Controlling an automated trading program using the Telegram messenger
 
 ![smtm-telegram-mode](https://github.com/msaltnet/smtm/assets/9311990/22ba2ebd-13e6-4eee-a829-94209c5618a9)
 
+## Architecture
+Layered Architecture for Scalability and Maintainability
+
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
+
+![smtm component](./doc/smtm_component.png)
