@@ -18,8 +18,6 @@
       color: red;
     }
   </style>
-</head>
-<body>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-CBWCD0B30G"></script>
   <script>
@@ -29,6 +27,9 @@
 
     gtag('config', 'G-CBWCD0B30G');
   </script>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
   <google-codelab codelab-gaid=""
                   id="smtm-after-school"
                   title="보충 수업 for 암호화폐 자동매매 시스템 만들기 with 파이썬"
@@ -319,12 +320,53 @@
 <p>텔레그램 챗봇은 파이썬으로 만든 다른 프로그램에서도 유용하게 사용할 수 있습니다. 웹 크롤러나 자동화 프로그램 등의 원격 컨트롤에도 접목할 수 있으니 한 번 잘 익혀두면 다양하게 활용하여 많은 도움을 받을 수 있으니 꼭 시간을 투자해서 마스터해 보시길 추천드립니다.</p>
 <h2 is-upgraded>결코 돌아가는 길이 아닙니다</h2>
 <p>이번 장의 내용은 마땅히 관련된 영상이나 자료가 많이 없네요. 어디서 돈 받고 가르쳐 주는 것은 아니지만 실무에서는 아주 유용하게, 또는 너무 당연하게 사용될 수 있는 내용에 대해서 추가로 설명을 드렸습니다. 어쩌면 과도한 친절일 수도 있겠지만, 책이 프로그램을 개발하는 과정을 A부터 Z까지 보여드리는 것을 목적으로 하다 보니 컨트롤러부터 개발하고 차근차근 기능을 확장하는 부분을 모두 담게 되었습니다.😎</p>
-<p>주피터 노트북이나 텔레그램 챗봇 관련된 내용 등을 포함해서 다양한 내용을 소개하는 것이 빠르고 쉬운 지름길을 알려준 것은 아니지만, 결코 돌아가는 길을 알려드린 것이 아닙니다. 장담하건대, 제대로 배울 수 있는 기회가 되었다고 확신합니다.</p>
+<p>주피터 노트북이나 텔레그램 챗봇 관련된 내용 등을 포함해서 다양한 내용을 소개하는 것이 빠르고 쉬운 지름길을 알려준 것은 아니지만, 결코 돌아가는 길을 알려드린 것이 아닙니다. 장담하건대, 제대로 배울 수 있는 기회가 될 것임을 확신합니다.</p>
 
 
       </google-codelab-step>
     
-      <google-codelab-step label="작성중..." duration="5">
+      <google-codelab-step label="Database and Repository" duration="15">
+        <p>smtm에서 시뮬레이션을 할 때 사용할 과거 거래 데이터를 저장하기 위해서 SQLite를 사용하고 있습니다. 그리고 Repository Pattern을 사용해서 Database와 비즈니스 로직을 분리하였습니다. 초보자가 쉽게 이해할 수 있는 내용은 아니지만 책에서 자세히 다루기에는 조금 지엽적인 내용이기도 하고, 책은 분량과 주제를 고려할 때 자세하게 설명할 수 없었습니다.</p>
+<p>이 자리를 빌려서, 관련 부분을 왜 그렇게 구현하였는지에 대한 설명과 함께 학습 자료를 소개해 드립니다.😀</p>
+<h2 is-upgraded>SQLite</h2>
+<p>SQLite를 논하기 전에 기본적으로 SQL에 대해서 먼저 정리를 하고 넘어가야 합니다. SW 전공이나 공학 계열 전공자 또는 프로그래밍에 조금이라도 관심이 있으신 분이라면 SQL은 대부분 알고 계실만큼 데이터 베이스에서 독보적인 존재입니다.</p>
+<p>SQL은 Structured Query Language의 약어이며, 데이터베이스 시스템에서 자료를 처리하는 용도로 사용되는 구조적 데이터 질의 언어입니다. 구조적 데이터 질의 언어라는 말 자체가 되게 어렵게 느껴질 수 있는데요. 데이터베이스에서 데이터를 조회하기 위해서 정해진 구조를 갖는 명령어 정도로 이해하고 넘어가셔도 좋을 것 같습니다.</p>
+<ul>
+<li><a href="https://namu.wiki/w/SQL" target="_blank">SQL - 나무위키</a></li>
+<li><a href="https://aws.amazon.com/ko/what-is/sql/#:~:text=Structured%20query%20language%20(SQL)%20is,relationships%20between%20the%20data%20values." target="_blank">SQL(구조적 쿼리 언어)이란 무엇인가요?</a></li>
+<li><a href="https://rachel0115.tistory.com/entry/SQL-%EA%B8%B0%EB%B3%B8-%EB%AC%B8%EB%B2%95-%EC%A0%95%EB%A6%AC-SELECT-%EC%A0%88" target="_blank">[MySQL] - SQL 기본 문법 정리 - (SELECT, WHERE, ORDER BY ..)</a></li>
+</ul>
+<p>SQL은 명령어이고, 그 명령어를 처리하는 데이터베이스는 여러 종류가 있습니다. 오픈 소스인 MySQL부터, 상업용 MS SQL, 오라클 등이 있으며 관계형 데이터 베이스 서버라고 합니다. relational database management system (RDBMS)라고 하며, 다양한 종류가 있습니다.</p>
+<p>RDBMS는 말 그대로 독립적인 시스템이며, 흔히 데이터 베이스라고 말하는 서버라고 생각하셔도 됩니다. 반면, SQLite는 많은 곳에서 사용되는 로컬 데이터 베이스 라이브러리입니다. 그러니까 독립적인 시스템이 아니라, 앱이나 프로그램 내부에서 SQL 언어를 사용해서 데이터를 저장하고 조회할 수 있는 라이브러리라고 이해하시면 됩니다.</p>
+<p>&#34;SQLite is a database engine written in the C programming language. It is not a standalone app; rather, it is a library that software developers embed in their apps.&#34;</p>
+<ul>
+<li><a href="https://namu.wiki/w/SQLite" target="_blank">SQLite - 나무위키</a></li>
+<li><a href="https://docs.python.org/3/library/sqlite3.html" target="_blank">sqlite3 — DB-API 2.0 interface for SQLite databases</a></li>
+</ul>
+<p>RDBMS는 여러 개의 파일을 이용할 뿐만 아니라 규모도 큰 시스템이지만, SQLite는 보통 하나의 파일에 SQL 언어를 사용해서 데이터를 효과적으로 저장, 조회합니다. SQLite에 대해서는 아래 영상에서 잘 소개하고 있는데, SQL 언어를 사용해서 가볍게 사용할 수 있는 라이브러리이며, 파이썬도 표준 라이브러리를 제공하고 있습니다.</p>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=d6MOHfT5jSg" target="_blank">영상 - (쌩기초) 데이터 베이스 관리 시스템 첫걸음 - SQLite 설치 및 테이블 만들기, 지우기, 자료입력하기!</a></li>
+<li><a href="https://www.youtube.com/watch?v=xqKjhucbQiA" target="_blank">영상 - [Python] 40. 파이썬에서 DB 연동하기(SQLite3)</a></li>
+</ul>
+<p>SQL과 RDBMS, SQLite의 관계를 제대로 이해하였다며, 이제 어떤 것을 검색해서 내가 원하는 것을 만들어야 할지, 프로그램 내에서 어떻게 동작하는 것인지 감이 좀 잡히실 것입니다. SQL 문법은 MySQL이나 SQLite 등 데이터 베이스 엔진마다 조금씩 차이가 있으므로, 사용하는 데이터 베이스에 맞게 명령어를 수정해서 사용해야 합니다.</p>
+<p class="image-container"><img alt="DB Expert Certificate" src="img\\f3e6f4ef12f7b9d0.png"></p>
+<p>데이터의 저장과 조회는 시스템에서 중요한 부분으로, SQL 문법이나 데이터 베이스 최적화가 전체 시스템에 큰 영향을 줄 수 있으며 전문가의 영역이 존재합니다. 하지만 <strong>smtm은 데이터 베이스 성능이 중요한 시스템이 아니므로, 모든 문법을 처음부터 외우려고 하지 말고, 필요에 맞는 구분을 검색해서 사용하시는 것을 추천드립니다. 검색이 잘 안되면 chatGPT를 적절히 활용하시는 것도 좋은 방법입니다.😆</strong></p>
+<h2 is-upgraded>Repository Pattern</h2>
+<p>smtm에서 database는 SQLite 하나뿐이므로 Repository와 Database가 하나의 모듈로 구현되어도 아무런 문제가 없습니다. 하지만 <strong>분명히 역할이 다르고, 관련된 부분을 함께 모아 둠으로써 복잡도가 오히려 줄어드는 효과가 있습니다. 또한, 관련 코드를 유지 보수하거나 확장하는 데에 있어서도 월등히 유리하기 때문에 Database와 Repository를 분리하여 구현하였습니다.</strong></p>
+<p>이처럼 비즈니스 로직과 데이터 로직을 분리하기 위해서 Repository 모듈을 만들어서 구현하는 것을 Repository Pattern이라고 합니다. SW에서 자주 사용되는 패턴이라는 의미로 디자인 패턴으로 불립니다. 더 좋은 SW를 만들기 위해서 디자인 패턴을 학습하는 것도 의미가 있지만, 패턴을 알아야만 좋은 SW를 만들 수 있는 것은 아니므로 기회가 될 때 학습해 보시는 것을 추천드립니다.</p>
+<ul>
+<li><a href="https://4z7l.github.io/2020/11/24/repository-pattern.html" target="_blank">[Design Pattern] Repository Pattern 이란</a></li>
+<li><a href="https://refactoring.guru/ko/design-patterns" target="_blank">디자인 패턴들</a></li>
+<li><a href="https://developer.android.com/codelabs/basic-android-kotlin-training-repository-pattern?hl=ko#0" target="_blank">저장소 패턴</a></li>
+</ul>
+<p>Repository 패턴 같은 경우는 안드로이드에서 기본적으로 사용이 권장되는 패턴이기도 합니다. 안드로이드 앱을 만들 때도 로컬 저장소로 SQLite를 많이 사용하고 동시에 원격으로 데이터 베이스 서버에 접속하기도 합니다.</p>
+<p class="image-container"><img alt="repository pattern" src="img\\5979e4ef67c79dcf.png"></p>
+<p>smtm에서는 Repository 모듈에서 시뮬레이션을 위한 업비트 거래 데이터를 가져오는 역할을 담당하고, Database에서는 순수하게 SQLite를 사용해서 데이터를 저장하고 조회하는 역할을 담당하고 있습니다.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="작성중..." duration="10">
         <p>작성중되는 대로 계속 업데이트 예정입니다!</p>
 
 
