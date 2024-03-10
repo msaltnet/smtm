@@ -449,6 +449,49 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(len(score_record["price_change_ratio"].keys()), 0)
         analyzer.make_periodic_record.assert_called_once()
 
+    def fill_test_data_for_big_data(self, analyzer):
+        ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+        start_datetime = "2020-02-23T00:00:00"
+        dummy_asset_info = {
+            "balance": 23456,
+            "asset": {},
+            "date_time": "2020-02-23T00:00:00",
+            "quote": {"banana": 1700, "mango": 600, "apple": 500},
+        }
+        analyzer.start_asset_info = dummy_asset_info
+        analyzer.asset_info_list.append(dummy_asset_info)
+        analyzer.score_list.append(
+            {
+                "balance": 5000,
+                "cumulative_return": -65.248,
+                "price_change_ratio": {"mango": -50.0, "apple": 50.0},
+                "asset": [
+                    ("mango", 500, 300, 5.23, -40.0),
+                    ("apple", 250, 750, 2.11, 200.0),
+                ],
+                "date_time": "2020-02-23T00:00:00",
+                "kind": 3,
+            }
+        )
+
+        for i in range(Analyzer.GRAPH_MAX_COUNT + 1):
+            target_datetime = datetime.strptime(
+                start_datetime, ISO_DATEFORMAT
+            ) + timedelta(minutes=i)
+            new_dt = target_datetime.strftime(ISO_DATEFORMAT)
+            dummy_info = {
+                "market": "orange",
+                "date_time": new_dt,
+                "opening_price": 5000,
+                "high_price": 15000,
+                "low_price": 4500,
+                "closing_price": 5500,
+                "acc_price": 1500000000,
+                "acc_volume": 1500,
+                "kind": 0,
+            }
+            analyzer.info_list.append(dummy_info)
+
     def fill_test_data_for_report(self, analyzer):
         dummy_info = {
             "market": "orange",
@@ -668,6 +711,20 @@ class AnalyzerTests(unittest.TestCase):
         )
 
         analyzer.update_asset_info.assert_called_once()
+
+    @patch("mplfinance.make_addplot")
+    @patch("mplfinance.plot")
+    def test_get_return_report_make_alert_with_big_data(self, mock_plot, mock_addplot):
+        alert_callback = MagicMock()
+        analyzer = Analyzer()
+        analyzer.initialize("mango", alert_callback)
+        analyzer.is_simulation = True
+        self.fill_test_data_for_big_data(analyzer)
+        self.assertEqual(len(analyzer.info_list), analyzer.GRAPH_MAX_COUNT + 1)
+        analyzer.update_asset_info = MagicMock()
+
+        analyzer.get_return_report(graph_filename="mango_graph.png")
+        alert_callback.assert_called_once_with("Graph data is trimmed. 1441 -> 1440")
 
     @patch("mplfinance.plot")
     def test_get_return_report_return_correct_report_with_index(self, mock_plot):

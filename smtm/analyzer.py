@@ -47,16 +47,18 @@ class Analyzer:
         self.logger = LogManager.get_logger(__class__.__name__)
         self.is_simulation = False
         self.sma_info = sma_info
+        self.alert_callback = None
 
         if os.path.isdir("output") is False:
             os.mkdir("output")
 
-    def initialize(self, get_asset_info_func):
+    def initialize(self, get_asset_info_func, alert_callback=None):
         """콜백 함수를 입력받아 초기화한다
 
         get_asset_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
         """
         self.get_asset_info_func = get_asset_info_func
+        self.alert_callback = alert_callback
 
     def add_drawing_spot(self, date_time, value):
         """그래프에 그려질 점의 위치를 입력받아서 저장한다
@@ -700,6 +702,12 @@ class Analyzer:
                         new["avr_price"] = last_avr_price
                     break
             plot_data.append(new)
+
+        if len(plot_data) > self.GRAPH_MAX_COUNT:
+            self._make_alert(
+                f"Graph data is trimmed. {len(plot_data)} -> {self.GRAPH_MAX_COUNT}"
+            )
+
         return pd.DataFrame(plot_data)[-self.GRAPH_MAX_COUNT :]
 
     def _add_line_plot_info(self, line_graph_list, line_pos, new, info_time):
@@ -859,6 +867,10 @@ class Analyzer:
             data = dump_file.read()
             target_list = ast.literal_eval(data)
             return target_list
+
+    def _make_alert(self, msg):
+        if self.alert_callback is not None:
+            self.alert_callback(msg)
 
     def dump(self, filename="dump"):
         """주요 데이터를 파일로 저장한다"""
