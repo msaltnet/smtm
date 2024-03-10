@@ -182,7 +182,7 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         self.trader_mock.send_request.assert_not_called()
         self.analyzer_mock.put_result.assert_not_called()
 
-    def test_execute_trading_should_call_on_exception_when_exception_occured(self):
+    def test_execute_trading_should_call_alert_callback_when_exception_occured(self):
         def make_exception():
             raise Exception("mango")
 
@@ -190,7 +190,7 @@ class OperatorExecuteTradingTests(unittest.TestCase):
         self.operator.initialize(
             self.dp_mock, self.strategy_mock, self.trader_mock, self.analyzer_mock, 100
         )
-        self.operator.on_exception = MagicMock()
+        self.operator.alert_callback = MagicMock()
 
         with self.assertRaises(Exception) as exception:
             self.operator._execute_trading(None)
@@ -198,7 +198,7 @@ class OperatorExecuteTradingTests(unittest.TestCase):
             str(exception.exception), "Something bad happened during trading"
         )
 
-        self.operator.on_exception.assert_called_once_with(
+        self.operator.alert_callback.assert_called_once_with(
             "Something bad happened during trading"
         )
 
