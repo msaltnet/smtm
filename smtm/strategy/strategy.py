@@ -12,7 +12,7 @@ class Strategy(metaclass=ABCMeta):
 
     @abstractmethod
     def initialize(
-        self, budget, min_price=100, add_spot_callback=None, add_line_callback=None
+        self, budget, min_price=100, add_spot_callback=None, add_line_callback=None, alert_callback=None
     ):
         """예산을 설정하고 초기화한다
 
@@ -20,6 +20,7 @@ class Strategy(metaclass=ABCMeta):
         min_price: 최소 거래 금액, 거래소의 최소 거래 금액
         add_spot_callback(date_time, value): 그래프에 그려질 spot을 추가하는 콜백 함수
         add_line_callback(date_time, value): 그래프에 그려질 line을 추가하는 콜백 함수
+        alert_callback(msg): 알림을 전달하는 콜백 함수 e.g. Operator나 Controller에 전달
         """
 
     @abstractmethod

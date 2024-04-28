@@ -87,7 +87,7 @@ class StrategySmaDualMl(Strategy):
         self.last_upper = None
 
     def initialize(
-        self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None
+        self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None, alert_callback=None
     ):
         """
         예산과 최소 거래 가능 금액을 설정한다
