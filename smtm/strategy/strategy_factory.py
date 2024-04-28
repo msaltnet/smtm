@@ -5,7 +5,7 @@ from .strategy_sma_0 import StrategySma0
 from .strategy_rsi import StrategyRsi
 from .strategy_sma_ml import StrategySmaMl
 from .strategy_sma_dual_ml import StrategySmaDualMl
-
+from .strategy_sas import StrategySas
 
 class StrategyFactory:
     """Strategy 정보 조회 및 생성을 담당하는 Factory 클래스"""
@@ -16,6 +16,7 @@ class StrategyFactory:
         StrategyRsi,
         StrategySmaMl,
         StrategySmaDualMl,
+        StrategySas,
     ]
 
     @staticmethod

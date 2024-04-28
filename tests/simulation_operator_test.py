@@ -105,7 +105,7 @@ class SimulationOperatorTests(unittest.TestCase):
         analyzer_mock.create_report.assert_called_once()
         self.assertEqual(operator.state, "simulation_terminated")
 
-    def test_execute_trading_should_NOT_call_trader_send_request_when_request_is_None(
+    def test_execute_trading_should_raise_exception_when_request_is_None(
         self,
     ):
         operator = SimulationOperator()
@@ -122,8 +122,8 @@ class SimulationOperatorTests(unittest.TestCase):
         trader_mock.send_request = MagicMock()
         operator.initialize(dp_mock, strategy_mock, trader_mock, analyzer_mock)
         operator.set_interval(27)
-        operator._execute_trading(None)
-        trader_mock.send_request.assert_not_called()
+        with self.assertRaises(UserWarning):
+            operator._execute_trading(None)
 
     def test_get_score_should_call_work_post_task_with_correct_task(self):
         operator = SimulationOperator()

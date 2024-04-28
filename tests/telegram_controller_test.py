@@ -578,5 +578,5 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.main_keyboard = "banana"
         tcb.alert_callback("mango")
         tcb._send_text_message.assert_called_once_with(
-            "트레이딩 중 문제가 발생하여 트레이딩이 중단되었습니다! mango", "banana"
+            "Alert: mango", "banana"
         )

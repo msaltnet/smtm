@@ -56,11 +56,17 @@ class Operator:
         if self.state is not None:
             return
 
-        def add_spot_callback(date_time, value):
+        def _add_spot_callback(date_time, value):
             analyzer.add_drawing_spot(date_time, value)
 
-        def add_line_callback(date_time, value):
+        def _add_line_callback(date_time, value):
             analyzer.add_value_for_line_graph(date_time, value)
+
+        def _alert_callback(msg):
+            if self.alert_callback is not None:
+                self.alert_callback(msg)
+            else:
+                self.logger.warning(f"alert callback is called: {msg}")
 
         self.data_provider = data_provider
         self.strategy = strategy
@@ -69,8 +75,9 @@ class Operator:
         self.state = "ready"
         self.strategy.initialize(
             budget,
-            add_spot_callback=add_spot_callback,
-            add_line_callback=add_line_callback,
+            add_spot_callback=_add_spot_callback,
+            add_line_callback=_add_line_callback,
+            alert_callback=_alert_callback,
         )
         self.analyzer.initialize(trader.get_account_info)
         self.tag = datetime.now().strftime("%Y%m%d-%H%M%S")

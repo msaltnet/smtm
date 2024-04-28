@@ -561,5 +561,5 @@ class TelegramController:
     def alert_callback(self, msg):
         """예외 상황 처리"""
         self._send_text_message(
-            f"트레이딩 중 문제가 발생하여 트레이딩이 중단되었습니다! {msg}", self.main_keyboard
+            f"Alert: {msg}", self.main_keyboard
         )

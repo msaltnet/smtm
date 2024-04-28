@@ -59,8 +59,7 @@ class SimulationOperator(Operator):
 
             target_request = self.strategy.get_request()
             if target_request is None:
-                self.logger.error("request should be submitted at simulation!")
-                return
+                raise UserWarning("request should be submitted at simulation!")
             self.trader.send_request(target_request, send_request_callback)
             self.analyzer.put_requests(target_request)
 
