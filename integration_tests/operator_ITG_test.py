@@ -34,7 +34,7 @@ class OperatorIntegrationTests(unittest.TestCase):
         self.assertEqual(op.state, "ready")
         analyzer.initialize.assert_called_with(trader.get_account_info)
         strategy.initialize.assert_called_with(
-            50000, add_spot_callback=ANY, add_line_callback=ANY
+            50000, add_spot_callback=ANY, add_line_callback=ANY, alert_callback=ANY
         )
 
         strategy.get_request.return_value = "mango"
