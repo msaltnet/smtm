@@ -34,7 +34,7 @@ class Analyzer:
     RSI_ENABLE = False
     RSI = (30, 70, 14)  # set (low, high, count) tuple to draw e.g. (30, 70, 14)
 
-    def __init__(self, sma_info=(10, 40, 60)):
+    def __init__(self, sma_info=(10, 40, 120)):
         self.request_list = []
         self.result_list = []
         self.info_list = []

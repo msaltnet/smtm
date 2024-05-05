@@ -16,10 +16,6 @@ class StrategySas(Strategy):
     budget: 시작 잔고
     balance: 현재 잔고
     min_price: 최소 주문 금액
-    current_process: 현재 진행해야 할 매매 타입, buy, sell
-    process_unit: 분할 매매를 진행할 단위
-    lower_list: 지지포인트 (date_time, price)
-    upper_list: 저항포인트 (date_time, price)
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -43,7 +39,12 @@ class StrategySas(Strategy):
         self.add_spot_callback = None
 
     def initialize(
-        self, budget, min_price=5000, add_spot_callback=None, add_line_callback=None, alert_callback=None
+        self,
+        budget,
+        min_price=5000,
+        add_spot_callback=None,
+        add_line_callback=None,
+        alert_callback=None,
     ):
         """
         예산과 최소 거래 가능 금액을 설정한다
@@ -145,7 +146,7 @@ class StrategySas(Strategy):
     def get_request(self):
         "거래 정보를 생성하지 않기 때문에 항상 None을 반환한다"
         now = datetime.now().strftime(self.ISO_DATEFORMAT)
-        if self.is_simulation:
+        if self.is_simulation is True:
             return [
                 {
                     "id": DateConverter.timestamp_id(),

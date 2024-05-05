@@ -22,6 +22,7 @@ from .strategy.strategy_sma_ml import StrategySmaMl
 from .strategy.strategy_rsi import StrategyRsi
 from .strategy.strategy_factory import StrategyFactory
 from .strategy.strategy_sas import StrategySas
+from .strategy.strategy_hey import StrategyHey
 from .trader.simulation_trader import SimulationTrader
 from .trader.virtual_market import VirtualMarket
 from .trader.demo_trader import DemoTrader
