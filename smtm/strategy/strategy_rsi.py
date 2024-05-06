@@ -39,7 +39,12 @@ class StrategyRsi(Strategy):
         self.position = None
 
     def initialize(
-        self, budget, min_price=100, add_spot_callback=None, add_line_callback=None, alert_callback=None
+        self,
+        budget,
+        min_price=100,
+        add_spot_callback=None,
+        add_line_callback=None,
+        alert_callback=None,
     ):
         """예산을 설정하고 초기화한다
 

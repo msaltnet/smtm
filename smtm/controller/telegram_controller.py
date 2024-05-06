@@ -560,6 +560,4 @@ class TelegramController:
 
     def alert_callback(self, msg):
         """예외 상황 처리"""
-        self._send_text_message(
-            f"Alert: {msg}", self.main_keyboard
-        )
+        self._send_text_message(f"Alert: {msg}", self.main_keyboard)

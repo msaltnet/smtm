@@ -8,6 +8,7 @@ from .strategy_sma_dual_ml import StrategySmaDualMl
 from .strategy_sas import StrategySas
 from .strategy_hey import StrategyHey
 
+
 class StrategyFactory:
     """Strategy 정보 조회 및 생성을 담당하는 Factory 클래스"""
 

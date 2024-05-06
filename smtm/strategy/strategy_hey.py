@@ -131,15 +131,25 @@ class StrategyHey(StrategySas):
             self.current_process = "buy"
             self.buy_price = current_price
             self.loss_cut_alerted = False
-            self.logger.debug(f"[HEY] BUY #{current_idx} {sma_short} : {sma_mid} : {sma_long}")
+            self.logger.debug(
+                f"[HEY] BUY #{current_idx} {sma_short} : {sma_mid} : {sma_long}"
+            )
         elif (sma_short < sma_mid < sma_long) and self.current_process != "sell":
             self.current_process = "sell"
             self.buy_price = 0
             self.loss_cut_alerted = False
-            self.logger.debug(f"[HEY] SELL #{current_idx} {sma_short} : {sma_mid} : {sma_long}")
-        elif self._is_loss_cut_entered(current_price) and self.current_process != "sell" and not self.loss_cut_alerted:
+            self.logger.debug(
+                f"[HEY] SELL #{current_idx} {sma_short} : {sma_mid} : {sma_long}"
+            )
+        elif (
+            self._is_loss_cut_entered(current_price)
+            and self.current_process != "sell"
+            and not self.loss_cut_alerted
+        ):
             self.loss_cut_alerted = True
-            self.logger.debug(f"[HEY] LOSS CUT #{current_idx} {sma_short} : {sma_mid} : {sma_long}")
+            self.logger.debug(
+                f"[HEY] LOSS CUT #{current_idx} {sma_short} : {sma_mid} : {sma_long}"
+            )
         else:
             return
 
@@ -153,8 +163,12 @@ class StrategyHey(StrategySas):
         self.update_atr_info(info)
         breakout_buy_signal, breakout_sell_signal = self.detect_breakout_signals()
         if breakout_buy_signal or breakout_sell_signal:
-            self.logger.debug(f"[HEY] BREAKOUT {info['date_time']} {breakout_buy_signal} {breakout_sell_signal}")
-            self.logger.debug(f"-- {self.atr} {info['closing_price']} {self.prev_close}")
+            self.logger.debug(
+                f"[HEY] BREAKOUT {info['date_time']} {breakout_buy_signal} {breakout_sell_signal}"
+            )
+            self.logger.debug(
+                f"-- {self.atr} {info['closing_price']} {self.prev_close}"
+            )
             self._make_alert(
                 info["date_time"],
                 info["closing_price"],
@@ -168,12 +182,12 @@ class StrategyHey(StrategySas):
 
         if len(self.data) > 1:
             # 이전 거래일 종가
-            self.prev_close = self.data[-2]['closing_price']
+            self.prev_close = self.data[-2]["closing_price"]
 
             # 새로운 True Range 계산
-            current_high = new_price_info['high_price']
-            current_low = new_price_info['low_price']
-            prev_close = self.data[-2]['closing_price']
+            current_high = new_price_info["high_price"]
+            current_low = new_price_info["low_price"]
+            prev_close = self.data[-2]["closing_price"]
 
             high_low = current_high - current_low
             high_close = abs(current_high - prev_close)
@@ -196,11 +210,15 @@ class StrategyHey(StrategySas):
             return False, False
 
         current_price = self.data[-1]
-        current_high = current_price['high_price']
-        current_low = current_price['low_price']
+        current_high = current_price["high_price"]
+        current_low = current_price["low_price"]
 
-        breakout_buy_signal = current_high > self.prev_close + self.VOLATILITY_BREAKOUT * self.atr
-        breakout_sell_signal = current_low < self.prev_close - self.VOLATILITY_BREAKOUT * self.atr
+        breakout_buy_signal = (
+            current_high > self.prev_close + self.VOLATILITY_BREAKOUT * self.atr
+        )
+        breakout_sell_signal = (
+            current_low < self.prev_close - self.VOLATILITY_BREAKOUT * self.atr
+        )
 
         return breakout_buy_signal, breakout_sell_signal
 
