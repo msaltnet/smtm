@@ -1,7 +1,7 @@
 import unittest
 from smtm import StrategyHey
 from unittest.mock import *
-
+import numpy as np
 
 class StrategyHeyTests(unittest.TestCase):
     def test_initialize_update_initial_balance(self):
@@ -152,3 +152,80 @@ class StrategyHeyTests(unittest.TestCase):
         sas.initialize(100, 10)
         requests = sas.get_request()
         self.assertEqual(requests, None)
+
+    def test_update_atr_info_should_update_correctly(self):
+        detector = StrategyHey()
+        detector.ATR_PERIOD = 3
+
+        # 초기 상태 확인
+        self.assertEqual(len(detector.data), 0)
+        self.assertIsNone(detector.prev_close)
+        self.assertIsNone(detector.atr)
+
+        # 새로운 거래 정보 추가 및 업데이트
+        new_price_info_1 = {"date_time": "2024-04-25T09:00:00", "opening_price": 10000, "high_price": 10500, "low_price": 9800, "closing_price": 10300}
+        detector.data.append(new_price_info_1)
+        detector.update_atr_info(new_price_info_1)
+
+        self.assertEqual(len(detector.data), 1)
+        self.assertIsNone(detector.prev_close)
+        self.assertIsNone(detector.atr)  # 최소 2개의 거래 정보가 필요함
+
+        new_price_info_2 = {"date_time": "2024-04-25T09:30:00", "opening_price": 10300, "high_price": 10600, "low_price": 10000, "closing_price": 10450}
+        detector.data.append(new_price_info_2)
+        detector.update_atr_info(new_price_info_2)
+
+        self.assertEqual(len(detector.data), 2)
+        self.assertEqual(detector.prev_close, 10300)  # 이전 거래일 종가 업데이트 확인
+        self.assertEqual(detector.atr, 600.0)
+
+        new_price_info_3 = {"date_time": "2024-04-25T10:00:00", "opening_price": 10450, "high_price": 10700, "low_price": 10200, "closing_price": 10580}
+        detector.data.append(new_price_info_3)
+        detector.update_atr_info(new_price_info_3)
+
+        self.assertEqual(len(detector.data), 3)
+        self.assertEqual(detector.prev_close, 10450)
+        self.assertEqual(detector.atr, 550.0)
+
+    def test_detect_breakout_signals_should_return_correct_value(self):
+        detector = StrategyHey()
+        detector.ATR_PERIOD = 3
+        detector.VOLATILITY_BREAKOUT = 1.2
+
+        # 변동성 돌파 신호 감지 테스트
+        new_price_info_1 = {"date_time": "2024-04-25T09:00:00", "opening_price": 10000, "high_price": 10500, "low_price": 9800, "closing_price": 10300}
+        new_price_info_2 = {"date_time": "2024-04-25T09:30:00", "opening_price": 10300, "high_price": 10600, "low_price": 10000, "closing_price": 10450}
+
+        detector.data.append(new_price_info_1)
+        detector.update_atr_info(new_price_info_1)
+
+        detector.data.append(new_price_info_2)
+        detector.update_atr_info(new_price_info_2)
+
+        breakout_buy_signal, breakout_sell_signal = detector.detect_breakout_signals()
+
+        # 최소 2개의 거래 정보가 필요하므로 초기값은 False 여야 함
+        self.assertFalse(breakout_buy_signal)
+        self.assertFalse(breakout_sell_signal)
+
+        # 추가 정보로 변동성 돌파 신호 확인
+        new_price_info_3 = {"date_time": "2024-04-25T10:00:00", "opening_price": 10450, "high_price": 12700, "low_price": 10200, "closing_price": 10580}
+        detector.data.append(new_price_info_3)
+        detector.update_atr_info(new_price_info_3)
+
+        breakout_buy_signal, breakout_sell_signal = detector.detect_breakout_signals()
+
+        # 변동성 돌파 신호 예상 확인
+        self.assertTrue(breakout_buy_signal)
+        self.assertFalse(breakout_sell_signal)
+
+        # 추가 정보로 변동성 돌파 신호 확인
+        new_price_info_4 = {"date_time": "2024-04-25T10:30:00", "opening_price": 10580, "high_price": 10800, "low_price": 8200, "closing_price": 10650}
+        detector.data.append(new_price_info_4)
+        detector.update_atr_info(new_price_info_4)
+
+        breakout_buy_signal, breakout_sell_signal = detector.detect_breakout_signals()
+
+        # 변동성 돌파 신호 예상 확인
+        self.assertFalse(breakout_buy_signal)
+        self.assertTrue(breakout_sell_signal)
