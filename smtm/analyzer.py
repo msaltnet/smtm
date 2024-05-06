@@ -348,6 +348,8 @@ class Analyzer:
         seed = deltas[:count]
         up_avg = seed[seed >= 0].sum() / count
         down_avg = -seed[seed < 0].sum() / count
+        if down_avg == 0:
+            return None
         r_strength = up_avg / down_avg
         rsi = np.zeros_like(prices)
         rsi[: count + 1] = 100.0 - 100.0 / (1.0 + r_strength)
@@ -365,6 +367,8 @@ class Analyzer:
             up_avg = (up_avg * (count - 1) + upval) / count
             down_avg = (down_avg * (count - 1) + downval) / count
 
+            if down_avg == 0:
+                return None
             r_strength = up_avg / down_avg
             rsi[i] = 100.0 - 100.0 / (1.0 + r_strength)
 

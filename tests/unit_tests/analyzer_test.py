@@ -1142,7 +1142,7 @@ class AnalyzerTests(unittest.TestCase):
         analyzer.update_asset_info = MagicMock()
         filename = "apple"
 
-        self.fill_test_data_for_report(analyzer)
+        self.fill_test_data_for_report_10(analyzer)
         analyzer.create_report(filename)
 
         self.assertEqual(
