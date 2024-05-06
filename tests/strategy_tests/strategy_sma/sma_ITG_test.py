@@ -1,10 +1,30 @@
-# python -m unittest discover .\integration_tests\strategy_hey  *test.py -v
+# python -m unittest discover tests/strategy_tests/strategy_sma  *test.py -v
 import json
 import unittest
 from smtm import Simulator
 from unittest.mock import *
 
 KEY_PERIOD = [
+    "220701.000000-220701.195900",
+    "220710.040000-220710.235900",
+    "220711.200000-220712.155900",
+    "220712.160000-220713.115900",
+    "220715.040000-220715.235900",
+    "220723.120000-220724.075900",
+    "220724.130000-220725.085900",
+    "220728.120000-220729.075900",
+    "220731.000000-220731.195900",
+    "220811.230000-220812.185900",
+    "220814.040000-220814.235900",
+    "220815.000000-220815.195900",
+    "220826.160000-220827.115900",
+    "220830.000000-220830.195900",
+    "221004.080000-221005.035900",
+    "221010.040000-221010.235900",
+    "221026.170000-221027.125900",
+    "221101.000000-221101.195900",
+    "221114.040000-221114.235900",
+    "221118.080000-221119.035900",
     "230112.160000-230113.115900",
     "230113.100000-230114.055900",
     "230117.160000-230118.115900",
@@ -24,7 +44,7 @@ KEY_PERIOD = [
 ]
 
 
-class HeyIntegrationTests(unittest.TestCase):
+class SmaIntegrationTests(unittest.TestCase):
     def test_ITG_run_single_simulation(self):
         result_list = []
         for period in KEY_PERIOD:
@@ -32,7 +52,7 @@ class HeyIntegrationTests(unittest.TestCase):
             simulator = Simulator(
                 budget=1000000,
                 interval=0.0001,
-                strategy="HEY",
+                strategy="SMA",
                 from_dash_to=period,
                 currency="BTC",
             )
@@ -50,10 +70,10 @@ class HeyIntegrationTests(unittest.TestCase):
             result_list.append(request_list)
 
         # If you want to update the expected result, uncomment the following code.
-        # with open("./hey_test_result.json", "w") as f:
+        # with open("./sma_test_result.json", "w") as f:
         #     json.dump(result_list, f)
 
-        with open("./integration_tests/strategy_hey/hey_test_result.json", "r") as f:
+        with open("tests/strategy_tests/strategy_sma/sma_test_result.json", "r") as f:
             expected = json.load(f)
 
         for result_idx, request_list in enumerate(result_list):

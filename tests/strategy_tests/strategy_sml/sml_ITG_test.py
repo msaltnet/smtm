@@ -1,4 +1,4 @@
-# python -m unittest discover .\integration_tests\strategy_sml  *test.py -v
+# python -m unittest discover tests/strategy_tests/strategy_sml  *test.py -v
 import json
 import unittest
 from smtm import Simulator
@@ -73,7 +73,7 @@ class SmlIntegrationTests(unittest.TestCase):
         # with open("./sml_test_result.json", "w") as f:
         #     json.dump(result_list, f)
 
-        with open("./integration_tests/strategy_sml/sml_test_result.json", "r") as f:
+        with open("tests/strategy_tests/strategy_sml/sml_test_result.json", "r") as f:
             expected = json.load(f)
 
         for result_idx, request_list in enumerate(result_list):

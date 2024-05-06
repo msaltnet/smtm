@@ -470,7 +470,7 @@ class DataRepositoryUpbitTests(unittest.TestCase):
     def test_get_data_should_return_data_fetched_from_server_with_1m_interval(
         self, get_mock
     ):
-        with open("tests/data/upbit_1m_20200220_170000-20200220_202000.json", "r") as f:
+        with open("tests/unit_tests/data/upbit_1m_20200220_170000-20200220_202000.json", "r") as f:
             get_mock.return_value.json.return_value = json.load(f)
         repo = DataRepository(interval=60)
         repo.database = MagicMock()
@@ -491,9 +491,9 @@ class DataRepositoryUpbitTests(unittest.TestCase):
         self, get_mock
     ):
         dummy_data = []
-        with open("tests/data/upbit_1m_20200220_170000-20200220_202000.json", "r") as f:
+        with open("tests/unit_tests/data/upbit_1m_20200220_170000-20200220_202000.json", "r") as f:
             dummy_data.append(json.load(f))
-        with open("tests/data/upbit_1m_20200220_202000-20200220_210000.json", "r") as f:
+        with open("tests/unit_tests/data/upbit_1m_20200220_202000-20200220_210000.json", "r") as f:
             dummy_data.append(json.load(f))
         get_mock.return_value.json.side_effect = dummy_data
 
@@ -512,7 +512,7 @@ class DataRepositoryUpbitTests(unittest.TestCase):
     def test_get_data_should_return_data_fetched_from_server_with_3m_interval(
         self, get_mock
     ):
-        with open("tests/data/upbit_3m_20200220_170000-20200220_200000.json", "r") as f:
+        with open("tests/unit_tests/data/upbit_3m_20200220_170000-20200220_200000.json", "r") as f:
             get_mock.return_value.json.return_value = json.load(f)
 
         repo = DataRepository(interval=180)
@@ -531,9 +531,9 @@ class DataRepositoryUpbitTests(unittest.TestCase):
         self, get_mock
     ):
         dummy_data = []
-        with open("tests/data/upbit_3m_20200220_000000-20200220_100000.json", "r") as f:
+        with open("tests/unit_tests/data/upbit_3m_20200220_000000-20200220_100000.json", "r") as f:
             dummy_data.append(json.load(f))
-        with open("tests/data/upbit_3m_20200220_100000-20200220_120000.json", "r") as f:
+        with open("tests/unit_tests/data/upbit_3m_20200220_100000-20200220_120000.json", "r") as f:
             dummy_data.append(json.load(f))
         get_mock.return_value.json.side_effect = dummy_data
 

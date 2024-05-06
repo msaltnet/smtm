@@ -9,7 +9,7 @@ class MassSimulatorIntegrationTests(unittest.TestCase):
     def test_ITG_run_single_simulation(self, mock_print):
         mass = MassSimulator()
 
-        mass.run("integration_tests/data/mass_simulation_config.json")
+        mass.run("tests/integration_tests/data/mass_simulation_config.json")
         expected_score = [
             "Result Summary =========================================",
             "수익률 평균:   -2.029",
@@ -39,7 +39,7 @@ class MassSimulator3mIntervalIntegrationTests(unittest.TestCase):
     def test_ITG_run_single_simulation(self, mock_print):
         mass = MassSimulator()
 
-        mass.run("integration_tests/data/mass_simulation_3m_config.json")
+        mass.run("tests/integration_tests/data/mass_simulation_3m_config.json")
         expected_score = [
             "Result Summary =========================================",
             "수익률 평균:   -2.034",
@@ -70,7 +70,7 @@ class MassSimulatorDual3mIntervalIntegrationTests(unittest.TestCase):
     def test_ITG_run_single_simulation(self, mock_print):
         mass = MassSimulator()
 
-        mass.run("integration_tests/data/mass_simulation_3m_config.json")
+        mass.run("tests/integration_tests/data/mass_simulation_3m_config.json")
         expected_score = [
             "Result Summary =========================================",
             "수익률 평균:   -2.034",

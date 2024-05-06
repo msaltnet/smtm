@@ -1,4 +1,4 @@
-# python -m unittest discover .\integration_tests\strategy_dml  *test.py -v
+# python -m unittest discover tests/strategy_tests/strategy_dml  *test.py -v
 # MUST SET Config.simulation_data_provider_type = "dual" in smtm/config.py
 # simulation_data_provider_type = "dual"
 
@@ -76,7 +76,7 @@ class SmlIntegrationTests(unittest.TestCase):
         # with open("./dml_test_result.json", "w") as f:
         #     json.dump(result_list, f)
 
-        with open("./integration_tests/strategy_dml/dml_test_result.json", "r") as f:
+        with open("tests/strategy_tests/strategy_dml/dml_test_result.json", "r") as f:
             expected = json.load(f)
 
         for result_idx, request_list in enumerate(result_list):

@@ -336,7 +336,7 @@ class AnalyzerIntegrationTests(unittest.TestCase):
         analyzer.create_report("test_report")
 
         with open(analyzer.OUTPUT_FOLDER + "test_report.txt", "r") as file1:
-            with open("integration_tests/data/test_report.txt", "r") as file2:
+            with open("tests/integration_tests/data/test_report.txt", "r") as file2:
                 diff = set(file1).difference(file2)
 
         self.assertTrue(len(diff) < 2)

@@ -1,1 +1,1 @@
-python -m unittest integration_tests
+python -m pytest tests/integration_tests

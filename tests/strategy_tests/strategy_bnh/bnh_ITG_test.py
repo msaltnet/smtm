@@ -1,4 +1,4 @@
-# python -m unittest discover .\integration_tests\strategy_sma  *test.py -v
+# python -m unittest discover tests/strategy_tests/strategy_bnh  *test.py -v
 import json
 import unittest
 from smtm import Simulator
@@ -44,7 +44,7 @@ KEY_PERIOD = [
 ]
 
 
-class SmaIntegrationTests(unittest.TestCase):
+class BnhIntegrationTests(unittest.TestCase):
     def test_ITG_run_single_simulation(self):
         result_list = []
         for period in KEY_PERIOD:
@@ -52,7 +52,7 @@ class SmaIntegrationTests(unittest.TestCase):
             simulator = Simulator(
                 budget=1000000,
                 interval=0.0001,
-                strategy="SMA",
+                strategy="BNH",
                 from_dash_to=period,
                 currency="BTC",
             )
@@ -70,10 +70,10 @@ class SmaIntegrationTests(unittest.TestCase):
             result_list.append(request_list)
 
         # If you want to update the expected result, uncomment the following code.
-        # with open("./sma_test_result.json", "w") as f:
+        # with open("./bnh_test_result.json", "w") as f:
         #     json.dump(result_list, f)
 
-        with open("./integration_tests/strategy_sma/sma_test_result.json", "r") as f:
+        with open("tests/strategy_tests/strategy_bnh/bnh_test_result.json", "r") as f:
             expected = json.load(f)
 
         for result_idx, request_list in enumerate(result_list):
