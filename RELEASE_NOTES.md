@@ -1,3 +1,29 @@
+## v1.5.0
+
+### alert_callback 인터페이스 추가
+코어 모듈에서 컨트롤러에 알림을 보내는 용도로 사용될 수 있는 `alert_callback`이 추가되었습니다. 거래를 하지 않고, 알림만 보내거나, Analyzer에서 데이터 처리시 오류에 대해서 알림을 보내는 등의 용도로 사용할 수 있습니다. 예제로는 `StrategySas` 전략이 추가 되었습니다.
+- https://github.com/msaltnet/smtm/commit/7dcd9e1843b15cd281dfe7af4b35fa4ca1352514
+- https://github.com/msaltnet/smtm/commit/3cd4328d8af1aa5749af6be646dec57b68c2db3b
+- https://github.com/msaltnet/smtm/commit/5263cdb6e0ca707977a9a966d2bb25321debab60
+- https://github.com/msaltnet/smtm/commit/231a58868d0bbd5c18f62171e231b8e1e19a5964
+- https://github.com/msaltnet/smtm/commit/95485d5d5d068644cf4de0da3aadf094056b6b2c
+
+### StrategyHey 전략 추가
+거래 정보를 분석해서 알림만 보내는 전략으로 StrategyHey 전략이 추가되었습니다. `StrategySas` 전략을 상속 받아서 이동 평균선이 깨질 때 또는 변동성 돌파 이벤트가 발생하였을 때, `alert_callback`을 통해 알림을 전달하는 앱을 구현하였습니다. 횡보장에서 단기 트레이딩시에 유용하게 사용할 수 있습니다.
+- https://github.com/msaltnet/smtm/commit/a420001d626d1a628c723eda01e676e95e1fbeda
+- https://github.com/msaltnet/smtm/commit/b1a2bbc48af339cd5eafde88df481a1faaa20161
+
+### 그 외 리팩터링
+- `pytest`를 적용하고, 단위테스트와 통합테스트를 `tests`로 모았습니다. `pytest`를 사용하게 되면서 테스트 결과 화면도 아래와 같이 깔끔하게 변경되었습니다.
+  - https://github.com/msaltnet/smtm/commit/087e910fb78f9f6328779ad89594633e34514cd4
+
+![image](https://github.com/msaltnet/smtm/assets/9311990/4b3d2e5a-991a-4525-839a-1a2bf828d531)
+
+- 코드를 정리하여 경고 문구를 제거하였습니다.
+  - https://github.com/msaltnet/smtm/commit/02fb5c08fa829be67f1866cb4367d367cbebf5b6
+  - https://github.com/msaltnet/smtm/commit/601b275bcba0b19b959672d6dc9e1d4d8c6410e6
+  - https://github.com/msaltnet/smtm/commit/5c15e2a12cce0ff75faa97eafb17ccd81016f92d
+
 ## v1.4.0
 
 ### Analyzer 기능 추가
