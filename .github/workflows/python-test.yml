@@ -21,9 +21,9 @@ jobs:
     steps:
     - name: 'Exporting TZ for Seoul'
       run: sudo timedatectl set-timezone Asia/Seoul
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -34,4 +34,4 @@ jobs:
       run: |
         coverage run --omit="*/test*" -m pytest ./tests/unit_tests
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
