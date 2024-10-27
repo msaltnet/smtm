@@ -104,7 +104,7 @@ class StrategyHey(StrategySas):
         self.data.append(copy.deepcopy(target))
         self._checking_sma(target)
         # 변동성 돌파 이벤트를 분봉을 기준으로 했을때, 너무 자주 발생됨
-        # self._checking_volitility_breakout(target)
+        # self._checking_volatility_breakout(target)
 
     def _checking_sma(self, info):
         current_price = info["closing_price"]
@@ -159,7 +159,7 @@ class StrategyHey(StrategySas):
             f"[HEY] SMA #{current_idx} {self.current_process} : {current_price}",
         )
 
-    def _checking_volitility_breakout(self, info):
+    def _checking_volatility_breakout(self, info):
         self.update_atr_info(info)
         breakout_buy_signal, breakout_sell_signal = self.detect_breakout_signals()
         if breakout_buy_signal or breakout_sell_signal:
