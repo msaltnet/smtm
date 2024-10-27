@@ -222,8 +222,12 @@ class TelegramController:
     def _handle_message(self):
         """텔레그램 메세지를 확인해서 명령어를 처리"""
         updates = self._get_updates()
+        if updates is None:
+            self.logger.error("get updates failed")
+            return
+
         try:
-            if updates is not None and updates["ok"]:
+            if updates["ok"]:
                 for result in updates["result"]:
                     self.logger.debug(
                         f'result: {result["message"]["chat"]["id"]} : {self.CHAT_ID}'
@@ -268,7 +272,8 @@ class TelegramController:
             url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
 
         def send_message(task):
-            self._send_http(task["url"])
+            if self._send_http(task["url"]):
+                self.logger.error(f"send message failed: {text}")
 
         self.post_worker.post_task({"runnable": send_message, "url": url})
 
@@ -276,7 +281,8 @@ class TelegramController:
         url = f"{self.API_HOST}{self.TOKEN}/sendPhoto?chat_id={self.CHAT_ID}"
 
         def send_image(task):
-            self._send_http(task["url"], True, task["file"])
+            if self._send_http(task["url"], True, task["file"]):
+                self.logger.error(f"send image failed: {task['file']}")
 
         self.post_worker.post_task({"runnable": send_image, "url": url, "file": file})
 
