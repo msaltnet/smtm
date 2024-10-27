@@ -351,6 +351,31 @@ class TelegramController:
         if trader_class:
             self.trader = trader_class(budget=self.budget, currency=self.currency)
 
+    def _get_summary_message(self):
+        return "".join(
+            [
+                f"화폐: {self.currency}\n",
+                f"전략: {self.strategy.NAME}\n",
+                f"거래소: {self.trader.NAME}\n",
+                f"예산: {self.budget}\n",
+            ]
+        )
+
+    def _start_operator(self):
+        def _alert_callback(msg):
+            self.alert_callback(msg)
+
+        self.operator = Operator(alert_callback=_alert_callback)
+        self.operator.initialize(
+            self.data_provider,
+            self.strategy,
+            self.trader,
+            Analyzer(),
+            budget=self.budget,
+        )
+        self.operator.set_interval(Config.candle_interval)
+        return self.operator.start()
+
     def _start_trading(self, command):
         """초기화 후 자동 거래 시작"""
         not_ok = True
@@ -383,49 +408,33 @@ class TelegramController:
                     break
 
             if not not_ok:
-                message = "".join(
-                    [
-                        f"화폐: {self.currency}\n",
-                        f"전략: {self.strategy.NAME}\n",
-                        f"거래소: {self.trader.NAME}\n",
-                        f"예산: {self.budget}\n",
-                    ]
-                )
-        elif self.in_progress_step == len(self.setup_list) and command.upper() in [
-            "1. YES",
-            "1",
-            "Y",
-            "YES",
-        ]:
-
-            def _alert_callback(msg):
-                self.alert_callback(msg)
-
-            self.operator = Operator(alert_callback=_alert_callback)
-            self.operator.initialize(
-                self.data_provider,
-                self.strategy,
-                self.trader,
-                Analyzer(),
-                budget=self.budget,
+                message = self._get_summary_message()
+        elif (
+            self.in_progress_step == len(self.setup_list)
+            and command.upper()
+            in [
+                "1. YES",
+                "1",
+                "Y",
+                "YES",
+            ]
+            and self._start_operator()
+        ):
+            start_message = [
+                "자동 거래가 시작되었습니다!\n",
+                f"화폐: {self.currency}\n",
+                f"전략: {self.strategy.NAME}\n",
+                f"거래소: {self.trader.NAME}\n",
+                f"예산: {self.budget}\n",
+                f"거래 간격: {Config.candle_interval}",
+            ]
+            self._send_text_message("".join(start_message), self.main_keyboard)
+            self.logger.info(
+                f"## START! strategy: {self.strategy.NAME} , trader: {self.trader.NAME}"
             )
-            self.operator.set_interval(Config.candle_interval)
-            if self.operator.start():
-                start_message = [
-                    "자동 거래가 시작되었습니다!\n",
-                    f"화폐: {self.currency}\n",
-                    f"전략: {self.strategy.NAME}\n",
-                    f"거래소: {self.trader.NAME}\n",
-                    f"예산: {self.budget}\n",
-                    f"거래 간격: {Config.candle_interval}",
-                ]
-                self._send_text_message("".join(start_message), self.main_keyboard)
-                self.logger.info(
-                    f"## START! strategy: {self.strategy.NAME} , trader: {self.trader.NAME}"
-                )
-                self.in_progress = None
-                self.in_progress_step = 0
-                return
+            self.in_progress = None
+            self.in_progress_step = 0
+            return
 
         if not_ok or self.in_progress_step >= len(self.setup_list):
             self._terminate_start_in_progress()
