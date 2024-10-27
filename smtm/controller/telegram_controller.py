@@ -144,7 +144,11 @@ class TelegramController:
         main_keyboard = {
             "keyboard": [
                 [{"text": "1. 시작"}, {"text": "2. 중지"}],
-                [{"text": "3. 상태 조회"}, {"text": "4. 수익률 조회"}, {"text": "5. 거래내역 조회"}],
+                [
+                    {"text": "3. 상태 조회"},
+                    {"text": "4. 수익률 조회"},
+                    {"text": "5. 거래내역 조회"},
+                ],
             ]
         }
         main_keyboard = json.dumps(main_keyboard)
@@ -318,30 +322,34 @@ class TelegramController:
         return result
 
     def _on_start_select_exchange(self, command):
-        not_ok = True
-        if command.upper() in ["1. UPBIT", "1", "UPBIT"]:
-            if self.currency in self.UPBIT_CURRENCY:
-                if self.is_demo:
-                    self.trader = DemoTrader(budget=self.budget, currency=self.currency)
-                else:
-                    self.trader = UpbitTrader(
-                        budget=self.budget, currency=self.currency
-                    )
-                not_ok = False
-            else:
-                self._send_text_message("현재 지원하지 않는 코인입니다.")
-        elif command.upper() in ["2. BITHUMB", "2", "BITHUMB"]:
-            if self.currency in self.BITHUMB_CURRENCY:
-                if self.is_demo:
-                    self.trader = DemoTrader(budget=self.budget, currency=self.currency)
-                else:
-                    self.trader = BithumbTrader(
-                        budget=self.budget, currency=self.currency
-                    )
-                not_ok = False
-            else:
-                self._send_text_message("현재 지원하지 않는 코인입니다.")
-        return not_ok
+        exchange = self._get_exchange_from_command(command)
+        if exchange is None:
+            self._send_text_message("지원하지 않는 거래소입니다.")
+            return True
+
+        if self.currency in getattr(self, f"{exchange.upper()}_CURRENCY"):
+            self._set_trader(exchange)
+            return False
+
+        self._send_text_message("현재 지원하지 않는 코인입니다.")
+        return True
+
+    def _get_exchange_from_command(self, command):
+        exchanges = {
+            "1. UPBIT": "UPBIT",
+            "1": "UPBIT",
+            "UPBIT": "UPBIT",
+            "2. BITHUMB": "BITHUMB",
+            "2": "BITHUMB",
+            "BITHUMB": "BITHUMB",
+        }
+        return exchanges.get(command.upper())
+
+    def _set_trader(self, exchange):
+        class_name = f"{exchange.title()}Trader"  # e.g., UpbitTrader, BithumbTrader
+        trader_class = DemoTrader if self.is_demo else globals().get(class_name)
+        if trader_class:
+            self.trader = trader_class(budget=self.budget, currency=self.currency)
 
     def _start_trading(self, command):
         """초기화 후 자동 거래 시작"""
@@ -438,7 +446,8 @@ class TelegramController:
         self.data_provider = None
         self.trader = None
         self._send_text_message(
-            "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요", self.main_keyboard
+            "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요",
+            self.main_keyboard,
         )
 
     def _stop_trading(self, command):

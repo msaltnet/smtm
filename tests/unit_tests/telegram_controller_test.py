@@ -306,7 +306,10 @@ class TelegramControllerTests(unittest.TestCase):
 
     def test__convert_keyboard_markup_should_conver_correctly(self):
         setup_list = [
-            {"guide": "운영 예산을 정해주세요", "keyboard": ["50000", "100000", "500000"]},
+            {
+                "guide": "운영 예산을 정해주세요",
+                "keyboard": ["50000", "100000", "500000"],
+            },
             {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
         ]
         TelegramController._convert_keyboard_markup(setup_list)
@@ -447,10 +450,13 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb._start_trading("NH bank")
         wrong_message = "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요"
-        tcb._send_text_message.assert_called_once_with(wrong_message, tcb.main_keyboard)
+        tcb._send_text_message.call_count = 2
+        called_args = tcb._send_text_message.call_args_list
+        self.assertEqual(called_args[0][0][0], "지원하지 않는 거래소입니다.")
+        self.assertEqual(called_args[1][0][0], wrong_message)
         self.assertIsNone(tcb.trader)
         self.assertIsNone(tcb.data_provider)
-        self.assertEqual(tcb.in_progress, None)
+        self.assertIsNone(tcb.in_progress)
         self.assertEqual(tcb.in_progress_step, 0)
 
     def test__start_trading_should_call_next_setup_message_correctly_when_step_6(self):
@@ -545,7 +551,9 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._query_score("1")
 
         tcb.operator.get_score.assert_called_once()
-        tcb._send_text_message.assert_called_once_with("조회중입니다", tcb.main_keyboard)
+        tcb._send_text_message.assert_called_once_with(
+            "조회중입니다", tcb.main_keyboard
+        )
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
         self.assertEqual(tcb.operator.get_score.call_args[0][1], (60 * 6, -1))
@@ -577,6 +585,4 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._send_text_message = MagicMock()
         tcb.main_keyboard = "banana"
         tcb.alert_callback("mango")
-        tcb._send_text_message.assert_called_once_with(
-            "Alert: mango", "banana"
-        )
+        tcb._send_text_message.assert_called_once_with("Alert: mango", "banana")
