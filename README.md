@@ -10,7 +10,7 @@ An algorithm-based automated cryptocurrency trading system made in Python. https
 
 [한국어](https://github.com/msaltnet/smtm/blob/master/README.md) 👈
 
-[![icon_wide_gold](doc/smtm.png)](https://smtm.msalt.net/)
+[![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
 
 "Data Gathering🔍 ➡️ Strategy Algorithm🖥️ ➡️ Realtime Trading💸" Repeat the process at a set interval
 
@@ -22,7 +22,7 @@ An algorithm-based automated cryptocurrency trading system made in Python. https
 
 ❗ It is not suitable for high-performance trading machines that need to process many trades in a short timeframe of seconds.
 
-![smtm-procedure](https://github.com/msaltnet/smtm/assets/9311990/1455246e-90c2-4093-8345-33276ebae50b)
+![smtm-procedure](doc/smtm.png)
 
 ## Features
 - Mass-simulation with Multi-process
