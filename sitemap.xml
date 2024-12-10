@@ -5,6 +5,10 @@
   <priority>1.0</priority>
 </url>
 <url>
+  <loc>https://smtm.msalt.net/en</loc>
+  <priority>1.0</priority>
+</url>
+<url>
   <loc>https://smtm.msalt.net/codelab</loc>
   <priority>1.0</priority>
 </url>
