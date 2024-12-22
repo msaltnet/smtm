@@ -1,5 +1,3 @@
-"""특정 상황을 만족하게 되었을 때 알림만을 전달하는 전략, 거래는 진행하지 않음"""
-
 import copy
 from datetime import datetime
 from .strategy import Strategy
@@ -9,6 +7,10 @@ from ..log_manager import LogManager
 
 class StrategySas(Strategy):
     """
+    특정 상황을 만족하게 되었을 때 알림만을 전달하는 전략, 거래는 진행하지 않음
+
+    Strategy that only delivers alerts when certain conditions are met, no trading is done
+
     is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
     result: 거래 요청 결과 리스트
@@ -144,7 +146,11 @@ class StrategySas(Strategy):
             self.logger.error(msg)
 
     def get_request(self):
-        "거래 정보를 생성하지 않기 때문에 항상 None을 반환한다"
+        """
+        거래 정보를 생성하지 않기 때문에 항상 None을 반환한다
+
+        Since no trading information is generated, always return None
+        """
         now = datetime.now().strftime(self.ISO_DATEFORMAT)
         if self.is_simulation is True:
             return [
@@ -161,6 +167,8 @@ class StrategySas(Strategy):
     def _make_alert(self, info):
         """
         거래 정보 기준으로 ALERT_INTERVAL_TICK 마다 한 번씩만 알림을 전달한다
+
+        Deliver an alert only once every ALERT_INTERVAL_TICK based on trading information
         """
         if self.alert_callback is None:
             return

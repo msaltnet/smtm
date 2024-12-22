@@ -1,5 +1,3 @@
-"""업비트 거래소를 통한 거래 요청 및 계좌 조회 요청을 처리하는 UpbitTrader 클래스"""
-
 import os
 import copy
 import uuid
@@ -19,7 +17,9 @@ load_dotenv()
 
 class UpbitTrader(Trader):
     """
-    거래 요청 정보를 받아서 거래소에 요청하고 거래소에서 받은 결과를 제공해주는 클래스
+    업비트 거래소를 통한 거래 요청 및 계좌 조회 요청을 처리하는 UpbitTrader 클래스
+
+    UpbitTrader class that processes trading requests and account inquiries through Upbit exchange
 
     id: 요청 정보 id "1607862457.560075"
     type: 거래 유형 sell, buy, cancel

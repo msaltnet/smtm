@@ -1,4 +1,3 @@
-"""Config에 설정된 거래소의 과거 거래 정보를 이용한 가상 거래소 역할의 VirtualMarket 클래스"""
 from datetime import datetime, timedelta
 from ..config import Config
 from ..log_manager import LogManager
@@ -7,7 +6,9 @@ from ..data.data_repository import DataRepository
 
 class VirtualMarket:
     """
-    거래 요청 정보를 받아서 처리하여 가상의 거래 결과 정보를 생성한다
+    Config에 설정된 거래소의 과거 거래 정보를 이용한 가상 거래소 역할의 VirtualMarket 클래스
+
+    Configures the VirtualMarket class to act as a virtual exchange using past trading information from the exchange set in Config
 
     end: 거래기간의 끝
     count: 거래기간까지 가져올 데이터의 갯수

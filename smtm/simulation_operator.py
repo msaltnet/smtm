@@ -1,5 +1,3 @@
-"""시뮬레이션에 사용되는 모듈들을 연동하여 시뮬레이션을 운영하는 SimulationOperator 클래스"""
-
 import time
 from datetime import datetime
 from .log_manager import LogManager
@@ -7,8 +5,6 @@ from .operator import Operator
 
 
 class SimulationOperator(Operator):
-    """각 모듈을 연동해 시뮬레이션을 진행하는 클래스"""
-
     PERIODIC_RECORD_INFO = (360, -1)  # (turn, index) e.g. (360, -1) 최근 6시간
     PERIODIC_RECORD_INTERVAL_TURN = 300
 
@@ -22,10 +18,16 @@ class SimulationOperator(Operator):
         self.periodic_record_enable = periodic_record_enable
 
     def _execute_trading(self, task):
-        """자동 거래를 실행 후 타이머를 실행한다
+        """
+        자동 거래를 실행 후 타이머를 실행한다
+        Run a timer after executing an automated trade
 
         simulation_terminated 상태는 시뮬레이션에만 존재하는 상태로서 시뮬레이션이 끝났으나
         Operator는 중지되지 않은 상태. Operator의 시작과 중지는 외부부터 실행되어야 한다.
+
+        The simulation_terminated state is a state that exists only in simulations,
+        where the simulation has ended but the Operator has not been stopped.
+        Starting and stopping the Operator must be executed externally.
         """
         del task
         self.logger.info(
@@ -74,8 +76,9 @@ class SimulationOperator(Operator):
         self._start_timer()
 
     def get_score(self, callback, index_info=None, graph_tag=None):
-        """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
-        시뮬레이션이 종료된 경우 마지막 수익률 전달한다
+        """
+        현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
+        Pass the current yield to the callback function passed as an argument
 
         index_info: 수익률 구간 정보
             (

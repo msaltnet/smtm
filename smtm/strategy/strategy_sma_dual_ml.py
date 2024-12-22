@@ -1,7 +1,3 @@
-"""Upbit, Binance 데이터를 함께 이용해서, 이동 평균선을 이용한 기본 전략에 ML을 접목한 전략 클래스
-SML 전략과 동일하게 동작하며 바이낸스 데이터를 이용해서 선그래프를 추가로 그린다
-"""
-
 import copy
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
@@ -16,7 +12,6 @@ from ..date_converter import DateConverter
 class StrategySmaDualMl(Strategy):
     """
     이동 평균선을 이용한 기본 전략에 간단한 ML을 추가
-
     SHORT, MID, LONG 세개의 이동 평균선을 계산한다
 
     매수 조건
@@ -28,6 +23,19 @@ class StrategySmaDualMl(Strategy):
 
     추가로 Binance close 가격을 선그래프로 표시한다
     필요에 따라 Binance 데이터의 이동평균선이나 변동폭을 활용할 수 있다
+
+    Basic strategy using moving averages with simple ML added
+    Calculates three moving averages: SHORT, MID, LONG
+
+    Buy condition
+    When SHORT > MID > LONG and the slope is positive, and WAITING_STABLE has passed since the last sell
+
+    Sell condition
+    When SHORT < MID < LONG
+    Or when the loss cut price is reached and SHORT < MID
+
+    Additionally, the Binance close price is displayed as a line graph
+    Binance data moving averages or volatility can be used as needed
 
     is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
@@ -345,7 +353,8 @@ class StrategySmaDualMl(Strategy):
             self.logger.error(msg)
 
     def _is_not_spoiled(self, index):
-        """check request index is too old, so spoiled
+        """
+        check request index is too old, so spoiled
         요청 index가 너무 오래되어서 유효한지 확인, 오래 체결안되는 경우에 대한 예외처리
         """
         current_idx = len(self.closing_price_list)
@@ -355,11 +364,20 @@ class StrategySmaDualMl(Strategy):
         return not_spoiled
 
     def get_request(self):
-        """이동 평균선을 이용한 기본 전략
+        """
+        이동 평균선을 이용한 기본 전략
 
         장기 이동 평균선과 단기 이동 평균선이 교차할 때부터 n회에 걸쳐 매매 주문 요청
         교차 지점과 거래 단위는 update_trading_info에서 결정
         사전에 결정된 정보를 바탕으로 매매 요청 생성
+
+        Basic strategy using moving average lines
+
+        Requests buy and sell orders n times from the crossing of a long-term moving average line
+        with a short-term moving average line.
+        Crossing points and trading units are determined in update_trading_info
+        Generate trade requests based on predetermined information
+
         Returns: 배열에 한 개 이상의 요청 정보를 전달
         [{
             "id": 요청 정보 id "1607862457.560075"

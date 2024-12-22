@@ -1,5 +1,3 @@
-"""분할 매수 후 홀딩 하는 간단한 전략 StrategyBuyAndHold 클래스"""
-
 import copy
 import math
 from datetime import datetime
@@ -11,6 +9,8 @@ from ..date_converter import DateConverter
 class StrategyBuyAndHold(Strategy):
     """
     분할 매수 후 홀딩 하는 간단한 전략
+
+    A simple strategy that buys and holds after splitting the purchase
 
     isInitialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
@@ -116,6 +116,12 @@ class StrategyBuyAndHold(Strategy):
 
         5번에 걸쳐 분할 매수 후 홀딩하는 전략
         마지막 종가로 처음 예산의 1/5에 해당하는 양 만큼 매수시도
+
+        Generate trade request information based on data analysis results
+
+        Buy and hold strategy with 5 installments
+        Attempt to buy an amount equal to 1/5 of the initial budget at the last closing price
+
         Returns: 배열에 한 개 이상의 요청 정보를 전달
         [{
             "id": 요청 정보 id "1607862457.560075"
@@ -201,7 +207,6 @@ class StrategyBuyAndHold(Strategy):
         add_line_callback=None,
         alert_callback=None,
     ):
-        """예산과 최소 거래 가능 금액을 설정한다"""
         if self.is_intialized:
             return
 

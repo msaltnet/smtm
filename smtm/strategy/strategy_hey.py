@@ -1,7 +1,3 @@
-"""이동 평균선, 변동성 돌파 전략등 주요 이벤트 발생시 알림을 전달하는 전략 클래스
-    변동성 돌파 이벤트를 분봉을 기준으로 했을때, 너무 자주 발생됨 -> 주석 처리
-"""
-
 import copy
 from .strategy_sas import StrategySas
 from ..log_manager import LogManager
@@ -11,6 +7,12 @@ import numpy as np
 
 class StrategyHey(StrategySas):
     """
+    이동 평균선, 변동성 돌파 전략등 주요 이벤트 발생시 알림을 전달하는 전략 클래스
+    변동성 돌파 이벤트를 분봉을 기준으로 했을때, 너무 자주 발생됨 -> 주석 처리
+
+    Moving average line, volatility breakout strategy, etc. Strategy class that delivers alerts when major events occur
+    Volatility breakout events occur too frequently when based on minute candles -> Commented out
+
     is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
     result: 거래 요청 결과 리스트
@@ -61,9 +63,6 @@ class StrategyHey(StrategySas):
         add_line_callback=None,
         alert_callback=None,
     ):
-        """
-        예산과 최소 거래 가능 금액을 설정한다
-        """
         if self.is_intialized:
             return
 
@@ -178,6 +177,8 @@ class StrategyHey(StrategySas):
     def update_atr_info(self, new_price_info):
         """
         새로운 거래 정보를 받아서 변동성 돌파 이벤트 정보를 업데이트
+
+        Update volatility breakout event information by receiving new trading information
         """
 
         if len(self.data) > 1:
@@ -205,6 +206,8 @@ class StrategyHey(StrategySas):
     def detect_breakout_signals(self):
         """
         변동성 돌파 신호 감지
+
+        Detecting volatility breakout signals
         """
         if len(self.data) < 2:
             return False, False
@@ -232,6 +235,8 @@ class StrategyHey(StrategySas):
     def _make_alert(self, date_time, price, msg):
         """
         거래 정보 기준으로 ALERT_INTERVAL_TICK 마다 한 번씩만 알림을 전달한다
+
+        Deliver an alert only once every ALERT_INTERVAL_TICK based on trading information
         """
         if self.alert_callback is None:
             return

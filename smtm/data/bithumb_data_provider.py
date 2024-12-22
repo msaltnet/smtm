@@ -1,5 +1,3 @@
-"""빗썸 거래소의 실시간 거래 데이터를 제공하는 BithumbDataProvider 클래스"""
-
 from datetime import datetime, timezone, timedelta
 import requests
 from .data_provider import DataProvider
@@ -9,8 +7,11 @@ from ..log_manager import LogManager
 class BithumbDataProvider(DataProvider):
     """
     빗썸 거래소의 실시간 거래 데이터를 제공하는 클래스
+    Classes that provide real-time trading data from the Bithumb exchange
 
     빗썸의 open api를 사용. 별도의 가입, 인증, token 없이 사용 가능
+    Use Bithumb's OPEN API. No signup, authentication, or token required.
+
     https://api.bithumb.com/public/candlestick/{order_currency}_{payment_currency}/{chart_intervals}
     https://api.bithumb.com/public/candlestick/BTC_KRW/1m
     https://apidocs.bithumb.com/docs/candlestick

@@ -1,5 +1,3 @@
-"""Data Provider 정보 조회 및 생성을 담당하는 Factory 클래스"""
-
 from .binance_data_provider import BinanceDataProvider
 from .upbit_data_provider import UpbitDataProvider
 from .bithumb_data_provider import BithumbDataProvider
@@ -7,7 +5,10 @@ from .upbit_binance_data_provider import UpbitBinanceDataProvider
 
 
 class DataProviderFactory:
-    """DataProvider 정보 조회 및 생성을 담당하는 Factory 클래스"""
+    """
+    DataProvider 정보 조회 및 생성을 담당하는 Factory 클래스
+    Factory class responsible for retrieving and creating DataProvider information
+    """
 
     DataProvider_LIST = [
         BinanceDataProvider,
@@ -18,7 +19,6 @@ class DataProviderFactory:
 
     @staticmethod
     def create(code):
-        """code에 해당하는 DataProvider 객체를 생성하여 반환"""
         for data_provider in DataProviderFactory.DataProvider_LIST:
             if data_provider.CODE == code:
                 return data_provider()
@@ -26,7 +26,6 @@ class DataProviderFactory:
 
     @staticmethod
     def get_name(code):
-        """code에 해당하는 Strategy 이름을 반환"""
         for data_provider in DataProviderFactory.DataProvider_LIST:
             if data_provider.CODE == code:
                 return data_provider.NAME
@@ -34,7 +33,6 @@ class DataProviderFactory:
 
     @staticmethod
     def get_all_strategy_info():
-        """전체 Strategy 정보를 반환"""
         all_data_provider = []
         for data_provider in DataProviderFactory.DataProvider_LIST:
             all_data_provider.append(

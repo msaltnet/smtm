@@ -1,5 +1,3 @@
-"""빗썸 거래소를 통한 거래 처리 및 계좌 정보 조회 할 수 있는 BithumbTrader 클래스"""
-
 import os
 import copy
 import time
@@ -21,7 +19,9 @@ load_dotenv()
 
 class BithumbTrader(Trader):
     """
-    거래 요청 정보를 받아서 거래소에 요청하고 거래소에서 받은 결과를 제공해주는 클래스
+    빗썸 거래소를 통한 거래 처리 및 계좌 정보 조회 할 수 있는 BithumbTrader 클래스
+
+    BithumbTrader class that can process transactions and check account information through Bithumb exchange
 
     id: 요청 정보 id "1607862457.560075"
     type: 거래 유형 sell, buy, cancel
@@ -80,7 +80,10 @@ class BithumbTrader(Trader):
         return mt_array[1] + mt_array[0][2:5]
 
     def send_request(self, request_list, callback):
-        """거래 요청을 처리한다
+        """
+        거래 요청을 처리한다
+
+        Process trading requests
 
         request_list: 한 개 이상의 거래 요청 정보 리스트
         [{
@@ -111,7 +114,10 @@ class BithumbTrader(Trader):
             )
 
     def get_account_info(self):
-        """계좌 정보를 요청한다
+        """
+        계좌 정보를 요청한다
+
+        Request account information
         Returns:
             {
                 balance: 계좌 현금 잔고
@@ -137,7 +143,10 @@ class BithumbTrader(Trader):
         return result
 
     def cancel_request(self, request_id):
-        """거래 요청을 취소한다
+        """
+        거래 요청을 취소한다
+
+        Cancel trading requests
         request_id: 취소하고자 하는 request의 id
         """
         if request_id not in self.order_map:
@@ -174,8 +183,12 @@ class BithumbTrader(Trader):
         self._call_callback(order["callback"], result)
 
     def cancel_all_requests(self):
-        """모든 거래 요청을 취소한다
+        """
+        모든 거래 요청을 취소한다
         체결되지 않고 대기중인 모든 거래 요청을 취소한다
+
+        Cancel all trading requests
+        Cancel all trading requests that are pending and not executed
         """
         orders = copy.deepcopy(self.order_map)
         for request_id in orders.keys():
@@ -316,8 +329,10 @@ class BithumbTrader(Trader):
         callback(result)
 
     def _send_limit_order(self, is_buy, price=None, volume=0.0001):
-        """지정 가격 주문 전송
+        """
+        지정 가격 주문 전송
 
+        Send a limit price order
         Params:
             order_currency: 주문 통화 (코인), String/필수
             payment_currency: 결제 통화 (마켓) 입력값: : KRW 혹은 BTC, String/필수

@@ -1,5 +1,3 @@
-"""시뮬레이션을 위한 가상 거래를 처리해주는 SimulationTrader 클래스"""
-
 from ..config import Config
 from ..log_manager import LogManager
 from .trader import Trader
@@ -8,7 +6,9 @@ from .virtual_market import VirtualMarket
 
 class SimulationTrader(Trader):
     """
-    거래 요청 정보를 받아서 거래소에 요청하고 거래소에서 받은 결과를 제공해주는 클래스
+    시뮬레이션을 위한 가상 거래를 처리해주는 SimulationTrader 클래스
+
+    SimulationTrader class that processes virtual trading for simulation
 
     id: 요청 정보 id "1607862457.560075"
     type: 거래 유형 sell, buy, cancel

@@ -1,5 +1,3 @@
-"""각 모듈을 컨트롤하여 전체 시스템의 운영을 담당하는 Operator 클래스"""
-
 import time
 import threading
 from datetime import datetime
@@ -9,8 +7,12 @@ from .worker import Worker
 
 class Operator:
     """
-    전체 시스템의 운영을 담당하는 클래스
-    PERIODIC_RECORD : 주기적으로 수익률 보고서와 그래프를 생성하는 기능
+    코어 모듈을 사용하여 시스템의 운영을 담당하는 클래스
+    Classes that use core modules to run the system
+
+    PERIODIC_RECORD :
+        주기적으로 수익률 보고서와 그래프를 생성하는 기능
+        Ability to generate periodic yield reports and graphs
 
     Attributes:
         data_provider: 사용될 DataProvider 인스턴스
@@ -89,17 +91,15 @@ class Operator:
             )
 
     def set_interval(self, interval):
-        """자동 거래 시간 간격을 설정한다.
+        """
+        자동 거래 시간 간격을 설정한다.
+        Set the time interval for automated trades.
 
         interval : 거래 프로세스가 수행되는 간격
         """
         self.interval = interval
 
     def start(self):
-        """자동 거래를 시작한다
-
-        자동 거래는 설정된 시간 간격에 맞춰서 Worker를 사용해서 별도의 스레드에서 처리된다.
-        """
         if self.state != "ready":
             return False
 
@@ -114,7 +114,6 @@ class Operator:
         return True
 
     def _start_timer(self):
-        """설정된 간격의 시간이 지난 후 Worker가 자동 거래를 수행하도록 타이머 설정"""
         self.logger.debug(
             f"start timer {self.is_timer_running} : {self.state} : {threading.get_ident()}"
         )
@@ -143,7 +142,6 @@ class Operator:
         return
 
     def _execute_trading(self, task):
-        """자동 거래를 실행 후 타이머를 실행한다"""
         del task
         self.logger.debug("trading is started #####################")
         self.is_timer_running = False
@@ -182,9 +180,6 @@ class Operator:
         self._start_timer()
 
     def stop(self):
-        """거래를 중단한다
-        analyzer.create_report을 실행하고 반환값을 반환한다.
-        """
         if self.state != "running":
             return None
 
@@ -209,7 +204,9 @@ class Operator:
         return self.last_report
 
     def get_score(self, callback, index_info=None, graph_tag=None):
-        """현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
+        """
+        현재 수익률을 인자로 전달받은 콜백함수를 통해 전달한다
+        Pass the current yield to the callback function passed as an argument
 
         index_info: 수익률 구간 정보
             (
@@ -263,7 +260,6 @@ class Operator:
         )
 
     def get_trading_results(self):
-        """현재까지 거래 결과 기록을 반환한다"""
         return self.analyzer.get_trading_results()
 
     def _periodic_internal_get_score(self):

@@ -1,5 +1,3 @@
-"""시스템 운영 인터페이스로서 Operator를 사용해서 자동 거래 시스템을 컨트롤하는 Controller 클래스"""
-
 import signal
 from ..config import Config
 from ..log_manager import LogManager
@@ -13,7 +11,10 @@ from ..operator import Operator
 
 
 class Controller:
-    """자동 거래 시스템 기본 컨트롤러"""
+    """
+    CLI를 사용하는 기본 컨트롤러
+    Basic controller using CLI
+    """
 
     MAIN_STATEMENT = "명령어를 입력하세요. (h: 도움말): "
 
@@ -29,6 +30,7 @@ class Controller:
         self.terminating = False
         self.interval = float(interval)
         self.operator = Operator()
+
         self.budget = int(budget)
         self.is_initialized = False
         self.command_list = []
@@ -43,7 +45,6 @@ class Controller:
             raise UserWarning(f"Invalid Strategy! {strategy}")
 
     def create_command(self):
-        """명령어 정보를 생성한다"""
         self.command_list = [
             {
                 "guide": "{0:15}도움말 출력".format("h, help"),
@@ -73,8 +74,6 @@ class Controller:
         ]
 
     def main(self):
-        """시작점이 되는 main 함수"""
-
         if self.is_bithumb:
             data_provider = BithumbDataProvider(currency=self.currency)
             trader = BithumbTrader(currency=self.currency, budget=self.budget)
@@ -114,13 +113,11 @@ class Controller:
                 break
 
     def print_help(self):
-        """가이드 문구 출력"""
         print("명령어 목록 =================")
         for item in self.command_list:
             print(item["guide"])
 
     def _on_command(self, key):
-        """커맨드 처리를 담당"""
         for cmd in self.command_list:
             if key.lower() in cmd["cmd"]:
                 print(f"{cmd['cmd'][0].upper()} 명령어를 실행합니다.")
@@ -129,7 +126,6 @@ class Controller:
         print("잘못된 명령어가 입력되었습니다")
 
     def _on_query_command(self):
-        """조회 커맨드 처리"""
         value = input("무엇을 조회할까요? (ex. 1.state, 2.score, 3.result) :")
         key = value.lower()
         if key in ["state", "1"]:
@@ -147,8 +143,6 @@ class Controller:
         self.operator.get_score(print_score_and_main_statement)
 
     def _get_trading_record(self):
-        """현재까지 거래 기록 출력"""
-
         if self.operator is None:
             print("초기화가 필요합니다")
             return
@@ -163,18 +157,14 @@ class Controller:
             print(f"{result['price']} x {result['amount']}")
 
     def start(self):
-        """프로그램 시작, 재시작"""
         if self.operator.start() is not True:
             print("프로그램 시작을 실패했습니다")
-            return
 
     def stop(self):
-        """프로그램 중지"""
         if self.operator is not None:
             self.operator.stop()
 
     def terminate(self, signum=None, frame=None):
-        """프로그램 종료"""
         del frame
         if signum is not None:
             print("강제 종료 신호 감지")

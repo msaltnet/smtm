@@ -1,4 +1,3 @@
-"""SimulationOperator를 사용해서 시뮬레이션을 컨트롤하는 Simulator 클래스"""
 import signal
 import time
 
@@ -14,7 +13,9 @@ from ..strategy.strategy_factory import StrategyFactory
 
 
 class Simulator:
-    """자동 거래 시뮬레이터 클래스
+    """
+    자동 거래 시뮬레이터 클래스
+    Simluator for automatic trading
 
     command_list:
         {
@@ -142,8 +143,6 @@ class Simulator:
         ]
 
     def initialize(self):
-        """시뮬레이션 초기화"""
-
         dt = DateConverter.to_end_min(
             self.start_str + "-" + self.end_str,
             interval_min=Config.candle_interval / 60,
@@ -190,7 +189,6 @@ class Simulator:
         return "SIM-" + strategy_code + "-" + start_str + "-" + end_str
 
     def start(self):
-        """시뮬레이션 시작, 재시작"""
         if self.operator is None or self.need_init:
             self._print("초기화가 필요합니다")
             return
@@ -202,7 +200,6 @@ class Simulator:
             return
 
     def stop(self, signum, frame):
-        """시뮬레이션 중지"""
         self._stop()
         self.__terminating = True
         self._print(f"Receive Signal {signum} {frame}")
@@ -215,14 +212,12 @@ class Simulator:
             self._print("프로그램을 재시작하려면 초기화하세요")
 
     def terminate(self):
-        """시뮬레이터 종료"""
         self._print("Terminating......")
         self._stop()
         self.__terminating = True
         self._print("Good Bye~")
 
     def run_single(self):
-        """인터렉션 없이 초기 설정 값으로 단독 1회 실행"""
         self.initialize()
         self.start()
         while self.operator.state == "running":
@@ -231,7 +226,6 @@ class Simulator:
         self.terminate()
 
     def main(self):
-        """main 함수"""
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
 
@@ -243,7 +237,6 @@ class Simulator:
                 break
 
     def on_command(self, key):
-        """커맨드 처리"""
         for cmd in self.command_list:
             if key.lower() in cmd["cmd"]:
                 cmd["action"]()
@@ -251,13 +244,11 @@ class Simulator:
         self._print("invalid command")
 
     def print_help(self):
-        """가이드 문구 출력"""
         self._print("command list =================")
         for item in self.command_list:
             self._print(item["guide"], True)
 
     def initialize_with_command(self):
-        """설정 값을 입력받아서 초기화 진행"""
         for config in self.config_list:
             self._print(config["guide"])
             value = input(f"현재값: {config['value']} >> ")

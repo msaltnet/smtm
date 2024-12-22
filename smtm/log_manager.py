@@ -1,14 +1,9 @@
-"""file, stream handler를 공유하는 logger 인스턴스를 제공하는 LogManager 클래스"""
 import os
 import logging
 from logging.handlers import RotatingFileHandler
 
 
 class LogManager:
-    """
-    파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공하는 클래스
-    """
-
     LOG_FOLDER = "log"
     DEFAULT_FILE_NAME = "smtm.log"
     LOG_FILE = f"{LOG_FOLDER}/{DEFAULT_FILE_NAME}"
@@ -44,7 +39,6 @@ class LogManager:
 
     @classmethod
     def get_logger(cls, name):
-        """파일, 스트림 핸들러가 설정된 logger 인스턴스를 제공한다"""
         logger = logging.getLogger(name)
         if name in cls.REGISTERED_LOGGER:
             return logger
@@ -57,7 +51,7 @@ class LogManager:
 
     @classmethod
     def set_stream_level(cls, level):
-        """스트림 핸들러의 레벨을 설정한다
+        """
         CRITICAL  50
         ERROR     40
         WARNING   30
@@ -69,7 +63,6 @@ class LogManager:
 
     @classmethod
     def change_log_file(cls, log_file=DEFAULT_FILE_NAME):
-        """파일 핸들러의 로그 파일을 변경한다"""
         cls.LOG_FILE = f"{cls.LOG_FOLDER}/{log_file}"
         new_file_handler = RotatingFileHandler(
             filename=cls.LOG_FILE,

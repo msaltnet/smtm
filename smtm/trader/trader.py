@@ -1,17 +1,22 @@
-"""거래 요청과 계좌 정보 요청을 처리하는 Trader 추상클래스"""
 from abc import ABCMeta, abstractmethod
 
 
 class Trader(metaclass=ABCMeta):
     """
-    거래 요청 정보를 받아서 거래소에 요청 후 결과를 콜백으로 돌려준다
+    거래 요청과 계좌 정보 요청을 처리하는 Trader 추상클래스
+
+    Abstract class for processing trading requests and account information requests
     """
 
     @abstractmethod
     def send_request(self, request_list, callback):
-        """거래를 요청한다
-
+        """
+        거래를 요청한다
         요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
+
+        Request a trade
+        Requests a trade based on the request information and receives the execution result in a callback.
+
         request_list: 한 개 이상의 거래 요청 정보 리스트
         [{
             "id": 요청 정보 id "1607862457.560075"

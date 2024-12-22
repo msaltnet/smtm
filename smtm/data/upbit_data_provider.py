@@ -1,5 +1,3 @@
-"""업비트 거래소의 실시간 거래 데이터를 제공하는 DataProvider 클래스"""
-
 import requests
 from .data_provider import DataProvider
 from ..log_manager import LogManager
@@ -8,8 +6,10 @@ from ..log_manager import LogManager
 class UpbitDataProvider(DataProvider):
     """
     업비트 거래소의 실시간 거래 데이터를 제공하는 클래스
+    Classes that provide real-time trading data from the Upbit exchange
 
     업비트의 open api를 사용. 별도의 가입, 인증, token 없이 사용 가능
+    Use Upbit's OPEN API. No signup, authentication, or token required.
     https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
     """
 

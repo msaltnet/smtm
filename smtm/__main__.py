@@ -1,23 +1,3 @@
-"""smtm 모듈의 시작
-mode:
-    0: simulator with interative mode
-    1: execute single simulation
-    2: controller for real trading
-    3: telegram chatbot controller
-    4: mass simulation with config file
-    5: make config file for mass simulation
-
-Example)
-python -m smtm --mode 0
-python -m smtm --mode 1
-python -m smtm --mode 1 --budget 500 --from_dash_to 201220.170000-201221 --term 1 --strategy BNH --currency BTC
-python -m smtm --mode 2 --budget 50000 --term 60 --strategy BNH --currency ETH
-python -m smtm --mode 2 --budget 50000 --term 60 --strategy BNH --currency ETH --demo 1
-python -m smtm --mode 3
-python -m smtm --mode 3 --demo 1
-python -m smtm --mode 4 --config /data/sma0_simulation.json
-python -m smtm --mode 5 --budget 50000 --title SMA_2H_week --strategy SMA --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 120 --file generated_config.json
-"""
 import argparse
 from argparse import RawTextHelpFormatter
 import sys
@@ -31,23 +11,37 @@ from .__init__ import __version__
 if __name__ == "__main__":
     DEFAULT_MODE = 6
     parser = argparse.ArgumentParser(
-        description="""자동 거래 시스템 smtm
+        description="""
+smtm - Algorithm-based Crypto Trading System
 
 mode:
-    0: simulator with interative mode
-    1: execute single simulation
-    2: controller for real trading
-    3: telegram chatbot controller
-    4: mass simulation with config file
-    5: make config file for mass simulation
+    0: Simulation with interative mode
+    1: Single simulation
+    2: Interactive mode Real trading system
+    3: Telegram chatbot trading system
+    4: Mass simulation
+    5: Making config files for mass simulation
 
 Example)
+# Run the Interactive Mode Simulator
 python -m smtm --mode 0
+
+# Run a simulation with parameters
 python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy BNH --currency BTC
+
+# Run a Interactive mode Real trading system
 python -m smtm --mode 2 --budget 50000 --term 60 --strategy BNH --currency ETH
+
+# Run a Telegram chatbot trading system
 python -m smtm --mode 3
+
+# Run a Telegram chatbot trading system with demo trader(fake trading)
 python -m smtm --mode 3 --demo 1 --token <telegram chat-bot token> --chatid <chat id>
+
+# Run a Mass simulation with config file
 python -m smtm --mode 4 --config /data/sma0_simulation.json
+
+# Make config files for mass simulation
 python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
 """,
         formatter_class=RawTextHelpFormatter,
@@ -95,7 +89,11 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
     if args.log is not None:
         LogManager.change_log_file(args.log)
 
-    if args.mode < 2:
+    if args.mode == DEFAULT_MODE:
+        parser.print_help()
+        sys.exit(0)
+
+    if args.mode == 0 or args.mode == 1:
         simulator = Simulator(
             budget=args.budget,
             interval=args.term,
@@ -103,10 +101,6 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
             currency=args.currency,
             from_dash_to=args.from_dash_to,
         )
-
-    if args.mode == DEFAULT_MODE:
-        parser.print_help()
-        sys.exit(0)
 
     if args.mode == 0:
         simulator.main()

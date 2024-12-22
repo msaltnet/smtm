@@ -1,19 +1,21 @@
-"""거래에 관련된 데이터를 수집해서 정해진 데이터 포맷에 맞게 정보를 제공하는 DataProvider 추상클래스"""
-
 from abc import ABCMeta, abstractmethod
 
 
 class DataProvider(metaclass=ABCMeta):
     """
-    데이터 소스로부터 데이터를 수집해서 정보를 제공하는 클래스
+    거래에 관련된 데이터를 수집해서 정해진 데이터 포맷에 맞게 정보를 제공하는 DataProvider 추상클래스
     """
 
     @abstractmethod
     def get_info(self):
         """
         거래 정보나 환율, 지수등의 다양한 정보 딕셔너리들을 리스트로 전달
-        'primary_candle' 타입으로 거래 정보를 전달.
+        주거래 정보는 'primary_candle' 타입으로 전달.
         이외 정보 딕셔너리의 키 값은 type에 따라 다름.
+
+        Passing trade information or various information dictionaries such as exchange rates, indices, etc. as lists
+        The primary trade information is passed as a 'primary_candle' type.
+        Key values for other information dictionaries depend on the type.
 
         Returns: 거래 정보 딕셔너리
         [

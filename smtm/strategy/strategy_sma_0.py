@@ -1,5 +1,3 @@
-"""이동 평균선을 이용한 기본 전략 StrategySma0 클래스"""
-
 import copy
 from datetime import datetime
 import math
@@ -13,6 +11,8 @@ from ..date_converter import DateConverter
 class StrategySma0(Strategy):
     """
     이동 평균선을 이용한 기본 전략
+
+    Basic strategy using moving average line
 
     is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터

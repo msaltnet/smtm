@@ -1,5 +1,3 @@
-"""텔래그램 챗봇을 활용한 자동 거래 시스템 운영 인터페이스 TelegramController 클래스"""
-
 import os
 import signal
 import time
@@ -23,7 +21,10 @@ load_dotenv()
 
 
 class TelegramController:
-    """자동 거래 시스템 탤래그램 챗봇 컨트롤러"""
+    """
+    자동 거래 시스템 탤래그램 챗봇 컨트롤러
+    Telegram chatbot controller for trading system
+    """
 
     API_HOST = "https://api.telegram.org/"
     TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
@@ -113,7 +114,6 @@ class TelegramController:
             )
 
     def _create_command(self):
-        """명령어 정보를 생성한다"""
         self.command_list = [
             {
                 "guide": "1. 시작 - 자동 거래 시작",
@@ -198,7 +198,6 @@ class TelegramController:
             item["keyboard"] = parse.quote(markup)
 
     def main(self, demo=False):
-        """main 함수"""
         print("##### smtm telegram controller is started #####")
         self.is_demo = demo
         if self.is_demo:
@@ -211,7 +210,10 @@ class TelegramController:
             time.sleep(0.5)
 
     def _start_get_updates_loop(self):
-        """반복적 텔레그램 메세지를 확인하는 쓰레드 관리"""
+        """
+        반복적 텔레그램 메세지를 확인하는 쓰레드 시작
+        Start a thread to check for repetitive Telegram messages
+        """
 
         def looper():
             self.logger.debug(f"start get updates thread: {threading.get_ident()}")
@@ -224,7 +226,10 @@ class TelegramController:
         get_updates_thread.start()
 
     def _handle_message(self):
-        """텔레그램 메세지를 확인해서 명령어를 처리"""
+        """
+        텔레그램 메세지를 확인해서 명령어를 처리
+        Check Telegram messages to process commands
+        """
         updates = self._get_updates()
         if updates is None:
             self.logger.error("get updates failed")
@@ -291,7 +296,10 @@ class TelegramController:
         self.post_worker.post_task({"runnable": send_image, "url": url, "file": file})
 
     def _get_updates(self):
-        """getUpdates API로 새로운 메세지를 가져오기"""
+        """
+        getUpdates API로 새로운 메세지를 가져오기
+        Get new messages with the getUpdates API
+        """
         offset = self.last_update_id + 1
         return self._send_http(
             f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout={self.POLLING_TIMEOUT}"
@@ -377,7 +385,6 @@ class TelegramController:
         return self.operator.start()
 
     def _start_trading(self, command):
-        """초기화 후 자동 거래 시작"""
         not_ok = True
         message = ""
         if self.in_progress_step == 0:
@@ -460,7 +467,6 @@ class TelegramController:
         )
 
     def _stop_trading(self, command):
-        """자동 거래 중지"""
         del command
         last_report = None
         if self.operator is not None:
@@ -486,7 +492,6 @@ class TelegramController:
             self._send_text_message("".join(score_message), self.main_keyboard)
 
     def _query_state(self, command):
-        """현재 상태를 메세지로 전송"""
         del command
         if self.operator is None:
             message = "자동 거래 시작 전입니다"
@@ -495,12 +500,19 @@ class TelegramController:
         self._send_text_message(message)
 
     def _query_score(self, command):
-        """구간 수익률과 그래프를 메세지로 전송
+        """
+        구간 수익률과 그래프를 메세지로 전송
         "1. 최근 6시간"
         "2. 최근 12시간"
         "3. 최근 24시간"
         "4. 24시간 전부터 12시간"
         "5. 48시간 전부터 24시간"
+        Message Band Returns and Graphs
+        “1. Last 6 hours”
+        “2. Last 12 hours”
+        “3. Last 24 hours”
+        “4. 24 hours to 12 hours ago”
+        “5. 48 hours to 24 hours ago”
         """
         not_ok = True
         if self.operator is None:
@@ -554,7 +566,10 @@ class TelegramController:
         self.in_progress_step += 1
 
     def _query_trading_records(self, command):
-        """현재까지 거래 기록을 메세지로 전송"""
+        """
+        현재까지 거래 기록을 메세지로 전송
+        Message transaction history to date
+        """
         del command
         if self.operator is None:
             self._send_text_message("자동 거래 운영중이 아닙니다", self.main_keyboard)
@@ -573,7 +588,6 @@ class TelegramController:
         self._send_text_message("".join(message), self.main_keyboard)
 
     def _terminate(self, signum=None, frame=None):
-        """프로그램 종료"""
         del frame
         self.terminating = True
         self.post_worker.stop()
@@ -583,5 +597,8 @@ class TelegramController:
         print("Good Bye~")
 
     def alert_callback(self, msg):
-        """예외 상황 처리"""
+        """
+        예외 상황 처리
+        send a alert message to handle a exception case
+        """
         self._send_text_message(f"Alert: {msg}", self.main_keyboard)

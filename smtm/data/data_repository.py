@@ -1,6 +1,3 @@
-"""거래 데이터를 클라우드에서 가져오고, 저장해서 제공하는 DataRepository 클래스
-Config에서 업비트와 바이낸스 데이터를 선택할 수 있음
-"""
 import copy
 import time
 from datetime import datetime, timedelta, timezone
@@ -11,7 +8,13 @@ from .database import Database
 
 
 class DataRepository:
-    """데이터를 서버 또는 데이터베이스에서 가져와서 반환해주는 클래스"""
+    """
+    거래 데이터를 클라우드에서 가져오고, 저장해서 제공하는 DataRepository 클래스
+    Config에서 업비트와 바이낸스 데이터를 선택할 수 있음
+
+    DataRepository class to fetch, store, and serve transaction data from the exchange service
+    Allows you to select Ubit and Binance data in Config
+    """
 
     def __init__(self, db_file=None, interval=60, source="upbit", database=None):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -43,10 +46,16 @@ class DataRepository:
             raise UserWarning(f"not supported simulation data: {source}")
 
     def get_data(self, start, end, market="KRW-BTC"):
-        """거래 데이터를 제공
+        """
+        거래 데이터를 제공
         데이터베이스에서 데이터 조회해서 결과를 반환하거나
         데이터베이스에 데이터가 없을 경우 서버에서 데이터를 가져와서 반환
         서버에서 가져온 데이터는 데이터베이스에 업데이트
+
+        Provide transaction data
+        Retrieve data from the database and return the result
+        If there is no data in the database, fetch the data from the server and return it
+        Update the database with the data fetched from the server
         """
         self.logger.info(f"get data from repo: {start} to {end}, {market}")
         target_start = DateConverter.floor_min(start, self.interval_min)
@@ -129,9 +138,14 @@ class DataRepository:
         return self._fetch_from_binance(start, end, market)
 
     def _fetch_from_binance(self, start, end, market):
-        """바이낸스 서버에서 n번 데이터 조회해서 최종 결과를 반환
+        """
+        바이낸스 서버에서 n번 데이터 조회해서 최종 결과를 반환
         1회 조회시 갯수 제한이 있기 때문에 여러번 조회해서 합쳐야함
         바이낸스는 현재 공식적으로 최대 1000개까지 조회 가능
+
+        Fetch n data from the Binance server and return the final result
+        Since there is a limit on the number of queries per query, you need to query multiple times and combine them
+        Binance currently officially supports up to 1000 queries
         """
         total_data = []
         dt_list = DateConverter.to_end_min(
@@ -164,9 +178,14 @@ class DataRepository:
         return total_data
 
     def _recovery_binance_head_broken_data(self, fetch_data, start, end, market):
-        """바이낸스 데이터의 앞부분이 깨진 경우
+        """
+        바이낸스 데이터의 앞부분이 깨진 경우
         1000개를 더 가져와서 시작부분까지 역으로 복사해서 채워준다
         업비트에서는 발생하지 않는 문제
+
+        If the front of the Binance data is broken
+        Fetch 1000 more and copy it backwards to fill up to the start
+        Not a problem with Upbit
         """
         new_data = []
         broken_count = 0
@@ -212,14 +231,21 @@ class DataRepository:
 
     @staticmethod
     def _get_kst_time_from_unix_time_ms(unix_time_ms):
-        """밀리세컨드 단위의 유닉스 시간을 한국 시간으로 변환해서 반환한다"""
+        """
+        밀리세컨드 단위의 유닉스 시간을 한국 시간으로 변환해서 반환한다
+        Convert milliseconds unit Unix time to Korean time and return it
+        """
         return DateConverter.to_iso_string(
             datetime.fromtimestamp(unix_time_ms / 1000, tz=timezone(timedelta(hours=9)))
         )
 
     def _fetch_from_binance_up_to_1000(self, start, end, count, market):
-        """바이낸스 서버에서 최대 1000개까지 데이터 조회해서 반환
+        """
+        바이낸스 서버에서 최대 1000개까지 데이터 조회해서 반환
         바이낸스의 경우 throttling이 대해 관대함
+
+        Fetch up to 1000 data from the Binance server and return it
+        Binance is generous about throttling
         https://www.binance.com/en/support/faq/frequently-asked-questions-on-api-360004492232
         """
         start_ms = self._convert_to_dt(start).timestamp() * 1000
@@ -263,9 +289,14 @@ class DataRepository:
             raise UserWarning("Fail get data from sever") from error
 
     def _fetch_from_upbit(self, start, end, market):
-        """업비트 서버에서 n번 데이터 조회해서 최종 결과를 반환
+        """
+        업비트 서버에서 n번 데이터 조회해서 최종 결과를 반환
         1회 조회시 갯수 제한이 있기 때문에 여러번 조회해서 합쳐야함
         업비트는 현재 공식적으로 최대 200개까지 조회 가능
+
+        Fetch n data from the Upbit server and return the final result
+        Since there is a limit on the number of queries per query, you need to query multiple times and combine them
+        Upbit currently officially supports up to 200 queries
         """
         total_data = []
         dt_list = DateConverter.to_end_min(
@@ -288,7 +319,11 @@ class DataRepository:
         return total_data
 
     def _recovery_broken_data(self, data, start, count, market):
-        """서버에서 가져온 데이터가 중간에 거래 데이터가 없는 경우 바로 앞의 데이터를 복사해서 채워준다"""
+        """
+        서버에서 가져온 데이터가 중간에 거래 데이터가 없는 경우 바로 앞의 데이터를 복사해서 채워준다
+
+        If the data fetched from the server does not have transaction data in the middle, copy the previous data and fill it
+        """
         new_data = []
         current_dt = self._convert_to_dt(start)
         current_datetime = start
@@ -352,8 +387,13 @@ class DataRepository:
         return result
 
     def _fetch_from_upbit_up_to_200_impl(self, end, count, market):
-        """업비트 서버에서 최대 200개까지 데이터 조회해서 반환
+        """
+        업비트 서버에서 최대 200개까지 데이터 조회해서 반환
         1, 3, 5, 15, 10, 30, 60, 240분 가능
+
+        Fetch up to 200 data from the Upbit server and return it
+        1, 3, 5, 15, 10, 30, 60, 240 minutes possible
+
         https://docs.upbit.com/reference#%EC%8B%9C%EC%84%B8-%EC%BA%94%EB%93%A4-%EC%A1%B0%ED%9A%8C
         """
 

@@ -1,5 +1,3 @@
-"""바이낸스 거래소의 실시간 거래 데이터를 제공하는 DataProvider 클래스"""
-
 from datetime import datetime, timezone, timedelta
 import requests
 from ..date_converter import DateConverter
@@ -10,8 +8,11 @@ from ..log_manager import LogManager
 class BinanceDataProvider(DataProvider):
     """
     바이낸스 거래소의 실시간 거래 데이터를 제공하는 클래스
+    A class that provides real-time trading data from the Binance exchange.
 
     바이낸스의 open api를 사용. 별도의 가입, 인증, token 없이 사용 가능
+    Uses Binance's OPEN API. No signup, authentication, or tokens required.
+
     https://binance-docs.github.io/apidocs/spot/en/#kline-candlestick-data
     """
 
@@ -104,7 +105,6 @@ class BinanceDataProvider(DataProvider):
 
     @staticmethod
     def _get_kst_time_from_unix_time_ms(unix_time_ms):
-        """밀리세컨드 단위의 유닉스 시간을 한국 시간으로 변환해서 반환한다"""
         return DateConverter.to_iso_string(
             datetime.fromtimestamp(unix_time_ms / 1000, tz=BinanceDataProvider.KST)
         )

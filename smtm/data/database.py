@@ -1,10 +1,12 @@
-"""거래 데이터의 데이터베이스 역할의 Database 클래스"""
 import sqlite3
 from ..log_manager import LogManager
 
 
 class Database:
-    """과거 거래 데이터의 데이터 베이스 클래스"""
+    """
+    과거 거래 데이터의 데이터 베이스 클래스
+    Database class for past trading data
+    """
 
     def __init__(self, db_file=None):
         db = db_file if db_file is not None else "smtm.db"
@@ -68,7 +70,6 @@ class Database:
         self.conn.commit()
 
     def query(self, start, end, market, period=60, is_upbit=True):
-        """데이터 조회"""
         table = "upbit" if is_upbit is True else "binance"
 
         self.cursor.execute(
@@ -78,7 +79,6 @@ class Database:
         return self.cursor.fetchall()
 
     def update(self, data, period=60, is_upbit=True):
-        """데이터베이스 데이터 추가 또는 업데이트"""
         table = "upbit" if is_upbit is True else "binance"
         tuple_list = []
         for item in data:

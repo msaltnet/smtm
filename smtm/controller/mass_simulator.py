@@ -1,7 +1,3 @@
-"""대량시뮬레이션을 위핸 MassSimulator 클래스
-
-SimulationOperator과 설정 파일을 사용해서 대량 시뮬레이션을 수행하는 모듈
-"""
 import copy
 import os
 import json
@@ -26,8 +22,8 @@ from ..data.simulation_dual_data_provider import SimulationDualDataProvider
 
 
 class MassSimulator:
-    """대량시뮬레이터
-    설정 파일을 사용하여 대량 시뮬레이션 진행
+    """
+    설정 파일을 사용하여 대량 시뮬레이션 진행하는 시뮬레이터
     """
 
     RESULT_FILE_OUTPUT = "output/"
@@ -35,9 +31,6 @@ class MassSimulator:
     MIN_PRINT_STATE_SEC = 3
 
     def __init__(self):
-        """
-        analyzed_result: 수익률 분석 결과 (평균, 표준편차, 최대, 최소)
-        """
         self.logger = LogManager.get_logger("MassSimulator")
         self.result = []
         self.start = 0
@@ -51,7 +44,10 @@ class MassSimulator:
 
     @staticmethod
     def memory_usage():
-        """현재 프로세스의 이름과 메모리 사용양을 화면에 출력"""
+        """
+        현재 프로세스의 이름과 메모리 사용양을 화면에 출력
+        Print current process name and memory usage
+        """
         # current process RAM usage
         process = psutil.Process()
         rss = process.memory_info().rss / 2**20  # Bytes to MB
@@ -65,7 +61,6 @@ class MassSimulator:
         return json_data
 
     def print_state(self, is_start=False, is_end=False):
-        """현재 시뮬레이터의 상태를 화면에 표시"""
         iso_format = "%Y-%m-%dT%H:%M:%S"
         now = datetime.now()
         now_string = now.strftime(iso_format)
@@ -108,7 +103,10 @@ class MassSimulator:
 
     @staticmethod
     def run_single(operator):
-        """시뮬레이션 1회 실행"""
+        """
+        시뮬레이션 1회 실행
+        Execute a single simulation
+        """
         operator.start()
         while operator.state == "running":
             time.sleep(0.1)
@@ -127,7 +125,11 @@ class MassSimulator:
     def get_initialized_operator(
         budget, strategy_code, interval, currency, start, end, tag
     ):
-        """시뮬레이션 오퍼레이션 생성 후 주어진 설정 값으로 초기화 하여 반환"""
+        """
+        주어진 설정 값으로 초기화된 SimulationOperator 반환
+        Returns a SimulationOperator initialized with the given setting values.
+
+        """
         dt = DateConverter.to_end_min(
             start_iso=start, end_iso=end, interval_min=Config.candle_interval / 60
         )
@@ -169,7 +171,6 @@ class MassSimulator:
         return operator
 
     def run(self, config_file, process=-1):
-        """설정 파일의 내용으로 기간을 변경하며 시뮬레이션 진행"""
         self.config = self._load_config(config_file)
         process_num = process
         if process_num < 1:
@@ -199,12 +200,10 @@ class MassSimulator:
                 }
             )
 
-        # 시뮬레이션 수행
         self.result = [None for x in range(len(self.config["period_list"]))]
         self.print_state(is_start=True)
         self._execute_simulation(config_list, process_num)
 
-        # 결과 분석
         self.analyze_result(self.result, self.config)
         self.print_state(is_end=True)
 
@@ -272,7 +271,6 @@ class MassSimulator:
         return round(num, 3)
 
     def analyze_result(self, result_list, config):
-        """수익률 비교 결과를 파일로 저장"""
         title = config["title"]
         period_list = config["period_list"]
 
@@ -367,7 +365,9 @@ class MassSimulator:
                         f"{self._round(df_mix['min_return'].iloc[i]):8}, {df_mix['min_return'].index[i]:3}\n"
                     )
 
-            result_file.write("순번, 인덱스, 구간 수익률, 최대 수익률, 최저 수익률 ===\n")
+            result_file.write(
+                "순번, 인덱스, 구간 수익률, 최대 수익률, 최저 수익률 ===\n"
+            )
             count = 0
             for index, row in df_final.iterrows():
                 count += 1
@@ -383,7 +383,10 @@ class MassSimulator:
 
     @staticmethod
     def draw_graph(return_list, mean=0, filename="mass-simulation-result.jpg"):
-        """수익률 막대 그래프를 파일로 저장"""
+        """
+        수익률 막대 그래프를 파일로 저장
+        Save the return bar graph to a file
+        """
         idx = list(range(len(return_list)))
         mean = [mean for i in range(len(return_list))]
         plt.bar(idx, return_list)
@@ -401,7 +404,10 @@ class MassSimulator:
         offset_min=120,
         filepath=None,
     ):
-        """대량 시뮬레이션을 위한 설정 파일 생성
+        """
+        대량 시뮬레이션을 위한 설정 파일 생성
+        Create configuration json files for mass simulation
+
         config: {
             "title": 타이틀
             "description": 시뮬레이션 설명
@@ -451,7 +457,10 @@ class MassSimulator:
 
     @staticmethod
     def make_chunk(original, num):
-        """전달 받은 리스트를 num개로 분할하여 반환"""
+        """
+        전달 받은 리스트를 num개로 분할하여 반환
+        Returns a list passed in, split into num pieces
+        """
         if len(original) < num or num == 1:
             return [copy.deepcopy(original)]
 

@@ -1,5 +1,3 @@
-"""시뮬레이션을 위한 DataProvider 구현체이며 Upbit, Binance 2개의 거래소 데이터를 전달하는 클래스"""
-
 import copy
 from datetime import datetime, timedelta
 from .data_provider import DataProvider
@@ -9,9 +7,13 @@ from .data_repository import DataRepository
 
 
 class SimulationDualDataProvider(DataProvider):
-    """Upbit, Binance 2개의 거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
+    """
+    Upbit, Binance 2개의 거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스
     Upbit 데이터의 타입을 primary_candle로 설정, Binance 데이터를 binance로 설정
     어느 거래소의 데이터를 기준으로 거래할지는 DataProvider는 관여하지 않음
+
+    Implementation of DataProvider for simulation SimulationDataProvider class
+    Collect past data from the exchange and provide it sequentially
     """
 
     AVAILABLE_CURRENCY = {
@@ -53,7 +55,10 @@ class SimulationDualDataProvider(DataProvider):
         self.currency = currency
 
     def initialize_simulation(self, end=None, count=100):
-        """DataRepository를 통해서 데이터를 가져와서 초기화한다"""
+        """
+        DataRepository를 통해서 데이터를 가져와서 초기화한다
+        Initialize by retrieving data through DataRepository
+        """
 
         self.index = 0
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")

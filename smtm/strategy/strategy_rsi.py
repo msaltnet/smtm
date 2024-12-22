@@ -1,4 +1,3 @@
-"""RSI Relativce Strength Index 상대 강도 지수를 활용한 매매 전략 클래스"""
 import copy
 import math
 from datetime import datetime
@@ -11,6 +10,8 @@ from ..date_converter import DateConverter
 class StrategyRsi(Strategy):
     """
     RSI Relativce Strength Index 상대 강도 지수를 활용한 매매 전략
+
+    RSI Relative Strength Index Trading Strategy
     http://www.investopedia.com/terms/r/rsi.asp
     """
 
@@ -62,8 +63,12 @@ class StrategyRsi(Strategy):
         self.add_spot_callback = add_spot_callback
 
     def get_request(self):
-        """현재 업데이트 된 포지션에 따라 거래 요청 정보를 생성한다
+        """
+        현재 업데이트 된 포지션에 따라 거래 요청 정보를 생성한다
         완료되지 않은 거래가 waiting_requests에 있으면 취소 요청한다
+
+        Generate trade request information based on the currently updated position
+        If there are uncompleted trades in waiting_requests, request to cancel them
 
         Returns: 배열에 한 개 이상의 요청 정보를 전달
         [{
@@ -181,9 +186,13 @@ class StrategyRsi(Strategy):
         self._update_position()
 
     def _update_position(self):
-        """매수, 매도 포지션을 결정해서 업데이트, 언제든 매매 요청 정보를 회신할 수 있도록 준비
-
+        """
+        매수, 매도 포지션을 결정해서 업데이트, 언제든 매매 요청 정보를 회신할 수 있도록 준비
         기본적으로 low보다 낮으면 최선을 다해 매수, high보다 높으면 최선을 다해 매도하도록 함
+
+        Update buy and sell positions to be able to respond to trade request information at any time
+        Basically, if it is lower than low, it is set to buy as much as possible,
+        and if it is higher than high, it is set to sell as much as possible
         """
         if self.rsi_info is None:
             self.position = None
@@ -195,7 +204,11 @@ class StrategyRsi(Strategy):
             self.logger.debug(f"[RSI] Update position to SELL {self.rsi[-1]}")
 
     def _update_rsi(self, price):
-        """전달 받은 종가 정보로 rsi 정보를 업데이트"""
+        """
+        전달 받은 종가 정보로 rsi 정보를 업데이트
+
+        Update rsi information with the closing price information received
+        """
 
         # 필요 갯수만큼 데이터 채우기
         if len(self.rsi) < self.RSI_COUNT:

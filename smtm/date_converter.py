@@ -1,12 +1,9 @@
-"""Datetime 포맷을 변경해주는 기능을 제공하는 DateConverter 클래스"""
 import time
 from datetime import datetime
 from datetime import timedelta
 
 
 class DateConverter:
-    """날짜와 시간을 필요에 따라 변경해주는 클래스"""
-
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     @classmethod

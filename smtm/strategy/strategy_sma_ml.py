@@ -1,5 +1,3 @@
-"""이동 평균선을 이용한 기본 전략 StrategySma에 ML을 접목한 전략 클래스"""
-
 import copy
 from datetime import datetime
 from decimal import Decimal, ROUND_DOWN
@@ -23,6 +21,17 @@ class StrategySmaMl(Strategy):
     매도 조건
     SHORT < MID < LONG 조건을 만족할 때
     또는 손절 가격에 도달 하고 SHORT < MID 일때
+
+    Adding simple ML to a basic strategy using moving average lines
+
+    Calculate three moving average lines: SHORT, MID, LONG
+
+    Buy condition
+    When SHORT > MID > LONG conditions are met, the slope is positive, and WAITING_STABLE has passed since the last sell.
+
+    Sell condition
+    When the condition SHORT < MID < LONG is fulfilled
+    or when the stop loss price is reached and SHORT < MID
 
     is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
@@ -340,11 +349,20 @@ class StrategySmaMl(Strategy):
         return not_spoiled
 
     def get_request(self):
-        """이동 평균선을 이용한 기본 전략
+        """
+        이동 평균선을 이용한 기본 전략
 
         장기 이동 평균선과 단기 이동 평균선이 교차할 때부터 n회에 걸쳐 매매 주문 요청
         교차 지점과 거래 단위는 update_trading_info에서 결정
         사전에 결정된 정보를 바탕으로 매매 요청 생성
+
+        Basic strategy using moving average lines
+
+        Requests buy and sell orders n times from the crossing of a long-term moving average line
+        with a short-term moving average line.
+        Crossing points and trading units are determined in update_trading_info
+        Generate trade requests based on predetermined information
+
         Returns: 배열에 한 개 이상의 요청 정보를 전달
         [{
             "id": 요청 정보 id "1607862457.560075"

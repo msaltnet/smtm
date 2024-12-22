@@ -1,5 +1,3 @@
-"""시뮬레이션을 위한 DataProvider 구현체 SimulationDataProvider 클래스"""
-
 from datetime import datetime, timedelta
 from ..config import Config
 from .data_provider import DataProvider
@@ -8,7 +6,12 @@ from .data_repository import DataRepository
 
 
 class SimulationDataProvider(DataProvider):
-    """거래소로부터 과거 데이터를 수집해서 순차적으로 제공하는 클래스"""
+    """시뮬레이션을 위한 DataProvider 구현체 SimulationDataProvider 클래스
+    거래소로부터 과거 데이터를 수집해서 순차적으로 제공
+
+    Implementation of DataProvider for simulation SimulationDataProvider class
+    Collect past data from the exchange and provide it sequentially
+    """
 
     AVAILABLE_CURRENCY = {
         "upbit": {
@@ -43,7 +46,10 @@ class SimulationDataProvider(DataProvider):
         self.market = self.AVAILABLE_CURRENCY[Config.simulation_source][currency]
 
     def initialize_simulation(self, end=None, count=100):
-        """DataRepository를 통해서 데이터를 가져와서 초기화한다"""
+        """
+        DataRepository를 통해서 데이터를 가져와서 초기화한다
+        Initialize by retrieving data through DataRepository
+        """
 
         self.index = 0
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%S")

@@ -1,5 +1,3 @@
-"""거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 Analayzer 클래스"""
-
 import copy
 import os
 from datetime import datetime
@@ -16,14 +14,33 @@ matplotlib.use("Agg")
 
 
 class Analyzer:
-    """거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스
+    """
+    거래 요청, 결과 정보를 저장하고 투자 결과를 분석하는 클래스
+    Analyzer class that stores trade requests, result information, and analyzes the results of investments.
 
-    request_list: 거래 요청 데이터 목록
-    result_list: 거래 결과 데이터 목록
-    info_list: 거래 데이터 목록
-    asset_info_list: 특정 시점에 기록된 자산 데이터 목록
-    score_list: 특정 시점에 기록된 수익률 데이터 목록
-    get_asset_info_func: 자산 정보 업데이트를 요청하기 위한 콜백 함수
+    request_list:
+        거래 요청 데이터 리스트
+        Trading request list
+
+    result_list:
+        거래 결과 데이터 리스트
+        Trading result list
+
+    info_list:
+        Data Provider가 제공하는 데이터 목록
+        List of data provided by the data provider
+
+    asset_info_list:
+        주요 이벤트가 발생했을 때 기록된 자산 데이터 목록
+        List of asset data recorded when key events occurred
+
+    score_list:
+        주요 이벤트가 발생했을 때 기록된 수익률 데이터 목록
+        List of recorded return data when key events occurred
+
+    get_asset_info_func:
+        자산 정보 업데이트를 요청하기 위한 콜백 함수
+        Callback functions for requesting asset information updates
     """
 
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -53,37 +70,57 @@ class Analyzer:
             os.mkdir("output")
 
     def initialize(self, get_asset_info_func, alert_callback=None):
-        """콜백 함수를 입력받아 초기화한다
+        """
+        콜백 함수와 함께 초기화한다
+        Initialize with a callback function
 
-        get_asset_info_func: 거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
+        get_asset_info_func:
+            거래 데이터를 요청하는 함수로 func(arg1) arg1은 정보 타입
+            A function to request transaction data func(arg1) arg1 is of information type
         """
         self.get_asset_info_func = get_asset_info_func
         self.alert_callback = alert_callback
 
     def add_drawing_spot(self, date_time, value):
-        """그래프에 그려질 점의 위치를 입력받아서 저장한다
+        """
+        그래프에 그려질 점의 위치를 입력받아서 저장한다
+        Stores the location of points to be plotted on the graph
 
-        date_time: 그래프의 시간축 정보로 info_list의 date_time과 같은 형식
-        value: 그래프의 y축에 해당하는 정보로 price 정보와 비슷한 수준의 값을 갖는 것이 좋다
+        date_time:
+            그래프의 시간축 정보로 info_list의 date_time과 같은 형식
+            Time base information for the graph, in a format like date_time in info_list
+
+        value:
+            그래프의 y축에 해당하는 정보로 price 정보와 비슷한 수준의 값을 갖는 것이 좋다
+            The information on the y-axis of the graph should have a similar value to the price information.
         """
         self.spot_list.append({"date_time": date_time, "value": value})
 
     def add_value_for_line_graph(self, date_time, value):
-        """그래프에 그려질 추가 선 그래프의 값을 입력받아서 저장한다
+        """
+            그래프에 그려질 추가 선 그래프의 값을 입력받아서 저장한다
+            Take in and save values for a line graph
 
-        date_time: 그래프의 시간축 정보로 info_list의 date_time과 같은 형식
-        value: 그래프의 y축에 해당하는 정보로 price 정보와 비슷한 수준의 값을 갖는 것이 좋다
+        date_time:
+            그래프의 시간축 정보로 info_list의 date_time과 같은 형식
+            Time base information for the graph, in a format like date_time in info_list
+
+        value:
+            그래프의 y축에 해당하는 정보로 price 정보와 비슷한 수준의 값을 갖는 것이 좋다
+            The information on the y-axis of the graph should have a similar value to the price information.
         """
         self.line_graph_list.append({"date_time": date_time, "value": value})
 
     def put_trading_info(self, info):
-        """거래 정보를 저장한다
+        """
+        거래 정보를 저장한다
+        Store trading info
 
-        kind: 보고서를 위한 데이터 종류
-            0: 거래 데이터
-            1: 매매 요청
-            2: 매매 결과
-            3: 수익률 정보
+        kind: 보고서를 위한 데이터 종류 Types of data for reports
+            0: 거래 데이터 Trading data
+            1: 매매 요청 Trading request
+            2: 매매 결과 Trading result
+            3: 수익률 정보 Return info
         """
         target = None
         for item in info:
@@ -100,21 +137,23 @@ class Analyzer:
         self.make_periodic_record()
 
     def put_requests(self, requests):
-        """거래 요청 정보를 저장한다
+        """
+        거래 요청 정보를 저장한다
+        Store trading request info
 
         request:
         {
-            "id": 요청 정보 id "1607862457.560075"
-            "type": 거래 유형 sell, buy, cancel
+            "id": request id e.g. "1607862457.560075"
+            "type": 거래 유형 trading type e.g. sell, buy, cancel
             "price": 거래 가격
             "amount": 거래 수량
-            "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
+            "date_time": 요청 생성 시간, 시뮬레이션 모드에서는 데이터 시간
         }
-        kind: 보고서를 위한 데이터 종류
-            0: 거래 데이터
-            1: 매매 요청
-            2: 매매 결과
-            3: 수익률 정보
+        kind: 보고서를 위한 데이터 종류 Types of data for reports
+            0: 거래 데이터 Trading data
+            1: 매매 요청 Trading request
+            2: 매매 결과 Trading result
+            3: 수익률 정보 Return info
         """
 
         for request in requests:
@@ -131,7 +170,9 @@ class Analyzer:
             self.request_list.append(new)
 
     def put_result(self, result):
-        """거래 결과 정보를 저장한다
+        """
+        거래 결과 정보를 저장한다
+        Store a trading result
 
         request: 거래 요청 정보
         result:
@@ -166,7 +207,9 @@ class Analyzer:
         self.update_asset_info()
 
     def update_asset_info(self):
-        """자산 정보를 저장한다
+        """
+        자산 정보를 저장한다
+        Store asset info
 
         returns:
         {
@@ -188,7 +231,6 @@ class Analyzer:
         self.make_score_record(new)
 
     def make_start_point(self):
-        """시작시점 거래정보를 기록한다"""
         self.start_asset_info = None
         self.request_list = []
         self.result_list = []
@@ -196,13 +238,9 @@ class Analyzer:
         self.update_asset_info()
 
     def update_start_point(self, info):
-        """기준 시작 자산 정보를 변경한다"""
         self.start_asset_info = info
 
     def make_periodic_record(self):
-        """최소 간격을 유지하며 수익율을 기록한다
-        RECORD_INTERVAL: 수익률 기록 간의 최소 시간(초)
-        """
         now = datetime.now()
         if self.is_simulation:
             now = datetime.strptime(
@@ -218,7 +256,9 @@ class Analyzer:
             self.update_asset_info()
 
     def make_score_record(self, new_info):
-        """수익률 기록을 생성한다
+        """
+        수익률 기록을 생성한다
+        Create a return record
 
         score_record:
             balance: 계좌 현금 잔고
@@ -286,7 +326,9 @@ class Analyzer:
             self.logger.error(f"making score record fail {msg}")
 
     def get_return_report(self, graph_filename=None, index_info=None):
-        """현시점 기준 간단한 수익률 보고서를 제공한다
+        """
+        간단한 수익률 보고서를 제공한다
+        Create a simple return report
 
         index_info: 수익률 구간 정보
             (
@@ -493,14 +535,14 @@ class Analyzer:
             return None
 
     def get_trading_results(self):
-        """거래 결과 목록을 반환한다"""
         return self.result_list
 
     def create_report(self, tag="untitled-report"):
-        """수익률 보고서를 생성한다
-
+        """
         수익률 보고서를 생성하고, 그래프를 파일로 저장한다.
-        tag: 생성할 리포트 파일명
+        Generate a return report and save the graph to a file.
+
+        tag: 생성할 리포트 파일명, Report filename to generate
         Returns:
             {
                 "summary": (
@@ -556,6 +598,7 @@ class Analyzer:
     def __create_report_file(self, filepath, summary, trading_table):
         """
         보고서를 정해진 형식에 맞게 파일로 출력한다
+        Output the report to a file in a defined format
 
         ### TRADING TABLE =================================
         date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume
@@ -877,7 +920,6 @@ class Analyzer:
             self.alert_callback(msg)
 
     def dump(self, filename="dump"):
-        """주요 데이터를 파일로 저장한다"""
         self._write_to_file(filename + ".1", self.request_list)
         self._write_to_file(filename + ".2", self.result_list)
         self._write_to_file(filename + ".3", self.info_list)
@@ -885,7 +927,6 @@ class Analyzer:
         self._write_to_file(filename + ".5", self.score_list)
 
     def load_dump(self, filename="dump"):
-        """주요 데이터를 파일로부터 읽어온다"""
         self.request_list = self._load_list_from_file(filename + ".1")
         self.result_list = self._load_list_from_file(filename + ".2")
         self.info_list = self._load_list_from_file(filename + ".3")

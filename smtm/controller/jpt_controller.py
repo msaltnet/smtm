@@ -1,7 +1,3 @@
-"""Jupyter notebook용 자동 거래 시스템 운영 인터페이스 JptController 클래스
-
-Jupyter notebook에서 사용하기 좋게 만든 자동 거래 시스템 컨트롤 모듈
-"""
 from IPython.display import Image, display
 from ..config import Config
 from ..log_manager import LogManager
@@ -15,7 +11,10 @@ from ..operator import Operator
 
 
 class JptController:
-    """Jupyter notebook용 자동 거래 시스템 컨트롤러"""
+    """
+    Jupyter notebook용 자동 거래 시스템 컨트롤러
+    Controller for Jupyter notebook
+    """
 
     def __init__(
         self,
@@ -36,7 +35,6 @@ class JptController:
         self.logger = LogManager.get_logger("JptController")
 
     def initialize(self, interval=10, strategy=0, budget=50000, is_bithumb=False):
-        """설정 값으로 초기화"""
         self.interval = interval
         self.strategy_code = strategy
         self.budget = budget
@@ -74,7 +72,6 @@ class JptController:
         )
 
     def start(self):
-        """프로그램 시작, 재시작"""
         if self.operator is None or self.need_init:
             print("초기화가 필요합니다")
             return
@@ -85,14 +82,12 @@ class JptController:
         print("자동 거래가 시작되었습니다")
 
     def stop(self):
-        """프로그램 중지"""
         if self.operator is not None:
             self.operator.stop()
             self.need_init = True
             print("프로그램을 재시작하려면 초기화하세요")
 
     def get_state(self):
-        """현재 상태 출력 출력"""
         state = "NOT INITIALIZED"
         if self.operator is not None:
             state = self.operator.state.upper()
@@ -100,8 +95,6 @@ class JptController:
         print(f"현재 시스템 상태: {state}")
 
     def get_score(self, index=None):
-        """현재 수익률과 그래프 출력"""
-
         if self.operator is None:
             print("초기화가 필요합니다")
             return
@@ -115,8 +108,6 @@ class JptController:
         self.operator.get_score(print_score_and_main_statement, index)
 
     def get_trading_record(self):
-        """현재까지 거래 기록 출력"""
-
         if self.operator is None:
             print("초기화가 필요합니다")
             return
@@ -132,8 +123,9 @@ class JptController:
 
     @staticmethod
     def set_log_level(value):
-        """로그 레벨 설정
-        (CRITICAL=50, ERROR=40, WARN=30, INFO=20, DEBUG=10)"""
+        """
+        로그 레벨 설정 (CRITICAL=50, ERROR=40, WARN=30, INFO=20, DEBUG=10)
+        """
 
         LogManager.set_stream_level(int(value))
         print(f"Log level set {value}")

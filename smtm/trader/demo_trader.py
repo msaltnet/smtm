@@ -1,5 +1,3 @@
-"""데모를 위해 계좌 정보가 없이 가상으로 거래 요청 및 계좌 조회 요청을 처리하는 클래스"""
-
 from datetime import datetime
 import requests
 from ..log_manager import LogManager
@@ -9,7 +7,9 @@ from ..worker import Worker
 
 class DemoTrader(Trader):
     """
-    거래 요청 정보를 받아서 거래소에 요청하고 거래소에서 받은 결과를 제공해주는 클래스
+    데모를 위해 계좌 정보가 없이 가상으로 거래 요청 및 계좌 조회 요청을 처리하는 클래스
+
+    This class processes virtual trading requests and account inquiries without account information for demos
 
     id: 요청 정보 id "1607862457.560075"
     type: 거래 유형 sell, buy, cancel

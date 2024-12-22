@@ -1,5 +1,3 @@
-"""Strategy 정보 조회 및 생성을 담당하는 Factory 클래스"""
-
 from .strategy_bnh import StrategyBuyAndHold
 from .strategy_sma_0 import StrategySma0
 from .strategy_rsi import StrategyRsi
@@ -10,7 +8,11 @@ from .strategy_hey import StrategyHey
 
 
 class StrategyFactory:
-    """Strategy 정보 조회 및 생성을 담당하는 Factory 클래스"""
+    """
+    Strategy 정보 조회 및 생성을 담당하는 Factory 클래스
+
+    Factory class responsible for retrieving and creating Strategy information
+    """
 
     STRATEGY_LIST = [
         StrategyBuyAndHold,
