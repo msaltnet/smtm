@@ -379,7 +379,7 @@ class TelegramController:
             url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
 
         def send_message(task):
-            if self._send_http(task["url"]):
+            if not self._send_http(task["url"]):
                 self.logger.error(f"send message failed: {text}")
 
         self.post_worker.post_task({"runnable": send_message, "url": url})
@@ -388,7 +388,7 @@ class TelegramController:
         url = f"{self.API_HOST}{self.TOKEN}/sendPhoto?chat_id={self.CHAT_ID}"
 
         def send_image(task):
-            if self._send_http(task["url"], True, task["file"]):
+            if not self._send_http(task["url"], True, task["file"]):
                 self.logger.error(f"send image failed: {task['file']}")
 
         self.post_worker.post_task({"runnable": send_image, "url": url, "file": file})
