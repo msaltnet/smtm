@@ -30,13 +30,108 @@ class TelegramController:
     TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
     CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "123456"))
     POLLING_TIMEOUT = 10
-    GUIDE_READY = "자동 거래 시작 전입니다.\n명령어를 입력해주세요.\n\n"
-    GUIDE_RUNNING = "자동 거래 운영 중입니다.\n명령어를 입력해주세요.\n\n"
+    MESSAGE = {
+        "ko": {
+            "GUIDE_READY": "자동 거래 시작 전입니다.\n명령어를 입력해주세요.\n\n",
+            "GUIDE_RUNNING": "자동 거래 운영 중입니다.\n명령어를 입력해주세요.\n\n",
+            "PERIOD_1": "1. 최근 6시간",
+            "PERIOD_2": "2. 최근 12시간",
+            "PERIOD_3": "3. 최근 24시간",
+            "PERIOD_4": "4. 24시간 전부터 12시간",
+            "PERIOD_5": "5. 48시간 전부터 24시간",
+            "COMMAND_G_1": "1. 시작 - 자동 거래 시작",
+            "COMMAND_G_2": "2. 중지 - 자동 거래 중지",
+            "COMMAND_G_3": "3. 상태 조회 - 운영 상태 조회",
+            "COMMAND_G_4": "4. 수익률 조회 - 기간별 수익률 조회",
+            "COMMAND_G_5": "5. 거래내역 조회 - 모든 거래내역 조회",
+            "COMMAND_C_1": "시작",
+            "COMMAND_C_2": "중지",
+            "COMMAND_C_3": "상태 조회",
+            "COMMAND_C_4": "수익률 조회",
+            "COMMAND_C_5": "거래내역 조회",
+            "SETUP_1": "운영 예산을 정해주세요",
+            "SETUP_2": "거래할 화폐를 정해주세요",
+            "SETUP_3": "사용할 데이터를 선택해 주세요",
+            "SETUP_4": "거래소를 선택해 주세요",
+            "SETUP_5": "전략을 선택해 주세요",
+            "SETUP_6": "자동 거래를 시작할까요?",
+            "SETUP_7": "조회할 기간을 정해주세요",
+            "ERROR_EXCHANGE": "지원하지 않는 거래소입니다.",
+            "ERROR_CURRENCY": "현재 지원하지 않는 코인입니다.",
+            "ERROR_RESTART": "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요",
+            "ERROR_QUERY": "수익률 조회중 문제가 발생하였습니다.",
+            "INFO_CURRENCY": "화폐",
+            "INFO_STRATEGY": "전략",
+            "INFO_TRADER": "거래소",
+            "INFO_BUDGET": "예산",
+            "INFO_INTERVAL": "거래 간격",
+            "INFO_START": "자동 거래가 시작되었습니다",
+            "NOTIFY_STOP": "자동 거래가 중지되었습니다",
+            "NOTIFY_ASSET": "자산",
+            "NOTIFY_RATE": "수익률",
+            "NOTIFY_COMPARE_RATE": "비교 수익률",
+            "NOTIFY_PERIOD_RATE": "구간 수익률",
+            "NOTIFY_TOTAL_RATE": "누적 수익률",
+            "INFO_STATUS_READY": "자동 거래 시작 전입니다",
+            "INFO_STATUS_RUNNING": "자동 거래 운영 중입니다",
+            "INFO_RESTART_QUERY": "다시 시작해 주세요",
+            "INFO_QUERY_RUNNING": "조회중입니다",
+            "INFO_QUERY_EMPTY": "거래 기록이 없습니다",
+        },
+        "en": {
+            "GUIDE_READY": "Before starting automatic trading.\nPlease enter a command.\n\n",
+            "GUIDE_RUNNING": "Automatic trading is in operation.\nPlease enter a command.\n\n",
+            "PERIOD_1": "1. Last 6 hours",
+            "PERIOD_2": "2. Last 12 hours",
+            "PERIOD_3": "3. Last 24 hours",
+            "PERIOD_4": "4. 24 hours to 12 hours ago",
+            "PERIOD_5": "5. 48 hours to 24 hours ago",
+            "COMMAND_G_1": "1. Start - Start automatic trading",
+            "COMMAND_G_2": "2. Stop - Stop automatic trading",
+            "COMMAND_G_3": "3. Status - Operation status check",
+            "COMMAND_G_4": "4. Return rate - Return rate by period",
+            "COMMAND_G_5": "5. Transaction history - View all transaction history",
+            "COMMAND_C_1": "Start",
+            "COMMAND_C_2": "Stop",
+            "COMMAND_C_3": "Status",
+            "COMMAND_C_4": "Return rate",
+            "COMMAND_C_5": "Transaction history",
+            "SETUP_1": "Please set the operating budget",
+            "SETUP_2": "Please select the currency to trade",
+            "SETUP_3": "Please select the data to use",
+            "SETUP_4": "Please select the exchange",
+            "SETUP_5": "Please select a strategy",
+            "SETUP_6": "Do you want to start automatic trading?",
+            "SETUP_7": "Please select the period to query",
+            "ERROR_EXCHANGE": "Unsupported exchange",
+            "ERROR_CURRENCY": "Currently unsupported coin",
+            "ERROR_RESTART": "Automatic trading has not started.\nPlease start over",
+            "ERROR_QUERY": "There was a problem with the return rate query.",
+            "INFO_CURRENCY": "Currency",
+            "INFO_STRATEGY": "Strategy",
+            "INFO_TRADER": "Exchange",
+            "INFO_BUDGET": "Budget",
+            "INFO_INTERVAL": "Trading interval",
+            "INFO_START": "Automatic trading has started",
+            "NOTIFY_STOP": "Automatic trading has stopped",
+            "NOTIFY_ASSET": "Asset",
+            "NOTIFY_RATE": "Return rate",
+            "NOTIFY_COMPARE_RATE": "Comparison rate",
+            "NOTIFY_PERIOD_RATE": "Period rate",
+            "NOTIFY_TOTAL_RATE": "Total rate",
+            "INFO_STATUS_READY": "Before starting automatic trading",
+            "INFO_STATUS_RUNNING": "Automatic trading is in operation",
+            "INFO_RESTART_QUERY": "Please start over",
+            "INFO_QUERY_RUNNING": "Querying",
+            "INFO_QUERY_EMPTY": "No transaction history",
+        },
+    }
     AVAILABLE_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     UPBIT_CURRENCY = ["BTC", "ETH", "DOGE", "XRP"]
     BITHUMB_CURRENCY = ["BTC", "ETH"]
 
     def __init__(self, token=None, chatid=None):
+        self.msg = self.MESSAGE.get(Config.language, self.MESSAGE["ko"])
         LogManager.set_stream_level(Config.operation_log_level)
         self.logger = LogManager.get_logger("TelegramController")
         self.post_worker = Worker("Chatbot-Post-Worker")
@@ -65,11 +160,11 @@ class TelegramController:
         self.is_demo = False
         an_hour_tick = int(60 / Config.candle_interval) * 60
         self.score_query_tick = {
-            "1. 최근 6시간": (an_hour_tick * 6, -1),
-            "2. 최근 12시간": (an_hour_tick * 12, -1),
-            "3. 최근 24시간": (an_hour_tick * 24, -1),
-            "4. 24시간 전부터 12시간": (an_hour_tick * 12, -2),
-            "5. 48시간 전부터 24시간": (an_hour_tick * 24, -2),
+            self.msg["PERIOD_1"]: (an_hour_tick * 6, -1),
+            self.msg["PERIOD_2"]: (an_hour_tick * 12, -1),
+            self.msg["PERIOD_3"]: (an_hour_tick * 24, -1),
+            self.msg["PERIOD_4"]: (an_hour_tick * 12, -2),
+            self.msg["PERIOD_5"]: (an_hour_tick * 24, -2),
             "1": (an_hour_tick * 6, -1),
             "2": (an_hour_tick * 12, -1),
             "3": (an_hour_tick * 24, -1),
@@ -116,38 +211,38 @@ class TelegramController:
     def _create_command(self):
         self.command_list = [
             {
-                "guide": "1. 시작 - 자동 거래 시작",
-                "cmd": ["시작", "1", "1. 시작"],
+                "guide": self.msg["COMMAND_G_1"],
+                "cmd": [self.msg["COMMAND_C_1"], "1"],
                 "action": self._start_trading,
             },
             {
-                "guide": "2. 중지 - 자동 거래 중지",
-                "cmd": ["중지", "2", "2. 중지"],
+                "guide": self.msg["COMMAND_G_2"],
+                "cmd": [self.msg["COMMAND_C_2"], "2"],
                 "action": self._stop_trading,
             },
             {
-                "guide": "3. 상태 조회 - 운영 상태 조회",
-                "cmd": ["상태", "3", "3. 상태 조회", "상태 조회"],
+                "guide": self.msg["COMMAND_G_3"],
+                "cmd": [self.msg["COMMAND_C_3"], "3"],
                 "action": self._query_state,
             },
             {
-                "guide": "4. 수익률 조회 - 기간별 수익률 조회",
-                "cmd": ["수익", "4", "수익률 조회", "4. 수익률 조회"],
+                "guide": self.msg["COMMAND_G_4"],
+                "cmd": [self.msg["COMMAND_C_4"], "4"],
                 "action": self._query_score,
             },
             {
-                "guide": "5. 거래내역 조회 - 모든 거래내역 조회",
-                "cmd": ["거래", "5", "거래내역 조회", "5. 거래내역 조회"],
+                "guide": self.msg["COMMAND_G_5"],
+                "cmd": [self.msg["COMMAND_C_5"], "5"],
                 "action": self._query_trading_records,
             },
         ]
         main_keyboard = {
             "keyboard": [
-                [{"text": "1. 시작"}, {"text": "2. 중지"}],
+                [{"text": self.msg["COMMAND_C_1"]}, {"text": self.msg["COMMAND_C_2"]}],
                 [
-                    {"text": "3. 상태 조회"},
-                    {"text": "4. 수익률 조회"},
-                    {"text": "5. 거래내역 조회"},
+                    {"text": self.msg["COMMAND_C_3"]},
+                    {"text": self.msg["COMMAND_C_4"]},
+                    {"text": self.msg["COMMAND_C_5"]},
                 ],
             ]
         }
@@ -161,28 +256,31 @@ class TelegramController:
             data_provider_list.append(dp_item["name"])
         self.setup_list = [
             {
-                "guide": "운영 예산을 정해주세요",
+                "guide": self.msg["SETUP_1"],
                 "keyboard": ["50000", "100000", "500000", "1000000"],
             },
-            {"guide": "거래할 화폐를 정해주세요", "keyboard": self.AVAILABLE_CURRENCY},
-            {"guide": "사용할 데이터를 선택해 주세요", "keyboard": data_provider_list},
-            {"guide": "거래소를 선택해 주세요", "keyboard": ["1. Upbit", "2. Bithumb"]},
             {
-                "guide": "전략을 선택해 주세요",
+                "guide": self.msg["SETUP_2"],
+                "keyboard": self.AVAILABLE_CURRENCY,
+            },
+            {"guide": self.msg["SETUP_3"], "keyboard": data_provider_list},
+            {"guide": self.msg["SETUP_4"], "keyboard": ["1. Upbit", "2. Bithumb"]},
+            {
+                "guide": self.msg["SETUP_5"],
                 "keyboard": strategy_list,
             },
-            {"guide": "자동 거래를 시작할까요?", "keyboard": ["1. Yes", "2. No"]},
+            {"guide": self.msg["SETUP_6"], "keyboard": ["1. Yes", "2. No"]},
         ]
         self._convert_keyboard_markup(self.setup_list)
         self.score_query_list = [
             {
-                "guide": "조회할 기간을 정해주세요",
+                "guide": self.msg["SETUP_7"],
                 "keyboard": [
-                    "1. 최근 6시간",
-                    "2. 최근 12시간",
-                    "3. 최근 24시간",
-                    "4. 24시간 전부터 12시간",
-                    "5. 48시간 전부터 24시간",
+                    self.msg["PERIOD_1"],
+                    self.msg["PERIOD_2"],
+                    self.msg["PERIOD_3"],
+                    self.msg["PERIOD_4"],
+                    self.msg["PERIOD_5"],
                 ],
             },
         ]
@@ -201,7 +299,7 @@ class TelegramController:
         print("##### smtm telegram controller is started #####")
         self.is_demo = demo
         if self.is_demo:
-            print("$$$ THIS IS DEMO MODE $$$")
+            print("$$$ DEMO MODE $$$")
 
         signal.signal(signal.SIGINT, self._terminate)
         signal.signal(signal.SIGTERM, self._terminate)
@@ -266,9 +364,9 @@ class TelegramController:
 
         if not found:
             if self.operator is None:
-                message = self.GUIDE_READY
+                message = self.msg["GUIDE_READY"]
             else:
-                message = self.GUIDE_RUNNING
+                message = self.msg["GUIDE_RUNNING"]
             for item in self.command_list:
                 message += item["guide"] + "\n"
             self._send_text_message(message, self.main_keyboard)
@@ -332,14 +430,14 @@ class TelegramController:
     def _on_start_select_exchange(self, command):
         exchange = self._get_exchange_from_command(command)
         if exchange is None:
-            self._send_text_message("지원하지 않는 거래소입니다.")
+            self._send_text_message(self.msg["ERROR_EXCHANGE"])
             return True
 
         if self.currency in getattr(self, f"{exchange.upper()}_CURRENCY"):
             self._set_trader(exchange)
             return False
 
-        self._send_text_message("현재 지원하지 않는 코인입니다.")
+        self._send_text_message(self.msg["ERROR_CURRENCY"])
         return True
 
     def _get_exchange_from_command(self, command):
@@ -362,10 +460,10 @@ class TelegramController:
     def _get_summary_message(self):
         return "".join(
             [
-                f"화폐: {self.currency}\n",
-                f"전략: {self.strategy.NAME}\n",
-                f"거래소: {self.trader.NAME}\n",
-                f"예산: {self.budget}\n",
+                f"{self.msg['INFO_CURRENCY']}: {self.currency}\n",
+                f"{self.msg['INFO_STRATEGY']}: {self.strategy.NAME}\n",
+                f"{self.msg['INFO_TRADER']}: {self.trader.NAME}\n",
+                f"{self.msg['INFO_BUDGET']}: {self.budget}\n",
             ]
         )
 
@@ -428,12 +526,12 @@ class TelegramController:
             and self._start_operator()
         ):
             start_message = [
-                "자동 거래가 시작되었습니다!\n",
-                f"화폐: {self.currency}\n",
-                f"전략: {self.strategy.NAME}\n",
-                f"거래소: {self.trader.NAME}\n",
-                f"예산: {self.budget}\n",
-                f"거래 간격: {Config.candle_interval}",
+                f"{self.msg['INFO_START']}\n",
+                f"{self.msg['INFO_CURRENCY']}: {self.currency}\n",
+                f"{self.msg['INFO_STRATEGY']}: {self.strategy.NAME}\n",
+                f"{self.msg['INFO_TRADER']}: {self.trader.NAME}\n",
+                f"{self.msg['INFO_BUDGET']}: {self.budget}\n",
+                f"{self.msg['INFO_INTERVAL']}: {Config.candle_interval}",
             ]
             self._send_text_message("".join(start_message), self.main_keyboard)
             self.logger.info(
@@ -462,7 +560,7 @@ class TelegramController:
         self.data_provider = None
         self.trader = None
         self._send_text_message(
-            "자동 거래가 시작되지 않았습니다.\n처음부터 다시 시작해주세요",
+            self.msg["ERROR_RESTART"],
             self.main_keyboard,
         )
 
@@ -480,23 +578,23 @@ class TelegramController:
         self.trader = None
 
         if last_report is None:
-            self._send_text_message("자동 거래가 중지되었습니다", self.main_keyboard)
+            self._send_text_message(self.msg["NOTIFY_STOP"], self.main_keyboard)
         else:
             score_message = [
-                "자동 거래가 중지되었습니다\n",
+                f"{self.msg['NOTIFY_STOP']}\n",
                 f"{last_report['summary'][8][1]} - {last_report['summary'][8][2]}\n",
-                f"자산 {last_report['summary'][0]} -> {last_report['summary'][1]}\n",
-                f"수익률 {last_report['summary'][2]}\n",
-                f"비교 수익률 {last_report['summary'][3]}\n",
+                f"{self.msg['NOTIFY_ASSET']}: {last_report['summary'][0]} -> {last_report['summary'][1]}\n",
+                f"{self.msg['NOTIFY_RATE']}: {last_report['summary'][2]}\n",
+                f"{self.msg['NOTIFY_COMPARE_RATE']}: {last_report['summary'][3]}\n",
             ]
             self._send_text_message("".join(score_message), self.main_keyboard)
 
     def _query_state(self, command):
         del command
         if self.operator is None:
-            message = "자동 거래 시작 전입니다"
+            message = self.msg["INFO_STATUS_READY"]
         else:
-            message = "자동 거래 운영 중입니다"
+            message = self.msg["INFO_STATUS_RUNNING"]
         self._send_text_message(message)
 
     def _query_score(self, command):
@@ -516,7 +614,7 @@ class TelegramController:
         """
         not_ok = True
         if self.operator is None:
-            self._send_text_message("자동 거래 운영중이 아닙니다", self.main_keyboard)
+            self._send_text_message(self.msg["INFO_STATUS_READY"], self.main_keyboard)
             return
 
         message = ""
@@ -526,7 +624,7 @@ class TelegramController:
                 def print_score_and_main_statement(score):
                     if score is None:
                         self._send_text_message(
-                            "수익률 조회중 문제가 발생하였습니다.", self.main_keyboard
+                            self.msg["ERROR_QUERY"], self.main_keyboard
                         )
                         return
 
@@ -534,11 +632,11 @@ class TelegramController:
                     ratio = round(diff / score[0] * 100, 3)
                     score_message = [
                         f"{score[8][1]} - {score[8][2]}\n",
-                        f"자산 {score[0]} -> {score[1]}\n",
-                        f"구간 수익률 {ratio}\n",
+                        f"{self.msg['NOTIFY_ASSET']}: {score[0]} -> {score[1]}\n",
+                        f"{self.msg['NOTIFY_PERIOD_RATE']}: {ratio}\n",
                         f"{score[8][0]}~\n",
-                        f"누적 수익률 {score[2]}\n",
-                        f"비교 수익률 {score[3]}\n",
+                        f"{self.msg['NOTIFY_TOTAL_RATE']}: {score[2]}\n",
+                        f"{self.msg['NOTIFY_COMPARE_RATE']}: {score[3]}\n",
                     ]
 
                     self._send_text_message("".join(score_message), self.main_keyboard)
@@ -554,9 +652,13 @@ class TelegramController:
             self.in_progress = None
             self.in_progress_step = 0
             if not_ok:
-                self._send_text_message("다시 시작해 주세요", self.main_keyboard)
+                self._send_text_message(
+                    self.msg["INFO_RESTART_QUERY"], self.main_keyboard
+                )
             else:
-                self._send_text_message("조회중입니다", self.main_keyboard)
+                self._send_text_message(
+                    self.msg["INFO_QUERY_RUNNING"], self.main_keyboard
+                )
             return
 
         message += self.score_query_list[self.in_progress_step]["guide"]
@@ -572,19 +674,19 @@ class TelegramController:
         """
         del command
         if self.operator is None:
-            self._send_text_message("자동 거래 운영중이 아닙니다", self.main_keyboard)
+            self._send_text_message(self.msg["INFO_STATUS_READY"], self.main_keyboard)
             return
 
         results = self.operator.get_trading_results()
         if results is None or len(results) == 0:
-            self._send_text_message("거래 기록이 없습니다", self.main_keyboard)
+            self._send_text_message(self.msg["INFO_QUERY_EMPTY"], self.main_keyboard)
             return
 
         message = []
         for result in results:
             message.append(f"@{result['date_time']}, {result['type']}\n")
             message.append(f"{result['price']} x {result['amount']}\n")
-        message.append(f"총 {len(results)}건의 거래")
+        message.append(f"Total {len(results)} records\n")
         self._send_text_message("".join(message), self.main_keyboard)
 
     def _terminate(self, signum=None, frame=None):
@@ -592,8 +694,8 @@ class TelegramController:
         self.terminating = True
         self.post_worker.stop()
         if signum is not None:
-            print("강제 종료 신호 감지")
-        print("프로그램 종료 중.....")
+            print("Received a termination signal")
+        print("##### smtm telegram controller is terminated #####")
         print("Good Bye~")
 
     def alert_callback(self, msg):

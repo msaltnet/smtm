@@ -349,7 +349,7 @@ class TelegramControllerTests(unittest.TestCase):
 
         tcb._stop_trading("2")
         tcb._send_text_message.assert_called_once_with(
-            "자동 거래가 중지되었습니다\n12-05 - 12-08\n자산 100 -> 200\n수익률 0.5\n비교 수익률 0.9\n",
+            "자동 거래가 중지되었습니다\n12-05 - 12-08\n자산: 100 -> 200\n수익률: 0.5\n비교 수익률: 0.9\n",
             tcb.main_keyboard,
         )
         self.assertEqual(tcb.operator, None)
@@ -524,7 +524,7 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._query_score("1")
 
         tcb._send_text_message.assert_called_once_with(
-            "자동 거래 운영중이 아닙니다", tcb.main_keyboard
+            "자동 거래 시작 전입니다", tcb.main_keyboard
         )
         self.assertEqual(tcb.in_progress, None)
         self.assertEqual(tcb.in_progress_step, 0)
@@ -564,7 +564,7 @@ class TelegramControllerTests(unittest.TestCase):
         )
         callback((100, 200, 0.5, 0.9, "test.jpg", 0, 0, 0, ("12-01", "12-05", "12-08")))
         tcb._send_text_message.assert_called_with(
-            "12-05 - 12-08\n자산 100 -> 200\n구간 수익률 100.0\n12-01~\n누적 수익률 0.5\n비교 수익률 0.9\n",
+            "12-05 - 12-08\n자산: 100 -> 200\n구간 수익률: 100.0\n12-01~\n누적 수익률: 0.5\n비교 수익률: 0.9\n",
             tcb.main_keyboard,
         )
         tcb._send_image_message.assert_called_with("test.jpg")
