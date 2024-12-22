@@ -18,10 +18,10 @@ class DataProviderFactory:
     ]
 
     @staticmethod
-    def create(code):
+    def create(code, currency="BTC", interval=60):
         for data_provider in DataProviderFactory.DataProvider_LIST:
             if data_provider.CODE == code:
-                return data_provider()
+                return data_provider(currency=currency, interval=interval)
         return None
 
     @staticmethod

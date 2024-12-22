@@ -23,9 +23,12 @@ class BithumbDataProvider(DataProvider):
     NAME = "BITTHUMB DP"
     CODE = "BTH"
 
-    def __init__(self, currency="BTC"):
+    def __init__(self, currency="BTC", interval=60):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
+
+        if interval != 60:
+            raise UserWarning(f"not supported interval: {interval}")
 
         self.logger = LogManager.get_logger(__class__.__name__)
         self.url = f"https://api.bithumb.com/public/candlestick/{self.AVAILABLE_CURRENCY[currency]}/1m"

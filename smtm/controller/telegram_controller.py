@@ -500,9 +500,16 @@ class TelegramController:
         elif self.in_progress_step == 3:
             for dp_item in self.data_providers:
                 if command.upper() in dp_item["selector"]:
-                    self.data_provider = dp_item["builder"]()
-                    not_ok = False
-                    break
+                    try:
+                        self.data_provider = dp_item["builder"](
+                            self.currency, interval=Config.candle_interval
+                        )
+                        not_ok = False
+                    except UserWarning as err:
+                        self.logger.error(f"invalid data provider: {err}")
+                        self._send_text_message(
+                            self.msg["ERROR_RESTART"], self.main_keyboard
+                        )
         elif self.in_progress_step == 4:
             not_ok = self._on_start_select_exchange(command)
         elif self.in_progress_step == 5:
