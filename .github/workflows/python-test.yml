@@ -34,4 +34,7 @@ jobs:
       run: |
         coverage run --omit="*/test*" -m pytest ./tests/unit_tests
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true # optional (default = false)
