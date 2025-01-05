@@ -8,7 +8,7 @@
 
 An algorithm-based automated cryptocurrency trading system made in Python. https://smtm.msalt.net
 
-[한국어](https://github.com/msaltnet/smtm/blob/master/README.md) 👈
+[한국어](https://github.com/msaltnet/smtm/blob/master/README-ko-kr.md) 👈
 
 [![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
 
