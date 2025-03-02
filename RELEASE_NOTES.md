@@ -1,3 +1,8 @@
+## v1.6.1
+- Fix README image link
+
+---
+
 ## v1.6.0
 
 ### Telegram Controller multilingual support (English)
