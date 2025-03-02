@@ -22,7 +22,7 @@ An algorithm-based automated cryptocurrency trading system made in Python. https
 
 ❗ It is not suitable for high-performance trading machines that need to process many trades in a short timeframe of seconds.
 
-![smtm-procedure](doc/smtm.png)
+![smtm-procedure](./doc/smtm.png)
 
 ## Features
 - Mass-simulation with Multi-process
@@ -31,7 +31,7 @@ An algorithm-based automated cryptocurrency trading system made in Python. https
 
 Controlling an automated trading program using the Telegram messenger
 
-![smtm_bot](https://user-images.githubusercontent.com/9311990/150667094-95139bfb-03e0-41d5-bad9-6be05ec6c9df.png)
+![smtm_bot](./doc/phone-en.png)
 
 ![smtm-telegram-mode](https://github.com/msaltnet/smtm/assets/9311990/22ba2ebd-13e6-4eee-a829-94209c5618a9)
 

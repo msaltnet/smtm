@@ -31,7 +31,7 @@
 
 텔레그램 메신저를 사용해서 자동매매 프로그램 컨트롤
 
-![smtm_bot](https://user-images.githubusercontent.com/9311990/150667094-95139bfb-03e0-41d5-bad9-6be05ec6c9df.png)
+![smtm_bot](./doc/phone.png)
 
 ![smtm-telegram-mode](https://github.com/msaltnet/smtm/assets/9311990/22ba2ebd-13e6-4eee-a829-94209c5618a9)
 
