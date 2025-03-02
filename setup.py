@@ -8,7 +8,7 @@ DESCRIPTION = "A algorithm crypto trading system."
 URL = "https://github.com/msaltnet/smtm"
 EMAIL = "salt.jeong@gmail.com"
 AUTHOR = "msalt"
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -26,7 +26,7 @@ REQUIRED = [
 
 
 def long_description():
-    with io.open("README-en_us.md", "r", encoding="utf-8") as f:
+    with io.open("README.md", "r", encoding="utf-8") as f:
         readme = f.read()
     return readme
 
@@ -50,7 +50,7 @@ setup(
     packages=["smtm"],
     classifiers=[
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.9",
     ],
     install_requires=REQUIRED,
     extras_require={"dev": ["coverage"]},

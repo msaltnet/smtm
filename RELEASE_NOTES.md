@@ -1,4 +1,42 @@
+## v1.6.0
+
+### Telegram Controller multilingual support (English)
+- https://github.com/msaltnet/smtm/commit/bd6decb7d9a14f22e8c0d429b16be07a5fa30b85
+
+## v1.6.0 (한국어)
+
+### TelegramController 다국어 지원(영어)
+- https://github.com/msaltnet/smtm/commit/bd6decb7d9a14f22e8c0d429b16be07a5fa30b85
+
+---
+
 ## v1.5.0
+
+### Add the alert_callback interface
+Added `alert_callback` which can be used to send notifications from the core module to the controller. It can be used to make no transaction, send only a notification, or to notify the Analyzer about errors in data processing. Added `StrategySas` strategy as an example.
+- https://github.com/msaltnet/smtm/commit/7dcd9e1843b15cd281dfe7af4b35fa4ca1352514
+- https://github.com/msaltnet/smtm/commit/3cd4328d8af1aa5749af6be646dec57b68c2db3b
+- https://github.com/msaltnet/smtm/commit/5263cdb6e0ca707977a9a966d2bb25321debab60
+- https://github.com/msaltnet/smtm/commit/231a58868d0bbd5c18f62171e231b8e1e19a5964
+- https://github.com/msaltnet/smtm/commit/95485d5d5d068644cf4de0da3aadf094056b6b2c
+
+### Added StrategyHey
+A new strategy, **StrategyHey**, has been added, which analyzes trading data and sends alerts only. It inherits from `StrategySas` and implements an alert system through `alert_callback` when a moving average breakdown occurs or a volatility breakout event is detected. This strategy is particularly useful for short-term trading in ranging markets.
+- https://github.com/msaltnet/smtm/commit/a420001d626d1a628c723eda01e676e95e1fbeda
+- https://github.com/msaltnet/smtm/commit/b1a2bbc48af339cd5eafde88df481a1faaa20161
+
+### Other Refactoring
+- **Implemented `pytest`**: Unit and integration tests have been consolidated into the `tests` directory. The transition to `pytest` has also improved the clarity of test results, as shown below.
+  - https://github.com/msaltnet/smtm/commit/087e910fb78f9f6328779ad89594633e34514cd4
+
+![image](https://github.com/msaltnet/smtm/assets/9311990/4b3d2e5a-991a-4525-839a-1a2bf828d531)
+
+- **Code Cleanup**: Removed warning messages by refining the code.
+  - https://github.com/msaltnet/smtm/commit/02fb5c08fa829be67f1866cb4367d367cbebf5b6
+  - https://github.com/msaltnet/smtm/commit/601b275bcba0b19b959672d6dc9e1d4d8c6410e6
+  - https://github.com/msaltnet/smtm/commit/5c15e2a12cce0ff75faa97eafb17ccd81016f92d
+
+## v1.5.0 (한국어)
 
 ### alert_callback 인터페이스 추가
 코어 모듈에서 컨트롤러에 알림을 보내는 용도로 사용될 수 있는 `alert_callback`이 추가되었습니다. 거래를 하지 않고, 알림만 보내거나, Analyzer에서 데이터 처리시 오류에 대해서 알림을 보내는 등의 용도로 사용할 수 있습니다. 예제로는 `StrategySas` 전략이 추가 되었습니다.
@@ -23,6 +61,8 @@
   - https://github.com/msaltnet/smtm/commit/02fb5c08fa829be67f1866cb4367d367cbebf5b6
   - https://github.com/msaltnet/smtm/commit/601b275bcba0b19b959672d6dc9e1d4d8c6410e6
   - https://github.com/msaltnet/smtm/commit/5c15e2a12cce0ff75faa97eafb17ccd81016f92d
+
+---
 
 ## v1.4.0
 
@@ -115,6 +155,8 @@ DataProviderFactory를 추가하여 Telegram Controller에서 Data Provider를 �
 - https://github.com/msaltnet/smtm/commit/2fff47b1e5caf1bee36388194e031c190585e786 
 
 
+---
+
 ## v1.3.0 (English)
 Improve architecture to change candel interval for both simulation and real-trading
   - Make `Config` module for global interval setting
@@ -126,9 +168,7 @@ Improve architecture to change candel interval for both simulation and real-trad
     - 6ffcee97f6d3fa13604d037e1da9b4eb9d660ad6
     - 031fcdf789f4f4e0a43ec0ff7173772a1476df33
 
----
-
-## v1.3.0
+## v1.3.0 (한국어)
 Candle Interval을 변경해서 시뮬레이션, 거래 진행 할 수 있도록 구조 개선
   - `Config` 모듈을 만들어서 전역적으로 interval 설정 가능하도록 변경
     - 5542498c66804aa2f6dba3fa0e6a9002c628b79f
@@ -139,35 +179,7 @@ Candle Interval을 변경해서 시뮬레이션, 거래 진행 할 수 있도록
     - 6ffcee97f6d3fa13604d037e1da9b4eb9d660ad6
     - 031fcdf789f4f4e0a43ec0ff7173772a1476df33
 
-## v1.3.0 (English)
-Improve architecture to change candel interval for both simulation and real-trading
-  - Make `Config` module for global interval setting
-    - 5542498c66804aa2f6dba3fa0e6a9002c628b79f
-    - 7de1ae1452346910819f2a96d4801832f62cea0a
-    - 40657f816366dd1b98fa3eaa975a813f41c97b40
-    - c3728b4a2b2e53dbfe0659563333d9bb6837e173
-    - c64c2215e073283baadbfad7e529c2da5137e9fd
-    - 6ffcee97f6d3fa13604d037e1da9b4eb9d660ad6
-    - 031fcdf789f4f4e0a43ec0ff7173772a1476df33
-
 ---
-
-## v1.2.0
-Simulation 속도 개선 (약 3배이상 향상)
-  - interval이 1초 미만일 때, `threading.Timer`를 사용하지 않고 바로 핸들러 호출하도록 수정
-    - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
-CI를 Travis -> github action으로 변경
-  - 50faecd5d1c83cd9af3f04b274d018d1f9f08e64
-전략 이름 대신 코드를 사용
-  - 5ea80279ca64f78f536f139ef615035ab1e5de57
-
-### 기능 추가
-- 이동 평균선을 이용한 기본 전략에 간단한 ML을 추가한 StrategySmaMl 전략 추가
-  - aad85ce841b90505017d94a6034f7f3b5b12965f
-
-### 버그 수정
-- 텔레그램 컨트롤러에서 전략 선택 문자 비교 버그 수정
-  - 7101eedd81bafa746ab21ff64c7f9a82ed4a2f2a
 
 ## v1.2.0 (English)
 Enhance simulation performance (about 3x more speedup)
@@ -186,21 +198,24 @@ Use strategy code instead of names
 - fix a bug for telegram controller strategy selector
   - 7101eedd81bafa746ab21ff64c7f9a82ed4a2f2a
 
----
-
-## v1.1.1
-StrategyFactory 추가 및 integration_tests를 패키지에서 제거
+## v1.2.0
+Simulation 속도 개선 (약 3배이상 향상)
+  - interval이 1초 미만일 때, `threading.Timer`를 사용하지 않고 바로 핸들러 호출하도록 수정
+    - d9e9b2b9262612ff35389a4ffd0f4e56effd9290
+CI를 Travis -> github action으로 변경
+  - 50faecd5d1c83cd9af3f04b274d018d1f9f08e64
+전략 이름 대신 코드를 사용
+  - 5ea80279ca64f78f536f139ef615035ab1e5de57
 
 ### 기능 추가
-- 전략을 쉽게 추가/제거 할 수 있도록 StrategyFactory 추가. 전략을 추가할 때 StrategyFactory에만 추가해주면 됨
-  - 3403c6918a18bd6fedf5606fe7726ce080fdd941
-  - 4bdc03e8214b7d172aa73ca1680b44a3e61f6386
-- 로그 파일을 log 폴더에 저장
-  - e74e91095425228038344ced0484416b00ea787a
+- 이동 평균선을 이용한 기본 전략에 간단한 ML을 추가한 StrategySmaMl 전략 추가
+  - aad85ce841b90505017d94a6034f7f3b5b12965f
 
 ### 버그 수정
-- integration_tests가 별도의 패키지로 top_level에 추가되고 있는 문제 수정. smtm 패키지 설치시 smtm과 integration_tests 두 개의 패키지가 따로 설치되는 문제
-  - bf5b925dc6aa4cd5cc9dc10218bdf30b1d308f6f
+- 텔레그램 컨트롤러에서 전략 선택 문자 비교 버그 수정
+  - 7101eedd81bafa746ab21ff64c7f9a82ed4a2f2a
+
+---
 
 ## v1.1.1 (English)
 Add StrategyFactory and remove integration_tests from package
@@ -216,33 +231,21 @@ Add StrategyFactory and remove integration_tests from package
 - Remove integration_tests package in the top_level of packages.
   - bf5b925dc6aa4cd5cc9dc10218bdf30b1d308f6f
 
----
-
-## v1.1.0
-Demo 모드와 RSI 전략 추가
+## v1.1.1
+StrategyFactory 추가 및 integration_tests를 패키지에서 제거
 
 ### 기능 추가
-- Analyzer `add_drawing_spot` 그래프에 점 추가 가능
-  - bff9cefc51fb9b0df7710e16b16d5889aeffe8b7
-  - 254e1165358a6d2055bbddea9133f135651ded41
-  - a98cb0075fa1a08554d94e1dc797846645f912d3
-  - 5893198250611ec60c50a5218d95b7e11a92e6da
-- Upbit에 DOGE, XRP 화폐 추가
-  - 6f68ea3975f12e42bfb579740c376d52f5504499
-- Simulation, MassSimulation 주기적으로 그래프 저장
-  - 692cc7323b502d2ab69aeb3be43a648208d7f89b
-  - e448005c07623b158de642a94483286644f511da
-- RSI index 추가
-  - a12b565fc047de6e145861995d79c7c70139b628
-- RSI 전략 추가
-  - 59ef24c2e15a76cc24a952e7d8bebba7031aa020
-- Telegram controller Demo 모드 추가
-  - 698b7240e9a62492d8f87815a96477e4372602b4
+- 전략을 쉽게 추가/제거 할 수 있도록 StrategyFactory 추가. 전략을 추가할 때 StrategyFactory에만 추가해주면 됨
+  - 3403c6918a18bd6fedf5606fe7726ce080fdd941
+  - 4bdc03e8214b7d172aa73ca1680b44a3e61f6386
+- 로그 파일을 log 폴더에 저장
+  - e74e91095425228038344ced0484416b00ea787a
 
 ### 버그 수정
-- Worker runnable에 문제 발생시 종료 후 텔레그램 메세지 전송
-  - ab54bfa5f42dab87e1efc53c8e792f66397ba744
-  - 032fac2df35de05c3d9b516d076277bb6b8222f0
+- integration_tests가 별도의 패키지로 top_level에 추가되고 있는 문제 수정. smtm 패키지 설치시 smtm과 integration_tests 두 개의 패키지가 따로 설치되는 문제
+  - bf5b925dc6aa4cd5cc9dc10218bdf30b1d308f6f
+
+---
 
 ## v1.1.0 (English)
 Demo feature and RSI strategy
@@ -270,7 +273,43 @@ Demo feature and RSI strategy
   - ab54bfa5f42dab87e1efc53c8e792f66397ba744
   - 032fac2df35de05c3d9b516d076277bb6b8222f0
 
+## v1.1.0
+Demo 모드와 RSI 전략 추가
+
+### 기능 추가
+- Analyzer `add_drawing_spot` 그래프에 점 추가 가능
+  - bff9cefc51fb9b0df7710e16b16d5889aeffe8b7
+  - 254e1165358a6d2055bbddea9133f135651ded41
+  - a98cb0075fa1a08554d94e1dc797846645f912d3
+  - 5893198250611ec60c50a5218d95b7e11a92e6da
+- Upbit에 DOGE, XRP 화폐 추가
+  - 6f68ea3975f12e42bfb579740c376d52f5504499
+- Simulation, MassSimulation 주기적으로 그래프 저장
+  - 692cc7323b502d2ab69aeb3be43a648208d7f89b
+  - e448005c07623b158de642a94483286644f511da
+- RSI index 추가
+  - a12b565fc047de6e145861995d79c7c70139b628
+- RSI 전략 추가
+  - 59ef24c2e15a76cc24a952e7d8bebba7031aa020
+- Telegram controller Demo 모드 추가
+  - 698b7240e9a62492d8f87815a96477e4372602b4
+
+### 버그 수정
+- Worker runnable에 문제 발생시 종료 후 텔레그램 메세지 전송
+  - ab54bfa5f42dab87e1efc53c8e792f66397ba744
+  - 032fac2df35de05c3d9b516d076277bb6b8222f0
+
 ---
+
+## v1.0.0 (English)
+First release with main features
+
+### Main Features
+1. Simulation
+2. Mass-Simulation
+3. Real Trading
+4. Telegram Chatbot Controller
+5. Jupyter Notebook Controller
 
 ## v1.0.0
 주요 기능을 포함한 첫번째 릴리즈
@@ -282,12 +321,3 @@ Demo feature and RSI strategy
 4. 텔레그램봇 모드
 5. 주피터 노트북 컨트롤러
 
-## v1.0.0 (English)
-First release with main features
-
-### Main Features
-1. Simulation
-2. Mass-Simulation
-3. Real Trading
-4. Telegram Chatbot Controller
-5. Jupyter Notebook Controller

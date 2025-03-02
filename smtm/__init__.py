@@ -1,6 +1,7 @@
 """
 Description for Package
 """
+
 from .config import Config
 from .worker import Worker
 from .date_converter import DateConverter
@@ -45,4 +46,4 @@ __all__ = [
     "TelegramController",
 ]
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
