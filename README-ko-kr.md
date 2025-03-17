@@ -8,7 +8,7 @@
 
 파이썬 알고리즘기반 암호화폐 자동매매 프로그램. https://smtm.msalt.net
 
-[English](https://github.com/msaltnet/smtm/blob/master/README-en_us.md) 👈
+[English](https://github.com/msaltnet/smtm/blob/master/README.md) 👈
 
 [![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
 

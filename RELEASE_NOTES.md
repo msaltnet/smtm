@@ -1,3 +1,8 @@
+## v1.6.2
+- Fix `setup.py`, `setup.cfg`
+
+---
+
 ## v1.6.1
 - Fix README image link
 
