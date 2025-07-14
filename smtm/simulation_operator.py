@@ -3,7 +3,7 @@
 import time
 from datetime import datetime
 from .log_manager import LogManager
-from .operator import Operator
+from .smtm_operator import Operator
 
 
 class SimulationOperator(Operator):
@@ -24,7 +24,9 @@ class SimulationOperator(Operator):
         simulation_terminated 상태는 시뮬레이션에만 존재하는 상태로서 시뮬레이션이 끝났으나
         Operator는 중지되지 않은 상태. Operator의 시작과 중지는 외부부터 실행되어야 한다.
         """
-        self.logger.info(f"############# Simulation trading is started : {self.turn + 1}")
+        self.logger.info(
+            f"############# Simulation trading is started : {self.turn + 1}"
+        )
         self.is_timer_running = False
         try:
             trading_info = self.data_provider.get_info()

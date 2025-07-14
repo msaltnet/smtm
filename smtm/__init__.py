@@ -1,8 +1,9 @@
 """
 Description for Package
 """
+
 from .date_converter import DateConverter
-from .operator import Operator
+from .smtm_operator import Operator
 from .log_manager import LogManager
 from .analyzer import Analyzer
 from .simulation_trader import SimulationTrader
