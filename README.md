@@ -10,7 +10,7 @@ An algorithm-based automated cryptocurrency trading system made in Python. https
 
 [한국어](https://github.com/msaltnet/smtm/blob/master/README-ko-kr.md) 👈
 
-[![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
+[![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
 "Data Gathering🔍 ➡️ Strategy Algorithm🖥️ ➡️ Realtime Trading💸" Repeat the process at a set interval
 
@@ -22,7 +22,7 @@ An algorithm-based automated cryptocurrency trading system made in Python. https
 
 ❗ It is not suitable for high-performance trading machines that need to process many trades in a short timeframe of seconds.
 
-![smtm-procedure](https://github.com/user-attachments/assets/63b57c05-e960-4bc2-84a2-993dfd250d9c)
+![smtm-procedure](https://github.com/user-attachments/assets/b4bb1729-e455-4329-914c-19bca6914735)
 
 ## Features
 - Mass-simulation with Multi-process
@@ -41,3 +41,20 @@ Layered Architecture for Scalability and Maintainability
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
 
 ![smtm component](https://user-images.githubusercontent.com/9311990/221420624-9807ca39-31c7-4bb6-b3de-3a4114f22430.png)
+
+
+
+2. 거대한 클래스 분할
+TelegramController (714줄): 너무 많은 책임을 가짐
+메시지 처리, 설정 관리, 거래 실행, UI 로직이 모두 섞여있음
+해결방안: Command Pattern과 State Pattern 적용하여 분할
+Analyzer (935줄): 데이터 분석과 그래프 생성이 혼재
+해결방안: DataAnalyzer, GraphGenerator, ReportGenerator로 분할
+
+7. 타입 힌트 부족
+대부분의 메서드에 타입 힌트가 없음
+해결방안: Python 3.8+ 타입 힌트 추가
+
+8. 로깅 개선
+일관성 없는 로그 레벨 사용
+해결방안: 구조화된 로깅 도입

@@ -4,7 +4,7 @@
 
 파이썬 알고리즘기반 암호화폐 자동매매 프로그램. https://smtm.msalt.net
 
-[![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
+[![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
 "데이터 수집🔍 ➡️ 알고리즘 분석🖥️ ➡️ 실시간 거래💸" 프로세스를 정해진 간격으로 반복 수행
 
@@ -46,7 +46,7 @@
 
 An algorithm-based automated cryptocurrency trading system with Python. https://smtm.msalt.net
 
-[![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
+[![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
 "Data Gathering🔍 ➡️ Strategy Algorithm🖥️ ➡️ Realtime Trading💸" Repeat the process at a set interval
 

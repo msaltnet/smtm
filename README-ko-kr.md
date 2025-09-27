@@ -10,7 +10,7 @@
 
 [English](https://github.com/msaltnet/smtm/blob/master/README.md) 👈
 
-[![icon_wide_gold](https://user-images.githubusercontent.com/9311990/161744914-05e3d116-0e9b-447f-a015-136e0b9ec22b.png)](https://smtm.msalt.net/)
+[![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
 "데이터 수집🔍 ➡️ 알고리즘 분석🖥️ ➡️ 실시간 거래💸" 프로세스를 정해진 간격으로 반복 수행
 
@@ -22,7 +22,7 @@
 
 ❗ 초 단위의 이하 짧은 시간에 많은 거래를 처리해야하는 고성능 트레이딩 머신으로는 적합하지 않을 수 있습니다.
 
-![smtm-procedure](doc/smtm.png)
+![smtm-procedure](https://github.com/user-attachments/assets/b4bb1729-e455-4329-914c-19bca6914735)
 
 ## 주요기능
 - 멀티프로세스 대량시뮬레이션
