@@ -47,16 +47,23 @@ class StartTradingCommand(TelegramCommand):
 
     def can_handle(self, command: str) -> bool:
         """
-        Check if this is a start trading command
-        거래 시작 명령어인지 확인합니다.
+        Check if this is a start trading command or part of the setup process
+        거래 시작 명령어이거나 설정 프로세스의 일부인지 확인합니다.
 
         Args:
             command: Command string to check / 확인할 명령어 문자열
 
         Returns:
-            True if this is a start trading command, False otherwise
-            거래 시작 명령어이면 True, 그렇지 않으면 False
+            True if this is a start trading command or part of setup process, False otherwise
+            거래 시작 명령어이거나 설정 프로세스의 일부이면 True, 그렇지 않으면 False
         """
+        # If setup is in progress, handle any command as part of the setup process
+        # 설정이 진행 중이면 모든 명령어를 설정 프로세스의 일부로 처리
+        if self.in_progress is not None:
+            return True
+            
+        # Check if this is an initial start command
+        # 초기 시작 명령어인지 확인
         start_commands = [self.controller.ui_manager.msg["COMMAND_C_1"], "1"]
         return command in start_commands
 

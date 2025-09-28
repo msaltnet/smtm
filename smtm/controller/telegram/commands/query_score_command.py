@@ -63,16 +63,23 @@ class QueryScoreCommand(TelegramCommand):
 
     def can_handle(self, command: str) -> bool:
         """
-        Check if this is a query score command
-        수익률 조회 명령어인지 확인합니다.
+        Check if this is a query score command or part of the query process
+        수익률 조회 명령어이거나 조회 프로세스의 일부인지 확인합니다.
 
         Args:
             command: Command string to check / 확인할 명령어 문자열
 
         Returns:
-            True if this is a query score command, False otherwise
-            수익률 조회 명령어이면 True, 그렇지 않으면 False
+            True if this is a query score command or part of query process, False otherwise
+            수익률 조회 명령어이거나 조회 프로세스의 일부이면 True, 그렇지 않으면 False
         """
+        # If query is in progress, handle any command as part of the query process
+        # 조회가 진행 중이면 모든 명령어를 조회 프로세스의 일부로 처리
+        if self.in_progress is not None:
+            return True
+            
+        # Check if this is an initial query score command
+        # 초기 수익률 조회 명령어인지 확인
         score_commands = [self.controller.ui_manager.msg["COMMAND_C_4"], "4"]
         return command in score_commands
 

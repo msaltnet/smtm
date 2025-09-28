@@ -499,3 +499,343 @@ class TelegramControllerTests(unittest.TestCase):
         tcb.ui_manager.main_keyboard = "banana"
         tcb.alert_callback("mango")
         tcb.message_handler.send_text_message.assert_called_once_with("Alert: mango", "banana")
+
+    def test_start_trading_command_can_handle_initial_state(self):
+        """Test StartTradingCommand can_handle in initial state"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        
+        tcb = TelegramController()
+        start_command = StartTradingCommand(tcb)
+        
+        # Initial state should only handle start commands
+        self.assertTrue(start_command.can_handle("1"))
+        self.assertFalse(start_command.can_handle("50000"))
+        self.assertFalse(start_command.can_handle("BTC"))
+        self.assertFalse(start_command.can_handle("invalid"))
+
+    def test_start_trading_command_can_handle_in_progress_state(self):
+        """Test StartTradingCommand can_handle when setup is in progress"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        
+        tcb = TelegramController()
+        start_command = StartTradingCommand(tcb)
+        
+        # Set in_progress to simulate setup process
+        start_command.in_progress = lambda x: None
+        
+        # In progress state should handle any command
+        self.assertTrue(start_command.can_handle("1"))
+        self.assertTrue(start_command.can_handle("50000"))
+        self.assertTrue(start_command.can_handle("BTC"))
+        self.assertTrue(start_command.can_handle("UPBIT"))
+        self.assertTrue(start_command.can_handle("invalid"))
+
+    def test_start_trading_command_can_handle_after_reset(self):
+        """Test StartTradingCommand can_handle after process is reset"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        
+        tcb = TelegramController()
+        start_command = StartTradingCommand(tcb)
+        
+        # Set in_progress first
+        start_command.in_progress = lambda x: None
+        self.assertTrue(start_command.can_handle("50000"))
+        
+        # Reset the process
+        start_command._terminate_start_in_progress()
+        
+        # Should return to initial state behavior
+        self.assertTrue(start_command.can_handle("1"))
+        self.assertFalse(start_command.can_handle("50000"))
+        self.assertFalse(start_command.can_handle("BTC"))
+
+    def test_start_trading_command_setup_process_flow(self):
+        """Test complete setup process flow with can_handle"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        
+        tcb = TelegramController()
+        tcb.message_handler.send_text_message = MagicMock()
+        tcb.ui_manager.get_setup_message = MagicMock(return_value=("Setup message", "keyboard"))
+        tcb.setup_manager.validate_budget = MagicMock(return_value=(True, 50000))
+        tcb.setup_manager.set_budget = MagicMock()
+        
+        start_command = StartTradingCommand(tcb)
+        
+        # Step 1: Initial start command
+        self.assertTrue(start_command.can_handle("1"))
+        start_command.execute("1")
+        
+        # Step 2: Budget input (should be handled because in_progress is set)
+        self.assertTrue(start_command.can_handle("50000"))
+        start_command.execute("50000")
+        
+        # Verify budget was set
+        tcb.setup_manager.set_budget.assert_called_once_with(50000)
+
+    def test_start_trading_command_handles_invalid_input_during_setup(self):
+        """Test StartTradingCommand handles invalid input during setup process"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        
+        tcb = TelegramController()
+        tcb.message_handler.send_text_message = MagicMock()
+        tcb.ui_manager.msg = {"ERROR_RESTART": "Error restart message"}
+        tcb.ui_manager.main_keyboard = "main_keyboard"
+        tcb.setup_manager.reset_setup = MagicMock()
+        
+        start_command = StartTradingCommand(tcb)
+        
+        # Start the process
+        start_command.execute("1")
+        
+        # Send invalid input during setup
+        start_command.execute("invalid_input")
+        
+        # Should reset the process
+        tcb.setup_manager.reset_setup.assert_called_once()
+        tcb.message_handler.send_text_message.assert_called_with(
+            "Error restart message", "main_keyboard"
+        )
+
+    def test_complete_trading_setup_flow_simulation(self):
+        """Test complete trading setup flow simulation - the original bug scenario"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        
+        tcb = TelegramController()
+        tcb.message_handler.send_text_message = MagicMock()
+        tcb.ui_manager.get_setup_message = MagicMock(return_value=("Setup message", "keyboard"))
+        tcb.ui_manager.msg = {"ERROR_RESTART": "Error restart message", "COMMAND_C_1": "Start"}
+        tcb.ui_manager.main_keyboard = "main_keyboard"
+        
+        # Mock setup manager methods
+        tcb.setup_manager.validate_budget = MagicMock(return_value=(True, 50000))
+        tcb.setup_manager.validate_currency = MagicMock(return_value=(True, "BTC"))
+        tcb.setup_manager.validate_data_provider = MagicMock(return_value=(True, "mock_data_provider"))
+        tcb.setup_manager.validate_exchange = MagicMock(return_value=(True, "UPBIT"))
+        tcb.setup_manager.validate_strategy = MagicMock(return_value=(True, "mock_strategy"))
+        
+        tcb.setup_manager.set_budget = MagicMock()
+        tcb.setup_manager.set_currency = MagicMock()
+        tcb.setup_manager.set_data_provider = MagicMock()
+        tcb.setup_manager.set_trader = MagicMock()
+        tcb.setup_manager.set_strategy = MagicMock()
+        tcb.setup_manager.get_setup_summary = MagicMock(return_value={
+            "currency": "BTC",
+            "strategy": type("MockStrategy", (), {"NAME": "TestStrategy"}),
+            "trader": type("MockTrader", (), {"NAME": "TestTrader"}),
+            "budget": 50000
+        })
+        
+        start_command = StartTradingCommand(tcb)
+        
+        # Simulate the original bug scenario: Start -> Budget -> should continue
+        # Step 1: User sends "Start" (or "1")
+        self.assertTrue(start_command.can_handle("1"))
+        start_command.execute("1")
+        
+        # Step 2: User sends budget "50000" - this should be handled now
+        self.assertTrue(start_command.can_handle("50000"))
+        start_command.execute("50000")
+        
+        # Verify budget was set
+        tcb.setup_manager.set_budget.assert_called_once_with(50000)
+        
+        # Step 3: User sends currency "BTC"
+        self.assertTrue(start_command.can_handle("BTC"))
+        start_command.execute("BTC")
+        
+        # Verify currency was set
+        tcb.setup_manager.set_currency.assert_called_once_with("BTC")
+
+    def test_trading_setup_command_priority_during_setup(self):
+        """Test that StartTradingCommand handles all inputs during setup process"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        from smtm.controller.telegram.commands.stop_trading_command import StopTradingCommand
+        
+        tcb = TelegramController()
+        tcb.message_handler.send_text_message = MagicMock()
+        tcb.ui_manager.get_setup_message = MagicMock(return_value=("Setup message", "keyboard"))
+        tcb.setup_manager.validate_budget = MagicMock(return_value=(True, 50000))
+        tcb.setup_manager.set_budget = MagicMock()
+        
+        start_command = StartTradingCommand(tcb)
+        stop_command = StopTradingCommand(tcb)
+        
+        # Start the setup process
+        start_command.execute("1")
+        
+        # During setup, StartTradingCommand should handle all inputs
+        # This is the key fix - StartTradingCommand now handles any input during setup
+        self.assertTrue(start_command.can_handle("2"))
+        self.assertTrue(start_command.can_handle("50000"))
+        self.assertTrue(start_command.can_handle("BTC"))
+        self.assertTrue(start_command.can_handle("invalid"))
+        
+        # Both commands can handle "2", but StartTradingCommand should be checked first
+        # due to the order in the commands list
+        self.assertTrue(stop_command.can_handle("2"))
+
+    def test_setup_process_state_management(self):
+        """Test proper state management during setup process"""
+        from smtm.controller.telegram.commands.start_trading_command import StartTradingCommand
+        
+        tcb = TelegramController()
+        tcb.message_handler.send_text_message = MagicMock()
+        tcb.ui_manager.get_setup_message = MagicMock(return_value=("Setup message", "keyboard"))
+        tcb.ui_manager.msg = {"ERROR_RESTART": "Error restart message"}
+        tcb.ui_manager.main_keyboard = "main_keyboard"
+        tcb.setup_manager.reset_setup = MagicMock()
+        
+        start_command = StartTradingCommand(tcb)
+        
+        # Initial state
+        self.assertEqual(start_command.in_progress_step, 0)
+        self.assertIsNone(start_command.in_progress)
+        
+        # Start process
+        start_command.execute("1")
+        self.assertEqual(start_command.in_progress_step, 1)
+        self.assertIsNotNone(start_command.in_progress)
+        
+        # Reset process
+        start_command._terminate_start_in_progress()
+        self.assertEqual(start_command.in_progress_step, 0)
+        self.assertIsNone(start_command.in_progress)
+
+    def test_query_score_command_can_handle_initial_state(self):
+        """Test QueryScoreCommand can_handle in initial state"""
+        from smtm.controller.telegram.commands.query_score_command import QueryScoreCommand
+        
+        tcb = TelegramController()
+        tcb.ui_manager.msg = {
+            "COMMAND_C_4": "Return rate", 
+            "PERIOD_1": "6 hours",
+            "PERIOD_2": "12 hours",
+            "PERIOD_3": "24 hours",
+            "PERIOD_4": "2 days",
+            "PERIOD_5": "3 days"
+        }
+        query_command = QueryScoreCommand(tcb)
+        
+        # Initial state should only handle query score commands
+        self.assertTrue(query_command.can_handle("4"))
+        self.assertTrue(query_command.can_handle("Return rate"))
+        self.assertFalse(query_command.can_handle("1"))
+        self.assertFalse(query_command.can_handle("6 hours"))
+
+    def test_query_score_command_can_handle_in_progress_state(self):
+        """Test QueryScoreCommand can_handle when query is in progress"""
+        from smtm.controller.telegram.commands.query_score_command import QueryScoreCommand
+        
+        tcb = TelegramController()
+        tcb.ui_manager.msg = {
+            "COMMAND_C_4": "Return rate", 
+            "PERIOD_1": "6 hours",
+            "PERIOD_2": "12 hours",
+            "PERIOD_3": "24 hours",
+            "PERIOD_4": "2 days",
+            "PERIOD_5": "3 days"
+        }
+        query_command = QueryScoreCommand(tcb)
+        
+        # Set in_progress to simulate query process
+        query_command.in_progress = lambda x: None
+        
+        # In progress state should handle any command
+        self.assertTrue(query_command.can_handle("4"))
+        self.assertTrue(query_command.can_handle("1"))
+        self.assertTrue(query_command.can_handle("6 hours"))
+        self.assertTrue(query_command.can_handle("invalid"))
+
+    def test_query_score_command_can_handle_after_reset(self):
+        """Test QueryScoreCommand can_handle after process is reset"""
+        from smtm.controller.telegram.commands.query_score_command import QueryScoreCommand
+        
+        tcb = TelegramController()
+        tcb.ui_manager.msg = {
+            "COMMAND_C_4": "Return rate", 
+            "PERIOD_1": "6 hours",
+            "PERIOD_2": "12 hours",
+            "PERIOD_3": "24 hours",
+            "PERIOD_4": "2 days",
+            "PERIOD_5": "3 days"
+        }
+        query_command = QueryScoreCommand(tcb)
+        
+        # Set in_progress first
+        query_command.in_progress = lambda x: None
+        self.assertTrue(query_command.can_handle("6 hours"))
+        
+        # Reset the process
+        query_command.in_progress = None
+        query_command.in_progress_step = 0
+        
+        # Should return to initial state behavior
+        self.assertTrue(query_command.can_handle("4"))
+        self.assertFalse(query_command.can_handle("6 hours"))
+        self.assertFalse(query_command.can_handle("1"))
+
+    def test_query_score_command_query_process_flow(self):
+        """Test complete query score process flow with can_handle"""
+        from smtm.controller.telegram.commands.query_score_command import QueryScoreCommand
+        
+        tcb = TelegramController()
+        tcb.message_handler.send_text_message = MagicMock()
+        tcb.ui_manager.msg = {
+            "COMMAND_C_4": "Return rate",
+            "PERIOD_1": "6 hours",
+            "PERIOD_2": "12 hours",
+            "PERIOD_3": "24 hours",
+            "PERIOD_4": "2 days",
+            "PERIOD_5": "3 days",
+            "INFO_STATUS_READY": "Ready message"
+        }
+        tcb.ui_manager.main_keyboard = "main_keyboard"
+        tcb.ui_manager.get_score_query_message = MagicMock(return_value=("Query message", "keyboard"))
+        tcb.operator = None  # Simulate no operator running
+        
+        query_command = QueryScoreCommand(tcb)
+        
+        # Step 1: Initial query command
+        self.assertTrue(query_command.can_handle("4"))
+        query_command.execute("4")
+        
+        # Should show ready message when no operator is running
+        tcb.message_handler.send_text_message.assert_called_with(
+            "Ready message", "main_keyboard"
+        )
+
+    def test_query_score_command_handles_period_selection(self):
+        """Test QueryScoreCommand handles period selection during query process"""
+        from smtm.controller.telegram.commands.query_score_command import QueryScoreCommand
+        
+        tcb = TelegramController()
+        tcb.message_handler.send_text_message = MagicMock()
+        tcb.ui_manager.msg = {
+            "COMMAND_C_4": "Return rate",
+            "PERIOD_1": "6 hours",
+            "PERIOD_2": "12 hours",
+            "PERIOD_3": "24 hours",
+            "PERIOD_4": "2 days",
+            "PERIOD_5": "3 days",
+            "INFO_QUERY_RUNNING": "Query running message"
+        }
+        tcb.ui_manager.main_keyboard = "main_keyboard"
+        tcb.ui_manager.get_score_query_message = MagicMock(return_value=("Query message", "keyboard"))
+        tcb.ui_manager.score_query_list = ["step1", "step2"]  # Mock query list
+        
+        # Mock operator with get_score method
+        mock_operator = MagicMock()
+        mock_operator.get_score = MagicMock()
+        tcb.operator = mock_operator
+        
+        query_command = QueryScoreCommand(tcb)
+        
+        # Start the query process
+        query_command.execute("4")
+        
+        # Step 2: Period selection (should be handled because in_progress is set)
+        self.assertTrue(query_command.can_handle("1"))  # Period selection
+        query_command.execute("1")
+        
+        # Verify get_score was called with correct parameters
+        mock_operator.get_score.assert_called_once()
