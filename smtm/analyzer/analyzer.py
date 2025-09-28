@@ -57,6 +57,13 @@ class Analyzer:
         self.start_asset_info = self.data_repository.start_asset_info
         self.is_simulation = self.data_repository.is_simulation
         self.sma_info = sma_info
+        
+        # Additional attributes for backward compatibility
+        # 추가 하위 호환성 속성들
+        self.OUTPUT_FOLDER = "output/"
+        self.GRAPH_MAX_COUNT = 1000
+        self.RSI_ENABLE = False
+        self.RSI = (30, 70, 2)
 
     def initialize(
         self, get_asset_info_func: Callable, alert_callback: Optional[Callable] = None
@@ -379,6 +386,36 @@ class Analyzer:
             data = dump_file.read()
             target_list = ast.literal_eval(data)
             return target_list
+
+    @staticmethod
+    def _get_min_max_return(score_list: List[Dict[str, Any]]) -> Tuple[float, float]:
+        """
+        Get minimum and maximum return values
+        최소 및 최대 수익률 값을 반환합니다.
+
+        Args:
+            score_list: List of score records / 점수 기록 리스트
+
+        Returns:
+            Tuple of (min_return, max_return) / (최소 수익률, 최대 수익률) 튜플
+        """
+        if not score_list:
+            return 0.0, 0.0
+        
+        returns = [record.get("cumulative_return", 0.0) for record in score_list]
+        return min(returns), max(returns)
+
+    def _get_rss_memory(self) -> float:
+        """
+        Get RSS memory usage
+        RSS 메모리 사용량을 반환합니다.
+
+        Returns:
+            Memory usage in MB / MB 단위의 메모리 사용량
+        """
+        import psutil
+        process = psutil.Process()
+        return process.memory_info().rss / 1024 / 1024
 
     def _make_alert(self, msg: str) -> None:
         """
