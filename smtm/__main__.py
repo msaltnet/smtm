@@ -1,6 +1,8 @@
 import argparse
 from argparse import RawTextHelpFormatter
 import sys
+
+from PIL.TiffImagePlugin import TRANSFERFUNCTION
 from .controller.simulator import Simulator
 from .controller.controller import Controller
 from .controller.telegram_controller import TelegramController
@@ -116,8 +118,9 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
         )
         controller.main()
     elif args.mode == 3:
-        tcb = TelegramController(token=args.token, chatid=args.chatid)
-        if tcb.TOKEN == "telegram_token" and args.token is None:
+        try:
+            tcb = TelegramController(token=args.token, chat_id=args.chatid)
+        except ValueError as e:
             print("Please check your telegram chat-bot token")
             sys.exit(0)
 

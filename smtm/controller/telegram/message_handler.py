@@ -9,7 +9,6 @@ Handles Telegram API communication and message parsing.
 import os
 import time
 import threading
-import json
 from urllib import parse
 from typing import Optional, Dict, Any, Callable
 import requests
@@ -57,6 +56,10 @@ class TelegramMessageHandler:
             self.TOKEN = token
         if chat_id is not None:
             self.CHAT_ID = int(chat_id)
+
+        if token == "telegram_token":
+            self.logger.error("Telegram token is not set")
+            raise ValueError("Telegram token is not set")
 
     def set_message_callback(self, callback: Callable[[str], None]) -> None:
         """
