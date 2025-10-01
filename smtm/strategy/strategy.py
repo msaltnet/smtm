@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from typing import Dict, Any, Callable, Optional, List
 
 
 class Strategy(metaclass=ABCMeta):
@@ -14,12 +15,12 @@ class Strategy(metaclass=ABCMeta):
     @abstractmethod
     def initialize(
         self,
-        budget,
-        min_price=100,
-        add_spot_callback=None,
-        add_line_callback=None,
-        alert_callback=None,
-    ):
+        budget: float,
+        min_price: float = 100,
+        add_spot_callback: Optional[Callable[[str, float], None]] = None,
+        add_line_callback: Optional[Callable[[str, float], None]] = None,
+        alert_callback: Optional[Callable[[str], None]] = None,
+    ) -> None:
         """예산을 설정하고 초기화한다
 
         budget: 예산
@@ -30,7 +31,7 @@ class Strategy(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def get_request(self):
+    def get_request(self) -> List[Dict[str, Any]]:
         """
         전략에 따라 거래 요청 정보를 생성한다
         Generate trade request information based on your strategy
@@ -46,7 +47,7 @@ class Strategy(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def update_trading_info(self, info):
+    def update_trading_info(self, info: Dict[str, Any]) -> None:
         """
         Data Provider에서 제공받은 새로운 거래 정보를 업데이트
 

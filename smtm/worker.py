@@ -1,6 +1,7 @@
 import queue
 import threading
 import traceback
+from typing import Dict, Any, Callable, Optional
 from .log_manager import LogManager
 
 
@@ -18,21 +19,21 @@ class Worker:
     passing task as an argument to runnable.
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.task_queue = queue.Queue()
         self.thread = None
         self.name = name
         self.logger = LogManager.get_logger(name)
         self.on_terminated = None
 
-    def register_on_terminated(self, callback):
+    def register_on_terminated(self, callback: Optional[Callable[[], None]]) -> None:
         """
         종료될 때 실행될 콜백 등록
         Register a callback to run on exit
         """
         self.on_terminated = callback
 
-    def post_task(self, task):
+    def post_task(self, task: Dict[str, Any]) -> None:
         """
         task를 추가한다
         Add task into task_queue

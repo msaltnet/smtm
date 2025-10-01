@@ -41,20 +41,3 @@ Layered Architecture for Scalability and Maintainability
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
 
 ![smtm component](https://user-images.githubusercontent.com/9311990/221420624-9807ca39-31c7-4bb6-b3de-3a4114f22430.png)
-
-
-
-2. 거대한 클래스 분할
-TelegramController (714줄): 너무 많은 책임을 가짐
-메시지 처리, 설정 관리, 거래 실행, UI 로직이 모두 섞여있음
-해결방안: Command Pattern과 State Pattern 적용하여 분할
-Analyzer (935줄): 데이터 분석과 그래프 생성이 혼재
-해결방안: DataAnalyzer, GraphGenerator, ReportGenerator로 분할
-
-7. 타입 힌트 부족
-대부분의 메서드에 타입 힌트가 없음
-해결방안: Python 3.8+ 타입 힌트 추가
-
-8. 로깅 개선
-일관성 없는 로그 레벨 사용
-해결방안: 구조화된 로깅 도입

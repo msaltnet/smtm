@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from typing import List, Dict, Any, Callable, Optional
 
 
 class Trader(metaclass=ABCMeta):
@@ -9,7 +10,7 @@ class Trader(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def send_request(self, request_list, callback):
+    def send_request(self, request_list: List[Dict[str, Any]], callback: Callable[[Dict[str, Any]], None]) -> None:
         """
         거래를 요청한다
         요청 정보를 기반으로 거래를 요청하고, callback으로 체결 결과를 수신한다.
@@ -39,19 +40,19 @@ class Trader(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def cancel_request(self, request_id):
+    def cancel_request(self, request_id: str) -> None:
         """거래 요청을 취소한다
         request_id: 취소하고자 하는 request의 id
         """
 
     @abstractmethod
-    def cancel_all_requests(self):
+    def cancel_all_requests(self) -> None:
         """모든 거래 요청을 취소한다
         체결되지 않고 대기중인 모든 거래 요청을 취소한다
         """
 
     @abstractmethod
-    def get_account_info(self):
+    def get_account_info(self) -> Dict[str, Any]:
         """계좌 정보를 요청한다
         현금을 포함한 모든 자산 정보를 제공한다
 
