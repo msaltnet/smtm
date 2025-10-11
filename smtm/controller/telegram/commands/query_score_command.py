@@ -32,7 +32,8 @@ class QueryScoreCommand(TelegramCommand):
         self.in_progress = None
 
         # Set score query tick / 수익률 조회 틱 설정
-        an_hour_tick = int(60 / self.controller.config.candle_interval) * 60
+        # candle_interval은 초 단위이므로, 1시간(3600초)을 candle_interval로 나누어 tick 수를 계산
+        an_hour_tick = int(3600 / self.controller.config.candle_interval)
         self.score_query_tick = {
             self.controller.ui_manager.msg["PERIOD_1"]: (an_hour_tick * 6, -1),
             self.controller.ui_manager.msg["PERIOD_2"]: (an_hour_tick * 12, -1),
