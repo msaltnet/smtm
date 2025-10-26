@@ -99,11 +99,16 @@ class ReportGenerator:
         Args:
             report_file: Report file object / 보고서 파일 객체
         """
-        rss = self._get_rss_memory()
-        report_file.write("### DEBUG INFO ====================================\n")
-        report_file.write(f"memory usage: {rss: 10.5f} MB\n")
-        # Additional debug information can be implemented as needed
-        # 추가 디버그 정보는 필요에 따라 구현
+        try:
+            rss = self._get_rss_memory()
+            report_file.write("### DEBUG INFO ====================================\n")
+            report_file.write(f"memory usage: {rss: 10.5f} MB\n")
+            # Additional debug information can be implemented as needed
+            # 추가 디버그 정보는 필요에 따라 구현
+        except Exception:
+            # Skip debug info if it fails
+            # 디버그 정보 작성이 실패하면 건너뜁니다
+            pass
 
     @staticmethod
     def _get_rss_memory() -> float:
@@ -114,8 +119,13 @@ class ReportGenerator:
         Returns:
             Memory usage in MB / MB 단위의 메모리 사용량
         """
-        process = psutil.Process()
-        return process.memory_info().rss / 2**20  # Convert bytes to MB / Bytes to MB
+        try:
+            process = psutil.Process()
+            return process.memory_info().rss / 2**20  # Convert bytes to MB / Bytes to MB
+        except (TypeError, AttributeError, OSError, Exception):
+            # Handle cases where psutil is not available or fails
+            # psutil이 사용 불가능하거나 실패하는 경우 처리
+            return 0.0
 
     def create_trading_table(
         self,
