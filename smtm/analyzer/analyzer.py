@@ -362,6 +362,10 @@ class Analyzer:
         """
         import ast
 
+        # Ensure filename is a string
+        # 파일명이 문자열인지 확인
+        filename = str(filename)
+
         with open(filename, "w", encoding="utf-8") as dump_file:
             dump_file.write("[\n")
             for item in target_list:
@@ -381,6 +385,10 @@ class Analyzer:
             Loaded list / 로드된 리스트
         """
         import ast
+
+        # Ensure filename is a string
+        # 파일명이 문자열인지 확인
+        filename = str(filename)
 
         with open(filename, "r", encoding="utf-8") as dump_file:
             data = dump_file.read()

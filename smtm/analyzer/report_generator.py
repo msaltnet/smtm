@@ -47,6 +47,9 @@ class ReportGenerator:
             summary: Summary tuple / 요약 튜플
             trading_table: Trading table data / 거래 테이블 데이터
         """
+        # Ensure filepath is a string
+        # 파일 경로가 문자열인지 확인
+        filepath = str(filepath)
         final_path = self.OUTPUT_FOLDER + filepath + ".txt"
 
         with open(final_path, "w", encoding="utf-8") as report_file:

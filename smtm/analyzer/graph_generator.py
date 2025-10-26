@@ -245,6 +245,9 @@ class GraphGenerator:
         Returns:
             Graph file path / 그래프 파일 경로
         """
+        # Ensure filename is a string
+        # 파일명이 문자열인지 확인
+        filename = str(filename)
         spots = None
         if spot_list is not None:
             spots = sorted(
