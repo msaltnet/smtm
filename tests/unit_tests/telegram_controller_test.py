@@ -8,10 +8,16 @@ from unittest.mock import *
 
 class TelegramControllerTests(unittest.TestCase):
     def setUp(self):
-        pass
+        # Mock Worker to prevent actual HTTP requests during initialization
+        # 초기화 중 실제 HTTP 요청을 방지하기 위해 Worker mock
+        self.worker_patcher = patch("smtm.controller.telegram.message_handler.Worker")
+        self.mock_worker = self.worker_patcher.start()
+        self.mock_worker.return_value.start = MagicMock()
+        self.mock_worker.return_value.stop = MagicMock()
+        self.mock_worker.return_value.post_task = MagicMock()
 
     def tearDown(self):
-        pass
+        self.worker_patcher.stop()
 
     def test_main_should_call__start_get_updates_loop(self):
         tcb = TelegramController()
@@ -53,7 +59,11 @@ class TelegramControllerTests(unittest.TestCase):
         tcb._handle_message("5")
 
     @patch("threading.Thread")
-    def test__start_get_updates_loop_start_thread_correctly(self, mock_thread):
+    @patch("smtm.controller.telegram.message_handler.Worker")
+    def test__start_get_updates_loop_start_thread_correctly(self, mock_worker, mock_thread):
+        mock_worker.return_value.start = MagicMock()
+        mock_worker.return_value.stop = MagicMock()
+        mock_worker.return_value.post_task = MagicMock()
         dummy_thread = MagicMock()
         mock_thread.return_value = dummy_thread
         tcb = TelegramController()

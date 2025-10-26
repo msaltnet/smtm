@@ -23,7 +23,7 @@ class ReportGenerator:
     """
 
     OUTPUT_FOLDER = "output/"
-    DEBUG_MODE = True
+    DEBUG_MODE = False
 
     def __init__(self):
         """
