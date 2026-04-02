@@ -1,10 +1,8 @@
 from datetime import datetime, timezone, timedelta
-import requests
-from .data_provider import DataProvider
-from ..log_manager import LogManager
+from .base_data_provider import BaseDataProvider
 
 
-class BithumbDataProvider(DataProvider):
+class BithumbDataProvider(BaseDataProvider):
     """
     빗썸 거래소의 실시간 거래 데이터를 제공하는 클래스
     Classes that provide real-time trading data from the Bithumb exchange
@@ -30,8 +28,10 @@ class BithumbDataProvider(DataProvider):
         if interval != 60:
             raise UserWarning(f"not supported interval: {interval}")
 
-        self.logger = LogManager.get_logger(__class__.__name__)
+        super().__init__(logger_name="BithumbDataProvider")
         self.url = f"https://api.bithumb.com/public/candlestick/{self.AVAILABLE_CURRENCY[currency]}/1m"
+        self._api_url = self.url
+        self._query_params = None
         self.market = currency
 
     def get_info(self):
@@ -49,13 +49,13 @@ class BithumbDataProvider(DataProvider):
             "acc_volume": 단위 시간내 누적 거래 양
         }
         """
-        data = self.__get_data_from_server()
+        data = self._get_data_from_server()
         if data["status"] != "0000":
             raise UserWarning("Fail get data from sever")
 
-        return [self.__create_candle_info(data["data"][-1])]
+        return [self._create_candle_info(data["data"][-1])]
 
-    def __create_candle_info(self, data):
+    def _create_candle_info(self, data):
         try:
             return {
                 "type": "primary_candle",
@@ -73,18 +73,3 @@ class BithumbDataProvider(DataProvider):
         except KeyError as err:
             self.logger.warning(f"invalid data for candle info: {err}")
             return None
-
-    def __get_data_from_server(self):
-        try:
-            response = requests.get(self.url)
-            response.raise_for_status()
-            return response.json()
-        except ValueError as error:
-            self.logger.error(f"Invalid data from server: {error}")
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.HTTPError as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.RequestException as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error

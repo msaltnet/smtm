@@ -1,18 +1,12 @@
-import os
-import copy
 import uuid
-from datetime import datetime
-import threading
 import hashlib
 from urllib.parse import urlencode
 import requests
 import jwt  # PyJWT
-from ..log_manager import LogManager
-from .trader import Trader
-from ..worker import Worker
+from .base_exchange_trader import BaseExchangeTrader
 
 
-class UpbitTrader(Trader):
+class UpbitTrader(BaseExchangeTrader):
     """
     업비트 거래소를 통한 거래 요청 및 계좌 조회 요청을 처리하는 UpbitTrader 클래스
 
@@ -24,8 +18,6 @@ class UpbitTrader(Trader):
     amount: 거래 수량
     """
 
-    RESULT_CHECKING_INTERVAL = 5
-    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     AVAILABLE_CURRENCY = {
         "BTC": ("KRW-BTC", "BTC"),
         "ETH": ("KRW-ETH", "ETH"),
@@ -40,20 +32,19 @@ class UpbitTrader(Trader):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
-        self.logger = LogManager.get_logger(__class__.__name__)
-        self.worker = Worker("UpbitTrader-Worker")
-        self.worker.start()
-        self.timer = None
-        self.order_map = {}
-        self.ACCESS_KEY = os.environ.get("UPBIT_OPEN_API_ACCESS_KEY", "")
-        self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "")
-        self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "")
-        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
-            self.logger.warning("UPBIT API credentials are not set")
-        self.is_opt_mode = opt_mode
-        self.asset = (0, 0)  # avr_price, amount
-        self.balance = budget
-        self.commission_ratio = commission_ratio
+        super().__init__(
+            budget=budget,
+            currency=currency,
+            commission_ratio=commission_ratio,
+            opt_mode=opt_mode,
+            logger_name="UpbitTrader",
+            worker_name="UpbitTrader-Worker",
+            env_key_names=(
+                "UPBIT_OPEN_API_ACCESS_KEY",
+                "UPBIT_OPEN_API_SECRET_KEY",
+                "UPBIT_OPEN_API_SERVER_URL",
+            ),
+        )
         currency_info = self.AVAILABLE_CURRENCY[currency]
         self.market = currency_info[0]
         self.market_currency = currency_info[1]
@@ -69,17 +60,6 @@ class UpbitTrader(Trader):
         }
         query_string = urlencode(query).encode()
         return query_string
-
-    @staticmethod
-    def _create_success_result(request):
-        return {
-            "state": "requested",
-            "request": request,
-            "type": request["type"],
-            "price": request["price"],
-            "amount": request["amount"],
-            "msg": "success",
-        }
 
     @staticmethod
     def _create_market_price_order_query(market, price=None, volume=None):
@@ -101,37 +81,6 @@ class UpbitTrader(Trader):
         query_string = urlencode(query).encode()
         return query_string
 
-    def send_request(self, request_list, callback):
-        """거래 요청을 처리한다
-
-        request_list: 한 개 이상의 거래 요청 정보 리스트
-        [{
-            "id": 요청 정보 id "1607862457.560075"
-            "type": 거래 유형 sell, buy, cancel
-            "price": 거래 가격
-            "amount": 거래 수량
-            "date_time": 요청 데이터 생성 시간
-        }]
-        callback(result):
-        {
-            "request": 요청 정보
-            "type": 거래 유형 sell, buy, cancel
-            "price": 거래 가격
-            "amount": 거래 수량
-            "state": 거래 상태 requested, done
-            "msg": 거래 결과 메세지
-            "date_time": 거래 체결 시간
-        }
-        """
-        for request in request_list:
-            self.worker.post_task(
-                {
-                    "runnable": self._execute_order,
-                    "request": request,
-                    "callback": callback,
-                }
-            )
-
     def get_account_info(self):
         """계좌 정보를 요청한다
         Returns:
@@ -142,6 +91,8 @@ class UpbitTrader(Trader):
                 date_time: 현재 시간
             }
         """
+        from datetime import datetime
+
         trade_info = self.get_trade_tick()
         result = {
             "balance": self.balance,
@@ -183,13 +134,31 @@ class UpbitTrader(Trader):
         result["state"] = "done"
         self._call_callback(order["callback"], result)
 
-    def cancel_all_requests(self):
-        """모든 거래 요청을 취소한다
-        체결되지 않고 대기중인 모든 거래 요청을 취소한다
-        """
-        orders = copy.deepcopy(self.order_map)
-        for request_id in orders.keys():
-            self.cancel_request(request_id)
+    def _call_callback(self, callback, result):
+        result_value = float(result["price"]) * float(result["amount"])
+        fee = result_value * self.commission_ratio
+
+        if result["state"] == "done" and result["type"] == "buy":
+            old_value = self.asset[0] * self.asset[1]
+            new_value = old_value + result_value
+            new_amount = self.asset[1] + float(result["amount"])
+            new_amount = round(new_amount, 6)
+            if new_amount == 0:
+                avr_price = 0
+            else:
+                avr_price = round(new_value / new_amount, 6)
+            self.asset = (avr_price, new_amount)
+            self.balance -= round(result_value + fee)
+        elif result["state"] == "done" and result["type"] == "sell":
+            old_avr_price = self.asset[0]
+            new_amount = self.asset[1] - float(result["amount"])
+            new_amount = round(new_amount, 6)
+            if new_amount == 0:
+                old_avr_price = 0
+            self.asset = (old_avr_price, new_amount)
+            self.balance += round(result_value - fee)
+
+        callback(result)
 
     def get_trade_tick(self):
         """최근 거래 정보 조회"""
@@ -241,25 +210,6 @@ class UpbitTrader(Trader):
         self.logger.debug(f"request inserted {self.order_map[request['id']]}")
         self._start_timer()
 
-    def _start_timer(self):
-        if self.timer is not None:
-            return
-
-        def post_query_result_task():
-            self.worker.post_task({"runnable": self._update_order_result})
-
-        self.timer = threading.Timer(
-            self.RESULT_CHECKING_INTERVAL, post_query_result_task
-        )
-        self.timer.start()
-
-    def _stop_timer(self):
-        if self.timer is None:
-            return
-
-        self.timer.cancel()
-        self.timer = None
-
     def _update_order_result(self, task):
         del task
         uuids = []
@@ -307,32 +257,6 @@ class UpbitTrader(Trader):
         if len(self.order_map) > 0:
             self._start_timer()
 
-    def _call_callback(self, callback, result):
-        result_value = float(result["price"]) * float(result["amount"])
-        fee = result_value * self.commission_ratio
-
-        if result["state"] == "done" and result["type"] == "buy":
-            old_value = self.asset[0] * self.asset[1]
-            new_value = old_value + result_value
-            new_amount = self.asset[1] + float(result["amount"])
-            new_amount = round(new_amount, 6)
-            if new_amount == 0:
-                avr_price = 0
-            else:
-                avr_price = round(new_value / new_amount, 6)
-            self.asset = (avr_price, new_amount)
-            self.balance -= round(result_value + fee)
-        elif result["state"] == "done" and result["type"] == "sell":
-            old_avr_price = self.asset[0]
-            new_amount = self.asset[1] - float(result["amount"])
-            new_amount = round(new_amount, 6)
-            if new_amount == 0:
-                old_avr_price = 0
-            self.asset = (old_avr_price, new_amount)
-            self.balance += round(result_value - fee)
-
-        callback(result)
-
     def _send_order(self, market, is_buy, price=None, volume=None):
         """
         Upbit에 거래 주문 전송
@@ -371,8 +295,7 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
-        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
-            self.logger.error("API credentials are not configured")
+        if not self._validate_credentials():
             return None
 
         self.logger.info(f"ORDER ##### {'BUY' if is_buy else 'SELL'}")
@@ -404,23 +327,9 @@ class UpbitTrader(Trader):
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
 
-        try:
-            response = requests.post(
-                self.SERVER_URL + "/v1/orders", params=query_string, headers=headers
-            )
-            response.raise_for_status()
-            result = response.json()
-        except ValueError as err:
-            self.logger.error(f"Invalid data from server: {err}")
-            return None
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return None
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return None
-
-        return result
+        return self._request_post(
+            self.SERVER_URL + "/v1/orders", params=query_string, headers=headers
+        )
 
     def _optimize_price(self, price, is_buy):
         latest = self.get_trade_tick()
@@ -459,8 +368,7 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
-        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
-            self.logger.error("API credentials are not configured")
+        if not self._validate_credentials():
             return None
 
         query_states = ["wait", "watch"]
@@ -497,8 +405,7 @@ class UpbitTrader(Trader):
             avg_buy_price_modified: 매수평균가 수정 여부, Boolean
             unit_currency: 평단가 기준 화폐, String
         """
-        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
-            self.logger.error("API credentials are not configured")
+        if not self._validate_credentials():
             return None
 
         jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY)
@@ -507,34 +414,16 @@ class UpbitTrader(Trader):
 
         return self._request_get(self.SERVER_URL + "/v1/accounts", headers=headers)
 
-    def _request_get(self, url, headers=None, params=None):
-        try:
-            if params is not None:
-                response = requests.get(url, params=params, headers=headers)
-            else:
-                response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            result = response.json()
-        except ValueError as err:
-            self.logger.error(f"Invalid data from server: {err}")
-            return None
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return None
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return None
-
-        return result
-
     @staticmethod
     def _create_jwt_token(a_key, s_key, query_string=None):
+        import hashlib as _hashlib
+
         payload = {
             "access_key": a_key,
             "nonce": str(uuid.uuid4()),
         }
         if query_string is not None:
-            msg = hashlib.sha512()
+            msg = _hashlib.sha512()
             msg.update(query_string)
             query_hash = msg.hexdigest()
             payload["query_hash"] = query_hash
@@ -567,8 +456,7 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
-        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
-            self.logger.error("API credentials are not configured")
+        if not self._validate_credentials():
             return None
 
         self.logger.info(f"CANCEL ORDER ##### {request_uuid}")

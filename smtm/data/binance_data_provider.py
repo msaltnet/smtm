@@ -1,11 +1,9 @@
 from datetime import datetime, timezone, timedelta
-import requests
 from ..date_converter import DateConverter
-from .data_provider import DataProvider
-from ..log_manager import LogManager
+from .base_data_provider import BaseDataProvider
 
 
-class BinanceDataProvider(DataProvider):
+class BinanceDataProvider(BaseDataProvider):
     """
     바이낸스 거래소의 실시간 거래 데이터를 제공하는 클래스
     A class that provides real-time trading data from the Binance exchange.
@@ -31,7 +29,7 @@ class BinanceDataProvider(DataProvider):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
-        self.logger = LogManager.get_logger(__class__.__name__)
+        super().__init__(logger_name="BinanceDataProvider")
         self.market = currency
         if interval == 60:
             self.interval = "1m"
@@ -43,7 +41,8 @@ class BinanceDataProvider(DataProvider):
             self.interval = "10m"
         else:
             raise UserWarning(f"not supported interval: {interval}")
-        self.query_string = {
+        self._api_url = self.URL
+        self._query_params = {
             "symbol": self.AVAILABLE_CURRENCY[currency],
             "limit": 1,
             "interval": self.interval,
@@ -108,18 +107,3 @@ class BinanceDataProvider(DataProvider):
         return DateConverter.to_iso_string(
             datetime.fromtimestamp(unix_time_ms / 1000, tz=BinanceDataProvider.KST)
         )
-
-    def _get_data_from_server(self):
-        try:
-            response = requests.get(self.URL, params=self.query_string)
-            response.raise_for_status()
-            return response.json()
-        except ValueError as error:
-            self.logger.error(f"Invalid data from server: {error}")
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.HTTPError as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.RequestException as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error

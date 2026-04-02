@@ -1,9 +1,7 @@
-import requests
-from .data_provider import DataProvider
-from ..log_manager import LogManager
+from .base_data_provider import BaseDataProvider
 
 
-class UpbitDataProvider(DataProvider):
+class UpbitDataProvider(BaseDataProvider):
     """
     업비트 거래소의 실시간 거래 데이터를 제공하는 클래스
     Classes that provide real-time trading data from the Upbit exchange
@@ -27,8 +25,7 @@ class UpbitDataProvider(DataProvider):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
-        self.logger = LogManager.get_logger(__class__.__name__)
-        self.query_string = {"market": self.AVAILABLE_CURRENCY[currency], "count": 1}
+        super().__init__(logger_name="UpbitDataProvider")
         self.market = currency
         self.interval = interval
         if self.interval == 60:
@@ -41,6 +38,8 @@ class UpbitDataProvider(DataProvider):
             self.URL = "https://api.upbit.com/v1/candles/minutes/10"
         else:
             raise UserWarning(f"not supported interval: {interval}")
+        self._api_url = self.URL
+        self._query_params = {"market": self.AVAILABLE_CURRENCY[currency], "count": 1}
 
     def get_info(self):
         """실시간 거래 정보 전달한다
@@ -57,10 +56,10 @@ class UpbitDataProvider(DataProvider):
             "acc_volume": 단위 시간내 누적 거래 양
         }
         """
-        data = self.__get_data_from_server()
-        return [self.__create_candle_info(data[0])]
+        data = self._get_data_from_server()
+        return [self._create_candle_info(data[0])]
 
-    def __create_candle_info(self, data):
+    def _create_candle_info(self, data):
         try:
             return {
                 "type": "primary_candle",
@@ -76,18 +75,3 @@ class UpbitDataProvider(DataProvider):
         except KeyError as err:
             self.logger.warning(f"invalid data for candle info: {err}")
             return None
-
-    def __get_data_from_server(self):
-        try:
-            response = requests.get(self.URL, params=self.query_string)
-            response.raise_for_status()
-            return response.json()
-        except ValueError as error:
-            self.logger.error(f"Invalid data from server: {error}")
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.HTTPError as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error
-        except requests.exceptions.RequestException as error:
-            self.logger.error(error)
-            raise UserWarning("Fail get data from sever") from error

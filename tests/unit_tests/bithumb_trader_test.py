@@ -662,7 +662,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
         )
 
         trader.get_trade_tick()
-        mock_get.assert_called_once_with(expected_url, params={"count": "1"})
+        mock_get.assert_called_once_with(
+            expected_url, params={"count": "1"}, headers=None
+        )
 
     @patch("requests.post")
     def test_bithumb_api_call_should_send_http_request_correctly(self, mock_post):

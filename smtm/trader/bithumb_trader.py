@@ -1,20 +1,16 @@
-import os
 import copy
 import time
 import math
-import threading
 from datetime import datetime
 from urllib.parse import urlencode
 import base64
 import hmac
 import hashlib
 import requests
-from ..log_manager import LogManager
-from .trader import Trader
-from ..worker import Worker
+from .base_exchange_trader import BaseExchangeTrader
 
 
-class BithumbTrader(Trader):
+class BithumbTrader(BaseExchangeTrader):
     """
     빗썸 거래소를 통한 거래 처리 및 계좌 정보 조회 할 수 있는 BithumbTrader 클래스
 
@@ -26,8 +22,6 @@ class BithumbTrader(Trader):
     amount: 거래 수량
     """
 
-    RESULT_CHECKING_INTERVAL = 5
-    ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
     AVAILABLE_CURRENCY = {"BTC": ("BTC", "KRW"), "ETH": ("ETH", "KRW")}
     NAME = "Bithumb"
 
@@ -37,20 +31,19 @@ class BithumbTrader(Trader):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
-        self.logger = LogManager.get_logger(__class__.__name__)
-        self.worker = Worker("BTR-Worker")
-        self.worker.start()
-        self.timer = None
-        self.order_map = {}
-        self.ACCESS_KEY = os.environ.get("BITHUMB_API_ACCESS_KEY", "")
-        self.SECRET_KEY = os.environ.get("BITHUMB_API_SECRET_KEY", "")
-        self.SERVER_URL = os.environ.get("BITHUMB_API_SERVER_URL", "")
-        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
-            self.logger.warning("BITHUMB API credentials are not set")
-        self.is_opt_mode = opt_mode
-        self.asset = (0, 0)  # avr_price, amount
-        self.balance = budget
-        self.commission_ratio = commission_ratio
+        super().__init__(
+            budget=budget,
+            currency=currency,
+            commission_ratio=commission_ratio,
+            opt_mode=opt_mode,
+            logger_name="BithumbTrader",
+            worker_name="BTR-Worker",
+            env_key_names=(
+                "BITHUMB_API_ACCESS_KEY",
+                "BITHUMB_API_SECRET_KEY",
+                "BITHUMB_API_SERVER_URL",
+            ),
+        )
         currency_info = self.AVAILABLE_CURRENCY[currency]
         self.market = currency_info[0]
         self.market_currency = currency_info[1]
@@ -62,55 +55,10 @@ class BithumbTrader(Trader):
         )
 
     @staticmethod
-    def _create_success_result(request):
-        return {
-            "state": "requested",
-            "request": request,
-            "type": request["type"],
-            "price": request["price"],
-            "amount": request["amount"],
-            "msg": "success",
-        }
-
-    @staticmethod
     def _timestamp_millisec():
         mt_string = "%f %d" % math.modf(time.time())
         mt_array = mt_string.split(" ")[:2]
         return mt_array[1] + mt_array[0][2:5]
-
-    def send_request(self, request_list, callback):
-        """
-        거래 요청을 처리한다
-
-        Process trading requests
-
-        request_list: 한 개 이상의 거래 요청 정보 리스트
-        [{
-            "id": 요청 정보 id "1607862457.560075"
-            "type": 거래 유형 sell, buy, cancel
-            "price": 거래 가격
-            "amount": 거래 수량
-            "date_time": 요청 데이터 생성 시간
-        }]
-        callback(result): 결과를 전달할 콜백함수
-        {
-            "request": 요청 정보
-            "type": 거래 유형 sell, buy, cancel
-            "price": 거래 가격
-            "amount": 거래 수량
-            "state": 거래 상태 requested, done
-            "msg": 거래 결과 메세지
-            "date_time": 거래 체결 시간
-        }
-        """
-        for request in request_list:
-            self.worker.post_task(
-                {
-                    "runnable": self._execute_order,
-                    "request": request,
-                    "callback": callback,
-                }
-            )
 
     def get_account_info(self):
         """
@@ -181,18 +129,6 @@ class BithumbTrader(Trader):
         self.logger.debug(f"canceled: {request_id}")
         self._call_callback(order["callback"], result)
 
-    def cancel_all_requests(self):
-        """
-        모든 거래 요청을 취소한다
-        체결되지 않고 대기중인 모든 거래 요청을 취소한다
-
-        Cancel all trading requests
-        Cancel all trading requests that are pending and not executed
-        """
-        orders = copy.deepcopy(self.order_map)
-        for request_id in orders.keys():
-            self.cancel_request(request_id)
-
     def _execute_order(self, task):
         request = task["request"]
         if request["type"] == "cancel":
@@ -253,25 +189,6 @@ class BithumbTrader(Trader):
         }
         return self.bithumb_api_call("/trade/cancel", query)
 
-    def _start_timer(self):
-        if self.timer is not None:
-            return
-
-        def post_query_result_task():
-            self.worker.post_task({"runnable": self._update_order_result})
-
-        self.timer = threading.Timer(
-            self.RESULT_CHECKING_INTERVAL, post_query_result_task
-        )
-        self.timer.start()
-
-    def _stop_timer(self):
-        if self.timer is None:
-            return
-
-        self.timer.cancel()
-        self.timer = None
-
     def _update_order_result(self, task):
         del task
         waiting_request = {}
@@ -300,32 +217,6 @@ class BithumbTrader(Trader):
         self._stop_timer()
         if len(self.order_map) > 0:
             self._start_timer()
-
-    def _call_callback(self, callback, result):
-        result_value = float(result["price"]) * float(result["amount"])
-        fee = result_value * self.commission_ratio
-
-        if result["state"] == "done" and result["type"] == "buy":
-            old_value = self.asset[0] * self.asset[1]
-            new_value = old_value + result_value
-            new_amount = self.asset[1] + float(result["amount"])
-            new_amount = round(new_amount, 6)
-            if new_amount == 0:
-                avr_price = 0
-            else:
-                avr_price = new_value / new_amount
-            self.asset = (avr_price, new_amount)
-            self.balance -= round(result_value + fee)
-        elif result["state"] == "done" and result["type"] == "sell":
-            old_avr_price = self.asset[0]
-            new_amount = self.asset[1] - float(result["amount"])
-            new_amount = round(new_amount, 6)
-            if new_amount == 0:
-                old_avr_price = 0
-            self.asset = (old_avr_price, new_amount)
-            self.balance += round(result_value - fee)
-
-        callback(result)
 
     def _send_limit_order(self, is_buy, price=None, volume=0.0001):
         """
@@ -441,32 +332,17 @@ class BithumbTrader(Trader):
 
         querystring = {"count": "1"}
 
-        try:
-            response = requests.get(
-                f"{self.SERVER_URL}/public/transaction_history/{self.market}_{self.market_currency}",
-                params=querystring,
-            )
-            response.raise_for_status()
-            result = response.json()
-        except ValueError as err:
-            self.logger.error(f"Invalid data from server: {err}")
-            return None
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return None
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return None
-
-        return result
+        return self._request_get(
+            f"{self.SERVER_URL}/public/transaction_history/{self.market}_{self.market_currency}",
+            params=querystring,
+        )
 
     def bithumb_api_call(self, endpoint, params):
         """빗썸 api wrapper
         nonce: it is an arbitrary number that may only be used once.
         api_sign: API signature information created in various combinations values.
         """
-        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
-            self.logger.error("API credentials are not configured")
+        if not self._validate_credentials():
             return None
 
         uri_array = dict(
@@ -496,18 +372,4 @@ class BithumbTrader(Trader):
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        try:
-            response = requests.post(url, headers=headers, data=str_data)
-            response.raise_for_status()
-            result = response.json()
-        except ValueError as err:
-            self.logger.error(f"Invalid data from server: {err}")
-            return None
-        except requests.exceptions.HTTPError as msg:
-            self.logger.error(msg)
-            return None
-        except requests.exceptions.RequestException as msg:
-            self.logger.error(msg)
-            return None
-
-        return result
+        return self._request_post(url, headers=headers, data=str_data)
