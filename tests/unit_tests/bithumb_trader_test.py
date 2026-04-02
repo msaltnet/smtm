@@ -1,8 +1,16 @@
+import os
 import unittest
 from smtm import BithumbTrader
 from unittest.mock import *
 
+TEST_BITHUMB_ENV = {
+    "BITHUMB_API_ACCESS_KEY": "test_access_key",
+    "BITHUMB_API_SECRET_KEY": "test_secret_key",
+    "BITHUMB_API_SERVER_URL": "http://test_server",
+}
 
+
+@patch.dict(os.environ, TEST_BITHUMB_ENV)
 class BithumbTraderBalanceTests(unittest.TestCase):
     def setUp(self):
         pass
@@ -83,6 +91,7 @@ class BithumbTraderBalanceTests(unittest.TestCase):
         dummy_callback.assert_called_once_with(dummy_result)
 
 
+@patch.dict(os.environ, TEST_BITHUMB_ENV)
 class BithumbTraderCancelRequestTests(unittest.TestCase):
     def setUp(self):
         self.patcher_delete = patch("requests.delete")
@@ -200,6 +209,7 @@ class BithumbTraderCancelRequestTests(unittest.TestCase):
         trader.bithumb_api_call.assert_called_once_with("/trade/cancel", expected_query)
 
 
+@patch.dict(os.environ, TEST_BITHUMB_ENV)
 class BithumbTraderBasicTests(unittest.TestCase):
     def setUp(self):
         pass

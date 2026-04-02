@@ -1,10 +1,18 @@
+import os
 import unittest
 import requests
 from urllib.parse import urlencode
 from smtm import UpbitTrader
 from unittest.mock import *
 
+TEST_UPBIT_ENV = {
+    "UPBIT_OPEN_API_ACCESS_KEY": "test_access_key",
+    "UPBIT_OPEN_API_SECRET_KEY": "test_secret_key",
+    "UPBIT_OPEN_API_SERVER_URL": "http://test_server",
+}
 
+
+@patch.dict(os.environ, TEST_UPBIT_ENV)
 class UpditTraderTests(unittest.TestCase):
     def setUp(self):
         pass
@@ -518,6 +526,7 @@ class UpditTraderTests(unittest.TestCase):
         mock_get.assert_called_once_with(expected_url, headers=dummy_headers)
 
 
+@patch.dict(os.environ, TEST_UPBIT_ENV)
 class UpditTraderSendOrderTests(unittest.TestCase):
     def setUp(self):
         self.post_patcher = patch("requests.post")
@@ -745,6 +754,7 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         trader._create_market_price_order_query.assert_not_called()
 
 
+@patch.dict(os.environ, TEST_UPBIT_ENV)
 class UpditTraderGetAccountTests(unittest.TestCase):
     def setUp(self):
         pass
@@ -773,6 +783,7 @@ class UpditTraderGetAccountTests(unittest.TestCase):
         trader.get_trade_tick.assert_called_once_with()
 
 
+@patch.dict(os.environ, TEST_UPBIT_ENV)
 class UpditTraderCancelRequestTests(unittest.TestCase):
     def setUp(self):
         self.patcher_delete = patch("requests.delete")
@@ -1085,6 +1096,7 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         )
 
 
+@patch.dict(os.environ, TEST_UPBIT_ENV)
 class UpditTraderBalanceTests(unittest.TestCase):
     def setUp(self):
         pass

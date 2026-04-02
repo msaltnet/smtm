@@ -12,11 +12,8 @@ import threading
 from urllib import parse
 from typing import Optional, Dict, Any, Callable
 import requests
-from dotenv import load_dotenv
 from ...log_manager import LogManager
 from ...worker import Worker
-
-load_dotenv()
 
 
 class TelegramMessageHandler:

@@ -9,12 +9,9 @@ import base64
 import hmac
 import hashlib
 import requests
-from dotenv import load_dotenv
 from ..log_manager import LogManager
 from .trader import Trader
 from ..worker import Worker
-
-load_dotenv()
 
 
 class BithumbTrader(Trader):
@@ -45,9 +42,11 @@ class BithumbTrader(Trader):
         self.worker.start()
         self.timer = None
         self.order_map = {}
-        self.ACCESS_KEY = os.environ.get("BITHUMB_API_ACCESS_KEY", "bithumb_access_key")
-        self.SECRET_KEY = os.environ.get("BITHUMB_API_SECRET_KEY", "bithumb_secret_key")
-        self.SERVER_URL = os.environ.get("BITHUMB_API_SERVER_URL", "bithumb_server_url")
+        self.ACCESS_KEY = os.environ.get("BITHUMB_API_ACCESS_KEY", "")
+        self.SECRET_KEY = os.environ.get("BITHUMB_API_SECRET_KEY", "")
+        self.SERVER_URL = os.environ.get("BITHUMB_API_SERVER_URL", "")
+        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
+            self.logger.warning("BITHUMB API credentials are not set")
         self.is_opt_mode = opt_mode
         self.asset = (0, 0)  # avr_price, amount
         self.balance = budget
@@ -436,6 +435,10 @@ class BithumbTrader(Trader):
             price: Currency 거래가, Number (String)
             total: 총 거래 금액, Number (String)
         """
+        if not self.SERVER_URL:
+            self.logger.error("API credentials are not configured")
+            return None
+
         querystring = {"count": "1"}
 
         try:
@@ -462,6 +465,10 @@ class BithumbTrader(Trader):
         nonce: it is an arbitrary number that may only be used once.
         api_sign: API signature information created in various combinations values.
         """
+        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
+            self.logger.error("API credentials are not configured")
+            return None
+
         uri_array = dict(
             {"endpoint": endpoint}, **params
         )  # Concatenate the two arrays.

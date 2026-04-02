@@ -7,12 +7,9 @@ import hashlib
 from urllib.parse import urlencode
 import requests
 import jwt  # PyJWT
-from dotenv import load_dotenv
 from ..log_manager import LogManager
 from .trader import Trader
 from ..worker import Worker
-
-load_dotenv()
 
 
 class UpbitTrader(Trader):
@@ -48,15 +45,11 @@ class UpbitTrader(Trader):
         self.worker.start()
         self.timer = None
         self.order_map = {}
-        self.ACCESS_KEY = os.environ.get(
-            "UPBIT_OPEN_API_ACCESS_KEY", "upbit_access_key"
-        )
-        self.SECRET_KEY = os.environ.get(
-            "UPBIT_OPEN_API_SECRET_KEY", "upbit_secret_key"
-        )
-        self.SERVER_URL = os.environ.get(
-            "UPBIT_OPEN_API_SERVER_URL", "upbit_server_url"
-        )
+        self.ACCESS_KEY = os.environ.get("UPBIT_OPEN_API_ACCESS_KEY", "")
+        self.SECRET_KEY = os.environ.get("UPBIT_OPEN_API_SECRET_KEY", "")
+        self.SERVER_URL = os.environ.get("UPBIT_OPEN_API_SERVER_URL", "")
+        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
+            self.logger.warning("UPBIT API credentials are not set")
         self.is_opt_mode = opt_mode
         self.asset = (0, 0)  # avr_price, amount
         self.balance = budget
@@ -378,6 +371,10 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
+        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
+            self.logger.error("API credentials are not configured")
+            return None
+
         self.logger.info(f"ORDER ##### {'BUY' if is_buy else 'SELL'}")
         self.logger.info(f"{market}, price: {price}, volume: {volume}")
         if price is not None and volume is not None:
@@ -462,6 +459,10 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
+        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
+            self.logger.error("API credentials are not configured")
+            return None
+
         query_states = ["wait", "watch"]
         if is_done_state:
             query_states = ["done", "cancel"]
@@ -496,6 +497,10 @@ class UpbitTrader(Trader):
             avg_buy_price_modified: 매수평균가 수정 여부, Boolean
             unit_currency: 평단가 기준 화폐, String
         """
+        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
+            self.logger.error("API credentials are not configured")
+            return None
+
         jwt_token = self._create_jwt_token(self.ACCESS_KEY, self.SECRET_KEY)
         authorize_token = "Bearer {}".format(jwt_token)
         headers = {"Authorization": authorize_token}
@@ -562,6 +567,10 @@ class UpbitTrader(Trader):
             executed_volume: 체결된 양, NumberString
             trade_count: 해당 주문에 걸린 체결 수, Integer
         """
+        if not self.ACCESS_KEY or not self.SECRET_KEY or not self.SERVER_URL:
+            self.logger.error("API credentials are not configured")
+            return None
+
         self.logger.info(f"CANCEL ORDER ##### {request_uuid}")
 
         query = {
