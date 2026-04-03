@@ -29,6 +29,7 @@ from .trader.virtual_market import VirtualMarket
 from .trader.demo_trader import DemoTrader
 from .trader.upbit_trader import UpbitTrader
 from .trader.bithumb_trader import BithumbTrader
+from .trader.trader_factory import TraderFactory
 from .operator import Operator
 from .simulation_operator import SimulationOperator
 from .controller.controller import Controller

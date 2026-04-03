@@ -24,6 +24,7 @@ class BithumbTrader(BaseExchangeTrader):
 
     AVAILABLE_CURRENCY = {"BTC": ("BTC", "KRW"), "ETH": ("ETH", "KRW")}
     NAME = "Bithumb"
+    CODE = "BTH"
 
     def __init__(
         self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True

@@ -55,7 +55,11 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
     parser.add_argument(
         "--strategy", help="BNH: buy and hold, SMA: sma, RSI: rsi", default="BNH"
     )
-    parser.add_argument("--trader", help="trader 0: Upbit, 1: Bithumb", default="0")
+    parser.add_argument(
+        "--trader",
+        help="exchange code UPB: Upbit, BTH: Bithumb (0, 1 also supported)",
+        default="UPB",
+    )
     parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
     parser.add_argument("--config", help="mass simulation config file", default="")
     parser.add_argument(
@@ -87,6 +91,11 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
     parser.add_argument(
         "--version", action="version", version=f"smtm version: {__version__}"
     )
+    def _resolve_exchange_code(value):
+        """Convert legacy numeric trader values to exchange codes."""
+        legacy_map = {"0": "UPB", "1": "BTH"}
+        return legacy_map.get(value, value)
+
     args = parser.parse_args()
     if args.log is not None:
         LogManager.change_log_file(args.log)
@@ -109,12 +118,13 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
     elif args.mode == 1:
         simulator.run_single()
     elif args.mode == 2:
+        exchange = _resolve_exchange_code(args.trader)
         controller = Controller(
             budget=args.budget,
             interval=args.term,
             strategy=args.strategy,
             currency=args.currency,
-            is_bithumb=args.trader == "1",
+            exchange=exchange,
         )
         controller.main()
     elif args.mode == 3:

@@ -56,7 +56,7 @@ class JptControllerTests(unittest.TestCase):
         self.assertTrue(isinstance(mock_initialize.call_args_list[1][0][3], Analyzer))
         self.assertEqual(mock_initialize.call_args_list[1][1]["budget"], 700)
 
-        controller.initialize(interval=5, strategy="SMA", budget=888, is_bithumb=True)
+        controller.initialize(interval=5, strategy="SMA", budget=888, exchange="BTH")
         mock_set_interval.assert_called_with(5)
         self.assertTrue(
             isinstance(mock_initialize.call_args_list[2][0][0], BithumbDataProvider)

@@ -2,10 +2,8 @@ from IPython.display import Image, display
 from ..config import Config
 from ..log_manager import LogManager
 from ..analyzer import Analyzer
-from ..trader.upbit_trader import UpbitTrader
-from ..data.upbit_data_provider import UpbitDataProvider
-from ..trader.bithumb_trader import BithumbTrader
-from ..data.bithumb_data_provider import BithumbDataProvider
+from ..trader.trader_factory import TraderFactory
+from ..data.data_provider_factory import DataProviderFactory
 from ..strategy.strategy_factory import StrategyFactory
 from ..operator import Operator
 
@@ -34,7 +32,7 @@ class JptController:
         self.need_init = True
         self.logger = LogManager.get_logger("JptController")
 
-    def initialize(self, interval=10, strategy=0, budget=50000, is_bithumb=False):
+    def initialize(self, interval=10, strategy=0, budget=50000, exchange="UPB"):
         self.interval = interval
         self.strategy_code = strategy
         self.budget = budget
@@ -44,18 +42,17 @@ class JptController:
             raise UserWarning(f"Invalid Strategy! {self.strategy_code}")
 
         self.operator = Operator()
-        if is_bithumb:
-            data_provider = BithumbDataProvider(currency=self.market)
-            trader = BithumbTrader(
-                currency=self.market, commission_ratio=0.0005, budget=self.budget
-            )
-        else:
-            data_provider = UpbitDataProvider(
-                currency=self.market, interval=Config.candle_interval
-            )
-            trader = UpbitTrader(
-                currency=self.market, commission_ratio=0.0005, budget=self.budget
-            )
+        data_provider = DataProviderFactory.create(
+            exchange, currency=self.market, interval=Config.candle_interval
+        )
+        trader = TraderFactory.create(
+            exchange,
+            budget=self.budget,
+            currency=self.market,
+            commission_ratio=self.commission_ratio,
+        )
+        if data_provider is None or trader is None:
+            raise UserWarning(f"Invalid exchange code! {exchange}")
 
         self.operator.initialize(
             data_provider,

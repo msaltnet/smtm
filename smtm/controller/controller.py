@@ -2,10 +2,8 @@ import signal
 from ..config import Config
 from ..log_manager import LogManager
 from ..analyzer import Analyzer
-from ..trader.upbit_trader import UpbitTrader
-from ..data.upbit_data_provider import UpbitDataProvider
-from ..trader.bithumb_trader import BithumbTrader
-from ..data.bithumb_data_provider import BithumbDataProvider
+from ..trader.trader_factory import TraderFactory
+from ..data.data_provider_factory import DataProviderFactory
 from ..strategy.strategy_factory import StrategyFactory
 from ..operator import Operator
 
@@ -24,7 +22,7 @@ class Controller:
         strategy="BNH",
         budget=50000,
         currency="BTC",
-        is_bithumb=False,
+        exchange="UPB",
     ):
         self.logger = LogManager.get_logger("Controller")
         self.terminating = False
@@ -35,7 +33,7 @@ class Controller:
         self.is_initialized = False
         self.command_list = []
         self.create_command()
-        self.is_bithumb = is_bithumb
+        self.exchange = exchange
         self.strategy = None
         self.currency = currency
         LogManager.set_stream_level(Config.operation_log_level)
@@ -74,14 +72,14 @@ class Controller:
         ]
 
     def main(self):
-        if self.is_bithumb:
-            data_provider = BithumbDataProvider(currency=self.currency)
-            trader = BithumbTrader(currency=self.currency, budget=self.budget)
-        else:
-            data_provider = UpbitDataProvider(
-                currency=self.currency, interval=Config.candle_interval
-            )
-            trader = UpbitTrader(currency=self.currency, budget=self.budget)
+        data_provider = DataProviderFactory.create(
+            self.exchange, currency=self.currency, interval=Config.candle_interval
+        )
+        trader = TraderFactory.create(
+            self.exchange, budget=self.budget, currency=self.currency
+        )
+        if data_provider is None or trader is None:
+            raise UserWarning(f"Invalid exchange code! {self.exchange}")
 
         self.operator.initialize(
             data_provider,

@@ -25,6 +25,7 @@ class UpbitTrader(BaseExchangeTrader):
         "XRP": ("KRW-XRP", "XRP"),
     }
     NAME = "Upbit"
+    CODE = "UPB"
 
     def __init__(
         self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True
