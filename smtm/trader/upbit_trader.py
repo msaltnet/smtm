@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 import requests
 import jwt  # PyJWT
 from .base_exchange_trader import BaseExchangeTrader
+from ..http_session import request_with_retry
 
 
 class UpbitTrader(BaseExchangeTrader):
@@ -474,7 +475,8 @@ class UpbitTrader(BaseExchangeTrader):
         headers = {"Authorization": authorize_token}
 
         try:
-            response = requests.delete(
+            response = request_with_retry(
+                requests.delete,
                 self.SERVER_URL + "/v1/order", params=query_string, headers=headers
             )
             response.raise_for_status()

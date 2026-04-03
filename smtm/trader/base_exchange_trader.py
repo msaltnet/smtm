@@ -4,6 +4,7 @@ import threading
 from datetime import datetime
 import requests
 from ..log_manager import LogManager
+from ..http_session import request_with_retry
 from .trader import Trader
 from ..worker import Worker
 
@@ -154,9 +155,13 @@ class BaseExchangeTrader(Trader):
     def _request_get(self, url, headers=None, params=None):
         try:
             if params is not None:
-                response = requests.get(url, params=params, headers=headers)
+                response = request_with_retry(
+                    requests.get, url, params=params, headers=headers
+                )
             else:
-                response = requests.get(url, headers=headers)
+                response = request_with_retry(
+                    requests.get, url, headers=headers
+                )
             response.raise_for_status()
             result = response.json()
         except ValueError as err:
@@ -178,7 +183,7 @@ class BaseExchangeTrader(Trader):
                 kwargs["params"] = params
             if data is not None:
                 kwargs["data"] = data
-            response = requests.post(url, **kwargs)
+            response = request_with_retry(requests.post, url, **kwargs)
             response.raise_for_status()
             result = response.json()
         except ValueError as err:

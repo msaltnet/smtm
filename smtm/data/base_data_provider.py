@@ -1,6 +1,7 @@
 import requests
 from .data_provider import DataProvider
 from ..log_manager import LogManager
+from ..http_session import request_with_retry
 
 
 class BaseDataProvider(DataProvider):
@@ -25,9 +26,11 @@ class BaseDataProvider(DataProvider):
     def _get_data_from_server(self):
         try:
             if self._query_params is not None:
-                response = requests.get(self._api_url, params=self._query_params)
+                response = request_with_retry(
+                    requests.get, self._api_url, params=self._query_params
+                )
             else:
-                response = requests.get(self._api_url)
+                response = request_with_retry(requests.get, self._api_url)
             response.raise_for_status()
             return response.json()
         except ValueError as error:
