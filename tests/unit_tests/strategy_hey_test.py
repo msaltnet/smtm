@@ -6,12 +6,12 @@ import numpy as np
 class StrategyHeyTests(unittest.TestCase):
     def test_initialize_update_initial_balance(self):
         sas = StrategyHey()
-        self.assertEqual(sas.is_intialized, False)
+        self.assertEqual(sas.is_initialized, False)
         sas.initialize(50000, 50)
         self.assertEqual(sas.budget, 50000)
         self.assertEqual(sas.balance, 50000)
         self.assertEqual(sas.min_price, 50)
-        self.assertEqual(sas.is_intialized, True)
+        self.assertEqual(sas.is_initialized, True)
         sas.initialize(100, 10)
         self.assertEqual(sas.budget, 50000)
         self.assertEqual(sas.balance, 50000)

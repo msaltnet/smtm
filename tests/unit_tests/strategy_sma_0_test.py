@@ -12,12 +12,12 @@ class StrategySma0Tests(unittest.TestCase):
 
     def test_initialize_update_initial_balance(self):
         sma = StrategySma0()
-        self.assertEqual(sma.is_intialized, False)
+        self.assertEqual(sma.is_initialized, False)
         sma.initialize(50000, 50)
         self.assertEqual(sma.budget, 50000)
         self.assertEqual(sma.balance, 50000)
         self.assertEqual(sma.min_price, 50)
-        self.assertEqual(sma.is_intialized, True)
+        self.assertEqual(sma.is_initialized, True)
         sma.initialize(100, 10)
         self.assertEqual(sma.budget, 50000)
         self.assertEqual(sma.balance, 50000)

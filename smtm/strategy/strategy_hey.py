@@ -13,7 +13,7 @@ class StrategyHey(StrategySas):
     Moving average line, volatility breakout strategy, etc. Strategy class that delivers alerts when major events occur
     Volatility breakout events occur too frequently when based on minute candles -> Commented out
 
-    is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
+    is_initialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
     result: 거래 요청 결과 리스트
     request: 마지막 거래 요청
@@ -34,7 +34,7 @@ class StrategyHey(StrategySas):
     VOLATILITY_BREAKOUT = 1.5
 
     def __init__(self):
-        self.is_intialized = False
+        self.is_initialized = False
         self.is_simulation = False
         self.data = []
         self.budget = 0
@@ -63,10 +63,10 @@ class StrategyHey(StrategySas):
         add_line_callback=None,
         alert_callback=None,
     ):
-        if self.is_intialized:
+        if self.is_initialized:
             return
 
-        self.is_intialized = True
+        self.is_initialized = True
         self.budget = budget
         self.balance = budget
         self.min_price = min_price
@@ -89,7 +89,7 @@ class StrategyHey(StrategySas):
             "acc_volume": 단위 시간내 누적 거래 양
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
         target = None
         for item in info:

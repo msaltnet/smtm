@@ -27,7 +27,7 @@ class StrategyBuyAndHold(Strategy):
     CODE = "BNH"
 
     def __init__(self):
-        self.is_intialized = False
+        self.is_initialized = False
         self.is_simulation = False
         self.data = []
         self.budget = 0
@@ -53,7 +53,7 @@ class StrategyBuyAndHold(Strategy):
             "acc_volume": 단위 시간내 누적 거래 양
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
 
         target = None
@@ -82,7 +82,7 @@ class StrategyBuyAndHold(Strategy):
             "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
 
         try:
@@ -131,7 +131,7 @@ class StrategyBuyAndHold(Strategy):
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
         }]
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return None
 
         try:
@@ -207,10 +207,10 @@ class StrategyBuyAndHold(Strategy):
         add_line_callback=None,
         alert_callback=None,
     ):
-        if self.is_intialized:
+        if self.is_initialized:
             return
 
-        self.is_intialized = True
+        self.is_initialized = True
         self.budget = budget
         self.balance = budget
         self.min_price = min_price

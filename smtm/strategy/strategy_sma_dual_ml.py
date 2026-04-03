@@ -37,7 +37,7 @@ class StrategySmaDualMl(Strategy):
     Additionally, the Binance close price is displayed as a line graph
     Binance data moving averages or volatility can be used as needed
 
-    is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
+    is_initialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
     result: 거래 요청 결과 리스트
     request: 마지막 거래 요청
@@ -70,7 +70,7 @@ class StrategySmaDualMl(Strategy):
     LR_UPPER_LIMIT = 0.000014
 
     def __init__(self):
-        self.is_intialized = False
+        self.is_initialized = False
         self.is_simulation = False
         self.data = []
         self.data_binance = []
@@ -105,10 +105,10 @@ class StrategySmaDualMl(Strategy):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
-        if self.is_intialized:
+        if self.is_initialized:
             return
 
-        self.is_intialized = True
+        self.is_initialized = True
         self.budget = budget
         self.balance = budget
         self.min_price = min_price
@@ -132,7 +132,7 @@ class StrategySmaDualMl(Strategy):
             "acc_volume": 단위 시간내 누적 거래 양
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
         target = None
         binance_data = None
@@ -312,7 +312,7 @@ class StrategySmaDualMl(Strategy):
             "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
 
         try:
@@ -387,7 +387,7 @@ class StrategySmaDualMl(Strategy):
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
         }]
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return None
 
         try:

@@ -11,7 +11,7 @@ class StrategySas(Strategy):
 
     Strategy that only delivers alerts when certain conditions are met, no trading is done
 
-    is_intialized: 최초 잔고는 초기화 할 때만 갱신 된다
+    is_initialized: 최초 잔고는 초기화 할 때만 갱신 된다
     data: 거래 데이터 리스트, OHLCV 데이터
     result: 거래 요청 결과 리스트
     request: 마지막 거래 요청
@@ -27,7 +27,7 @@ class StrategySas(Strategy):
     ALERT_INTERVAL_TICK = 5
 
     def __init__(self):
-        self.is_intialized = False
+        self.is_initialized = False
         self.is_simulation = False
         self.data = []
         self.budget = 0
@@ -51,10 +51,10 @@ class StrategySas(Strategy):
         """
         예산과 최소 거래 가능 금액을 설정한다
         """
-        if self.is_intialized:
+        if self.is_initialized:
             return
 
-        self.is_intialized = True
+        self.is_initialized = True
         self.budget = budget
         self.balance = budget
         self.min_price = min_price
@@ -76,7 +76,7 @@ class StrategySas(Strategy):
             "acc_volume": 단위 시간내 누적 거래 양
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
         target = None
         for item in info:
@@ -105,7 +105,7 @@ class StrategySas(Strategy):
             "date_time": 시뮬레이션 모드에서는 데이터 시간 +2초
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
 
         try:

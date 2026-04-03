@@ -24,7 +24,7 @@ class StrategyRsi(Strategy):
     CODE = "RSI"
 
     def __init__(self):
-        self.is_intialized = False
+        self.is_initialized = False
         self.is_simulation = False
         self.rsi_info = None
         self.rsi = []
@@ -53,10 +53,10 @@ class StrategyRsi(Strategy):
         min_price: 최소 거래 금액, 거래소의 최소 거래 금액
         add_spot_callback(date_time, value): 그래프에 그려질 spot을 추가하는 콜백 함수
         """
-        if self.is_intialized:
+        if self.is_initialized:
             return
 
-        self.is_intialized = True
+        self.is_initialized = True
         self.budget = budget
         self.balance = budget
         self.min_price = min_price
@@ -79,7 +79,7 @@ class StrategyRsi(Strategy):
             "date_time": 요청 데이터 생성 시간, 시뮬레이션 모드에서는 데이터 시간
         }]
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return None
 
         try:
@@ -169,7 +169,7 @@ class StrategyRsi(Strategy):
             "acc_volume": 단위 시간내 누적 거래 양
         }
         """
-        if self.is_intialized is not True or info is None:
+        if self.is_initialized is not True or info is None:
             return
         target = None
         for item in info:
@@ -266,7 +266,7 @@ class StrategyRsi(Strategy):
             "date_time": 거래 체결 시간, 시뮬레이션 모드에서는 데이터 시간 +2초
         }
         """
-        if self.is_intialized is not True:
+        if self.is_initialized is not True:
             return
 
         try:
