@@ -37,9 +37,15 @@ from .controller.jpt_controller import JptController
 from .controller.telegram_controller import TelegramController
 from .controller.mass_simulator import MassSimulator
 from .controller.simulator import Simulator
+from .llm.llm_operator import LlmOperator
+from .llm.llm_client import LlmClient
+from .llm.claude_llm_client import ClaudeLlmClient
+from .llm.safety_guard import SafetyGuard, SafetyConfig
+from .llm.system_monitor import SystemMonitor
 
 __all__ = [
     "LogManager",
+    "LlmOperator",
     "Simulator",
     "MassSimulator",
     "Controller",
