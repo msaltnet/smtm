@@ -1,1 +1,0 @@
-jupyter nbconvert --clear-output --inplace .\notebook\*.ipynb

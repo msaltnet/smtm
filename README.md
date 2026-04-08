@@ -6,38 +6,33 @@
 
 > It's a game to get money. 
 
-An algorithm-based automated cryptocurrency trading system made in Python. https://smtm.msalt.net
+An LLM-powered autonomous cryptocurrency trading system made in Python. https://smtm.msalt.net
 
 [한국어](https://github.com/msaltnet/smtm/blob/master/README-ko-kr.md) 👈
 
 [![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
-"Data Gathering🔍 ➡️ Strategy Algorithm🖥️ ➡️ Realtime Trading💸" Repeat the process at a set interval
+LLM autonomously analyzes market data, makes trading decisions, and executes trades using tools -- all controlled through a simple chat interface.
 
-1. The Data Provider module aggregates data  
-2. Make a decision using the Strategy module  
-3. Execute a trading via the Trader module  
- --- repeat ---
-4. Create analyzing result by the Analyzer module  
-
-❗ It is not suitable for high-performance trading machines that need to process many trades in a short timeframe of seconds.
-
-![smtm-procedure](https://github.com/user-attachments/assets/b4bb1729-e455-4329-914c-19bca6914735)
+1. LlmOperator periodically invokes the LLM with market context  
+2. LLM autonomously calls tools (market data, trade, portfolio, etc.)  
+3. SafetyGuard enforces trading limits at the tool level  
+4. SystemMonitor independently logs all activity  
 
 ## Features
-- Mass-simulation with Multi-process
-- Remote Control with Jupyter Notebook
-- Automated trading programs controlled by Telegram
-
-Controlling an automated trading program using the Telegram messenger
-
-![smtm_bot](https://github.com/user-attachments/assets/bddcee69-469a-4e57-b0fa-b1b78266a8a7)
-
-![smtm-telegram-mode](https://github.com/msaltnet/smtm/assets/9311990/22ba2ebd-13e6-4eee-a829-94209c5618a9)
+- LLM-powered autonomous trading decisions via tool use
+- Safety guardrails (max trade amount, daily trade limit, loss ratio ceiling)
+- CLI interactive mode and Telegram chatbot control
+- Strategy knowledge loaded as documents (SMA, RSI, Buy & Hold)
+- Vendor-independent LLM client abstraction (Claude, OpenAI, Ollama)
 
 ## Architecture
-Layered Architecture for Scalability and Maintainability
+
+**LlmOperator** replaces the traditional rule-based pipeline with a single chat interface:
+
+- **DataProvider** -> Market Data Tool
+- **Trader** -> Trade / Portfolio Tools  
+- **Strategy** -> Knowledge documents (RAG)
+- **Analyzer** -> SystemMonitor + Performance Tool
 
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
-
-![smtm component](https://user-images.githubusercontent.com/9311990/221420624-9807ca39-31c7-4bb6-b3de-3a4114f22430.png)
