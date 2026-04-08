@@ -1,77 +1,43 @@
+import os
 import signal
 from ..config import Config
 from ..log_manager import LogManager
-from ..analyzer import Analyzer
+from ..llm.llm_operator import LlmOperator
+from ..llm.claude_llm_client import ClaudeLlmClient
 from ..trader.trader_factory import TraderFactory
 from ..data.data_provider_factory import DataProviderFactory
-from ..strategy.strategy_factory import StrategyFactory
-from ..operator import Operator
 
 
 class Controller:
-    """
-    CLI를 사용하는 기본 컨트롤러
-    Basic controller using CLI
-    """
+    """LLM 기반 CLI 컨트롤러"""
 
-    MAIN_STATEMENT = "명령어를 입력하세요. (h: 도움말): "
+    MAIN_STATEMENT = "메시지를 입력하세요 (q: 종료): "
 
-    def __init__(
-        self,
-        interval=10,
-        strategy="BNH",
-        budget=50000,
-        currency="BTC",
-        exchange="UPB",
-    ):
+    def __init__(self, interval=60, budget=500000, currency="BTC", exchange="UPB"):
         self.logger = LogManager.get_logger("Controller")
         self.terminating = False
         self.interval = float(interval)
-        self.operator = Operator()
-
         self.budget = int(budget)
-        self.is_initialized = False
-        self.command_list = []
-        self.create_command()
-        self.exchange = exchange
-        self.strategy = None
         self.currency = currency
+        self.exchange = exchange
         LogManager.set_stream_level(Config.operation_log_level)
 
-        self.strategy = StrategyFactory.create(strategy)
-        if self.strategy is None:
-            raise UserWarning(f"Invalid Strategy! {strategy}")
-
-    def create_command(self):
-        self.command_list = [
-            {
-                "guide": "{0:15}도움말 출력".format("h, help"),
-                "cmd": ["help", "h"],
-                "action": self.print_help,
-            },
-            {
-                "guide": "{0:15}자동 거래 시작".format("r, run"),
-                "cmd": ["run", "r"],
-                "action": self.start,
-            },
-            {
-                "guide": "{0:15}자동 거래 중지".format("s, stop"),
-                "cmd": ["stop", "s"],
-                "action": self.stop,
-            },
-            {
-                "guide": "{0:15}프로그램 종료".format("t, terminate"),
-                "cmd": ["terminate", "t"],
-                "action": self.terminate,
-            },
-            {
-                "guide": "{0:15}정보 조회".format("q, query"),
-                "cmd": ["query", "q"],
-                "action": self._on_query_command,
-            },
-        ]
-
     def main(self):
+        api_key = os.environ.get("SMTM_LLM_API_KEY", "")
+        if not api_key:
+            print("SMTM_LLM_API_KEY 환경변수를 설정해주세요")
+            return
+
+        llm_client = ClaudeLlmClient(api_key=api_key)
+        config = {
+            "exchange": self.exchange,
+            "currency": self.currency,
+            "budget": self.budget,
+            "interval": self.interval,
+            "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
+        }
+        operator = LlmOperator(llm_client, config)
+
         data_provider = DataProviderFactory.create(
             self.exchange, currency=self.currency, interval=Config.candle_interval
         )
@@ -79,94 +45,40 @@ class Controller:
             self.exchange, budget=self.budget, currency=self.currency
         )
         if data_provider is None or trader is None:
-            raise UserWarning(f"Invalid exchange code! {self.exchange}")
+            print(f"Invalid exchange code: {self.exchange}")
+            return
 
-        self.operator.initialize(
-            data_provider,
-            self.strategy,
-            trader,
-            Analyzer(),
-            budget=self.budget,
-        )
+        operator.setup_tools(data_provider=data_provider, trader=trader)
 
-        self.operator.set_interval(self.interval)
-        print("##### smtm is intialized #####")
-        print(
-            f"interval: {self.interval}, strategy: {self.strategy.NAME} , trader: {trader.NAME}"
-        )
+        print("##### smtm LLM trading system is initialized #####")
+        print(f"exchange: {self.exchange}, currency: {self.currency}, budget: {self.budget}")
+        print("'start'를 입력하면 자동 매매가 시작됩니다")
         print("==============================")
 
-        self.logger.info(
-            f"interval: {self.interval}, strategy: {self.strategy.NAME} , trader: {trader.NAME}"
-        )
-        signal.signal(signal.SIGINT, self.terminate)
-        signal.signal(signal.SIGTERM, self.terminate)
+        signal.signal(signal.SIGINT, lambda s, f: self._terminate(operator))
+        signal.signal(signal.SIGTERM, lambda s, f: self._terminate(operator))
 
         while not self.terminating:
             try:
-                key = input(self.MAIN_STATEMENT)
-                self.logger.debug(f"Execute command {key}")
-                self._on_command(key)
+                message = input(self.MAIN_STATEMENT)
+                if message.lower() in ("q", "quit", "exit", "terminate"):
+                    self._terminate(operator)
+                    break
+                if message.lower() == "start":
+                    operator.start_trading()
+                    print("자동 매매가 시작되었습니다")
+                    continue
+                if message.lower() == "stop":
+                    operator.stop_trading()
+                    print("자동 매매가 중지되었습니다")
+                    continue
+                response = operator.chat(message)
+                print(f"\n{response}\n")
             except EOFError:
                 break
 
-    def print_help(self):
-        print("명령어 목록 =================")
-        for item in self.command_list:
-            print(item["guide"])
-
-    def _on_command(self, key):
-        for cmd in self.command_list:
-            if key.lower() in cmd["cmd"]:
-                print(f"{cmd['cmd'][0].upper()} 명령어를 실행합니다.")
-                cmd["action"]()
-                return
-        print("잘못된 명령어가 입력되었습니다")
-
-    def _on_query_command(self):
-        value = input("무엇을 조회할까요? (ex. 1.state, 2.score, 3.result) :")
-        key = value.lower()
-        if key in ["state", "1"]:
-            print(f"현재 상태: {self.operator.state.upper()}")
-        elif key in ["score", "2"]:
-            self._get_score()
-        elif key in ["result", "3"]:
-            self._get_trading_record()
-
-    def _get_score(self):
-        def print_score_and_main_statement(score):
-            print("current score ==========")
-            print(score)
-
-        self.operator.get_score(print_score_and_main_statement)
-
-    def _get_trading_record(self):
-        if self.operator is None:
-            print("초기화가 필요합니다")
-            return
-
-        results = self.operator.get_trading_results()
-        if results is None or len(results) == 0:
-            print("거래 기록이 없습니다")
-            return
-
-        for result in results:
-            print(f"@{result['date_time']}, {result['type']}")
-            print(f"{result['price']} x {result['amount']}")
-
-    def start(self):
-        if self.operator.start() is not True:
-            print("프로그램 시작을 실패했습니다")
-
-    def stop(self):
-        if self.operator is not None:
-            self.operator.stop()
-
-    def terminate(self, signum=None, frame=None):
-        del frame
-        if signum is not None:
-            print("강제 종료 신호 감지")
+    def _terminate(self, operator):
         print("프로그램 종료 중.....")
-        self.stop()
+        operator.stop_trading()
         self.terminating = True
         print("Good Bye~")
