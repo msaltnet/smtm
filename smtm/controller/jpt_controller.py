@@ -1,5 +1,4 @@
 import os
-from IPython.display import display
 from ..config import Config
 from ..log_manager import LogManager
 from ..llm.llm_operator import LlmOperator
