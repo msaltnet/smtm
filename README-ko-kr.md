@@ -86,6 +86,39 @@ python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
 | `--term` | 거래 주기 (초) | 60 |
 | `--log` | 로그 파일 이름 | None |
 
+## 테스트
+
+```bash
+# 개발 의존성 설치
+pip install -r requirements-dev.txt
+
+# 전체 테스트 실행
+python -m pytest tests/
+
+# 카테고리별 실행
+python -m pytest tests/unit_tests/          # 단위 테스트
+python -m pytest tests/e2e_tests/           # E2E 테스트
+python -m pytest tests/integration_tests/   # 통합 테스트 (API 키 필요)
+```
+
+### 테스트 구조
+
+| 디렉토리 | 설명 | 외부 API |
+|----------|------|----------|
+| `tests/unit_tests/` | 개별 컴포넌트 테스트 | 전부 mock |
+| `tests/e2e_tests/` | 전체 파이프라인 테스트 (채팅 → 도구 → 거래 → 결과) | LLM, 거래소, 시장 데이터만 Fake. 내부 컴포넌트는 전부 실제 코드 |
+| `tests/integration_tests/` | 실제 거래소 API 테스트 | API 키 필요 |
+
+### E2E 테스트
+
+E2E 테스트는 외부 API 호출 없이 전체 흐름을 검증합니다. 시스템 경계만 Fake로 대체됩니다:
+
+- **FakeLlmClient** — 미리 정의된 LLM 응답(도구 호출, 텍스트)을 순서대로 반환
+- **FakeTrader** — 실제 잔고/자산 상태를 관리하는 거래소 시뮬레이터
+- **FakeDataProvider** — 고정 시장 캔들 데이터 반환
+
+내부 컴포넌트(`LlmOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, 모든 Tool)는 실제 코드로 동작합니다.
+
 ## Architecture
 
 **LlmOperator**가 기존 규칙 기반 파이프라인을 단일 채팅 인터페이스로 대체:

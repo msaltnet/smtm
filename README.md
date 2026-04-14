@@ -88,6 +88,39 @@ Control trading through Telegram messenger. All messages are forwarded to the LL
 | `--term` | Trading tick interval in seconds | 60 |
 | `--log` | Log file name | None |
 
+## Testing
+
+```bash
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Run all tests
+python -m pytest tests/
+
+# Run by category
+python -m pytest tests/unit_tests/          # Unit tests
+python -m pytest tests/e2e_tests/           # E2E tests
+python -m pytest tests/integration_tests/   # Integration tests (requires API keys)
+```
+
+### Test Structure
+
+| Directory | Description | External APIs |
+|-----------|-------------|---------------|
+| `tests/unit_tests/` | Individual component tests | All mocked |
+| `tests/e2e_tests/` | Full pipeline tests (chat → tool → trade → result) | LLM, exchange, market data are Fake; all internal components run real code |
+| `tests/integration_tests/` | Real exchange API tests | Requires API keys |
+
+### E2E Tests
+
+E2E tests verify the complete flow without calling any external APIs. Only the system boundary is replaced with Fake implementations:
+
+- **FakeLlmClient** — Returns pre-scripted LLM responses (tool calls and text)
+- **FakeTrader** — Simulates exchange with real balance/asset state management
+- **FakeDataProvider** — Returns static market candle data
+
+All internal components (`LlmOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, all Tools) run with real code.
+
 ## Architecture
 
 **LlmOperator** replaces the traditional rule-based pipeline with a single chat interface:
