@@ -108,6 +108,19 @@ python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
 | `--term` | 거래 주기 (초) | 60 |
 | `--log` | 로그 파일 이름 | None |
 
+### 지원 거래소 및 데이터 제공자
+
+`--exchange`는 시장 데이터 소스와 주문 실행 Trader를 동시에 선택합니다. 실제 매매까지 가능하려면 두 Factory에 모두 등록되어 있어야 합니다.
+
+| 코드 | Data Provider | Trader | 비고 |
+|------|---------------|--------|------|
+| `UPB` | Upbit | Upbit | 기본값 |
+| `BTH` | Bithumb | Bithumb | |
+| `BNC` | Binance | — | 데이터만 지원, Trader 미구현 |
+| `UBD` | Upbit + Binance 병합 | — | 데이터만 지원, Trader 미구현 |
+
+등록 위치: `smtm/data/data_provider_factory.py`, `smtm/trader/trader_factory.py`.
+
 ### 안전 가드레일
 
 `SafetyGuard`는 모든 거래 Tool 호출을 실행 전에 검증하며 LLM이 우회할 수 없습니다. 기본값은 `smtm/llm/safety_guard.py`의 `SafetyConfig`에 정의되어 있습니다:

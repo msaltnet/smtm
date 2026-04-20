@@ -110,6 +110,19 @@ Control trading through Telegram messenger. All messages are forwarded to the LL
 | `--term` | Trading tick interval in seconds | 60 |
 | `--log` | Log file name | None |
 
+### Supported Exchanges & Data Providers
+
+`--exchange` selects both the market data source and the order-placing trader. End-to-end trading requires a matching entry in both factories.
+
+| Code | Data Provider | Trader | Notes |
+|------|---------------|--------|-------|
+| `UPB` | Upbit | Upbit | Default |
+| `BTH` | Bithumb | Bithumb | |
+| `BNC` | Binance | — | Data only; no trader yet |
+| `UBD` | Upbit + Binance (merged) | — | Data only; no trader yet |
+
+Registered in `smtm/data/data_provider_factory.py` and `smtm/trader/trader_factory.py`.
+
 ### Safety Guardrails
 
 `SafetyGuard` validates every trade tool call before execution and cannot be bypassed by the LLM. Defaults are defined in `smtm/llm/safety_guard.py` (`SafetyConfig`):
