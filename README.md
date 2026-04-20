@@ -24,9 +24,12 @@ LLM autonomously analyzes market data, makes trading decisions, and executes tra
 - Safety guardrails (max trade amount, daily trade limit, loss ratio ceiling)
 - CLI interactive mode and Telegram chatbot control
 - Strategy knowledge loaded as documents (SMA, RSI, Buy & Hold)
-- Vendor-independent LLM client abstraction (Claude, OpenAI, Ollama)
+- Pluggable LLM client interface — Claude is implemented; OpenAI / Ollama adapters are planned
 
 ## Setup
+
+### Prerequisites
+- Python 3.9 or higher
 
 ### Installation
 
@@ -41,7 +44,7 @@ pip install -r requirements.txt
 Create a `.env` file in the project root (or export variables directly):
 
 ```bash
-# Required: LLM API key (Anthropic Claude)
+# Required: LLM API key (currently Anthropic Claude — the only implemented vendor)
 SMTM_LLM_API_KEY=your_anthropic_api_key
 
 # Upbit exchange (when using --exchange UPB)
@@ -69,6 +72,25 @@ python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
 
 Chat with the LLM to control trading. Type messages to ask about the market, start/stop trading, or check portfolio status.
 
+#### Example chat session
+
+```
+메시지를 입력하세요 (q: 종료): start
+자동 매매가 시작되었습니다
+
+메시지를 입력하세요 (q: 종료): Analyze the BTC market and buy if it looks good
+[LLM → get_market_data → execute_trade(buy, ...)]
+Market is in an uptrend. Placed a buy order for 0.0001 BTC at ~50,000,000 KRW.
+
+메시지를 입력하세요 (q: 종료): Show my portfolio
+[LLM → get_portfolio]
+Cash: 495,000 KRW · BTC: 0.0001 · Current value: 500,000 KRW (0.0%)
+
+메시지를 입력하세요 (q: 종료): Sell everything and stop
+[LLM → execute_trade(sell, ...)]
+Sold 0.0001 BTC. Trading stopped.
+```
+
 ### Telegram Chatbot Mode
 
 ```bash
@@ -87,6 +109,31 @@ Control trading through Telegram messenger. All messages are forwarded to the LL
 | `--exchange` | Exchange code (UPB: Upbit, BTH: Bithumb) | UPB |
 | `--term` | Trading tick interval in seconds | 60 |
 | `--log` | Log file name | None |
+
+### Safety Guardrails
+
+`SafetyGuard` validates every trade tool call before execution and cannot be bypassed by the LLM. Defaults are defined in `smtm/llm/safety_guard.py` (`SafetyConfig`):
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `max_trade_amount` | Max KRW value of a single trade | 100,000 |
+| `max_daily_trades` | Max number of trades per calendar day | 20 |
+| `max_loss_ratio` | Cumulative loss floor (negative ratio) | -0.20 (-20%) |
+| `initial_budget` | Baseline for loss-ratio calculation | value of `--budget` |
+
+To override the defaults, pass a `safety` entry into the operator config when wiring `LlmOperator`:
+
+```python
+config = {
+    "budget": 500000,
+    "safety": {
+        "max_trade_amount": 50000,
+        "max_daily_trades": 10,
+        "max_loss_ratio": -0.10,
+    },
+}
+operator = LlmOperator(llm_client, config)
+```
 
 ## Testing
 

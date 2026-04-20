@@ -24,9 +24,12 @@ LLM이 자율적으로 시장 데이터를 분석하고, 매매 결정을 내리
 - 안전 가드레일 (최대 거래 금액, 일일 거래 제한, 손실 비율 상한)
 - CLI 인터랙티브 모드 및 텔레그램 챗봇 제어
 - 전략 지식을 문서로 로딩 (SMA, RSI, Buy & Hold)
-- 벤더 독립적 LLM 클라이언트 추상화 (Claude, OpenAI, Ollama)
+- 교체 가능한 LLM 클라이언트 인터페이스 — 현재 Claude 구현. OpenAI / Ollama 어댑터는 예정
 
 ## 설치
+
+### 사전 요구 사항
+- Python 3.9 이상
 
 ```bash
 git clone https://github.com/msaltnet/smtm.git
@@ -39,7 +42,7 @@ pip install -r requirements.txt
 프로젝트 루트에 `.env` 파일을 생성하거나 환경변수를 직접 설정합니다:
 
 ```bash
-# 필수: LLM API 키 (Anthropic Claude)
+# 필수: LLM API 키 (현재 구현된 벤더는 Anthropic Claude 하나입니다)
 SMTM_LLM_API_KEY=your_anthropic_api_key
 
 # Upbit 거래소 (--exchange UPB 사용 시)
@@ -67,6 +70,25 @@ python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
 
 LLM과 채팅하며 거래를 제어합니다. 시장 분석, 거래 시작/중지, 포트폴리오 확인 등을 메시지로 요청할 수 있습니다.
 
+#### 채팅 예시
+
+```
+메시지를 입력하세요 (q: 종료): start
+자동 매매가 시작되었습니다
+
+메시지를 입력하세요 (q: 종료): BTC 시장 분석해서 괜찮으면 매수해줘
+[LLM → get_market_data → execute_trade(buy, ...)]
+상승 추세입니다. 50,000,000 KRW 부근에서 0.0001 BTC 매수 주문을 넣었습니다.
+
+메시지를 입력하세요 (q: 종료): 포트폴리오 보여줘
+[LLM → get_portfolio]
+현금: 495,000 KRW · BTC: 0.0001 · 현재가치: 500,000 KRW (0.0%)
+
+메시지를 입력하세요 (q: 종료): 전부 매도하고 중지
+[LLM → execute_trade(sell, ...)]
+0.0001 BTC를 매도했습니다. 자동 매매가 중지되었습니다.
+```
+
 ### 텔레그램 챗봇 모드
 
 ```bash
@@ -85,6 +107,31 @@ python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
 | `--exchange` | 거래소 코드 (UPB: 업비트, BTH: 빗썸) | UPB |
 | `--term` | 거래 주기 (초) | 60 |
 | `--log` | 로그 파일 이름 | None |
+
+### 안전 가드레일
+
+`SafetyGuard`는 모든 거래 Tool 호출을 실행 전에 검증하며 LLM이 우회할 수 없습니다. 기본값은 `smtm/llm/safety_guard.py`의 `SafetyConfig`에 정의되어 있습니다:
+
+| 파라미터 | 설명 | 기본값 |
+|----------|------|--------|
+| `max_trade_amount` | 1회 최대 거래 금액 (KRW) | 100,000 |
+| `max_daily_trades` | 하루 최대 거래 횟수 | 20 |
+| `max_loss_ratio` | 누적 손실 한도 (음수 비율) | -0.20 (-20%) |
+| `initial_budget` | 손실률 계산 기준이 되는 초기 예산 | `--budget` 값 |
+
+기본값을 덮어쓰려면 `LlmOperator` 설정의 `safety` 항목으로 전달합니다:
+
+```python
+config = {
+    "budget": 500000,
+    "safety": {
+        "max_trade_amount": 50000,
+        "max_daily_trades": 10,
+        "max_loss_ratio": -0.10,
+    },
+}
+operator = LlmOperator(llm_client, config)
+```
 
 ## 테스트
 
