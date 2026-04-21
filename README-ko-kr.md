@@ -118,8 +118,11 @@ python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
 | `BTH` | Bithumb | Bithumb | |
 | `BNC` | Binance | — | 데이터만 지원, Trader 미구현 |
 | `UBD` | Upbit + Binance 병합 | — | 데이터만 지원, Trader 미구현 |
+| `UPN` | Upbit + 암호화폐 뉴스 RSS | Upbit | 캔들 + 텍스트형 뉴스 항목을 함께 제공 |
 
 등록 위치: `smtm/data/data_provider_factory.py`, `smtm/trader/trader_factory.py`.
+
+`DataProvider.get_info()`는 `type` 키로 구분되는 여러 형식의 딕셔너리를 하나의 리스트로 반환할 수 있습니다. `primary_candle`·`binance`·`exchange_rate` 같은 수치형뿐 아니라 `news`·`notice` 같은 텍스트형도 혼합할 수 있으며, 각 딕셔너리는 `type` 필드로 자기 스키마를 표시합니다. 계약 정의는 `smtm/data/data_provider.py`, 다중 타입 실구현 예시는 `UpbitNewsDataProvider`(`UPN`)를 참고하세요.
 
 ### 안전 가드레일
 

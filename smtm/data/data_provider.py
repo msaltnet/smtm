@@ -9,42 +9,55 @@ class DataProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_info(self):
         """
-        거래 정보나 환율, 지수등의 다양한 정보 딕셔너리들을 리스트로 전달
+        거래 정보·환율·지수·뉴스 등 다양한 정보 딕셔너리들을 리스트로 전달.
         주거래 정보는 'primary_candle' 타입으로 전달.
-        이외 정보 딕셔너리의 키 값은 type에 따라 다름.
+        그 외 딕셔너리는 'type' 값으로 소비자가 구분하며, 키 집합은 type에 따라 다름.
+        수치형(캔들·환율·지수)과 텍스트형(뉴스·공지·요약)을 한 리스트에 혼합해도 된다.
 
-        Passing trade information or various information dictionaries such as exchange rates, indices, etc. as lists
-        The primary trade information is passed as a 'primary_candle' type.
-        Key values for other information dictionaries depend on the type.
+        Passes a list of typed dictionaries representing trade data, exchange rates,
+        indices, news, or any other information relevant to the LLM.
+        The primary trading source is always emitted as type='primary_candle'.
+        The key set varies by 'type'. Numeric (candle/rate/index) and text (news/notice)
+        entries may be mixed in one list.
 
-        Returns: 거래 정보 딕셔너리
+        Returns 예시:
         [
             {
-                "type": 데이터의 종류 e.g. 데이터 출처, 종류에 따른 구분으로 소비자가 데이터를 구분할 수 있게 함
-                "market": 거래 시장 종류 BTC
-                "date_time": 정보의 기준 시간
-                "opening_price": 시작 거래 가격
-                "high_price": 최고 거래 가격
-                "low_price": 최저 거래 가격
-                "closing_price": 마지막 거래 가격
-                "acc_price": 단위 시간내 누적 거래 금액
-                "acc_volume": 단위 시간내 누적 거래 양
+                "type": "primary_candle",      # 주거래 캔들 (필수 스키마)
+                "market": "BTC",
+                "date_time": "...",
+                "opening_price": ...,
+                "high_price": ...,
+                "low_price": ...,
+                "closing_price": ...,
+                "acc_price": ...,
+                "acc_volume": ...,
             },
             {
-                "type": 데이터의 종류 e.g. 데이터 출처, 종류에 따른 구분으로 소비자가 데이터를 구분할 수 있게 함
-                "usd_krw": 환율
-                "date_time": 정보의 기준 시간
+                "type": "binance",             # 보조 거래소 캔들
+                "market": "BTC-USDT",
+                "date_time": "...",
+                "opening_price": ..., ...
             },
             {
-                "type": 데이터의 종류 e.g. 데이터 출처, 종류에 따른 구분으로 소비자가 데이터를 구분할 수 있게 함
-                "market": 거래 시장 종류 BTC
-                "date_time": 정보의 기준 시간
-                "opening_price": 시작 거래 가격
-                "high_price": 최고 거래 가격
-                "low_price": 최저 거래 가격
-                "closing_price": 마지막 거래 가격
-                "acc_price": 단위 시간내 누적 거래 금액
-                "acc_volume": 단위 시간내 누적 거래 양
+                "type": "exchange_rate",       # 환율
+                "date_time": "...",
+                "usd_krw": 1350.0
+            },
+            {
+                "type": "news",                # 텍스트형 — 뉴스 한 건
+                "date_time": "...",
+                "source": "coindesk",
+                "title": "...",
+                "summary": "...",
+                "url": "..."
+            },
+            {
+                "type": "notice",              # 텍스트형 — 거래소 공지 등
+                "date_time": "...",
+                "source": "upbit",
+                "title": "...",
+                "body": "..."
             }
         ]
         """

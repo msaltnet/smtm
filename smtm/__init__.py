@@ -10,6 +10,8 @@ from .data.upbit_data_provider import UpbitDataProvider
 from .data.upbit_binance_data_provider import UpbitBinanceDataProvider
 from .data.bithumb_data_provider import BithumbDataProvider
 from .data.binance_data_provider import BinanceDataProvider
+from .data.news_data_provider import NewsDataProvider
+from .data.upbit_news_data_provider import UpbitNewsDataProvider
 from .data.data_provider_factory import DataProviderFactory
 from .trader.upbit_trader import UpbitTrader
 from .trader.bithumb_trader import BithumbTrader

@@ -107,6 +107,12 @@ A. `UPB`는 Upbit 시장 데이터 + Upbit 실주문을 모두 사용합니다. 
 **Q. `UBD`는 무엇인가요?**
 A. `UpbitBinanceDataProvider`로 Upbit과 Binance 양쪽 데이터를 병합해 제공하는 DataProvider 코드입니다. 역시 Trader 구현은 없습니다.
 
+**Q. `UPN`은 무엇인가요?**
+A. `UpbitNewsDataProvider`입니다. Upbit의 `primary_candle`과 RSS 기반 암호화폐 뉴스(`type='news'`)를 한 번에 제공합니다. Trader는 Upbit가 그대로 사용되므로 실매매가 가능합니다. 사용자 정의 RSS URL을 쓰고 싶으면 `UpbitNewsDataProvider(news_url=..., news_source=...)`로 직접 생성하세요.
+
+**Q. DataProvider가 캔들 말고 다른 것도 제공할 수 있나요?**
+A. 네. `get_info()`는 `type` 필드로 구분되는 어떤 형식의 딕셔너리든 같은 리스트에 섞어 반환할 수 있습니다. 현재 내장된 타입은 `primary_candle`, `binance`, `news` 세 종류이며, `exchange_rate`·`notice` 같은 새 타입을 추가하려면 Provider만 새로 만들고 Factory에 등록하면 됩니다. LLM은 각 항목의 `type`을 보고 알아서 해석합니다.
+
 **Q. 수수료는 어떻게 반영되나요?**
 A. Trader 생성 시 `commission_ratio`(기본 0.0005 = 0.05%)가 포함되지만, 현재 SafetyGuard 계산은 수수료 제외입니다. 실제 수익률 확인은 거래소 잔고 또는 `get_performance` 결과를 기준으로 합니다.
 

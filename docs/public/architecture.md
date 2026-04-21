@@ -21,7 +21,7 @@ graph TD
     Safety[SafetyGuard\n규칙 기반 안전장치]
     Monitor[SystemMonitor\n구조화 로그]
     Tools[Tools\nmarket / trade / portfolio / history / performance]
-    DP[DataProvider\nUpbit · Bithumb · Binance · Upbit+Binance]
+    DP[DataProvider\nUpbit · Bithumb · Binance · Upbit+Binance · Upbit+News]
     Trader[Trader\nUpbit · Bithumb]
     Ext1[(거래소 API)]
     Ext2[(Anthropic API)]
@@ -50,7 +50,7 @@ graph TD
 | LLM 어댑터 | 벤더 API 추상화 | `LlmClient` (추상), `ClaudeLlmClient` (구현) |
 | Safety | Tool 실행 직전 한도 검사 | `SafetyGuard`, `SafetyConfig` |
 | Tool 계층 | LLM이 호출 가능한 능력 | `ToolRouter`, `tools/*` |
-| Integration | 시장 데이터 / 주문 실행 | `DataProvider` 4종, `Trader` 2종 (+ Factory) |
+| Integration | 시장 데이터 / 주문 실행 | `DataProvider` 5종(UPB · BTH · BNC · UBD · UPN), `Trader` 2종 (+ Factory) |
 | Observability | 로그·모니터링 | `LogManager`(파일 로그), `SystemMonitor`(인메모리 구조화 로그) |
 
 ---
@@ -102,7 +102,21 @@ class LlmResponse:
 | `max_loss_ratio` | -0.20 | 누적 손실률 하한 (-20%) |
 | `initial_budget` | `--budget` 값 | 손실률 계산 기준 |
 
-### 3.4 SystemMonitor 로그 종류
+### 3.4 DataProvider 다형 데이터 계약
+
+`DataProvider.get_info()`는 수치형과 텍스트형 데이터를 한 리스트에 섞어 반환할 수 있습니다. 각 딕셔너리는 `type` 키로 자기 스키마를 알립니다.
+
+| `type` | 종류 | 주요 필드 | 예시 Provider |
+|--------|------|----------|--------------|
+| `primary_candle` | 주거래 캔들 (필수) | market, date_time, OHLCV, acc_price, acc_volume | Upbit / Bithumb / Binance |
+| `binance` | 보조 거래소 캔들 | market, date_time, OHLCV | UpbitBinanceDataProvider |
+| `exchange_rate` | 환율 | date_time, usd_krw 등 | (확장 예시) |
+| `news` | 뉴스 기사 | date_time, source, title, summary, url | NewsDataProvider / UpbitNewsDataProvider |
+| `notice` | 거래소·프로젝트 공지 | date_time, source, title, body | (확장 예시) |
+
+새 데이터 유형을 추가할 때는 계약만 지키면 됩니다. 소비자(LLM)가 리스트의 각 항목을 `type`별로 해석하므로 기존 Tool 스키마를 깨지 않고도 다양한 신호를 주입할 수 있습니다. 이미지 같은 multimodal 블록 지원은 로드맵 항목입니다([`release-notes.md`](release-notes.md#roadmap)).
+
+### 3.5 SystemMonitor 로그 종류
 
 | 로그 | 내용 |
 |------|------|
@@ -269,7 +283,7 @@ operator = LlmOperator(client, config)
 
 ### 7.2 SystemMonitor
 
-- 인메모리 구조화 로그 (§3.4).
+- 인메모리 구조화 로그 (§3.5).
 - `get_llm_usage()` — 누적 입/출력 토큰 및 호출 횟수.
 - 디스크 영속화는 [후속 과제](release-notes.md#roadmap).
 

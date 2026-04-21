@@ -58,11 +58,13 @@ smtm이 제공해야 하는 기능을 영역별로 정리한 문서입니다. `[
 
 ### 2.5 시장 데이터 (DataProvider)
 
-- **[MVP] R-DATA-01** — `DataProvider`는 `get_info()`를 통해 OHLCV 캔들 리스트를 반환해야 한다.
-- **[MVP] R-DATA-02** — 다음 코드를 지원한다: `UPB`(Upbit), `BTH`(Bithumb), `BNC`(Binance), `UBD`(Upbit+Binance 병합).
+- **[MVP] R-DATA-01** — `DataProvider`는 `get_info()`를 통해 `type` 필드로 구분되는 타입별 딕셔너리를 리스트로 반환한다. 주 거래 캔들은 반드시 `type='primary_candle'` 형태로 포함돼야 한다.
+- **[MVP] R-DATA-02** — 다음 코드를 지원한다: `UPB`(Upbit), `BTH`(Bithumb), `BNC`(Binance), `UBD`(Upbit+Binance 병합), `UPN`(Upbit+뉴스 RSS).
 - **[MVP] R-DATA-03** — `DataProviderFactory`는 `CODE` 속성으로 공급자를 식별한다.
 - **[MVP] R-DATA-04** — 캔들 간격은 `Config.candle_interval`(기본 60초)로 설정된다.
-- **[후속] R-DATA-05** — 실시간 WebSocket 기반 틱 피드 지원.
+- **[MVP] R-DATA-05** — 텍스트형 데이터(`type='news'` 등) 역시 같은 리스트에 섞어 반환할 수 있어야 하며, 네트워크 실패나 파싱 오류는 빈 리스트로 흡수해 매매 루프를 중단시키지 않아야 한다.
+- **[후속] R-DATA-06** — 실시간 WebSocket 기반 틱 피드 지원.
+- **[후속] R-DATA-07** — 이미지·차트 캡처 등 multimodal 데이터 블록 지원(Tool 결과 경로 확장 포함).
 
 ### 2.6 거래소 (Trader)
 

@@ -120,8 +120,11 @@ Control trading through Telegram messenger. All messages are forwarded to the LL
 | `BTH` | Bithumb | Bithumb | |
 | `BNC` | Binance | — | Data only; no trader yet |
 | `UBD` | Upbit + Binance (merged) | — | Data only; no trader yet |
+| `UPN` | Upbit + Crypto News RSS | Upbit | Candle + text news items in one feed |
 
 Registered in `smtm/data/data_provider_factory.py` and `smtm/trader/trader_factory.py`.
+
+`DataProvider.get_info()` may return a mixed list of typed dicts — numeric types such as `primary_candle`, `binance`, `exchange_rate`, and text types such as `news` or `notice`. Each dict is self-describing via its `type` field; see `smtm/data/data_provider.py` for the contract and `UpbitNewsDataProvider` (`CODE=UPN`) for a working multi-type example.
 
 ### Safety Guardrails
 

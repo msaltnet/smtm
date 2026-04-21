@@ -2,6 +2,7 @@ from .binance_data_provider import BinanceDataProvider
 from .upbit_data_provider import UpbitDataProvider
 from .bithumb_data_provider import BithumbDataProvider
 from .upbit_binance_data_provider import UpbitBinanceDataProvider
+from .upbit_news_data_provider import UpbitNewsDataProvider
 
 
 class DataProviderFactory:
@@ -15,6 +16,7 @@ class DataProviderFactory:
         UpbitDataProvider,
         BithumbDataProvider,
         UpbitBinanceDataProvider,
+        UpbitNewsDataProvider,
     ]
 
     @staticmethod

@@ -36,6 +36,7 @@
 - **개선**
   - 대화 이력 최대 크기 상한(`max_conversation_turns * 2`) 추가로 장시간 구동 시 메모리·토큰 폭증 방지.
   - Strategy 지식(`sma_crossover.md`, `rsi_strategy.md`, `buy_and_hold.md`)을 시스템 프롬프트에 주입.
+  - DataProvider 계약을 다형 데이터 리스트로 명시화: 캔들 외에 `news`·`notice` 같은 텍스트 타입을 같은 리스트에 혼합 가능. 실구현으로 `NewsDataProvider`와 `UpbitNewsDataProvider`(`CODE=UPN`)를 추가하고 `MarketDataTool` description을 다중 타입 반영해 확장.
 - **인프라 · 운영**
   - E2E 테스트 도입(`tests/e2e_tests/`): 외부 API 없이 채팅 → Tool → 거래 → 결과 전 구간 검증.
   - 루트 README와 `README-ko-kr.md`를 LLM 아키텍처 기준으로 재작성.
@@ -105,6 +106,7 @@
 - [ ] **Ollama / 로컬 LLM 어댑터** — 자체 호스팅 환경 지원.
 - [ ] **Prompt 캐싱 활용** — 시스템 프롬프트·전략 지식 문서에 Anthropic prompt caching 적용으로 비용 절감.
 - [ ] **운영용 systemd 유닛 / Docker 이미지** 공식 제공.
+- [ ] **Multimodal tool_result** — 이미지·차트 캡처를 Tool 결과에 직접 태워 보내는 경로(ToolResult 스키마 + ClaudeLlmClient content 블록 처리 확장).
 
 ### 장기
 - [ ] **웹 대시보드** — SystemMonitor 로그와 포트폴리오 스냅샷을 시각화하는 웹 UI.
