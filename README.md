@@ -120,11 +120,46 @@ Control trading through Telegram messenger. All messages are forwarded to the LL
 | `BTH` | Bithumb | Bithumb | |
 | `BNC` | Binance | — | Data only; no trader yet |
 | `UBD` | Upbit + Binance (merged) | — | Data only; no trader yet |
-| `UPN` | Upbit + Crypto News RSS | Upbit | Candle + text news items in one feed |
+| `UPN` | Upbit + Crypto News RSS (CoinDesk) | Upbit | Candle + text news items in one feed |
+| `UMN` | Upbit + Multi-source News (CoinDesk / CoinTelegraph / Decrypt / CryptoSlate) | Upbit | Candle + aggregated news from four sources |
+| `USC` | Upbit + Multi News + Reddit + Fear & Greed Index | Upbit | Full social/sentiment snapshot alongside candle |
+| `UFC` | Upbit + **all** public sources below (price / on-chain / funding / macro / notices / news / social / tech) | Upbit | Heaviest option — single "full context" feed per tick |
 
 Registered in `smtm/data/data_provider_factory.py` and `smtm/trader/trader_factory.py`.
 
-`DataProvider.get_info()` may return a mixed list of typed dicts — numeric types such as `primary_candle`, `binance`, `exchange_rate`, and text types such as `news` or `notice`. Each dict is self-describing via its `type` field; see `smtm/data/data_provider.py` for the contract and `UpbitNewsDataProvider` (`CODE=UPN`) for a working multi-type example.
+Building-block signal providers (use directly, not factory-registered). All use free public APIs with no key required:
+
+| Class | `CODE` | `type` emitted | Source |
+|-------|--------|----------------|--------|
+| `NewsDataProvider` | `NWS` | `news` | Generic RSS (CoinDesk by default) |
+| `CoinTelegraphNewsDataProvider` | `CTN` | `news` | `cointelegraph.com/rss` |
+| `DecryptNewsDataProvider` | `DCN` | `news` | `decrypt.co/feed` |
+| `CryptoSlateNewsDataProvider` | `CSN` | `news` | `cryptoslate.com/feed/` |
+| `BitcoinMagazineNewsDataProvider` | `BMN` | `news` | `bitcoinmagazine.com/.rss/full/` |
+| `TheBlockNewsDataProvider` | `TBN` | `news` | `theblock.co/rss.xml` — crypto/finance crossover |
+| `WSJMarketsNewsDataProvider` | `WSJ` | `news` | `feeds.a.dj.com/rss/RSSMarketsMain.xml` — WSJ Markets |
+| `MarketWatchNewsDataProvider` | `MWN` | `news` | `feeds.marketwatch.com/marketwatch/topstories/` |
+| `CNBCFinanceNewsDataProvider` | `CNB` | `news` | `cnbc.com/id/10000664/device/rss/rss.html` — CNBC Markets |
+| `MultiNewsDataProvider` | `MNS` | `news` | Aggregates multiple news sources |
+| `RedditDataProvider` | `RDT` | `reddit` | Any subreddit Atom feed (`/r/{sub}/.rss`) |
+| `CryptoCurrencyRedditDataProvider` | `RCC` | `reddit` | `r/CryptoCurrency` |
+| `BitcoinRedditDataProvider` | `RBT` | `reddit` | `r/Bitcoin` |
+| `FearGreedDataProvider` | `FGI` | `sentiment_index` | `api.alternative.me/fng/` (Crypto Fear & Greed) |
+| `CoinGeckoDataProvider` | `CGK` | `price_snapshot` | `api.coingecko.com/api/v3/simple/price` — price / market cap / 24h volume / 24h change |
+| `CoinCapDataProvider` | `CCP` | `price_snapshot` | `api.coincap.io/v2/assets/{id}` — alternative with higher rate limit |
+| `CryptoGlobalDataProvider` | `CGL` | `crypto_global` | `api.coingecko.com/api/v3/global` — total market cap / BTC·ETH·stablecoin dominance |
+| `YahooFinanceDataProvider` | `YFN` | `macro_market` | `query1.finance.yahoo.com/v8/finance/chart` — DXY / S&P500 / VIX / Gold / US10Y / Nasdaq |
+| `BlockchainInfoDataProvider` | `BCI` | `onchain_stats` | `api.blockchain.info/stats` — BTC hash rate / difficulty / tx / mempool |
+| `MempoolFeesDataProvider` | `MPF` | `mempool_fees` | `mempool.space/api/v1/fees/recommended` — BTC fee sat/vB |
+| `EtherscanGasDataProvider` | `EGS` | `eth_gas` | `api.etherscan.io/api?module=gastracker&action=gasoracle` — ETH gas safe/propose/fast (gwei), optional key |
+| `BinanceFundingRateDataProvider` | `BFR` | `funding_rate` | `fapi.binance.com/fapi/v1/premiumIndex` — perp funding / mark price |
+| `BinanceOpenInterestDataProvider` | `BOI` | `open_interest` | `fapi.binance.com/futures/data/openInterestHist` — perp open interest (contracts + USD notional) |
+| `BinanceLongShortRatioDataProvider` | `BLS` | `long_short_ratio` | `fapi.binance.com/futures/data/globalLongShortAccountRatio` — retail / top trader long vs short ratio |
+| `UpbitNoticeDataProvider` | `UPT` | `notice` | `api-manager.upbit.com/api/v1/notices` — Upbit announcements |
+| `ExchangeRateDataProvider` | `FXR` | `exchange_rate` | `open.er-api.com/v6/latest/USD` — USD → KRW/JPY/EUR/CNY |
+| `HackerNewsDataProvider` | `HNS` | `hackernews` | `hn.algolia.com/api/v1/search_by_date` — crypto stories |
+
+`DataProvider.get_info()` may return a mixed list of typed dicts — numeric types such as `primary_candle`, `binance`, `price_snapshot`, `crypto_global`, `macro_market`, `onchain_stats`, `mempool_fees`, `eth_gas`, `funding_rate`, `open_interest`, `long_short_ratio`, `exchange_rate`, `sentiment_index`, and text / social types such as `news`, `reddit`, `hackernews`, `notice`. Each dict is self-describing via its `type` field; see `smtm/data/data_provider.py` for the contract and `UpbitNewsDataProvider` (`UPN`) / `UpbitMultiNewsDataProvider` (`UMN`) / `UpbitSocialDataProvider` (`USC`) / `UpbitFullContextDataProvider` (`UFC`) for working multi-type examples.
 
 ### Safety Guardrails
 

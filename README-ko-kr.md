@@ -118,11 +118,46 @@ python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
 | `BTH` | Bithumb | Bithumb | |
 | `BNC` | Binance | — | 데이터만 지원, Trader 미구현 |
 | `UBD` | Upbit + Binance 병합 | — | 데이터만 지원, Trader 미구현 |
-| `UPN` | Upbit + 암호화폐 뉴스 RSS | Upbit | 캔들 + 텍스트형 뉴스 항목을 함께 제공 |
+| `UPN` | Upbit + 암호화폐 뉴스 RSS(CoinDesk) | Upbit | 캔들 + 텍스트형 뉴스 항목을 함께 제공 |
+| `UMN` | Upbit + 다중 소스 뉴스(CoinDesk / CoinTelegraph / Decrypt / CryptoSlate) | Upbit | 캔들 + 네 곳의 뉴스를 집계해 제공 |
+| `USC` | Upbit + 다중 뉴스 + Reddit + Fear & Greed 지수 | Upbit | 캔들과 함께 소셜·감정 지표까지 한 번에 제공 |
+| `UFC` | Upbit + **모든 공개 소스**(가격·온체인·펀딩·매크로·공지·뉴스·소셜·테크) | Upbit | 가장 무거운 옵션 — 한 틱에 "풀 컨텍스트"를 한 번에 전달 |
 
 등록 위치: `smtm/data/data_provider_factory.py`, `smtm/trader/trader_factory.py`.
 
-`DataProvider.get_info()`는 `type` 키로 구분되는 여러 형식의 딕셔너리를 하나의 리스트로 반환할 수 있습니다. `primary_candle`·`binance`·`exchange_rate` 같은 수치형뿐 아니라 `news`·`notice` 같은 텍스트형도 혼합할 수 있으며, 각 딕셔너리는 `type` 필드로 자기 스키마를 표시합니다. 계약 정의는 `smtm/data/data_provider.py`, 다중 타입 실구현 예시는 `UpbitNewsDataProvider`(`UPN`)를 참고하세요.
+Factory에 등록하지 않고 직접 코드로 사용하는 빌딩 블록형 Provider. 모두 무료 공개 API이며 키가 필요 없습니다:
+
+| 클래스 | `CODE` | 반환 `type` | 소스 |
+|--------|--------|------------|------|
+| `NewsDataProvider` | `NWS` | `news` | 범용 RSS(기본 CoinDesk) |
+| `CoinTelegraphNewsDataProvider` | `CTN` | `news` | `cointelegraph.com/rss` |
+| `DecryptNewsDataProvider` | `DCN` | `news` | `decrypt.co/feed` |
+| `CryptoSlateNewsDataProvider` | `CSN` | `news` | `cryptoslate.com/feed/` |
+| `BitcoinMagazineNewsDataProvider` | `BMN` | `news` | `bitcoinmagazine.com/.rss/full/` |
+| `TheBlockNewsDataProvider` | `TBN` | `news` | `theblock.co/rss.xml` — 크립토·금융 교차 보도 |
+| `WSJMarketsNewsDataProvider` | `WSJ` | `news` | `feeds.a.dj.com/rss/RSSMarketsMain.xml` — WSJ Markets |
+| `MarketWatchNewsDataProvider` | `MWN` | `news` | `feeds.marketwatch.com/marketwatch/topstories/` |
+| `CNBCFinanceNewsDataProvider` | `CNB` | `news` | `cnbc.com/id/10000664/device/rss/rss.html` — CNBC Markets |
+| `MultiNewsDataProvider` | `MNS` | `news` | 여러 뉴스 소스 합산 |
+| `RedditDataProvider` | `RDT` | `reddit` | 임의 서브레딧 Atom 피드(`/r/{sub}/.rss`) |
+| `CryptoCurrencyRedditDataProvider` | `RCC` | `reddit` | `r/CryptoCurrency` |
+| `BitcoinRedditDataProvider` | `RBT` | `reddit` | `r/Bitcoin` |
+| `FearGreedDataProvider` | `FGI` | `sentiment_index` | `api.alternative.me/fng/` (Crypto Fear & Greed) |
+| `CoinGeckoDataProvider` | `CGK` | `price_snapshot` | `api.coingecko.com/api/v3/simple/price` — 가격/시총/24h거래량/변동률 |
+| `CoinCapDataProvider` | `CCP` | `price_snapshot` | `api.coincap.io/v2/assets/{id}` — CoinGecko 백업(rate limit 더 관대) |
+| `CryptoGlobalDataProvider` | `CGL` | `crypto_global` | `api.coingecko.com/api/v3/global` — 전체 시총 / BTC·ETH·스테이블 도미넌스 |
+| `YahooFinanceDataProvider` | `YFN` | `macro_market` | `query1.finance.yahoo.com/v8/finance/chart` — DXY / S&P500 / VIX / Gold / US10Y / Nasdaq |
+| `BlockchainInfoDataProvider` | `BCI` | `onchain_stats` | `api.blockchain.info/stats` — BTC 해시레이트/난이도/거래수/멤풀 |
+| `MempoolFeesDataProvider` | `MPF` | `mempool_fees` | `mempool.space/api/v1/fees/recommended` — BTC 수수료 sat/vB |
+| `EtherscanGasDataProvider` | `EGS` | `eth_gas` | `api.etherscan.io/api?module=gastracker&action=gasoracle` — ETH 가스 safe/propose/fast(gwei), 키 선택 |
+| `BinanceFundingRateDataProvider` | `BFR` | `funding_rate` | `fapi.binance.com/fapi/v1/premiumIndex` — 선물 펀딩비/마크가격 |
+| `BinanceOpenInterestDataProvider` | `BOI` | `open_interest` | `fapi.binance.com/futures/data/openInterestHist` — 선물 누적 미결제약정(계약수·USD 환산) |
+| `BinanceLongShortRatioDataProvider` | `BLS` | `long_short_ratio` | `fapi.binance.com/futures/data/globalLongShortAccountRatio` — 선물 롱/숏 계정 비율(리테일·상위) |
+| `UpbitNoticeDataProvider` | `UPT` | `notice` | `api-manager.upbit.com/api/v1/notices` — Upbit 공지 |
+| `ExchangeRateDataProvider` | `FXR` | `exchange_rate` | `open.er-api.com/v6/latest/USD` — USD→KRW/JPY/EUR/CNY |
+| `HackerNewsDataProvider` | `HNS` | `hackernews` | `hn.algolia.com/api/v1/search_by_date` — 크립토 스토리 |
+
+`DataProvider.get_info()`는 `type` 키로 구분되는 여러 형식의 딕셔너리를 하나의 리스트로 반환할 수 있습니다. `primary_candle`·`binance`·`price_snapshot`·`crypto_global`·`macro_market`·`onchain_stats`·`mempool_fees`·`eth_gas`·`funding_rate`·`open_interest`·`long_short_ratio`·`exchange_rate`·`sentiment_index` 같은 수치형뿐 아니라 `news`·`reddit`·`hackernews`·`notice` 같은 텍스트·소셜형도 혼합할 수 있으며, 각 딕셔너리는 `type` 필드로 자기 스키마를 표시합니다. 계약 정의는 `smtm/data/data_provider.py`, 다중 타입 실구현 예시는 `UpbitNewsDataProvider`(`UPN`) · `UpbitMultiNewsDataProvider`(`UMN`) · `UpbitSocialDataProvider`(`USC`) · `UpbitFullContextDataProvider`(`UFC`)를 참고하세요.
 
 ### 안전 가드레일
 

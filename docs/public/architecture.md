@@ -50,7 +50,7 @@ graph TD
 | LLM 어댑터 | 벤더 API 추상화 | `LlmClient` (추상), `ClaudeLlmClient` (구현) |
 | Safety | Tool 실행 직전 한도 검사 | `SafetyGuard`, `SafetyConfig` |
 | Tool 계층 | LLM이 호출 가능한 능력 | `ToolRouter`, `tools/*` |
-| Integration | 시장 데이터 / 주문 실행 | `DataProvider` 5종(UPB · BTH · BNC · UBD · UPN), `Trader` 2종 (+ Factory) |
+| Integration | 시장 데이터 / 주문 실행 | `DataProvider` 8종 (UPB · BTH · BNC · UBD · UPN · UMN · USC · UFC) + 신호 빌딩 블록 (크립토 뉴스 NWS·CTN·DCN·CSN·BMN·TBN·MNS / 경제 뉴스 WSJ·MWN·CNB / 소셜 RDT·RCC·RBT·HNS / 감정 FGI / 가격 CGK·CCP·CGL / 전통시장 YFN / 온체인 BCI·MPF·EGS / 파생·포지셔닝 BFR·BOI·BLS / 공지 UPT / 환율 FXR), `Trader` 2종 (+ Factory) |
 | Observability | 로그·모니터링 | `LogManager`(파일 로그), `SystemMonitor`(인메모리 구조화 로그) |
 
 ---
@@ -110,11 +110,25 @@ class LlmResponse:
 |--------|------|----------|--------------|
 | `primary_candle` | 주거래 캔들 (필수) | market, date_time, OHLCV, acc_price, acc_volume | Upbit / Bithumb / Binance |
 | `binance` | 보조 거래소 캔들 | market, date_time, OHLCV | UpbitBinanceDataProvider |
-| `exchange_rate` | 환율 | date_time, usd_krw 등 | (확장 예시) |
-| `news` | 뉴스 기사 | date_time, source, title, summary, url | NewsDataProvider / UpbitNewsDataProvider |
-| `notice` | 거래소·프로젝트 공지 | date_time, source, title, body | (확장 예시) |
+| `price_snapshot` | 종합 가격 스냅샷 | prices, market_cap_usd, volume_24h_usd, change_24h_pct | CoinGeckoDataProvider |
+| `onchain_stats` | 온체인 네트워크 통계 | hash_rate_ghs, difficulty, n_tx_24h, miners_revenue_usd, ... | BlockchainInfoDataProvider |
+| `mempool_fees` | BTC 수수료 권장값 | fastest_fee, half_hour_fee, hour_fee, economy_fee, minimum_fee (sat/vB) | MempoolFeesDataProvider |
+| `eth_gas` | ETH 가스 권장값(gwei) | safe_gas_price, propose_gas_price, fast_gas_price, suggest_base_fee | EtherscanGasDataProvider |
+| `funding_rate` | 선물 펀딩비 | symbol, funding_rate, funding_rate_pct, mark_price, index_price | BinanceFundingRateDataProvider |
+| `open_interest` | 선물 누적 미결제약정 | symbol, period, open_interest_contracts, open_interest_notional_usd | BinanceOpenInterestDataProvider |
+| `long_short_ratio` | 선물 롱/숏 계정 비율 | symbol, period, scope, long_short_ratio, long_account_pct, short_account_pct | BinanceLongShortRatioDataProvider |
+| `exchange_rate` | 환율 | base, rates, date_time | ExchangeRateDataProvider |
+| `macro_market` | 전통시장/매크로 지수 | symbol, label, price, previous_close, change_24h_pct, currency, exchange | YahooFinanceDataProvider |
+| `crypto_global` | 전체 크립토 시장 거시 | total_market_cap_usd, total_volume_24h_usd, btc/eth/stablecoin_dominance_pct, market_cap_change_24h_pct | CryptoGlobalDataProvider |
+| `sentiment_index` | 감정 지수(0~100) | date_time, source, index_name, value, classification | FearGreedDataProvider |
+| `news` | 뉴스 기사 | date_time, source, title, summary, url | NewsDataProvider · CoinTelegraph · Decrypt · CryptoSlate · BitcoinMagazine · TheBlock · WSJMarkets · MarketWatch · CNBCFinance · MultiNewsDataProvider · UpbitNewsDataProvider · UpbitMultiNewsDataProvider |
+| `reddit` | 서브레딧 게시물 | date_time, source, title, summary, url, author | RedditDataProvider · CryptoCurrencyRedditDataProvider · BitcoinRedditDataProvider |
+| `hackernews` | HN 스토리 | title, url, author, points, num_comments, date_time | HackerNewsDataProvider |
+| `notice` | 거래소 공지 | date_time, source, title, body, url, category | UpbitNoticeDataProvider |
 
 새 데이터 유형을 추가할 때는 계약만 지키면 됩니다. 소비자(LLM)가 리스트의 각 항목을 `type`별로 해석하므로 기존 Tool 스키마를 깨지 않고도 다양한 신호를 주입할 수 있습니다. 이미지 같은 multimodal 블록 지원은 로드맵 항목입니다([`release-notes.md`](release-notes.md#roadmap)).
+
+내장된 모든 Provider의 **엔드포인트 · 필드 · 인증 · Rate Limit**은 [`data-providers.md`](data-providers.md)에 카탈로그로 정리돼 있습니다.
 
 ### 3.5 SystemMonitor 로그 종류
 
