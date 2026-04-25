@@ -1,3 +1,62 @@
+## v1.8.0
+
+### New Features
+- **HTTP request retry logic for transient network failures**: Added `request_with_retry` wrapper with 2 retries and exponential backoff for 5xx status codes and `ConnectionError`. Applied to `BaseExchangeTrader`, `BaseDataProvider`, and `UpbitTrader` cancel request.
+  - https://github.com/msaltnet/smtm/commit/54d02af2bea0a238457ea7d3d26562a938fc2d53
+
+### Refactoring
+- **Extract base classes to eliminate code duplication in traders and data providers**: Added `BaseExchangeTrader` with shared logic (timer, callbacks, credentials, HTTP helpers, `send_request`, `cancel_all_requests`) and `BaseDataProvider` with shared HTTP GET + error handling. Refactored `UpbitTrader`/`BithumbTrader` (-38% / -34% LOC) and 3 DataProviders (-16~19% LOC).
+  - https://github.com/msaltnet/smtm/commit/f48fcc39100e687f72504bb5cd07fb682c80146a
+- **Introduce TraderFactory to replace hardcoded `is_bithumb` exchange selection**: Replaced boolean `is_bithumb` flag with exchange code pattern (UPB, BTH) using `TraderFactory`, consistent with existing `StrategyFactory` and `DataProviderFactory`. Backward compatible with legacy numeric trader arguments (0, 1).
+  - https://github.com/msaltnet/smtm/commit/8cc6b308b573bdef1c3f0cb9465d9e5432872772
+
+### Security
+- **Remove hardcoded API credential fallbacks and add validation**: Replaced placeholder default values (e.g. `"upbit_access_key"`) with empty strings and added credential validation at API call points. Removed duplicate `load_dotenv()` calls from trader and telegram modules (already called in `config.py` via `__init__.py`).
+  - https://github.com/msaltnet/smtm/commit/63ff0c1999a58e3e3237752e855f32f56c0cabce
+
+### Fixed Bugs
+- **Correct `is_intialized` typo to `is_initialized` across all strategies**: Renamed misspelled variable in 7 strategy files and 6 corresponding test files.
+  - https://github.com/msaltnet/smtm/commit/84f06e878f73d834a76c83e0b70e9427a75cf2a6
+
+### Build / CI
+- **Pin dependency versions, separate dev dependencies, fix encoding**: Pinned compatible version ranges in `setup.cfg`, moved dev tools (`pytest`, `coverage`, `pylint`, `black`) to `extras_require[dev]`, added `requirements-dev.txt`, and fixed `requirements.txt` UTF-16 encoding to UTF-8.
+  - https://github.com/msaltnet/smtm/commit/66a9c2bc911160a8a345cb4cc250329f886892ba
+- **Install dev dependencies in CI** to provide `coverage` and `pytest` for the test workflow.
+  - https://github.com/msaltnet/smtm/commit/c4265032eec23287fe6f2a2ed1d053024937afc1
+
+## v1.8.0 (한국어)
+
+### 기능 추가
+- **일시적 네트워크 오류에 대한 HTTP 요청 재시도 로직 추가**: 5xx 상태 코드 및 `ConnectionError` 발생 시 지수 백오프(exponential backoff)로 2회 재시도하는 `request_with_retry` 래퍼를 추가하였습니다. `BaseExchangeTrader`, `BaseDataProvider`, `UpbitTrader`의 주문 취소 요청에 적용되었습니다.
+  - https://github.com/msaltnet/smtm/commit/54d02af2bea0a238457ea7d3d26562a938fc2d53
+
+### 리팩터링
+- **Trader와 Data Provider의 코드 중복 제거를 위한 베이스 클래스 추출**: 타이머, 콜백, 인증정보, HTTP 헬퍼, `send_request`, `cancel_all_requests` 등의 공통 로직을 가진 `BaseExchangeTrader`와, 공통 HTTP GET 및 에러 처리 로직을 가진 `BaseDataProvider`를 추가하였습니다. `UpbitTrader`/`BithumbTrader`는 -38% / -34% LOC, 3개의 DataProvider는 -16~19% LOC 감소하였습니다.
+  - https://github.com/msaltnet/smtm/commit/f48fcc39100e687f72504bb5cd07fb682c80146a
+- **TraderFactory 도입으로 하드코딩된 `is_bithumb` 거래소 선택 방식 개선**: boolean `is_bithumb` 플래그를 거래소 코드 패턴(UPB, BTH)으로 대체하여 기존의 `StrategyFactory`, `DataProviderFactory`와 일관성을 확보하였습니다. 기존의 숫자 인자(0, 1)와도 하위 호환성을 유지합니다.
+  - https://github.com/msaltnet/smtm/commit/8cc6b308b573bdef1c3f0cb9465d9e5432872772
+
+### 보안 개선
+- **하드코딩된 API 자격증명 기본값 제거 및 검증 추가**: placeholder 기본값(예: `"upbit_access_key"`)을 빈 문자열로 변경하고 API 호출 시점에 자격증명 검증을 추가하였습니다. trader와 telegram 모듈의 중복된 `load_dotenv()` 호출을 제거하였습니다(`config.py`의 `__init__.py`에서 이미 호출됨).
+  - https://github.com/msaltnet/smtm/commit/63ff0c1999a58e3e3237752e855f32f56c0cabce
+
+### 버그 수정
+- **모든 전략에서 `is_intialized` 오타를 `is_initialized`로 수정**: 7개의 전략 파일과 6개의 테스트 파일에서 잘못 표기된 변수명을 수정하였습니다.
+  - https://github.com/msaltnet/smtm/commit/84f06e878f73d834a76c83e0b70e9427a75cf2a6
+
+### 빌드 / CI
+- **의존성 버전 고정, 개발용 의존성 분리, 인코딩 수정**: `setup.cfg`에 호환 가능한 버전 범위를 고정하고, 개발 도구(`pytest`, `coverage`, `pylint`, `black`)를 `extras_require[dev]`로 분리하였으며, `requirements-dev.txt`를 추가하고 `requirements.txt` 인코딩을 UTF-16에서 UTF-8로 수정하였습니다.
+  - https://github.com/msaltnet/smtm/commit/66a9c2bc911160a8a345cb4cc250329f886892ba
+- **CI에서 개발용 의존성 설치**: 테스트 워크플로우에 필요한 `coverage`와 `pytest`를 제공하기 위해 CI에서 dev 의존성을 설치하도록 수정하였습니다.
+  - https://github.com/msaltnet/smtm/commit/c4265032eec23287fe6f2a2ed1d053024937afc1
+
+---
+
+## v1.7.1
+- Refactoring and renewal documents and images
+
+---
+
 ## v1.6.2
 - Fix `setup.py`, `setup.cfg`
 
