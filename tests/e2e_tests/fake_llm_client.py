@@ -37,70 +37,6 @@ class FakeLlmClient(LlmClient):
             )
         return self.responses.pop(0)
 
-
-class FakeTrader:
-    """거래소 API를 대체하는 Fake Trader
-
-    send_request, get_account_info 인터페이스를 구현하며,
-    내부 상태(잔고, 보유 자산)를 실제로 변경한다.
-    """
-
-    def __init__(self, balance=500000):
-        self.balance = balance
-        self.assets = {}  # {"BTC": (avg_price, amount)}
-        self.quotes = {}  # {"BTC": current_price}
-        self.order_history = []
-
-    def send_request(self, request_list, callback):
-        for req in request_list:
-            trade_amount = req["price"] * req["amount"]
-            result = dict(req)
-
-            if req["type"] == "buy":
-                if trade_amount > self.balance:
-                    result["state"] = "failed"
-                    result["msg"] = "잔고 부족"
-                else:
-                    self.balance -= trade_amount
-                    currency = "BTC"  # default
-                    if currency in self.assets:
-                        old_price, old_amount = self.assets[currency]
-                        new_amount = old_amount + req["amount"]
-                        new_price = (old_price * old_amount + req["price"] * req["amount"]) / new_amount
-                        self.assets[currency] = (new_price, new_amount)
-                    else:
-                        self.assets[currency] = (req["price"], req["amount"])
-                    result["state"] = "done"
-                    result["msg"] = "success"
-
-            elif req["type"] == "sell":
-                currency = "BTC"
-                if currency not in self.assets or self.assets[currency][1] < req["amount"]:
-                    result["state"] = "failed"
-                    result["msg"] = "보유 수량 부족"
-                else:
-                    self.balance += trade_amount
-                    old_price, old_amount = self.assets[currency]
-                    new_amount = old_amount - req["amount"]
-                    if new_amount <= 0:
-                        del self.assets[currency]
-                    else:
-                        self.assets[currency] = (old_price, new_amount)
-                    result["state"] = "done"
-                    result["msg"] = "success"
-
-            result["balance"] = self.balance
-            self.order_history.append(result)
-            callback(result)
-
-    def get_account_info(self):
-        return {
-            "balance": self.balance,
-            "asset": dict(self.assets),
-            "quote": dict(self.quotes),
-        }
-
-
 class FakeDataProvider:
     """시장 데이터를 대체하는 Fake DataProvider"""
 
@@ -127,7 +63,7 @@ class FakeDataProvider:
             "opening_price": 50000000,
             "high_price": 51000000,
             "low_price": 49000000,
-            "closing_price": 50500000,
+            "closing_price": 50000,
             "acc_price": 1000000000,
             "acc_volume": 200,
         }

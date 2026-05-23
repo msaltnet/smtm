@@ -72,6 +72,14 @@ python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
 
 Chat with the LLM to control trading. Type messages to ask about the market, start/stop trading, or check portfolio status.
 
+You can also move run options into a JSON config file:
+
+```bash
+python -m smtm --config config/paper-upbit.json
+```
+
+Supported config keys are `mode`, `budget`, `currency`, `exchange`, `paper`, `term`, `log`, `token`, and `chatid`. `interval` is accepted as an alias for `term`, and `chat_id` is accepted as an alias for `chatid`. CLI arguments override config-file values.
+
 #### Example chat session
 
 ```
@@ -103,16 +111,28 @@ Control trading through Telegram messenger. All messages are forwarded to the LL
 
 | Option | Description | Default |
 |--------|-------------|---------|
+| `--config` | JSON config file path | None |
 | `--mode` | 0: CLI interactive, 1: Telegram chatbot | (shows help) |
 | `--budget` | Trading budget (KRW) | 500000 |
 | `--currency` | Trading currency (e.g. BTC, ETH) | BTC |
 | `--exchange` | Exchange code (UPB: Upbit, BTH: Bithumb) | UPB |
+| `--paper` | Paper trading mode with real-time quotes and simulated balance | False |
+| `--no-paper` | Disable paper mode when the config file enables it | False |
 | `--term` | Trading tick interval in seconds | 60 |
 | `--log` | Log file name | None |
 
+### Paper Trading
+
+```bash
+python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB --paper
+python -m smtm --mode 0 --currency BTC --exchange UFC --paper
+```
+
+`--paper` keeps the selected DataProvider but routes orders to the in-memory `SimulationTrader` instead of a real exchange. Quotes are injected from the latest `primary_candle` close, so run `start` at least once before manual buy/sell chats. State is in-memory only and commission is currently 0.
+
 ### Supported Exchanges & Data Providers
 
-`--exchange` selects both the market data source and the order-placing trader. End-to-end trading requires a matching entry in both factories.
+`--exchange` selects both the market data source and the order-placing trader. End-to-end trading requires a matching entry in both factories. Any code in this table can be combined with `--paper` to route orders through `SimulationTrader` instead of the real exchange.
 
 | Code | Data Provider | Trader | Notes |
 |------|---------------|--------|-------|
@@ -214,7 +234,7 @@ python -m pytest tests/integration_tests/   # Integration tests (requires API ke
 E2E tests verify the complete flow without calling any external APIs. Only the system boundary is replaced with Fake implementations:
 
 - **FakeLlmClient** — Returns pre-scripted LLM responses (tool calls and text)
-- **FakeTrader** — Simulates exchange with real balance/asset state management
+- **SimulationTrader** — Production paper-trading trader with real balance/asset state management
 - **FakeDataProvider** — Returns static market candle data
 
 All internal components (`LlmOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, all Tools) run with real code.

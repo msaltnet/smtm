@@ -13,13 +13,21 @@ class Controller:
 
     MAIN_STATEMENT = "메시지를 입력하세요 (q: 종료): "
 
-    def __init__(self, interval=60, budget=500000, currency="BTC", exchange="UPB"):
+    def __init__(
+        self,
+        interval=60,
+        budget=500000,
+        currency="BTC",
+        exchange="UPB",
+        paper=False,
+    ):
         self.logger = LogManager.get_logger("Controller")
         self.terminating = False
         self.interval = float(interval)
         self.budget = int(budget)
         self.currency = currency
         self.exchange = exchange
+        self.paper = paper
         LogManager.set_stream_level(Config.operation_log_level)
 
     def main(self):
@@ -42,7 +50,10 @@ class Controller:
             self.exchange, currency=self.currency, interval=Config.candle_interval
         )
         trader = TraderFactory.create(
-            self.exchange, budget=self.budget, currency=self.currency
+            self.exchange,
+            budget=self.budget,
+            currency=self.currency,
+            paper=self.paper,
         )
         if data_provider is None or trader is None:
             print(f"Invalid exchange code: {self.exchange}")
@@ -52,6 +63,8 @@ class Controller:
 
         print("##### smtm LLM trading system is initialized #####")
         print(f"exchange: {self.exchange}, currency: {self.currency}, budget: {self.budget}")
+        if self.paper:
+            print("!! PAPER TRADING MODE - no real orders will be placed")
         print("'start'를 입력하면 자동 매매가 시작됩니다")
         print("==============================")
 

@@ -1,0 +1,77 @@
+import json
+import tempfile
+import unittest
+
+from smtm.__main__ import parse_args
+
+
+class MainConfigTests(unittest.TestCase):
+    def _write_config(self, data):
+        temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False)
+        with temp:
+            json.dump(data, temp)
+        return temp.name
+
+    def test_config_file_supplies_cli_values(self):
+        path = self._write_config({
+            "mode": 0,
+            "budget": 500000,
+            "currency": "BTC",
+            "exchange": "UPB",
+            "paper": True,
+            "term": 30,
+        })
+
+        parser, args = parse_args(["--config", path])
+
+        self.assertIsNotNone(parser)
+        self.assertEqual(args.mode, 0)
+        self.assertEqual(args.budget, 500000)
+        self.assertEqual(args.currency, "BTC")
+        self.assertEqual(args.exchange, "UPB")
+        self.assertTrue(args.paper)
+        self.assertEqual(args.term, 30)
+
+    def test_cli_args_override_config_file(self):
+        path = self._write_config({
+            "mode": 0,
+            "budget": 500000,
+            "currency": "BTC",
+            "exchange": "UPB",
+            "paper": True,
+        })
+
+        _, args = parse_args([
+            "--config", path,
+            "--budget", "1000000",
+            "--currency", "ETH",
+            "--no-paper",
+        ])
+
+        self.assertEqual(args.budget, 1000000)
+        self.assertEqual(args.currency, "ETH")
+        self.assertFalse(args.paper)
+
+    def test_config_aliases_are_supported(self):
+        path = self._write_config({
+            "mode": 1,
+            "interval": 15,
+            "chat_id": "1234",
+            "token": "token",
+        })
+
+        _, args = parse_args(["--config", path])
+
+        self.assertEqual(args.mode, 1)
+        self.assertEqual(args.term, 15)
+        self.assertEqual(args.chatid, "1234")
+
+    def test_unknown_config_key_exits_with_error(self):
+        path = self._write_config({"mode": 0, "unknown": True})
+
+        with self.assertRaises(SystemExit):
+            parse_args(["--config", path])
+
+
+if __name__ == "__main__":
+    unittest.main()

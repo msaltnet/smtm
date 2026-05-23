@@ -16,7 +16,8 @@ LlmOperator, ToolRouter, SafetyGuard, SystemMonitor, 각 Tool 등
 import unittest
 from smtm.llm.llm_operator import LlmOperator
 from smtm.llm.llm_client import LlmResponse, ToolCall
-from .fake_llm_client import FakeLlmClient, FakeTrader, FakeDataProvider
+from smtm.trader.simulation_trader import SimulationTrader
+from .fake_llm_client import FakeLlmClient, FakeDataProvider
 
 
 class ChatTradingE2ETest(unittest.TestCase):
@@ -24,7 +25,8 @@ class ChatTradingE2ETest(unittest.TestCase):
 
     def _make_operator(self, budget=500000, safety=None):
         self.llm = FakeLlmClient()
-        self.trader = FakeTrader(balance=budget)
+        self.trader = SimulationTrader(budget=budget, currency="BTC")
+        self.trader.update_quote("BTC", 50000)
         self.dp = FakeDataProvider()
         config = {
             "exchange": "UPB",
@@ -71,7 +73,7 @@ class ChatTradingE2ETest(unittest.TestCase):
         # 응답 텍스트에 매수 결과가 포함
         self.assertIn("매수", result)
 
-        # FakeTrader 상태 변경 확인
+        # SimulationTrader 상태 변경 확인
         self.assertEqual(self.trader.balance, 499500)  # 500000 - (50000 * 0.01)
         self.assertIn("BTC", self.trader.assets)
         self.assertEqual(self.trader.assets["BTC"], (50000, 0.01))
@@ -110,7 +112,7 @@ class ChatTradingE2ETest(unittest.TestCase):
         self.assertEqual(self.trader.balance, 499500)
 
         # 2단계: 가격 상승 후 매도
-        self.trader.quotes["BTC"] = 60000  # 가격 상승
+        self.trader.update_quote("BTC", 60000)  # 가격 상승
         self.llm.add_responses([
             LlmResponse(
                 text="", stop_reason="tool_use",
@@ -242,7 +244,8 @@ class SafetyGuardE2ETest(unittest.TestCase):
 
     def _make_operator(self, budget=500000, safety=None):
         self.llm = FakeLlmClient()
-        self.trader = FakeTrader(balance=budget)
+        self.trader = SimulationTrader(budget=budget, currency="BTC")
+        self.trader.update_quote("BTC", 50000)
         self.dp = FakeDataProvider()
         config = {
             "exchange": "UPB",
@@ -310,7 +313,7 @@ class SafetyGuardE2ETest(unittest.TestCase):
 
         op.chat("소량 매수해줘")
 
-        self.assertEqual(self.trader.balance, 500000 - 5)
+        self.assertEqual(self.trader.balance, 500000 - 50)
         self.assertEqual(len(op.system_monitor.safety_event_log), 0)
         self.assertEqual(len(op.system_monitor.trade_result_log), 1)
 
@@ -394,7 +397,8 @@ class MonitoringE2ETest(unittest.TestCase):
 
     def _make_operator(self, budget=500000):
         self.llm = FakeLlmClient()
-        self.trader = FakeTrader(balance=budget)
+        self.trader = SimulationTrader(budget=budget, currency="BTC")
+        self.trader.update_quote("BTC", 50000)
         self.dp = FakeDataProvider()
         config = {
             "exchange": "UPB",

@@ -70,6 +70,14 @@ python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
 
 LLM과 채팅하며 거래를 제어합니다. 시장 분석, 거래 시작/중지, 포트폴리오 확인 등을 메시지로 요청할 수 있습니다.
 
+실행 옵션은 JSON 설정 파일로 옮길 수도 있습니다:
+
+```bash
+python -m smtm --config config/paper-upbit.json
+```
+
+지원하는 설정 키는 `mode`, `budget`, `currency`, `exchange`, `paper`, `term`, `log`, `token`, `chatid`입니다. `interval`은 `term`의 별칭으로, `chat_id`는 `chatid`의 별칭으로 사용할 수 있습니다. CLI 인자를 함께 주면 설정 파일 값보다 우선합니다.
+
 #### 채팅 예시
 
 ```
@@ -101,16 +109,28 @@ python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
 
 | 옵션 | 설명 | 기본값 |
 |------|------|--------|
+| `--config` | JSON 설정 파일 경로 | None |
 | `--mode` | 0: CLI 인터랙티브, 1: 텔레그램 챗봇 | (도움말 표시) |
 | `--budget` | 거래 예산 (KRW) | 500000 |
 | `--currency` | 거래 통화 (예: BTC, ETH) | BTC |
 | `--exchange` | 거래소 코드 (UPB: 업비트, BTH: 빗썸) | UPB |
+| `--paper` | 페이퍼 트레이딩 모드 (실시간 시세 + 가상 잔고) | False |
+| `--no-paper` | 설정 파일에서 켠 페이퍼 모드를 CLI에서 끔 | False |
 | `--term` | 거래 주기 (초) | 60 |
 | `--log` | 로그 파일 이름 | None |
 
+### 페이퍼 트레이딩
+
+```bash
+python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB --paper
+python -m smtm --mode 0 --currency BTC --exchange UFC --paper
+```
+
+`--paper`는 선택한 DataProvider는 그대로 쓰되, 주문은 실제 거래소 대신 인메모리 `SimulationTrader`로 보냅니다. 시세는 최신 `primary_candle` 종가에서 주입되므로, 수동 매수/매도 채팅 전에 `start`를 최소 한 번 실행해 시세를 받아와야 합니다. 상태는 메모리에만 저장되며 현재 시뮬레이션 수수료는 0입니다.
+
 ### 지원 거래소 및 데이터 제공자
 
-`--exchange`는 시장 데이터 소스와 주문 실행 Trader를 동시에 선택합니다. 실제 매매까지 가능하려면 두 Factory에 모두 등록되어 있어야 합니다.
+`--exchange`는 시장 데이터 소스와 주문 실행 Trader를 동시에 선택합니다. 실제 매매까지 가능하려면 두 Factory에 모두 등록되어 있어야 합니다. 이 표의 모든 코드는 `--paper`와 결합해 실제 거래소 대신 `SimulationTrader`로 주문을 보낼 수 있습니다.
 
 | 코드 | Data Provider | Trader | 비고 |
 |------|---------------|--------|------|
@@ -212,7 +232,7 @@ python -m pytest tests/integration_tests/   # 통합 테스트 (API 키 필요)
 E2E 테스트는 외부 API 호출 없이 전체 흐름을 검증합니다. 시스템 경계만 Fake로 대체됩니다:
 
 - **FakeLlmClient** — 미리 정의된 LLM 응답(도구 호출, 텍스트)을 순서대로 반환
-- **FakeTrader** — 실제 잔고/자산 상태를 관리하는 거래소 시뮬레이터
+- **SimulationTrader** — 실제 잔고/자산 상태를 관리하는 프로덕션 페이퍼 트레이딩 Trader
 - **FakeDataProvider** — 고정 시장 캔들 데이터 반환
 
 내부 컴포넌트(`LlmOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, 모든 Tool)는 실제 코드로 동작합니다.

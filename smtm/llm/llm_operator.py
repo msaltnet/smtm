@@ -55,6 +55,8 @@ class LlmOperator:
 
         # DataProvider (setup_tools에서 설정)
         self.data_provider = None
+        self.trader = None
+        self.last_market_data = None
 
     def setup_tools(self, data_provider=None, trader=None):
         """Tool 등록을 위한 설정. Controller가 호출."""
@@ -69,6 +71,7 @@ class LlmOperator:
             self.tool_router.register(MarketDataTool(data_provider))
 
         if trader:
+            self.trader = trader
             self.tool_router.register(TradeTool(trader, self.system_monitor))
             self.tool_router.register(PortfolioTool(trader))
             self.tool_router.register(PerformanceTool(
@@ -79,6 +82,9 @@ class LlmOperator:
 
     def chat(self, message: str) -> str:
         """단일 인터페이스 — 사용자 요청 및 주기적 판단 모두 처리"""
+        if self.last_market_data:
+            self._sync_trader_quote(self.last_market_data)
+
         self.conversation_history.append({"role": "user", "content": message})
 
         response_text = self._execute_llm_loop()
@@ -126,6 +132,9 @@ class LlmOperator:
             tool_results_content = []
             for tool_call in response.tool_calls:
                 result = self.tool_router.execute(tool_call)
+                if tool_call.name == "get_market_data" and result.success:
+                    self.last_market_data = result.data
+                    self._sync_trader_quote(result.data)
                 tool_results_content.append({
                     "type": "tool_result",
                     "tool_use_id": tool_call.id,
@@ -147,6 +156,8 @@ class LlmOperator:
             if self.data_provider:
                 market_data = self.data_provider.get_info()
                 self.system_monitor.log_market_data(market_data)
+                self.last_market_data = market_data
+                self._sync_trader_quote(market_data)
 
             prompt = self._build_periodic_prompt(market_data)
             self.chat(prompt)
@@ -161,6 +172,22 @@ class LlmOperator:
         self.timer = threading.Timer(self.interval, self._on_timer)
         self.timer.start()
         self.is_timer_running = True
+
+    def _sync_trader_quote(self, market_data) -> None:
+        """Push the latest candle close to paper traders that support quote injection."""
+        if not self.trader or not hasattr(self.trader, "update_quote") or not market_data:
+            return
+
+        candles = market_data if isinstance(market_data, list) else [market_data]
+        for item in candles:
+            if not isinstance(item, dict) or item.get("type") != "primary_candle":
+                continue
+
+            currency = item.get("market", self.config.get("currency", "BTC"))
+            price = item.get("closing_price")
+            if currency and price is not None:
+                self.trader.update_quote(currency, price)
+            return
 
     def _build_system_prompt(self) -> str:
         parts = [
