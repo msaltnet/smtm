@@ -58,6 +58,7 @@ class MainConfigTests(unittest.TestCase):
             "interval": 15,
             "chat_id": "1234",
             "token": "token",
+            "virtual": True,
         })
 
         _, args = parse_args(["--config", path])
@@ -65,6 +66,19 @@ class MainConfigTests(unittest.TestCase):
         self.assertEqual(args.mode, 1)
         self.assertEqual(args.term, 15)
         self.assertEqual(args.chatid, "1234")
+        self.assertTrue(args.paper)
+
+    def test_virtual_cli_alias_sets_paper_mode(self):
+        _, args = parse_args(["--mode", "0", "--virtual"])
+
+        self.assertTrue(args.paper)
+
+    def test_no_virtual_cli_alias_disables_config_value(self):
+        path = self._write_config({"mode": 0, "virtual": True})
+
+        _, args = parse_args(["--config", path, "--no-virtual"])
+
+        self.assertFalse(args.paper)
 
     def test_unknown_config_key_exits_with_error(self):
         path = self._write_config({"mode": 0, "unknown": True})

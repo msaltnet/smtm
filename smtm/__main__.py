@@ -24,6 +24,7 @@ DEFAULT_CONFIG = {
 CONFIG_ALIASES = {
     "interval": "term",
     "chat_id": "chatid",
+    "virtual": "paper",
 }
 
 
@@ -41,7 +42,7 @@ Example)
 python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
 
 # Run with a JSON config file
-python -m smtm --config config/paper-upbit.json
+python -m smtm --config config/virtual-upbit.json
 
 # Run Telegram chatbot trading
 python -m smtm --mode 1 --token <token> --chatid <chatid>
@@ -61,8 +62,10 @@ python -m smtm --mode 1 --token <token> --chatid <chatid>
     parser.add_argument("--currency", help="trading currency e.g.BTC", default=None)
     parser.add_argument(
         "--paper",
-        help="paper trading mode (simulation trader, real-time quotes)",
+        "--virtual",
+        help="virtual trading mode (simulation trader, real-time quotes)",
         action=argparse.BooleanOptionalAction,
+        dest="paper",
         default=None,
     )
     parser.add_argument("--log", help="log file name", default=None)

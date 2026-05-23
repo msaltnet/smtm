@@ -64,7 +64,7 @@ class Controller:
         print("##### smtm LLM trading system is initialized #####")
         print(f"exchange: {self.exchange}, currency: {self.currency}, budget: {self.budget}")
         if self.paper:
-            print("!! PAPER TRADING MODE - no real orders will be placed")
+            print("!! 가상거래 모드 - 실제 주문은 전송되지 않습니다")
         print("'start'를 입력하면 자동 매매가 시작됩니다")
         print("==============================")
 

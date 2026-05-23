@@ -174,7 +174,7 @@ class LlmOperator:
         self.is_timer_running = True
 
     def _sync_trader_quote(self, market_data) -> None:
-        """Push the latest candle close to paper traders that support quote injection."""
+        """Push the latest candle close to virtual traders that support quote injection."""
         if not self.trader or not hasattr(self.trader, "update_quote") or not market_data:
             return
 

@@ -6,7 +6,7 @@ from .trader import Trader
 
 
 class SimulationTrader(Trader):
-    """In-memory paper-trading Trader using externally injected market quotes."""
+    """In-memory virtual trading Trader using externally injected market quotes."""
 
     NAME = "Simulation Trader"
     CODE = "SIM"

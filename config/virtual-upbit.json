@@ -3,6 +3,6 @@
   "budget": 500000,
   "currency": "BTC",
   "exchange": "UPB",
-  "paper": true,
+  "virtual": true,
   "term": 60
 }
