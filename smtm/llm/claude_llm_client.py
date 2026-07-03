@@ -12,7 +12,7 @@ class ClaudeLlmClient(LlmClient):
         self.model = model
         self.max_tokens = max_tokens
 
-    def create_message(self, system_prompt, messages, tools):
+    def create_message(self, system_prompt, messages, tools, tool_choice=None):
         kwargs = {
             "model": self.model,
             "max_tokens": self.max_tokens,
@@ -21,6 +21,8 @@ class ClaudeLlmClient(LlmClient):
         }
         if tools:
             kwargs["tools"] = tools
+        if tool_choice:
+            kwargs["tool_choice"] = tool_choice
 
         response = self.client.messages.create(**kwargs)
 

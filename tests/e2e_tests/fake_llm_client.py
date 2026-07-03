@@ -22,11 +22,12 @@ class FakeLlmClient(LlmClient):
     def add_responses(self, responses: list):
         self.responses.extend(responses)
 
-    def create_message(self, system_prompt, messages, tools) -> LlmResponse:
+    def create_message(self, system_prompt, messages, tools, tool_choice=None) -> LlmResponse:
         self.call_log.append({
             "system_prompt": system_prompt,
             "messages": messages,
             "tools": tools,
+            "tool_choice": tool_choice,
         })
         if not self.responses:
             return LlmResponse(

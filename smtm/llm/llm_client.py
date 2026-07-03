@@ -33,5 +33,6 @@ class LlmClient(metaclass=ABCMeta):
         system_prompt: str,
         messages: list,
         tools: list,
+        tool_choice: dict = None,
     ) -> LlmResponse:
-        """LLM에 메시지를 전송하고 응답을 받는다"""
+        """LLM에 메시지를 전송하고 응답을 받는다. tool_choice로 특정 Tool 호출을 강제할 수 있다"""

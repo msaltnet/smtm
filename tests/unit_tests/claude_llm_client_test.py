@@ -103,3 +103,44 @@ class ClaudeLlmClientTests(unittest.TestCase):
         self.assertEqual(response.text, "먼저 시장을 확인하겠습니다")
         self.assertEqual(len(response.tool_calls), 1)
         self.assertEqual(response.tool_calls[0].name, "get_market_data")
+
+
+class ClaudeLlmClientToolChoiceTests(unittest.TestCase):
+    def setUp(self):
+        self.patcher = patch("smtm.llm.claude_llm_client.anthropic")
+        self.mock_anthropic = self.patcher.start()
+        self.mock_client = MagicMock()
+        self.mock_anthropic.Anthropic.return_value = self.mock_client
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_tool_choice_is_passed_to_api(self):
+        mock_response = MagicMock()
+        mock_response.content = []
+        mock_response.stop_reason = "tool_use"
+        mock_response.usage.input_tokens = 1
+        mock_response.usage.output_tokens = 1
+        self.mock_client.messages.create.return_value = mock_response
+
+        client = ClaudeLlmClient(api_key="test-key")
+        client.create_message(
+            "system", [{"role": "user", "content": "hi"}],
+            [{"name": "submit_decision"}],
+            tool_choice={"type": "tool", "name": "submit_decision"},
+        )
+        kwargs = self.mock_client.messages.create.call_args.kwargs
+        self.assertEqual(kwargs["tool_choice"], {"type": "tool", "name": "submit_decision"})
+
+    def test_tool_choice_none_is_not_passed(self):
+        mock_response = MagicMock()
+        mock_response.content = []
+        mock_response.stop_reason = "end_turn"
+        mock_response.usage.input_tokens = 1
+        mock_response.usage.output_tokens = 1
+        self.mock_client.messages.create.return_value = mock_response
+
+        client = ClaudeLlmClient(api_key="test-key")
+        client.create_message("system", [{"role": "user", "content": "hi"}], [])
+        kwargs = self.mock_client.messages.create.call_args.kwargs
+        self.assertNotIn("tool_choice", kwargs)
