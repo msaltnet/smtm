@@ -79,7 +79,7 @@ You can also move run options into a JSON config file:
 python -m smtm --config config/virtual-upbit.json
 ```
 
-Supported config keys are `mode`, `budget`, `currency`, `exchange`, `virtual`, `paper`, `term`, `log`, `token`, and `chatid`. `virtual` is the recommended key for virtual trading; `paper` remains supported as a compatibility alias. `interval` is accepted as an alias for `term`, and `chat_id` is accepted as an alias for `chatid`. CLI arguments override config-file values.
+Supported config keys are `mode`, `budget`, `currency`, `exchange`, `virtual`, `paper`, `term`, `strategy`, `log`, `token`, and `chatid`. `virtual` is the recommended key for virtual trading; `paper` remains supported as a compatibility alias. `interval` is accepted as an alias for `term`, and `chat_id` is accepted as an alias for `chatid`. CLI arguments override config-file values.
 
 You can also pick a trading strategy directly, or load a saved account profile:
 

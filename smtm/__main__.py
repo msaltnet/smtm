@@ -119,10 +119,12 @@ def merge_config(args):
 
     if getattr(args, "profile", None):
         # 프로파일은 config 파일보다 뒤, CLI 플래그보다 앞에 반영된다.
-        # MVP 범위: CLI 부팅 시에는 5개 기본 키(exchange/currency/budget/
-        # virtual/term/strategy)만 반영하고, strategy_params/safety는
-        # DEFAULT_CONFIG에 없으므로 여기서는 무시한다 — 해당 값은 실행 중
-        # 에이전트의 switch_profile 경로로 적용된다.
+        # MVP 범위: 프로파일의 키는 모두 이 config 딕셔너리에 병합되지만,
+        # Controller가 실제로 사용하는 것은 그중 6개 키(exchange/currency/
+        # budget/virtual/term/strategy)뿐이다. strategy_params/safety 등은
+        # 병합되어도 Controller 부팅 경로에서는 읽히지 않으므로 CLI 부팅
+        # 시에는 적용되지 않는다 — 해당 값은 실행 중 에이전트의
+        # switch_profile 경로로 적용된다.
         from .profile_store import ProfileStore
         profile = ProfileStore().load(args.profile)
         for key, value in profile.items():
