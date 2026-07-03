@@ -96,6 +96,17 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
         self.assertEqual(self.operator.strategy_code, "RSI")
         self.assertEqual(self.operator.budget, 300000)
 
+    def test_apply_profile_failure_keeps_current_config(self):
+        result = self.operator.apply_profile({
+            "name": "bad", "strategy": "NOPE", "budget": 999999,
+        })
+        self.assertFalse(result["success"])
+        self.assertEqual(self.operator.strategy_code, "BNH")
+        self.assertEqual(self.operator.budget, 500000)
+        self.assertEqual(self.operator.config.get("strategy"), "BNH")
+        # 재구성 후에도 매매 시작이 가능해야 한다 (일관 상태)
+        self.assertTrue(self.operator.start_trading()["success"])
+
 
 class SystemOperatorChatTests(unittest.TestCase):
     def test_chat_returns_text(self):
@@ -114,6 +125,25 @@ class SystemOperatorChatTests(unittest.TestCase):
         operator = make_operator(responses=responses)
         result = operator.chat("포트폴리오 알려줘")
         self.assertEqual(result, "포트폴리오입니다")
+
+    def test_tool_loop_appends_anthropic_format_blocks(self):
+        responses = [
+            LlmResponse(text="확인해볼게요", tool_calls=[
+                ToolCall(id="t1", name="get_portfolio", arguments={})
+            ], stop_reason="tool_use"),
+            LlmResponse(text="완료"),
+        ]
+        operator = make_operator(responses=responses)
+        operator.chat("포트폴리오?")
+        second_call_messages = operator.llm_client.call_log[1]["messages"]
+        assistant_msg = second_call_messages[-2]
+        self.assertEqual(assistant_msg["role"], "assistant")
+        types = [block["type"] for block in assistant_msg["content"]]
+        self.assertIn("text", types)
+        self.assertIn("tool_use", types)
+        tool_block = [b for b in assistant_msg["content"] if b["type"] == "tool_use"][0]
+        self.assertEqual(tool_block["name"], "get_portfolio")
+        self.assertEqual(tool_block["id"], "t1")
 
     def test_chat_trims_history(self):
         operator = make_operator(config_extra={

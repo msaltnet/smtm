@@ -161,6 +161,8 @@ class SystemOperator:
         was_running = self._is_trading_running()
         if was_running:
             self.trading_operator.stop()
+        old_config = dict(self.config)
+        old_budget = self.budget
         for key in ("exchange", "currency", "budget", "virtual", "term",
                     "strategy", "strategy_params", "safety"):
             if key in profile:
@@ -170,6 +172,11 @@ class SystemOperator:
         try:
             self._build_trading_components(rebuild_infra=True)
         except ValueError as err:
+            # 현재 구성 유지: 스냅샷 복원 후 이전 구성으로 재구성
+            self.config.clear()
+            self.config.update(old_config)
+            self.budget = old_budget
+            self._build_trading_components(rebuild_infra=True)
             return {"success": False, "error": str(err)}
         return {"success": True, "profile": profile.get("name"),
                 "was_running": was_running,
@@ -213,7 +220,14 @@ class SystemOperator:
                     "tool_use_id": tool_call.id,
                     "content": str(result.to_dict()),
                 })
-            messages.append({"role": "assistant", "content": response.tool_calls})
+            assistant_content = []
+            if response.text:
+                assistant_content.append({"type": "text", "text": response.text})
+            assistant_content.extend(
+                {"type": "tool_use", "id": tc.id, "name": tc.name, "input": tc.arguments}
+                for tc in response.tool_calls
+            )
+            messages.append({"role": "assistant", "content": assistant_content})
             messages.append({"role": "user", "content": tool_results_content})
 
     def _build_system_prompt(self) -> str:
