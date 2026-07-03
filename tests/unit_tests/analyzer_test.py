@@ -31,6 +31,12 @@ class AnalyzerTests(unittest.TestCase):
         # 400000 + 2.0 * 60000 = 520000
         self.assertEqual(self.analyzer.current_account_value(), 520000)
 
+    def test_current_account_value_falls_back_to_avg_price_without_quote(self):
+        # quote가 없으면 평균단가로 자산 가치를 계산한다
+        self.account["quote"] = {}
+        # 400000 + 2.0 * 50000(평균단가) = 500000
+        self.assertEqual(self.analyzer.current_account_value(), 500000)
+
     def test_get_return_report_computes_cumulative_return(self):
         self.analyzer.make_start_point()          # 시작 가치 520000
         self.account["balance"] = 452000          # 현재 가치 572000 → +10%
