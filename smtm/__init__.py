@@ -60,6 +60,7 @@ from .llm.system_monitor import SystemMonitor
 from .strategy.strategy import Strategy
 from .strategy.strategy_bnh import StrategyBuyAndHold
 from .strategy.strategy_rsi import StrategyRsi
+from .strategy.strategy_sma import StrategySma
 
 __all__ = [
     "LogManager",

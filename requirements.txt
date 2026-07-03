@@ -3,3 +3,4 @@ pyjwt
 python-dotenv
 anthropic
 numpy
+pandas
