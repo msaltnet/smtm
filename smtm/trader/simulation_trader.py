@@ -120,4 +120,6 @@ class SimulationTrader(Trader):
     def _fail(result: Dict[str, Any], message: str) -> Dict[str, Any]:
         result["state"] = "failed"
         result["msg"] = message
+        result["price"] = 0
+        result["amount"] = 0
         return result

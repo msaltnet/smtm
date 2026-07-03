@@ -50,6 +50,18 @@ class SimulationTraderBuyTest(unittest.TestCase):
         self.assertEqual(results[0]["msg"], "잔고 부족")
         self.assertEqual(trader.balance, 100)
 
+    def test_failed_fill_zeroes_price_and_amount(self):
+        trader = SimulationTrader(budget=1000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+        trader.send_request([{  # 잔고 부족 → 실패
+            "id": "r1", "type": "buy", "price": 50000, "amount": 1.0,
+            "date_time": "2026-07-03T12:00:00",
+        }], results.append)
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertEqual(results[0]["price"], 0)
+        self.assertEqual(results[0]["amount"], 0)
+
     def test_buy_updates_average_cost(self):
         trader = SimulationTrader(budget=500000, currency="BTC")
         trader.update_quote("BTC", 50000)
