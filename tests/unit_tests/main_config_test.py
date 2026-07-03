@@ -87,5 +87,35 @@ class MainConfigTests(unittest.TestCase):
             parse_args(["--config", path])
 
 
+class StrategyProfileConfigTests(unittest.TestCase):
+    def test_default_strategy_is_bnh(self):
+        _, args = parse_args([])
+        self.assertEqual(args.strategy, "BNH")
+
+    def test_strategy_flag_overrides_default(self):
+        _, args = parse_args(["--strategy", "RSI"])
+        self.assertEqual(args.strategy, "RSI")
+
+    def test_config_file_strategy_key_is_accepted(self):
+        import json, tempfile
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump({"strategy": "SMA"}, f)
+            path = f.name
+        _, args = parse_args(["--config", path])
+        self.assertEqual(args.strategy, "SMA")
+
+    def test_profile_flag_parsed(self):
+        # ProfileStore().load(...) hits the real config/profiles/ directory,
+        # so mock it out rather than depending on a fixture profile file
+        # existing on disk.
+        from unittest.mock import patch
+        with patch(
+            "smtm.profile_store.ProfileStore.load",
+            return_value={"name": "my-profile", "strategy": "RSI"},
+        ):
+            _, args = parse_args(["--profile", "my-profile"])
+        self.assertEqual(args.profile, "my-profile")
+
+
 if __name__ == "__main__":
     unittest.main()

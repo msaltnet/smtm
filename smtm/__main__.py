@@ -20,6 +20,7 @@ DEFAULT_CONFIG = {
     "token": None,
     "chatid": None,
     "mode": DEFAULT_MODE,
+    "strategy": "BNH",
 }
 CONFIG_ALIASES = {
     "interval": "term",
@@ -78,6 +79,16 @@ python -m smtm --mode 1 --token <token> --chatid <chatid>
         default=None,
     )
     parser.add_argument(
+        "--strategy",
+        help="trading strategy code (BNH, RSI, SMA, LLM)",
+        default=None,
+    )
+    parser.add_argument(
+        "--profile",
+        help="account profile name in config/profiles/",
+        default=None,
+    )
+    parser.add_argument(
         "--version", action="version", version=f"smtm version: {__version__}"
     )
     return parser
@@ -106,12 +117,25 @@ def merge_config(args):
     if args.config:
         config.update(load_config(args.config))
 
+    if getattr(args, "profile", None):
+        # 프로파일은 config 파일보다 뒤, CLI 플래그보다 앞에 반영된다.
+        # MVP 범위: CLI 부팅 시에는 5개 기본 키(exchange/currency/budget/
+        # virtual/term/strategy)만 반영하고, strategy_params/safety는
+        # DEFAULT_CONFIG에 없으므로 여기서는 무시한다 — 해당 값은 실행 중
+        # 에이전트의 switch_profile 경로로 적용된다.
+        from .profile_store import ProfileStore
+        profile = ProfileStore().load(args.profile)
+        for key, value in profile.items():
+            if key == "name":
+                continue
+            config[CONFIG_ALIASES.get(key, key)] = value
+
     for key in DEFAULT_CONFIG:
         cli_value = getattr(args, key, None)
         if cli_value is not None:
             config[key] = cli_value
 
-    return argparse.Namespace(config=args.config, **config)
+    return argparse.Namespace(config=args.config, profile=args.profile, **config)
 
 
 def parse_args(argv=None):
@@ -139,6 +163,7 @@ def main(argv=None):
             currency=args.currency,
             exchange=args.exchange,
             paper=args.paper,
+            strategy=args.strategy,
         )
         controller.main()
     elif args.mode == 1:
