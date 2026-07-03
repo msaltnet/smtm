@@ -57,6 +57,7 @@ from .llm.llm_client import LlmClient
 from .llm.claude_llm_client import ClaudeLlmClient
 from .llm.safety_guard import SafetyGuard, SafetyConfig
 from .llm.system_monitor import SystemMonitor
+from .analyzer import Analyzer
 from .strategy.strategy import Strategy
 from .strategy.strategy_bnh import StrategyBuyAndHold
 from .strategy.strategy_rsi import StrategyRsi
@@ -66,6 +67,7 @@ from .strategy.strategy_factory import StrategyFactory
 __all__ = [
     "LogManager",
     "LlmOperator",
+    "Analyzer",
     "Controller",
     "JptController",
     "TelegramController",
