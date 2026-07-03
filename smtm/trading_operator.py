@@ -126,5 +126,6 @@ class TradingOperator:
             self.worker.post_task({"runnable": self._execute_trading})
 
         self.timer = threading.Timer(self.interval, on_timer_expired)
+        self.timer.daemon = True
         self.timer.start()
         self.is_timer_running = True

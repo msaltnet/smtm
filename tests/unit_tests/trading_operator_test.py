@@ -51,8 +51,22 @@ class TradingOperatorInitTests(unittest.TestCase):
 
 
 class TradingOperatorTickTests(unittest.TestCase):
+    def _make(self, **kwargs):
+        operator_tuple = make_operator(**kwargs)
+        if not hasattr(self, "_operators"):
+            self._operators = []
+        self._operators.append(operator_tuple[0])
+        return operator_tuple
+
+    def tearDown(self):
+        # 직접 틱 호출로 시작된 타이머 정리
+        if hasattr(self, "_operators"):
+            for operator in self._operators:
+                if operator.timer is not None:
+                    operator.timer.cancel()
+
     def test_tick_executes_full_pipeline_and_buys(self):
-        operator, trader, _, monitor = make_operator()
+        operator, trader, _, monitor = self._make()
         operator.state = "running"
         operator._execute_trading(None)
         # BnH는 예산의 1/5 매수 → SimulationTrader 잔고 감소
@@ -65,7 +79,7 @@ class TradingOperatorTickTests(unittest.TestCase):
         self.assertEqual(len(monitor.trade_result_log), 1)
 
     def test_tick_injects_quote_into_simulation_trader(self):
-        operator, trader, _, _ = make_operator(closing_price=42000)
+        operator, trader, _, _ = self._make(closing_price=42000)
         operator.state = "running"
         operator._execute_trading(None)
         self.assertEqual(trader.quotes["BTC"], 42000)
@@ -73,7 +87,7 @@ class TradingOperatorTickTests(unittest.TestCase):
         self.assertEqual(trader.order_history[0]["price"], 42000)
 
     def test_tick_is_noop_for_trader_without_update_quote(self):
-        operator, _, _, _ = make_operator()
+        operator, _, _, _ = self._make()
         real_trader = MagicMock(spec=["send_request", "cancel_request",
                                       "cancel_all_requests", "get_account_info"])
         operator.trader = real_trader
@@ -82,7 +96,7 @@ class TradingOperatorTickTests(unittest.TestCase):
 
     def test_safety_guard_blocks_oversized_request(self):
         # max_trade_amount=1000 → BnH의 10만원 매수 차단
-        operator, trader, _, monitor = make_operator(max_trade_amount=1000)
+        operator, trader, _, monitor = self._make(max_trade_amount=1000)
         operator.state = "running"
         operator._execute_trading(None)
         self.assertEqual(len(trader.order_history), 0)
@@ -90,7 +104,7 @@ class TradingOperatorTickTests(unittest.TestCase):
         self.assertEqual(len(monitor.safety_event_log), 1)
 
     def test_empty_data_does_not_crash(self):
-        operator, trader, _, _ = make_operator()
+        operator, trader, _, _ = self._make()
         operator.data_provider = MagicMock(get_info=MagicMock(return_value=[]))
         operator.state = "running"
         operator._execute_trading(None)
