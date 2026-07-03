@@ -1,6 +1,7 @@
 from .strategy_bnh import StrategyBuyAndHold
 from .strategy_rsi import StrategyRsi
 from .strategy_sma import StrategySma
+from .strategy_llm import StrategyLlm
 
 
 class StrategyFactory:
@@ -10,14 +11,16 @@ class StrategyFactory:
         StrategyBuyAndHold,
         StrategyRsi,
         StrategySma,
+        StrategyLlm,
     ]
 
     @staticmethod
     def create(code, llm_client=None):
-        """code에 해당하는 Strategy 객체를 생성하여 반환. llm_client는 LLM 전략에서만 사용"""
-        del llm_client  # LLM 전략 등록 시(Task 9) 사용
+        """code에 해당하는 Strategy 객체를 생성하여 반환. llm_client는 LLM 전략에만 주입"""
         for strategy in StrategyFactory.STRATEGY_LIST:
             if strategy.CODE == code:
+                if strategy is StrategyLlm:
+                    return StrategyLlm(llm_client=llm_client)
                 return strategy()
         return None
 
