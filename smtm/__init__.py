@@ -57,6 +57,8 @@ from .llm.llm_client import LlmClient
 from .llm.claude_llm_client import ClaudeLlmClient
 from .llm.safety_guard import SafetyGuard, SafetyConfig
 from .llm.system_monitor import SystemMonitor
+from .strategy.strategy import Strategy
+from .strategy.strategy_bnh import StrategyBuyAndHold
 
 __all__ = [
     "LogManager",
