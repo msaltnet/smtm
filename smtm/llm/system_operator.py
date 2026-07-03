@@ -120,6 +120,18 @@ class SystemOperator:
         self.tool_router.register(StopTradingTool(self))
         self.tool_router.register(GetStatusTool(self))
 
+        if self.profile_store is not None:
+            from .tools.profile_tools import (
+                ListProfilesTool, DescribeProfileTool, CreateProfileTool,
+                UpdateProfileTool, DeleteProfileTool, SwitchProfileTool,
+            )
+            self.tool_router.register(ListProfilesTool(self.profile_store))
+            self.tool_router.register(DescribeProfileTool(self.profile_store))
+            self.tool_router.register(CreateProfileTool(self.profile_store))
+            self.tool_router.register(UpdateProfileTool(self.profile_store))
+            self.tool_router.register(DeleteProfileTool(self.profile_store))
+            self.tool_router.register(SwitchProfileTool(self.profile_store, self))
+
     # ------------------------------------------------------------------
     # 오케스트레이션 API (Tool과 Controller에서 호출)
     # ------------------------------------------------------------------
