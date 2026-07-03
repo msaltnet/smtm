@@ -33,26 +33,32 @@ class SafetyGuard:
         self.current_value = config.initial_budget
 
     def check(self, tool_call) -> SafetyResult:
-        """Tool 호출 사전 검증. 거래 Tool만 검증, 나머지는 통과."""
+        """Tool 호출 사전 검증. 거래 Tool만 검증, 나머지는 통과. (Task 11에서 제거 예정)"""
         if tool_call.name not in self.TRADE_TOOLS:
             return SafetyResult(allowed=True)
+        trade_amount = tool_call.arguments.get("price", 0) * tool_call.arguments.get("amount", 0)
+        return self._check_limits(trade_amount)
 
+    def check_request(self, request: dict) -> SafetyResult:
+        """거래 요청(request dict) 사전 검증. cancel 요청은 검사 제외."""
+        if request.get("type") == "cancel":
+            return SafetyResult(allowed=True)
+        trade_amount = float(request.get("price", 0)) * float(request.get("amount", 0))
+        return self._check_limits(trade_amount)
+
+    def _check_limits(self, trade_amount: float) -> SafetyResult:
         self._reset_daily_if_needed()
 
-        # 1회 최대 거래금액 검증
-        trade_amount = tool_call.arguments.get("price", 0) * tool_call.arguments.get("amount", 0)
         if trade_amount > self.config.max_trade_amount:
             reason = f"1회 최대 거래금액 초과 ({trade_amount:,.0f} > {self.config.max_trade_amount:,.0f})"
             self.logger.warning(reason)
             return SafetyResult(allowed=False, reason=reason)
 
-        # 일일 거래횟수 제한
         if self.daily_trade_count >= self.config.max_daily_trades:
             reason = f"일일 거래횟수 초과 ({self.daily_trade_count}/{self.config.max_daily_trades})"
             self.logger.warning(reason)
             return SafetyResult(allowed=False, reason=reason)
 
-        # 누적 손실 한도
         loss_ratio = (self.current_value - self.config.initial_budget) / self.config.initial_budget
         if loss_ratio < self.config.max_loss_ratio:
             reason = f"손실 한도 초과 ({loss_ratio:.1%} < {self.config.max_loss_ratio:.1%})"
