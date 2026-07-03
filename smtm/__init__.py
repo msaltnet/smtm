@@ -61,6 +61,7 @@ from .strategy.strategy import Strategy
 from .strategy.strategy_bnh import StrategyBuyAndHold
 from .strategy.strategy_rsi import StrategyRsi
 from .strategy.strategy_sma import StrategySma
+from .strategy.strategy_factory import StrategyFactory
 
 __all__ = [
     "LogManager",
