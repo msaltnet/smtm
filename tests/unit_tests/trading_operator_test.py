@@ -134,11 +134,12 @@ class TradingOperatorTickTests(unittest.TestCase):
                                        "cancel_all_requests", "get_account_info"])
         error_trader.send_request.side_effect = (
             lambda requests, callback: callback("error!"))
-        error_trader.get_account_info.return_value = {
-            "balance": 500000, "asset": {}, "quote": {}}
         operator.trader = error_trader
-        operator.analyzer.get_account_info_func = error_trader.get_account_info
-        operator._execute_trading(None)  # 크래시 없이 통과해야 한다
+        # 가드가 없으면 AttributeError가 여기서 전파된다 (_send_requests는 try 밖)
+        operator._send_requests([{
+            "id": "t1", "type": "buy", "price": 50000, "amount": 0.5,
+            "date_time": "2026-07-03T12:00:00",
+        }])
 
 
 class TradingOperatorLifecycleTests(unittest.TestCase):
