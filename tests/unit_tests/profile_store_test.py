@@ -73,3 +73,10 @@ class ProfileStoreTests(unittest.TestCase):
             f.write("{not json")
         profiles = self.store.list_profiles()
         self.assertEqual(len(profiles), 1)
+
+    def test_list_ignores_non_dict_json(self):
+        self.store.save(PROFILE)
+        with open(os.path.join(self.tmp.name, "weird.json"), "w") as f:
+            f.write("[1, 2, 3]")
+        profiles = self.store.list_profiles()
+        self.assertEqual(len(profiles), 1)

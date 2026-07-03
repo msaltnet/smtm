@@ -65,6 +65,9 @@ class ProfileStore:
                 with open(os.path.join(self.dir_path, filename), "r",
                           encoding="utf-8") as f:
                     profile = json.load(f)
+                if not isinstance(profile, dict):
+                    self.logger.warning(f"invalid profile file {filename}: not a dict")
+                    continue
                 summaries.append({
                     "name": profile.get("name"),
                     "strategy": profile.get("strategy"),
