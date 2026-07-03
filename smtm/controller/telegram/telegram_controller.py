@@ -9,10 +9,8 @@ import time
 from typing import Optional, Any
 from ...config import Config
 from ...log_manager import LogManager
-from ...llm.llm_operator import LlmOperator
+from ...llm.system_operator import SystemOperator
 from ...llm.claude_llm_client import ClaudeLlmClient
-from ...trader.trader_factory import TraderFactory
-from ...data.data_provider_factory import DataProviderFactory
 from .message_handler import TelegramMessageHandler
 
 
@@ -43,16 +41,16 @@ class TelegramController:
             "currency": currency,
             "budget": budget,
             "interval": Config.candle_interval,
+            "virtual": False,
+            "strategy": "BNH",
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
-        self.operator = LlmOperator(llm_client, config)
-
-        data_provider = DataProviderFactory.create(
-            exchange, currency=currency, interval=Config.candle_interval
-        )
-        trader = TraderFactory.create(exchange, budget=budget, currency=currency)
-        if data_provider is not None and trader is not None:
-            self.operator.setup_tools(data_provider=data_provider, trader=trader)
+        self.operator = SystemOperator(llm_client, config)
+        try:
+            self.operator.setup()
+        except ValueError as err:
+            print(str(err))
+            return
 
         self.operator.start_trading()
 

@@ -2,17 +2,15 @@ from typing import Dict
 from ..log_manager import LogManager
 from .tool import Tool, ToolResult
 from .llm_client import ToolCall
-from .safety_guard import SafetyGuard
 from .system_monitor import SystemMonitor
 
 
 class ToolRouter:
     """Tool 등록, 라우팅, 실행"""
 
-    def __init__(self, safety_guard: SafetyGuard, system_monitor: SystemMonitor):
+    def __init__(self, system_monitor: SystemMonitor):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.tools: Dict[str, Tool] = {}
-        self.safety_guard = safety_guard
         self.system_monitor = system_monitor
 
     def register(self, tool: Tool):
@@ -28,17 +26,6 @@ class ToolRouter:
             self.logger.error(error)
             return ToolResult(success=False, error=error)
 
-        # SafetyGuard 검증
-        safety_result = self.safety_guard.check(tool_call)
-        if not safety_result.allowed:
-            self.system_monitor.log_safety_event({
-                "type": "blocked",
-                "tool": tool_call.name,
-                "reason": safety_result.reason,
-            })
-            return ToolResult(success=False, error=safety_result.reason)
-
-        # Tool 실행
         tool = self.tools[tool_call.name]
         try:
             result = tool.execute(tool_call.arguments)
@@ -46,15 +33,9 @@ class ToolRouter:
             self.logger.error(f"Tool execution failed: {tool_call.name} - {e}")
             result = ToolResult(success=False, error=str(e))
 
-        # SystemMonitor 기록
         self.system_monitor.log_tool_call(
             tool_name=tool_call.name,
             arguments=tool_call.arguments,
             result=result.to_dict(),
         )
-
-        # 거래 성공 시 SafetyGuard 카운터 업데이트
-        if tool_call.name == "execute_trade" and result.success:
-            self.safety_guard.record_trade(tool_call.arguments)
-
         return result

@@ -52,7 +52,6 @@ from .trader.trader_factory import TraderFactory
 from .controller.controller import Controller
 from .controller.jpt_controller import JptController
 from .controller.telegram import TelegramController
-from .llm.llm_operator import LlmOperator
 from .llm.llm_client import LlmClient
 from .llm.claude_llm_client import ClaudeLlmClient
 from .llm.safety_guard import SafetyGuard, SafetyConfig
@@ -69,7 +68,6 @@ from .profile_store import ProfileStore
 
 __all__ = [
     "LogManager",
-    "LlmOperator",
     "Analyzer",
     "Controller",
     "JptController",

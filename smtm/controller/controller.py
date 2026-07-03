@@ -2,14 +2,13 @@ import os
 import signal
 from ..config import Config
 from ..log_manager import LogManager
-from ..llm.llm_operator import LlmOperator
+from ..llm.system_operator import SystemOperator
 from ..llm.claude_llm_client import ClaudeLlmClient
-from ..trader.trader_factory import TraderFactory
-from ..data.data_provider_factory import DataProviderFactory
+from ..profile_store import ProfileStore
 
 
 class Controller:
-    """LLM 기반 CLI 컨트롤러"""
+    """LLM 기반 CLI 컨트롤러 — SystemOperator를 통해 시스템을 제어"""
 
     MAIN_STATEMENT = "메시지를 입력하세요 (q: 종료): "
 
@@ -20,6 +19,7 @@ class Controller:
         currency="BTC",
         exchange="UPB",
         paper=False,
+        strategy="BNH",
     ):
         self.logger = LogManager.get_logger("Controller")
         self.terminating = False
@@ -28,6 +28,7 @@ class Controller:
         self.currency = currency
         self.exchange = exchange
         self.paper = paper
+        self.strategy = strategy
         LogManager.set_stream_level(Config.operation_log_level)
 
     def main(self):
@@ -42,27 +43,21 @@ class Controller:
             "currency": self.currency,
             "budget": self.budget,
             "interval": self.interval,
+            "virtual": self.paper,
+            "strategy": self.strategy,
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
-        operator = LlmOperator(llm_client, config)
-
-        data_provider = DataProviderFactory.create(
-            self.exchange, currency=self.currency, interval=Config.candle_interval
-        )
-        trader = TraderFactory.create(
-            self.exchange,
-            budget=self.budget,
-            currency=self.currency,
-            paper=self.paper,
-        )
-        if data_provider is None or trader is None:
-            print(f"Invalid exchange code: {self.exchange}")
+        operator = SystemOperator(llm_client, config,
+                                  profile_store=ProfileStore())
+        try:
+            operator.setup()
+        except ValueError as err:
+            print(str(err))
             return
 
-        operator.setup_tools(data_provider=data_provider, trader=trader)
-
         print("##### smtm LLM trading system is initialized #####")
-        print(f"exchange: {self.exchange}, currency: {self.currency}, budget: {self.budget}")
+        print(f"exchange: {self.exchange}, currency: {self.currency}, "
+              f"budget: {self.budget}, strategy: {self.strategy}")
         if self.paper:
             print("!! 가상거래 모드 - 실제 주문은 전송되지 않습니다")
         print("'start'를 입력하면 자동 매매가 시작됩니다")
@@ -78,8 +73,9 @@ class Controller:
                     self._terminate(operator)
                     break
                 if message.lower() == "start":
-                    operator.start_trading()
-                    print("자동 매매가 시작되었습니다")
+                    result = operator.start_trading()
+                    print("자동 매매가 시작되었습니다" if result.get("success")
+                          else f"시작 실패: {result.get('error')}")
                     continue
                 if message.lower() == "stop":
                     operator.stop_trading()

@@ -1,10 +1,7 @@
 import os
-from ..config import Config
 from ..log_manager import LogManager
-from ..llm.llm_operator import LlmOperator
+from ..llm.system_operator import SystemOperator
 from ..llm.claude_llm_client import ClaudeLlmClient
-from ..trader.trader_factory import TraderFactory
-from ..data.data_provider_factory import DataProviderFactory
 
 
 class JptController:
@@ -32,20 +29,12 @@ class JptController:
             "currency": self.currency,
             "budget": self.budget,
             "interval": self.interval,
+            "virtual": False,
+            "strategy": "BNH",
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
-        self.operator = LlmOperator(llm_client, config)
-
-        data_provider = DataProviderFactory.create(
-            exchange, currency=self.currency, interval=Config.candle_interval
-        )
-        trader = TraderFactory.create(
-            exchange, budget=self.budget, currency=self.currency
-        )
-        if data_provider is None or trader is None:
-            raise UserWarning(f"Invalid exchange code! {exchange}")
-
-        self.operator.setup_tools(data_provider=data_provider, trader=trader)
+        self.operator = SystemOperator(llm_client, config)
+        self.operator.setup()
         print("##### smtm LLM trading is initialized #####")
         print(f"interval: {self.interval}, budget: {self.budget}")
 

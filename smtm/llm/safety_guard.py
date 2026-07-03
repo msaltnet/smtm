@@ -21,9 +21,7 @@ class SafetyResult:
 
 
 class SafetyGuard:
-    """규칙 기반 안전장치 — Tool 실행 전 검증, LLM 우회 불가"""
-
-    TRADE_TOOLS = ("execute_trade",)
+    """규칙 기반 안전장치 — 거래 요청 실행 전 검증, LLM 우회 불가"""
 
     def __init__(self, config: SafetyConfig):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -31,13 +29,6 @@ class SafetyGuard:
         self.daily_trade_count = 0
         self.daily_date = date.today()
         self.current_value = config.initial_budget
-
-    def check(self, tool_call) -> SafetyResult:
-        """Tool 호출 사전 검증. 거래 Tool만 검증, 나머지는 통과. (Task 11에서 제거 예정)"""
-        if tool_call.name not in self.TRADE_TOOLS:
-            return SafetyResult(allowed=True)
-        trade_amount = tool_call.arguments.get("price", 0) * tool_call.arguments.get("amount", 0)
-        return self._check_limits(trade_amount)
 
     def check_request(self, request: dict) -> SafetyResult:
         """거래 요청(request dict) 사전 검증. cancel 요청은 검사 제외."""
@@ -84,8 +75,8 @@ class SafetyGuard:
             "daily_limit": self.config.max_daily_trades,
             "current_loss_ratio": round(loss_ratio, 4),
             "max_loss_ratio": self.config.max_loss_ratio,
-            "trading_allowed": self.check(
-                type("FakeCall", (), {"name": "execute_trade", "arguments": {"price": 1, "amount": 1}})()
+            "trading_allowed": self.check_request(
+                {"type": "buy", "price": 1, "amount": 1}
             ).allowed,
         }
 
