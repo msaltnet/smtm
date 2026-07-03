@@ -1,6 +1,39 @@
 import unittest
+from unittest.mock import patch
 from smtm.llm.system_operator import SystemOperator
 from smtm.llm.llm_client import LlmClient, LlmResponse, ToolCall
+
+
+class StubDataProvider:
+    """실 네트워크 호출 없이 고정 캔들을 반환하는 테스트용 DataProvider"""
+
+    def get_info(self):
+        return [{
+            "type": "primary_candle", "market": "BTC",
+            "date_time": "2026-07-03T12:00:00",
+            "opening_price": 50000, "high_price": 51000, "low_price": 49000,
+            "closing_price": 50000, "acc_price": 1000000000, "acc_volume": 200,
+        }]
+
+
+_data_provider_patcher = None
+
+
+def setUpModule():
+    # SystemOperator._build_trading_components는 DataProviderFactory를 지역
+    # import하므로, 실제 Factory의 create를 패치해 어떤 유닛 테스트도 실
+    # 거래소로 네트워크 틱을 보내지 않도록 한다 (apply_profile 등은
+    # rebuild_infra=True로 이 경로를 다시 탄다).
+    global _data_provider_patcher
+    _data_provider_patcher = patch(
+        "smtm.data.data_provider_factory.DataProviderFactory.create",
+        return_value=StubDataProvider(),
+    )
+    _data_provider_patcher.start()
+
+
+def tearDownModule():
+    _data_provider_patcher.stop()
 
 
 class StubLlmClient(LlmClient):
@@ -106,6 +139,24 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
         self.assertEqual(self.operator.config.get("strategy"), "BNH")
         # 재구성 후에도 매매 시작이 가능해야 한다 (일관 상태)
         self.assertTrue(self.operator.start_trading()["success"])
+
+    def test_apply_profile_with_bad_safety_key_keeps_config(self):
+        result = self.operator.apply_profile({
+            "name": "bad-safety", "safety": {"max_trade": 5},
+        })
+        self.assertFalse(result["success"])
+        # make_operator의 초기 config에는 "safety" 키가 없으므로 복원 후에도
+        # 부재 상태가 유지되어야 한다 (반쯤 재구성된 상태가 아니라 이전
+        # 스냅샷 그대로).
+        self.assertIsNone(self.operator.config.get("safety"))
+        # 복원 후에도 일관 상태
+        self.assertTrue(self.operator.start_trading()["success"])
+
+    def test_select_strategy_preserves_daily_trade_count(self):
+        self.operator.safety_guard.record_trade({})
+        self.operator.safety_guard.record_trade({})
+        self.operator.select_strategy("RSI")
+        self.assertEqual(self.operator.safety_guard.daily_trade_count, 2)
 
 
 class SystemOperatorChatTests(unittest.TestCase):

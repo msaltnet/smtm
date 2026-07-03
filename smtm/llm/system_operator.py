@@ -85,8 +85,15 @@ class SystemOperator:
             raise ValueError(f"올바르지 않은 전략 코드입니다: {strategy_code}")
 
         analyzer = Analyzer(self.system_monitor)
+        old_guard = self.safety_guard
         self.safety_guard = SafetyGuard(SafetyConfig(
             initial_budget=self.budget, **cfg.get("safety", {})))
+        if old_guard is not None:
+            # 일일 거래 한도는 구성 변경으로 리셋되지 않는다 (LLM 우회 방지).
+            # 손실률 추적(current_value)은 예산이 바뀔 수 있으므로 새
+            # initial_budget 기준으로 재시작한다.
+            self.safety_guard.daily_trade_count = old_guard.daily_trade_count
+            self.safety_guard.daily_date = old_guard.daily_date
 
         operator = TradingOperator(
             interval=cfg.get("interval", 60), currency=currency)
@@ -143,7 +150,7 @@ class SystemOperator:
         self.config["strategy"] = code
         try:
             self._build_trading_components(rebuild_infra=False)
-        except ValueError as err:
+        except Exception as err:
             self.config["strategy"] = previous
             return {"success": False, "error": str(err)}
         return {"success": True, "strategy": code}
@@ -194,7 +201,7 @@ class SystemOperator:
         self.budget = self.config.get("budget", self.budget)
         try:
             self._build_trading_components(rebuild_infra=True)
-        except ValueError as err:
+        except Exception as err:
             # 현재 구성 유지: 스냅샷 복원 후 이전 구성으로 재구성
             self.config.clear()
             self.config.update(old_config)

@@ -51,7 +51,7 @@ class Controller:
                                   profile_store=ProfileStore())
         try:
             operator.setup()
-        except ValueError as err:
+        except Exception as err:
             print(str(err))
             return
 
