@@ -3,7 +3,7 @@ E2E 테스트용 Fake LLM Client
 
 외부 LLM API를 대체하여 미리 정의된 시나리오대로 응답을 반환한다.
 실제 LlmClient ABC를 상속하여 create_message 인터페이스를 구현하므로,
-LlmOperator 입장에서는 실제 LLM과 동일하게 동작한다.
+SystemOperator 입장에서는 실제 LLM과 동일하게 동작한다.
 """
 
 from smtm.llm.llm_client import LlmClient, LlmResponse, ToolCall

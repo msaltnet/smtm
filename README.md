@@ -12,15 +12,16 @@ An LLM-powered autonomous cryptocurrency trading system made in Python. https://
 
 [![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
-LLM autonomously analyzes market data, makes trading decisions, and executes trades using tools -- all controlled through a simple chat interface.
+A chat-driven LLM agent orchestrates the system -- selecting a strategy, starting/stopping trading, and managing account profiles -- while a separate fixed-interval loop executes the actual trades.
 
-1. LlmOperator periodically invokes the LLM with market context  
-2. LLM autonomously calls tools (market data, trade, portfolio, etc.)  
-3. SafetyGuard enforces trading limits at the tool level  
-4. SystemMonitor independently logs all activity  
+1. SystemOperator (the chat agent) selects/switches strategies and starts or stops trading via tools
+2. TradingOperator runs a fixed-interval loop: DataProvider -> Strategy -> SafetyGuard -> Trader -> Analyzer
+3. Strategy is pluggable -- algorithmic (Buy & Hold, RSI, SMA) or a single LLM judgment per tick (`LLM`)
+4. SafetyGuard enforces trading limits before every order; SystemMonitor independently logs all activity
 
 ## Features
-- LLM-powered autonomous trading decisions via tool use
+- Chat-based orchestration agent: select a strategy, start/stop trading, manage account profiles
+- Pluggable trading strategies executed on a fixed interval: Buy & Hold, RSI, SMA, or a single LLM judgment per tick (`LLM`)
 - Safety guardrails (max trade amount, daily trade limit, loss ratio ceiling)
 - CLI interactive mode and Telegram chatbot control
 - Strategy knowledge loaded as documents (SMA, RSI, Buy & Hold)
@@ -80,23 +81,35 @@ python -m smtm --config config/virtual-upbit.json
 
 Supported config keys are `mode`, `budget`, `currency`, `exchange`, `virtual`, `paper`, `term`, `log`, `token`, and `chatid`. `virtual` is the recommended key for virtual trading; `paper` remains supported as a compatibility alias. `interval` is accepted as an alias for `term`, and `chat_id` is accepted as an alias for `chatid`. CLI arguments override config-file values.
 
+You can also pick a trading strategy directly, or load a saved account profile:
+
+```bash
+# Run with an algorithmic strategy (no LLM call in the trading loop)
+python -m smtm --mode 0 --strategy RSI --virtual --budget 500000
+
+# Run with the LLM decision strategy
+python -m smtm --mode 0 --strategy LLM --virtual
+
+# Run with a saved account profile (config/profiles/<name>.json)
+python -m smtm --mode 0 --profile my-btc-virtual
+```
+
 #### Example chat session
 
 ```
+메시지를 입력하세요 (q: 종료): Switch to the RSI strategy
+[Agent → select_strategy(RSI)]
+Switched to the RSI strategy.
+
 메시지를 입력하세요 (q: 종료): start
 자동 매매가 시작되었습니다
 
-메시지를 입력하세요 (q: 종료): Analyze the BTC market and buy if it looks good
-[LLM → get_market_data → execute_trade(buy, ...)]
-Market is in an uptrend. Placed a buy order for 0.0001 BTC at ~50,000,000 KRW.
-
 메시지를 입력하세요 (q: 종료): Show my portfolio
-[LLM → get_portfolio]
+[Agent → get_portfolio]
 Cash: 495,000 KRW · BTC: 0.0001 · Current value: 500,000 KRW (0.0%)
 
-메시지를 입력하세요 (q: 종료): Sell everything and stop
-[LLM → execute_trade(sell, ...)]
-Sold 0.0001 BTC. Trading stopped.
+메시지를 입력하세요 (q: 종료): stop
+자동 매매가 중지되었습니다
 ```
 
 ### Telegram Chatbot Mode
@@ -116,6 +129,8 @@ Control trading through Telegram messenger. All messages are forwarded to the LL
 | `--budget` | Trading budget (KRW) | 500000 |
 | `--currency` | Trading currency (e.g. BTC, ETH) | BTC |
 | `--exchange` | Exchange code (UPB: Upbit, BTH: Bithumb) | UPB |
+| `--strategy` | Trading strategy code (BNH, RSI, SMA, LLM) | BNH |
+| `--profile` | Load a saved account profile from `config/profiles/` | None |
 | `--virtual` / `--paper` | Virtual trading mode with real-time quotes and simulated balance | False |
 | `--no-virtual` / `--no-paper` | Disable virtual trading when the config file enables it | False |
 | `--term` | Trading tick interval in seconds | 60 |
@@ -192,7 +207,7 @@ Building-block signal providers (use directly, not factory-registered). All use 
 | `max_loss_ratio` | Cumulative loss floor (negative ratio) | -0.20 (-20%) |
 | `initial_budget` | Baseline for loss-ratio calculation | value of `--budget` |
 
-To override the defaults, pass a `safety` entry into the operator config when wiring `LlmOperator`:
+To override the defaults, pass a `safety` entry into the operator config when wiring `SystemOperator`:
 
 ```python
 config = {
@@ -203,7 +218,7 @@ config = {
         "max_loss_ratio": -0.10,
     },
 }
-operator = LlmOperator(llm_client, config)
+operator = SystemOperator(llm_client, config)
 ```
 
 ## Testing
@@ -237,15 +252,15 @@ E2E tests verify the complete flow without calling any external APIs. Only the s
 - **SimulationTrader** — Production virtual-trading trader with real balance/asset state management
 - **FakeDataProvider** — Returns static market candle data
 
-All internal components (`LlmOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, all Tools) run with real code.
+All internal components (`SystemOperator`, `TradingOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, all Strategies and Tools) run with real code.
 
 ## Architecture
 
-**LlmOperator** replaces the traditional rule-based pipeline with a single chat interface:
+The system is split into two layers:
 
-- **DataProvider** -> Market Data Tool
-- **Trader** -> Trade / Portfolio Tools  
-- **Strategy** -> Knowledge documents (RAG)
-- **Analyzer** -> SystemMonitor + Performance Tool
+- **SystemOperator** — chat-based LLM agent; orchestrates strategy selection, start/stop, and account profiles via Tools (does not trade directly)
+- **TradingOperator** — fixed-interval loop: **DataProvider** -> **Strategy** -> **SafetyGuard** -> **Trader** -> **Analyzer**
+- **Strategy** — pluggable: algorithmic (Buy & Hold, RSI, SMA) or a single LLM judgment per tick (`LLM`)
+- **SystemMonitor** — independently logs all activity (market data, requests, results, safety events, LLM usage)
 
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
