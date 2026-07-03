@@ -98,9 +98,17 @@ class SafetyGuardCheckRequestTests(unittest.TestCase):
         self.assertFalse(result.allowed)
         self.assertIn("최대 거래금액", result.reason)
 
-    def test_cancel_request_bypasses_amount_check(self):
-        result = self.guard.check_request(self._request(type="cancel", price=0, amount=0))
+    def test_cancel_request_bypasses_all_checks(self):
+        # 모든 한도를 동시에 위반한 상태에서도 cancel은 무조건 허용된다
+        self.guard.record_trade({})
+        self.guard.record_trade({})              # 일일 거래횟수 한도 도달
+        self.guard.update_portfolio_value(350000)  # -30% < -20% 손실 한도 위반
+        result = self.guard.check_request(
+            self._request(type="cancel", price=999999999, amount=999))
         self.assertTrue(result.allowed)
+        # 동일 상태에서 buy는 차단된다
+        result = self.guard.check_request(self._request())
+        self.assertFalse(result.allowed)
 
     def test_blocks_after_daily_trade_limit(self):
         self.guard.record_trade({})
