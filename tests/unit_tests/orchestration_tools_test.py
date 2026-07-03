@@ -1,6 +1,37 @@
 import unittest
+from unittest.mock import patch
 from smtm.llm.system_operator import SystemOperator
 from smtm.llm.llm_client import LlmClient, LlmResponse
+
+
+class StubDataProvider:
+    """실 네트워크 호출 없이 고정 캔들을 반환하는 테스트용 DataProvider"""
+
+    def get_info(self):
+        return [{
+            "type": "primary_candle", "market": "BTC",
+            "date_time": "2026-07-03T12:00:00",
+            "opening_price": 50000, "high_price": 51000, "low_price": 49000,
+            "closing_price": 50000, "acc_price": 1000000000, "acc_volume": 200,
+        }]
+
+
+_data_provider_patcher = None
+
+
+def setUpModule():
+    # start_trading 경로에서 실 거래소로 네트워크 틱이 나가지 않도록
+    # DataProviderFactory.create를 패치한다.
+    global _data_provider_patcher
+    _data_provider_patcher = patch(
+        "smtm.data.data_provider_factory.DataProviderFactory.create",
+        return_value=StubDataProvider(),
+    )
+    _data_provider_patcher.start()
+
+
+def tearDownModule():
+    _data_provider_patcher.stop()
 
 
 class StubLlmClient(LlmClient):
