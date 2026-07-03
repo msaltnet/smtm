@@ -58,6 +58,7 @@ from .llm.claude_llm_client import ClaudeLlmClient
 from .llm.safety_guard import SafetyGuard, SafetyConfig
 from .llm.system_monitor import SystemMonitor
 from .analyzer import Analyzer
+from .trading_operator import TradingOperator
 from .strategy.strategy import Strategy
 from .strategy.strategy_bnh import StrategyBuyAndHold
 from .strategy.strategy_rsi import StrategyRsi
