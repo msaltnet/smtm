@@ -66,6 +66,8 @@ class TradingOperator:
     def _execute_trading(self, task):
         del task
         self.is_timer_running = False
+        if self.state != "running":
+            return
         try:
             info = self.data_provider.get_info()
             self._sync_trader_quote(info)
@@ -98,10 +100,11 @@ class TradingOperator:
 
         def callback(result):
             self.strategy.update_result(result)
-            if result.get("state") != "requested":
-                self.analyzer.put_result(result)
-                if result.get("type") in ("buy", "sell"):
-                    self.safety_guard.record_trade(result)
+            if result.get("state") == "requested":
+                return
+            self.analyzer.put_result(result)
+            if result.get("state") == "done" and result.get("type") in ("buy", "sell"):
+                self.safety_guard.record_trade(result)
 
         self.trader.send_request(allowed, callback)
         self.analyzer.put_requests(allowed)

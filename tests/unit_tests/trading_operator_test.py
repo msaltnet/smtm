@@ -110,6 +110,23 @@ class TradingOperatorTickTests(unittest.TestCase):
         operator._execute_trading(None)
         self.assertEqual(len(trader.order_history), 0)
 
+    def test_failed_trade_does_not_consume_daily_quota(self):
+        operator, trader, _, _ = self._make()
+        operator.state = "running"
+        trader.update_quote("BTC", 50000)
+        # 보유 수량 없이 매도 → SimulationTrader가 failed 결과 반환
+        operator._send_requests([{
+            "id": "t1", "type": "sell", "price": 50000, "amount": 1.0,
+            "date_time": "2026-07-03T12:00:00",
+        }])
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
+    def test_tick_is_noop_when_not_running(self):
+        operator, trader, _, _ = self._make()
+        # state가 ready(정지 상태)이면 틱이 아무 것도 하지 않는다
+        operator._execute_trading(None)
+        self.assertEqual(len(trader.order_history), 0)
+
 
 class TradingOperatorLifecycleTests(unittest.TestCase):
     def test_start_stop_start_cycle(self):
