@@ -99,6 +99,9 @@ class TradingOperator:
             return
 
         def callback(result):
+            if not isinstance(result, dict):
+                self.logger.error(f"request fail: {result}")
+                return
             self.strategy.update_result(result)
             if result.get("state") == "requested":
                 return

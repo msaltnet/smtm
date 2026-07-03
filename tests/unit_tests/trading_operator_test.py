@@ -127,6 +127,19 @@ class TradingOperatorTickTests(unittest.TestCase):
         operator._execute_trading(None)
         self.assertEqual(len(trader.order_history), 0)
 
+    def test_error_string_callback_does_not_crash(self):
+        operator, _, strategy, _ = self._make()
+        operator.state = "running"
+        error_trader = MagicMock(spec=["send_request", "cancel_request",
+                                       "cancel_all_requests", "get_account_info"])
+        error_trader.send_request.side_effect = (
+            lambda requests, callback: callback("error!"))
+        error_trader.get_account_info.return_value = {
+            "balance": 500000, "asset": {}, "quote": {}}
+        operator.trader = error_trader
+        operator.analyzer.get_account_info_func = error_trader.get_account_info
+        operator._execute_trading(None)  # 크래시 없이 통과해야 한다
+
 
 class TradingOperatorLifecycleTests(unittest.TestCase):
     def test_start_stop_start_cycle(self):
