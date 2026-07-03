@@ -59,6 +59,7 @@ from .llm.safety_guard import SafetyGuard, SafetyConfig
 from .llm.system_monitor import SystemMonitor
 from .strategy.strategy import Strategy
 from .strategy.strategy_bnh import StrategyBuyAndHold
+from .strategy.strategy_rsi import StrategyRsi
 
 __all__ = [
     "LogManager",

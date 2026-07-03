@@ -2,3 +2,4 @@ requests
 pyjwt
 python-dotenv
 anthropic
+numpy
