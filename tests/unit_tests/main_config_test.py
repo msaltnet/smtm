@@ -111,10 +111,23 @@ class StrategyProfileConfigTests(unittest.TestCase):
         from unittest.mock import patch
         with patch(
             "smtm.profile_store.ProfileStore.load",
-            return_value={"name": "my-profile", "strategy": "RSI"},
+            return_value={"name": "my-profile", "strategy": "RSI", "budget": 300000, "virtual": True},
         ):
             _, args = parse_args(["--profile", "my-profile"])
         self.assertEqual(args.profile, "my-profile")
+        self.assertEqual(args.strategy, "RSI")      # profile value merged
+        self.assertEqual(args.budget, 300000)
+        self.assertTrue(args.paper)                  # virtual → paper alias mapping
+
+    def test_cli_flag_overrides_profile(self):
+        # Verify CLI flags override profile values
+        from unittest.mock import patch
+        with patch(
+            "smtm.profile_store.ProfileStore.load",
+            return_value={"name": "my-profile", "strategy": "RSI", "budget": 300000, "virtual": True},
+        ):
+            _, args = parse_args(["--profile", "my-profile", "--strategy", "LLM"])
+        self.assertEqual(args.strategy, "LLM")      # CLI flag overrides profile
 
 
 if __name__ == "__main__":
