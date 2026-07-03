@@ -109,6 +109,17 @@ class SystemOperator:
         self.tool_router.register(PerformanceTool(
             self.system_monitor, self.trader, self.budget))
 
+        from .tools.orchestration_tools import (
+            ListStrategiesTool, DescribeStrategyTool, SelectStrategyTool,
+            StartTradingTool, StopTradingTool, GetStatusTool,
+        )
+        self.tool_router.register(ListStrategiesTool())
+        self.tool_router.register(DescribeStrategyTool())
+        self.tool_router.register(SelectStrategyTool(self))
+        self.tool_router.register(StartTradingTool(self))
+        self.tool_router.register(StopTradingTool(self))
+        self.tool_router.register(GetStatusTool(self))
+
     # ------------------------------------------------------------------
     # 오케스트레이션 API (Tool과 Controller에서 호출)
     # ------------------------------------------------------------------
