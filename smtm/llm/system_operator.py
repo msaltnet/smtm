@@ -153,16 +153,25 @@ class SystemOperator:
         return self.session_manager.stop_session("default")
 
     def apply_profile(self, profile: dict) -> dict:
-        result = self.session_manager.replace_session("default", profile)
+        # 현재 config를 기반으로 요청 프로파일을 오버레이 — 미지정 키는
+        # 기존 설정을 상속한다 (가상→실거래 무언 전환 방지)
+        effective = self._config_to_profile()
+        for key in ("exchange", "currency", "budget", "virtual", "term",
+                    "strategy", "strategy_params", "safety", "account"):
+            if key in profile:
+                effective[key] = profile[key]
+        effective["name"] = "default"
+        result = self.session_manager.replace_session("default", effective)
         if result.get("success"):
-            # config를 프로파일에 맞춰 동기화 (레거시 get_status 일관성)
+            # config를 유효 프로파일에 맞춰 동기화 (레거시 get_status 일관성)
             for key in ("exchange", "currency", "budget", "virtual",
                         "strategy", "strategy_params", "safety", "account"):
-                if key in profile:
-                    self.config[key] = profile[key]
-            if "term" in profile:
-                self.config["interval"] = profile["term"]
+                if key in effective:
+                    self.config[key] = effective[key]
+            if "term" in effective:
+                self.config["interval"] = effective["term"]
             self.budget = self.config.get("budget", self.budget)
+            self.default_strategy_used = not self.config.get("strategy")
             # 읽기 Tool이 구 세션 컴포넌트를 가리키지 않도록 재등록 (Task 10에서 근본 해결)
             self._register_tools()
             result["note"] = ("프로파일이 default 세션에 적용되었습니다. "

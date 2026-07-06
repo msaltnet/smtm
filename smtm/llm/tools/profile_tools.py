@@ -110,8 +110,8 @@ class DeleteProfileTool(Tool):
 
 class SwitchProfileTool(Tool):
     name = "switch_profile"
-    description = ("프로파일을 로드하여 시스템 구성을 전환합니다. "
-                   "매매 중이면 중지 후 적용되며, 재시작은 별도로 start_trading을 호출해야 합니다")
+    description = ("stopped 상태의 default 세션에 프로파일을 적용합니다. "
+                   "매매 중이면 먼저 stop_trading으로 중지해야 합니다.")
     input_schema = {
         "type": "object",
         "properties": {"name": PROFILE_PROPERTIES["name"]},

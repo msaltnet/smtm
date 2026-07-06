@@ -82,7 +82,9 @@ class StopTradingTool(Tool):
 
     def execute(self, arguments: dict) -> ToolResult:
         result = self.operator.stop_trading()
-        return ToolResult(success=True, data=result)
+        if result.get("success"):
+            return ToolResult(success=True, data=result)
+        return ToolResult(success=False, error=result.get("error"))
 
 
 class GetStatusTool(Tool):

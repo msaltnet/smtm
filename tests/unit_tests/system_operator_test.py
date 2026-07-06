@@ -180,6 +180,24 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
             self.operator.session_manager.get_session("default")
             .session_guard.daily_trade_count, 2)
 
+    def test_apply_partial_profile_inherits_current_virtual(self):
+        # virtual 미지정 부분 프로파일 → 기존 가상 모드 유지 (실거래 전환 금지)
+        result = self.operator.apply_profile({"name": "rsi-only", "strategy": "RSI"})
+        self.assertTrue(result["success"])
+        session = self.operator.session_manager.get_session("default")
+        self.assertTrue(session.profile.get("virtual"))
+
+    def test_apply_profile_recomputes_default_strategy_note(self):
+        operator = make_operator(config_extra={"strategy": None})
+        try:
+            self.assertTrue(operator.default_strategy_used)
+            operator.apply_profile({"name": "p", "strategy": "RSI", "virtual": True})
+            result = operator.start_trading()
+            self.assertTrue(result["success"])
+            self.assertNotIn("note", result)
+        finally:
+            operator.shutdown()
+
 
 class SystemOperatorMultiSessionTests(unittest.TestCase):
     def setUp(self):
