@@ -290,16 +290,27 @@ class SessionManager:
 
     def get_performance(self, name) -> dict:
         session = self.get_session(name)
-        return {"session": name, **session.operator.get_score()}
+        report = {"session": name, **session.operator.get_score()}
+        if self.system_monitor is not None:
+            report["total_trades"] = len(
+                self.system_monitor.get_trade_log(session=name))
+        return report
 
     def compare_performance(self) -> list:
-        return [{
-            "session": s.name,
-            "state": s.state,
-            "strategy": s.profile.get("strategy"),
-            "virtual": bool(s.profile.get("virtual", False)),
-            **s.operator.get_score(),
-        } for s in self.sessions.values()]
+        result = []
+        for s in self.sessions.values():
+            row = {
+                "session": s.name,
+                "state": s.state,
+                "strategy": s.profile.get("strategy"),
+                "virtual": bool(s.profile.get("virtual", False)),
+                **s.operator.get_score(),
+            }
+            if self.system_monitor is not None:
+                row["total_trades"] = len(
+                    self.system_monitor.get_trade_log(session=s.name))
+            result.append(row)
+        return result
 
     def get_account_guard(self, alias):
         from .llm.account_guard import AccountGuard

@@ -98,6 +98,15 @@ class SessionManagerVirtualTests(unittest.TestCase):
         self.assertEqual({r["session"] for r in rows}, {"v1", "v2"})
         self.assertIn("cumulative_return", rows[0])
 
+    def test_get_performance_includes_trade_count(self):
+        self.manager.create_session(VIRTUAL_PROFILE)
+        self.manager.system_monitor.log_trade_result({"state": "done"}, session="v1")
+        self.manager.system_monitor.log_trade_result({"state": "done"}, session="other")
+        report = self.manager.get_performance("v1")
+        self.assertEqual(report["total_trades"], 1)
+        rows = self.manager.compare_performance()
+        self.assertEqual(rows[0]["total_trades"], 1)
+
     def test_replace_session_preserves_daily_count_and_rolls_back(self):
         self.manager.create_session(VIRTUAL_PROFILE)
         self.manager.get_session("v1").session_guard.record_trade({})
