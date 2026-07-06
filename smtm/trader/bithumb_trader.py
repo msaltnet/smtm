@@ -27,7 +27,8 @@ class BithumbTrader(BaseExchangeTrader):
     CODE = "BTH"
 
     def __init__(
-        self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True
+        self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True,
+        access_key_env=None, secret_key_env=None,
     ):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
@@ -40,8 +41,8 @@ class BithumbTrader(BaseExchangeTrader):
             logger_name="BithumbTrader",
             worker_name="BTR-Worker",
             env_key_names=(
-                "BITHUMB_API_ACCESS_KEY",
-                "BITHUMB_API_SECRET_KEY",
+                access_key_env or "BITHUMB_API_ACCESS_KEY",
+                secret_key_env or "BITHUMB_API_SECRET_KEY",
                 "BITHUMB_API_SERVER_URL",
             ),
         )

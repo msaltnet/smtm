@@ -29,7 +29,8 @@ class UpbitTrader(BaseExchangeTrader):
     CODE = "UPB"
 
     def __init__(
-        self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True
+        self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True,
+        access_key_env=None, secret_key_env=None,
     ):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
@@ -42,8 +43,8 @@ class UpbitTrader(BaseExchangeTrader):
             logger_name="UpbitTrader",
             worker_name="UpbitTrader-Worker",
             env_key_names=(
-                "UPBIT_OPEN_API_ACCESS_KEY",
-                "UPBIT_OPEN_API_SECRET_KEY",
+                access_key_env or "UPBIT_OPEN_API_ACCESS_KEY",
+                secret_key_env or "UPBIT_OPEN_API_SECRET_KEY",
                 "UPBIT_OPEN_API_SERVER_URL",
             ),
         )
