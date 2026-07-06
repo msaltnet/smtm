@@ -274,5 +274,6 @@ controlled by chatting with the agent:
 - `create_session` / `start_session` / `compare_performance` via chat
 - Per-session budgets are validated against the real account balance,
   and an account-level guard caps daily trades across sessions
+- Designed for a handful of concurrent sessions — each session polls the exchange independently, so keep session count modest to respect API rate limits
 
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
