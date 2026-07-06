@@ -117,6 +117,15 @@ class SystemOperator:
             self.tool_router.register(DeleteProfileTool(self.profile_store))
             self.tool_router.register(SwitchProfileTool(self.profile_store, self))
 
+        if self.account_store is not None:
+            from .tools.account_tools import (
+                RegisterAccountTool, ListAccountsTool, DeleteAccountTool,
+            )
+            self.tool_router.register(RegisterAccountTool(self.account_store))
+            self.tool_router.register(ListAccountsTool(self.account_store))
+            self.tool_router.register(DeleteAccountTool(
+                self.account_store, self.session_manager))
+
     # ------------------------------------------------------------------
     # 레거시 위임 (default 세션)
     # ------------------------------------------------------------------
