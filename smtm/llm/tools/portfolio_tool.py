@@ -3,19 +3,26 @@ from ...log_manager import LogManager
 
 
 class PortfolioTool(Tool):
-    """포트폴리오 조회 Tool — Trader.get_account_info 래핑"""
+    """포트폴리오 조회 Tool — 세션 Trader.get_account_info 래핑"""
     name = "get_portfolio"
-    description = "현재 보유 자산, 현금 잔고, 종목별 시세를 조회합니다"
-    input_schema = {"type": "object", "properties": {}}
+    description = "세션의 포트폴리오(잔고/자산/시세)를 조회합니다"
+    input_schema = {
+        "type": "object",
+        "properties": {"session": {"type": "string",
+                                   "description": "세션 이름 (기본 default)"}},
+    }
 
-    def __init__(self, trader):
+    def __init__(self, session_manager):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.trader = trader
+        self.session_manager = session_manager
 
     def execute(self, arguments: dict) -> ToolResult:
         try:
-            info = self.trader.get_account_info()
-            return ToolResult(success=True, data=info)
+            session = self.session_manager.get_session(
+                arguments.get("session") or "default")
+            return ToolResult(success=True, data=session.trader.get_account_info())
+        except ValueError as err:
+            return ToolResult(success=False, error=str(err))
         except Exception as e:
             self.logger.error(f"PortfolioTool error: {e}")
             return ToolResult(success=False, error=str(e))

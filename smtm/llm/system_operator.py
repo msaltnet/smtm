@@ -85,14 +85,10 @@ class SystemOperator:
         from .tools.trade_history_tool import TradeHistoryTool
         from .tools.performance_tool import PerformanceTool
 
-        # 읽기 Tool 4종은 default 세션의 컴포넌트로 임시 등록
-        # (Task 10에서 세션 인식 Tool로 리팩터 예정)
-        default = self.default_session()
-        self.tool_router.register(MarketDataTool(default.operator.data_provider))
-        self.tool_router.register(PortfolioTool(default.trader))
+        self.tool_router.register(MarketDataTool(self.session_manager))
+        self.tool_router.register(PortfolioTool(self.session_manager))
         self.tool_router.register(TradeHistoryTool(self.system_monitor))
-        self.tool_router.register(PerformanceTool(
-            self.system_monitor, default.trader, self.budget))
+        self.tool_router.register(PerformanceTool(self.session_manager))
 
         from .tools.orchestration_tools import (
             ListStrategiesTool, DescribeStrategyTool, SelectStrategyTool,
@@ -160,8 +156,6 @@ class SystemOperator:
             self.config["strategy"] = previous
             return result
         self.default_strategy_used = False
-        # 읽기 Tool이 구 세션 컴포넌트를 가리키지 않도록 재등록 (Task 10에서 근본 해결)
-        self._register_tools()
         return {"success": True, "strategy": code}
 
     def start_trading(self) -> dict:
@@ -194,8 +188,6 @@ class SystemOperator:
                 self.config["interval"] = effective["term"]
             self.budget = self.config.get("budget", self.budget)
             self.default_strategy_used = not self.config.get("strategy")
-            # 읽기 Tool이 구 세션 컴포넌트를 가리키지 않도록 재등록 (Task 10에서 근본 해결)
-            self._register_tools()
             result["note"] = ("프로파일이 default 세션에 적용되었습니다. "
                               "매매를 재개하려면 start_trading을 호출하세요.")
         return result

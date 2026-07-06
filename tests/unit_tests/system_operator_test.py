@@ -164,13 +164,15 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
         # 복원 후에도 일관 상태
         self.assertTrue(self.operator.start_trading()["success"])
 
-    def test_select_strategy_rebinds_read_tools_to_new_session(self):
-        # 세션 교체 후 읽기 Tool이 구 세션 컴포넌트를 가리키면 안 된다
-        # (Task 10 전까지는 재등록으로 보장)
+    def test_read_tools_reflect_new_session_after_strategy_change(self):
+        # 읽기 Tool은 session_manager를 통해 execute 시점에 세션을 해석하므로
+        # (Task 10) 세션 교체 후에도 재등록 없이 최신 세션 데이터를 반환해야 한다.
+        portfolio_tool = self.operator.tool_router.tools["get_portfolio"]
         self.operator.select_strategy("RSI")
         session = self.operator.session_manager.get_session("default")
-        portfolio_tool = self.operator.tool_router.tools["get_portfolio"]
-        self.assertIs(portfolio_tool.trader, session.trader)
+        result = portfolio_tool.execute({})
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, session.trader.get_account_info())
 
     def test_select_strategy_preserves_daily_trade_count(self):
         self.operator.session_manager.get_session("default").session_guard.record_trade({})

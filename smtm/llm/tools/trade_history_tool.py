@@ -10,6 +10,8 @@ class TradeHistoryTool(Tool):
         "type": "object",
         "properties": {
             "count": {"type": "integer", "description": "조회할 최근 거래 수 (기본 20)", "default": 20},
+            "session": {"type": "string",
+                       "description": "세션 이름 (생략 시 전체 세션)"},
         },
     }
 
@@ -20,7 +22,7 @@ class TradeHistoryTool(Tool):
     def execute(self, arguments: dict) -> ToolResult:
         try:
             count = arguments.get("count", 20)
-            log = self.system_monitor.get_trade_log()
+            log = self.system_monitor.get_trade_log(session=arguments.get("session"))
             return ToolResult(success=True, data=log[-count:])
         except Exception as e:
             self.logger.error(f"TradeHistoryTool error: {e}")
