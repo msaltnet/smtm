@@ -55,7 +55,10 @@ class SessionManager:
 
         exchange = profile.get("exchange", "UPB")
         currency = profile.get("currency", "BTC")
-        budget = float(profile.get("budget", 500000))
+        try:
+            budget = float(profile.get("budget", 500000))
+        except (TypeError, ValueError):
+            return {"success": False, "error": "올바르지 않은 예산 값입니다"}
         virtual = bool(profile.get("virtual", False))
 
         # --- 실거래 검증 (가상은 건너뜀) ---
@@ -95,9 +98,14 @@ class SessionManager:
                                       f"세션 '{session.name}'이 이미 운영 중입니다")}
 
         # --- Trader 생성 (실잔고 조회에 필요) ---
-        trader = TraderFactory.create(
-            exchange, budget=budget, currency=currency,
-            paper=virtual, account=account)
+        # TraderFactory/Trader 생성자가 던지는 예외(예: 미지원 currency)도
+        # 무부작용 보장을 위해 흡수한다 — replace_session의 원복 경로를 지키기 위함
+        try:
+            trader = TraderFactory.create(
+                exchange, budget=budget, currency=currency,
+                paper=virtual, account=account)
+        except Exception as err:
+            return {"success": False, "error": f"트레이더 생성 실패: {err}"}
         if trader is None:
             return {"success": False, "error": f"올바르지 않은 거래소 코드입니다: {exchange}"}
 
@@ -197,7 +205,12 @@ class SessionManager:
             if old.account:
                 self.get_account_guard(old.account).release(name)
 
-        result = self.create_session(profile, name=name)
+        try:
+            result = self.create_session(profile, name=name)
+        except Exception as err:
+            # create_session은 원칙적으로 내부에서 모든 예외를 흡수하지만,
+            # 방어적으로 한 겹 더 감싸 원복 경로가 반드시 실행되게 한다
+            result = {"success": False, "error": f"세션 생성 실패: {err}"}
         if not result.get("success"):
             if old is not None:  # 원복
                 self.sessions[name] = old
@@ -210,6 +223,7 @@ class SessionManager:
             new_guard = self.sessions[name].session_guard
             new_guard.daily_trade_count = old.session_guard.daily_trade_count
             new_guard.daily_date = old.session_guard.daily_date
+            self._discard_trader(old.trader)
         return result
 
     # ------------------------------------------------------------------
@@ -245,6 +259,7 @@ class SessionManager:
             session.operator.stop()
         if session.account:
             self.get_account_guard(session.account).release(name)
+        self._discard_trader(session.trader)
         del self.sessions[name]
         return {"success": True, "removed": name}
 
