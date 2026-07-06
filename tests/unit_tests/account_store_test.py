@@ -85,3 +85,14 @@ class AccountStoreTests(unittest.TestCase):
         accounts = self.store.list_accounts()  # 크래시 없이 동작
         names = [a["name"] for a in accounts]
         self.assertIn("main", names)
+
+    def test_save_rejects_duplicate_env_pair(self):
+        self.store.save(ACCOUNT)
+        with self.assertRaises(ValueError):
+            self.store.save({**ACCOUNT, "name": "clone"})
+        # 같은 별칭 재저장(갱신)은 허용
+        self.store.save(ACCOUNT)
+
+    def test_validate_rejects_key_value_shaped_env_name(self):
+        with self.assertRaises(ValueError):
+            self.store.validate({**ACCOUNT, "access_key_env": "AKIA1234+secret/value=="})
