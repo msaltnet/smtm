@@ -25,6 +25,7 @@ class SessionManager:
 
     세션 생성 검증(예산 합계 ≤ 실잔고, (계좌,심볼) 충돌 방지)과
     계좌별 AccountGuard 공유를 담당한다. 검증 실패 시 무부작용.
+    생성/교체/제거는 단일 제어 스레드(SystemOperator)에서만 호출하는 것을 전제한다.
     """
 
     DEFAULT_SESSION = "default"
@@ -128,7 +129,7 @@ class SessionManager:
                 self.get_account_guard(guard_alias) if not virtual else None)
         except Exception as err:
             self._discard_trader(trader)
-            return {"success": False, "error": str(err)}
+            return {"success": False, "error": f"세션 조립 실패: {err}"}
 
         if not virtual:
             self.get_account_guard(guard_alias).allocate(name, budget)
@@ -250,7 +251,10 @@ class SessionManager:
     def stop_all(self):
         for session in list(self.sessions.values()):
             if session.state == "running":
-                session.operator.stop()
+                try:
+                    session.operator.stop()
+                except Exception as err:
+                    self.logger.error(f"session stop failed: {session.name}: {err}")
 
     # ------------------------------------------------------------------
     # 조회

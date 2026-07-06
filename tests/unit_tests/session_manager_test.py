@@ -113,6 +113,14 @@ class SessionManagerVirtualTests(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(self.manager.get_session("v1").profile["strategy"], "RSI")
 
+    def test_assembly_failure_returns_korean_error(self):
+        result = self.manager.create_session(
+            {**VIRTUAL_PROFILE, "name": "bad-safety",
+             "safety": {"max_trade": 5}})  # 잘못된 키 → TypeError
+        self.assertFalse(result["success"])
+        self.assertIn("세션 조립 실패", result["error"])
+        self.assertEqual(self.manager.list_sessions(), [])
+
 
 class SessionManagerRealTradeValidationTests(unittest.TestCase):
     """실거래 검증 경로 — Trader/잔고는 전부 mock"""
