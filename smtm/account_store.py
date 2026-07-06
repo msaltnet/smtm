@@ -14,6 +14,7 @@ class AccountStore:
     ALLOWED_FIELDS = {"name", "exchange", "access_key_env", "secret_key_env"}
     REQUIRED_FIELDS = ("name", "exchange", "access_key_env", "secret_key_env")
     NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+    ENV_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 
     def __init__(self, dir_path="config/accounts"):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -31,6 +32,11 @@ class AccountStore:
         for key in self.REQUIRED_FIELDS:
             if not account.get(key):
                 raise ValueError(f"필수 계좌 필드가 없습니다: {key}")
+        for key in ("access_key_env", "secret_key_env"):
+            value = account.get(key, "")
+            if value and not self.ENV_NAME_PATTERN.match(str(value)):
+                raise ValueError(
+                    f"{key}은(는) 환경변수 '이름'이어야 합니다 (키 값을 넣지 마세요)")
 
     def missing_env_vars(self, account: dict) -> list:
         """설정되지 않은 키 환경변수 '이름' 목록 (값을 저장하거나 반환하지 않는다)"""
@@ -43,6 +49,12 @@ class AccountStore:
 
     def save(self, account: dict) -> dict:
         self.validate(account)
+        for existing in self.list_accounts():
+            if (existing["name"] != account["name"]
+                    and existing.get("access_key_env") == account.get("access_key_env")
+                    and existing.get("secret_key_env") == account.get("secret_key_env")):
+                raise ValueError(
+                    f"같은 키 환경변수를 사용하는 계좌가 이미 있습니다: {existing['name']}")
         os.makedirs(self.dir_path, exist_ok=True)
         with open(self._path(account["name"]), "w", encoding="utf-8") as f:
             json.dump(account, f, ensure_ascii=False, indent=2)
