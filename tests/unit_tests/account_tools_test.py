@@ -90,3 +90,20 @@ class AccountToolsTests(unittest.TestCase):
         result = self.tools["delete_account"].execute({"name": "busy"})
         self.assertFalse(result.success)
         self.assertIn("사용 중", result.error)
+
+
+class AccountToolsAbsentTests(unittest.TestCase):
+    def test_no_account_tools_without_store(self):
+        patcher = patch(
+            "smtm.data.data_provider_factory.DataProviderFactory.create",
+            side_effect=lambda *a, **k: StubDataProvider())
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        operator = SystemOperator(StubLlmClient(), {
+            "exchange": "UPB", "currency": "BTC", "budget": 500000,
+            "virtual": True, "strategy": "BNH",
+        })
+        operator.setup()
+        self.addCleanup(operator.shutdown)
+        for name in ("register_account", "list_accounts", "delete_account"):
+            self.assertNotIn(name, operator.tool_router.tools)
