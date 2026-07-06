@@ -89,11 +89,19 @@ class StopTradingTool(Tool):
 
 class GetStatusTool(Tool):
     name = "get_status"
-    description = "시스템 상태(매매 상태/전략/설정/안전장치/토큰 사용량)를 조회합니다"
-    input_schema = {"type": "object", "properties": {}}
+    description = ("시스템 상태를 조회합니다. 인자 없이 호출하면 전체 세션/계좌 요약,"
+                   " session을 지정하면 해당 세션 상세를 반환합니다")
+    input_schema = {
+        "type": "object",
+        "properties": {"session": {"type": "string",
+                                   "description": "세션 이름 (선택)"}},
+    }
 
     def __init__(self, operator):
         self.operator = operator
 
     def execute(self, arguments: dict) -> ToolResult:
-        return ToolResult(success=True, data=self.operator.get_status())
+        status = self.operator.get_status(session=arguments.get("session"))
+        if "error" in status:
+            return ToolResult(success=False, error=status["error"])
+        return ToolResult(success=True, data=status)

@@ -126,6 +126,19 @@ class SystemOperator:
             self.tool_router.register(DeleteAccountTool(
                 self.account_store, self.session_manager))
 
+        from .tools.session_tools import (
+            CreateSessionTool, StartSessionTool, StopSessionTool,
+            RemoveSessionTool, ListSessionsTool, ComparePerformanceTool,
+        )
+        self.tool_router.register(StartSessionTool(self.session_manager))
+        self.tool_router.register(StopSessionTool(self.session_manager))
+        self.tool_router.register(RemoveSessionTool(self.session_manager))
+        self.tool_router.register(ListSessionsTool(self.session_manager))
+        self.tool_router.register(ComparePerformanceTool(self.session_manager))
+        if self.profile_store is not None:
+            self.tool_router.register(CreateSessionTool(
+                self.profile_store, self.session_manager))
+
     # ------------------------------------------------------------------
     # 레거시 위임 (default 세션)
     # ------------------------------------------------------------------
