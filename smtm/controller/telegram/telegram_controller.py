@@ -50,7 +50,7 @@ class TelegramController:
                                        account_store=AccountStore())
         try:
             self.operator.setup()
-        except ValueError as err:
+        except Exception as err:
             print(str(err))
             return
 
