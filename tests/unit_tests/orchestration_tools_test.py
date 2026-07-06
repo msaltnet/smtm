@@ -80,12 +80,13 @@ class OrchestrationToolsTests(unittest.TestCase):
     def test_select_strategy_tool_changes_strategy(self):
         result = self.tools["select_strategy"].execute({"code": "SMA"})
         self.assertTrue(result.success)
-        self.assertEqual(self.operator.strategy_code, "SMA")
+        self.assertEqual(self.operator.default_strategy(), "SMA")
 
     def test_start_stop_get_status_flow(self):
         result = self.tools["start_trading"].execute({})
         self.assertTrue(result.success)
         status = self.tools["get_status"].execute({})
-        self.assertEqual(status.data["trading_state"], "running")
+        default = [s for s in status.data["sessions"] if s["name"] == "default"][0]
+        self.assertEqual(default["state"], "running")
         result = self.tools["stop_trading"].execute({})
         self.assertTrue(result.success)
