@@ -1,5 +1,6 @@
 from .upbit_trader import UpbitTrader
 from .bithumb_trader import BithumbTrader
+from .simulation_trader import SimulationTrader
 
 
 class TraderFactory:
@@ -14,7 +15,14 @@ class TraderFactory:
     ]
 
     @staticmethod
-    def create(code, budget=50000, currency="BTC", commission_ratio=0.0005):
+    def create(code, budget=50000, currency="BTC", commission_ratio=0.0005, paper=False):
+        if paper:
+            return SimulationTrader(
+                budget=budget,
+                currency=currency,
+                commission_ratio=commission_ratio,
+            )
+
         for trader in TraderFactory.TRADER_LIST:
             if trader.CODE == code:
                 return trader(

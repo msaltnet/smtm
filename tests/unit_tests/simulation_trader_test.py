@@ -1,103 +1,160 @@
 import unittest
-from smtm import SimulationTrader
-from unittest.mock import *
+
+from smtm.trader.simulation_trader import SimulationTrader
+from smtm.trader.trader_factory import TraderFactory
 
 
-class SimulationTraderTests(unittest.TestCase):
-    def setUp(self):
-        pass
+class SimulationTraderBuyTest(unittest.TestCase):
+    def test_buy_uses_injected_quote_and_ignores_request_price(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
 
-    def tearDown(self):
-        pass
+        trader.send_request([
+            {
+                "id": "1",
+                "type": "buy",
+                "price": 1,
+                "amount": 0.01,
+                "date_time": "2026-04-26T12:00:00",
+            }
+        ], results.append)
 
-    def test_initialize_simulation_initialize_virtual_market(self):
+        self.assertEqual(results[0]["state"], "done")
+        self.assertEqual(results[0]["price"], 50000)
+        self.assertEqual(trader.balance, 499500)
+        self.assertEqual(trader.assets["BTC"], (50000, 0.01))
+
+    def test_buy_fails_when_quote_missing(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        results = []
+
+        trader.send_request([
+            {"id": "1", "type": "buy", "price": 50000, "amount": 0.01}
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertEqual(results[0]["msg"], "시세 없음")
+        self.assertEqual(trader.balance, 500000)
+
+    def test_buy_fails_when_balance_is_not_enough(self):
+        trader = SimulationTrader(budget=100, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+
+        trader.send_request([
+            {"id": "1", "type": "buy", "price": 50000, "amount": 1}
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertEqual(results[0]["msg"], "잔고 부족")
+        self.assertEqual(trader.balance, 100)
+
+    def test_failed_fill_zeroes_price_and_amount(self):
+        trader = SimulationTrader(budget=1000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+        trader.send_request([{  # 잔고 부족 → 실패
+            "id": "r1", "type": "buy", "price": 50000, "amount": 1.0,
+            "date_time": "2026-07-03T12:00:00",
+        }], results.append)
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertEqual(results[0]["price"], 0)
+        self.assertEqual(results[0]["amount"], 0)
+
+    def test_buy_updates_average_cost(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        trader.send_request([
+            {"id": "1", "type": "buy", "price": 50000, "amount": 0.01}
+        ], lambda result: None)
+
+        trader.update_quote("BTC", 70000)
+        trader.send_request([
+            {"id": "2", "type": "buy", "price": 70000, "amount": 0.01}
+        ], lambda result: None)
+
+        self.assertEqual(trader.assets["BTC"], (60000, 0.02))
+
+
+class SimulationTraderSellTest(unittest.TestCase):
+    def test_sell_adds_balance_and_reduces_asset(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        trader.send_request([
+            {"id": "1", "type": "buy", "price": 50000, "amount": 0.02}
+        ], lambda result: None)
+
+        trader.update_quote("BTC", 60000)
+        results = []
+        trader.send_request([
+            {"id": "2", "type": "sell", "price": 1, "amount": 0.01}
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "done")
+        self.assertEqual(results[0]["price"], 60000)
+        self.assertEqual(trader.balance, 499600)
+        self.assertEqual(trader.assets["BTC"], (50000, 0.01))
+
+    def test_sell_removes_asset_when_amount_goes_to_zero(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        trader.send_request([
+            {"id": "1", "type": "buy", "price": 50000, "amount": 0.01}
+        ], lambda result: None)
+
+        trader.send_request([
+            {"id": "2", "type": "sell", "price": 50000, "amount": 0.01}
+        ], lambda result: None)
+
+        self.assertNotIn("BTC", trader.assets)
+
+    def test_sell_fails_when_asset_is_not_enough(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+
+        trader.send_request([
+            {"id": "1", "type": "sell", "price": 50000, "amount": 0.01}
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertEqual(results[0]["msg"], "보유 수량 부족")
+
+
+class SimulationTraderAccountTest(unittest.TestCase):
+    def test_get_account_info_returns_balance_assets_and_quotes(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+
+        info = trader.get_account_info()
+
+        self.assertEqual(info["balance"], 500000)
+        self.assertEqual(info["asset"], {})
+        self.assertEqual(info["quote"], {"BTC": 50000})
+        self.assertIn("date_time", info)
+
+    def test_cancel_methods_are_noops(self):
         trader = SimulationTrader()
-        trader.v_market.initialize = MagicMock()
-        trader.v_market.deposit = MagicMock()
+        trader.cancel_request("unknown")
+        trader.cancel_all_requests()
 
-        trader.initialize_simulation("mango", 500, 5000)
+        self.assertEqual(trader.order_history, [])
 
-        trader.v_market.initialize.assert_called_once_with("mango", 500, 5000)
-        self.assertEqual(trader.is_initialized, True)
 
-    def test_initialize_simulation_set_is_initialized_False_when_invalid_market(self):
-        trader = SimulationTrader()
-        trader.v_market = "make exception"
-        with self.assertRaises(AttributeError):
-            trader.initialize_simulation("mango", 500, 5000)
+class TraderFactoryPaperFlagTest(unittest.TestCase):
+    def test_paper_flag_returns_simulation_trader(self):
+        trader = TraderFactory.create("UPB", budget=500000, currency="BTC", paper=True)
 
-        self.assertEqual(trader.is_initialized, False)
+        self.assertIsInstance(trader, SimulationTrader)
+        self.assertEqual(trader.balance, 500000)
 
-    def test_send_request_call_callback_with_result_of_market_handle_quest(self):
-        trader = SimulationTrader()
-        trader.is_initialized = True
+    def test_paper_flag_overrides_exchange_code(self):
+        trader = TraderFactory.create("BTH", budget=300000, currency="ETH", paper=True)
 
-        dummy_requests = [{"id": "mango", "type": "orange", "price": 500, "amount": 10}]
-        callback = MagicMock()
-        trader.v_market.handle_request = MagicMock(return_value="banana")
-        trader.send_request(dummy_requests, callback)
-        trader.v_market.handle_request.assert_called_once_with(dummy_requests[0])
-        callback.assert_called_once_with("banana")
+        self.assertIsInstance(trader, SimulationTrader)
+        self.assertEqual(trader.currency, "ETH")
 
-    def test_send_request_call_raise_exception_UserWarning_when_is_initialized_False(
-        self,
-    ):
-        trader = SimulationTrader()
-        trader.is_initialized = False
 
-        with self.assertRaises(UserWarning):
-            trader.send_request(None, None)
-
-    def test_send_request_call_raise_exception_UserWarning_when_market_is_invalid(self):
-        trader = SimulationTrader()
-        trader.is_initialized = True
-        trader.v_market = "make exception"
-
-        with self.assertRaises(UserWarning):
-            trader.send_request(None, None)
-
-    def test_send_request_call_raise_exception_UserWarning_when_callback_make_TypeError(
-        self,
-    ):
-        trader = SimulationTrader()
-        trader.is_initialized = True
-
-        with self.assertRaises(UserWarning):
-            trader.send_request(None, None)
-
-    def test_get_account_info_call_callback_with_virtual_market_get_balance_result(
-        self,
-    ):
-        trader = SimulationTrader()
-        trader.is_initialized = True
-        trader.v_market.get_balance = MagicMock(return_value="banana")
-        self.assertEqual(trader.get_account_info(), "banana")
-        trader.v_market.get_balance.assert_called_once()
-
-    def test_get_account_info_call_raise_exception_UserWarning_when_is_initialized_False(
-        self,
-    ):
-        trader = SimulationTrader()
-        trader.is_initialized = False
-
-        with self.assertRaises(UserWarning):
-            trader.get_account_info()
-
-    def test_get_account_info_call_raise_exception_UserWarning_when_market_is_invalid(
-        self,
-    ):
-        trader = SimulationTrader()
-        trader.is_initialized = True
-        trader.v_market = "make exception"
-
-        with self.assertRaises(UserWarning):
-            trader.get_account_info()
-
-    def test_get_account_info_call_raise_exception_UserWarning_when_callback_make_TypeError(
-        self,
-    ):
-        trader = SimulationTrader()
-        trader.is_initialized = True
-
-        with self.assertRaises(UserWarning):
-            trader.get_account_info()
+if __name__ == "__main__":
+    unittest.main()

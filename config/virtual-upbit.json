@@ -1,0 +1,8 @@
+{
+  "mode": 0,
+  "budget": 500000,
+  "currency": "BTC",
+  "exchange": "UPB",
+  "virtual": true,
+  "term": 60
+}

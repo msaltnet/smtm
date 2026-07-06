@@ -1,13 +1,59 @@
-# The original Analyzer has been refactored and moved to the analyzer/ directory.
-# 기존 Analyzer는 리팩터링되어 analyzer/ 디렉토리로 이동되었습니다.
-# To use the new structure, import as follows:
-# 새로운 구조를 사용하려면 다음을 import하세요:
-# from .analyzer import Analyzer
+from .log_manager import LogManager
 
-# Import the existing class for backward compatibility.
-# 하위 호환성을 위해 기존 클래스를 import합니다.
-from .analyzer.analyzer import Analyzer
 
-# Maintain alias for compatibility with existing code.
-# 기존 코드와의 호환성을 위해 별칭을 유지합니다.
-__all__ = ["Analyzer"]
+class Analyzer:
+    """SystemMonitor 위에서 Strategy 콜백 계약과 최소 성과 집계를 제공하는 경량 분석 계층"""
+
+    def __init__(self, system_monitor):
+        self.logger = LogManager.get_logger(__class__.__name__)
+        self.system_monitor = system_monitor
+        self.get_account_info_func = None
+        self.start_value = None
+        self.spots = []
+        self.lines = []
+
+    def initialize(self, get_account_info_func):
+        self.get_account_info_func = get_account_info_func
+
+    def make_start_point(self):
+        self.start_value = self.current_account_value()
+
+    def put_trading_info(self, info):
+        self.system_monitor.log_market_data(info)
+
+    def put_requests(self, requests):
+        for request in requests:
+            self.system_monitor.log_trade_request(request)
+
+    def put_result(self, result):
+        self.system_monitor.log_trade_result(result)
+
+    def put_safety_event(self, event):
+        self.system_monitor.log_safety_event(event)
+
+    def add_drawing_spot(self, date_time, value):
+        self.spots.append({"date_time": date_time, "value": value})
+
+    def add_value_for_line_graph(self, date_time, value):
+        self.lines.append({"date_time": date_time, "value": value})
+
+    def current_account_value(self) -> float:
+        if self.get_account_info_func is None:
+            return 0.0
+        account = self.get_account_info_func()
+        value = float(account.get("balance", 0))
+        quotes = account.get("quote", {}) or {}
+        for currency, (avg_price, amount) in (account.get("asset", {}) or {}).items():
+            price = quotes.get(currency, avg_price)
+            value += float(price) * float(amount)
+        return value
+
+    def get_return_report(self) -> dict:
+        current_value = self.current_account_value()
+        start_value = self.start_value
+        if not start_value:
+            return {"start_value": current_value, "current_value": current_value,
+                    "cumulative_return": 0}
+        cumulative_return = round((current_value - start_value) / start_value * 100, 3)
+        return {"start_value": start_value, "current_value": current_value,
+                "cumulative_return": cumulative_return}

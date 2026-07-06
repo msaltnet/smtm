@@ -1,102 +1,156 @@
 import argparse
 from argparse import RawTextHelpFormatter
+import json
 import sys
 
-from PIL.TiffImagePlugin import TRANSFERFUNCTION
-from .controller.simulator import Simulator
 from .controller.controller import Controller
-from .controller.telegram_controller import TelegramController
-from .controller.mass_simulator import MassSimulator
+from .controller.telegram import TelegramController
 from .log_manager import LogManager
 from .__init__ import __version__
 
-if __name__ == "__main__":
-    DEFAULT_MODE = 6
+
+DEFAULT_MODE = 2
+DEFAULT_CONFIG = {
+    "budget": 500000,
+    "term": 60,
+    "exchange": "UPB",
+    "currency": "BTC",
+    "paper": False,
+    "log": None,
+    "token": None,
+    "chatid": None,
+    "mode": DEFAULT_MODE,
+    "strategy": "BNH",
+}
+CONFIG_ALIASES = {
+    "interval": "term",
+    "chat_id": "chatid",
+    "virtual": "paper",
+}
+
+
+def build_parser():
     parser = argparse.ArgumentParser(
         description="""
-smtm - Algorithm-based Crypto Trading System
+smtm - LLM-powered Crypto Trading System
 
 mode:
-    0: Simulation with interative mode
-    1: Single simulation
-    2: Interactive mode Real trading system
-    3: Telegram chatbot trading system
-    4: Mass simulation
-    5: Making config files for mass simulation
+    0: Interactive CLI trading
+    1: Telegram chatbot trading
 
 Example)
-# Run the Interactive Mode Simulator
-python -m smtm --mode 0
+# Run CLI interactive trading
+python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
 
-# Run a simulation with parameters
-python -m smtm --mode 1 --budget 50000 --from_dash_to 201220.170000-201221 --term 0.1 --strategy BNH --currency BTC
+# Run with a JSON config file
+python -m smtm --config config/virtual-upbit.json
 
-# Run a Interactive mode Real trading system
-python -m smtm --mode 2 --budget 50000 --term 60 --strategy BNH --currency ETH
-
-# Run a Telegram chatbot trading system
-python -m smtm --mode 3
-
-# Run a Telegram chatbot trading system with demo trader(fake trading)
-python -m smtm --mode 3 --demo 1 --token <telegram chat-bot token> --chatid <chat id>
-
-# Run a Mass simulation with config file
-python -m smtm --mode 4 --config /data/sma0_simulation.json
-
-# Make config files for mass simulation
-python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --currency ETH --from_dash_to 210804.000000-210811.000000 --offset 360 --file generated_config.json
+# Run Telegram chatbot trading
+python -m smtm --mode 1 --token <token> --chatid <chatid>
 """,
         formatter_class=RawTextHelpFormatter,
     )
-    parser.add_argument("--budget", help="budget", type=int, default=10000)
+    parser.add_argument("--config", help="JSON config file path", default=None)
+    parser.add_argument("--budget", help="budget", type=int, default=None)
     parser.add_argument(
-        "--term", help="trading tick interval (seconds)", type=float, default="60"
+        "--term", help="trading tick interval (seconds)", type=float, default=None
     )
     parser.add_argument(
-        "--strategy", help="BNH: buy and hold, SMA: sma, RSI: rsi", default="BNH"
+        "--exchange",
+        help="exchange code UPB: Upbit, BTH: Bithumb",
+        default=None,
     )
+    parser.add_argument("--currency", help="trading currency e.g.BTC", default=None)
     parser.add_argument(
-        "--trader",
-        help="exchange code UPB: Upbit, BTH: Bithumb (0, 1 also supported)",
-        default="UPB",
-    )
-    parser.add_argument("--currency", help="trading currency e.g.BTC", default="BTC")
-    parser.add_argument("--config", help="mass simulation config file", default="")
-    parser.add_argument(
-        "--process",
-        help="process number for mass simulation. default -1 use cpu number",
-        type=int,
-        default=-1,
-    )
-    parser.add_argument("--title", help="mass simulation title", default="SMA_2H_week")
-    parser.add_argument("--file", help="generated config file name", default=None)
-    parser.add_argument(
-        "--offset", help="mass simulation period offset", type=int, default=120
+        "--paper",
+        "--virtual",
+        help="virtual trading mode (simulation trader, real-time quotes)",
+        action=argparse.BooleanOptionalAction,
+        dest="paper",
+        default=None,
     )
     parser.add_argument("--log", help="log file name", default=None)
-    parser.add_argument("--demo", help="use demo trader", type=int, default=0)
     parser.add_argument("--token", help="telegram chat-bot token", default=None)
     parser.add_argument("--chatid", help="telegram chat id", default=None)
     parser.add_argument(
         "--mode",
-        help="0: interactive simulator, 1: single simulation, 2: real trading",
+        help="0: interactive CLI, 1: telegram chatbot",
         type=int,
-        default=DEFAULT_MODE,
+        default=None,
     )
     parser.add_argument(
-        "--from_dash_to",
-        help="simulation period ex) 201220.170000-201220.180000",
-        default="201220.170000-201220.180000",
+        "--strategy",
+        help="trading strategy code (BNH, RSI, SMA, LLM)",
+        default=None,
+    )
+    parser.add_argument(
+        "--profile",
+        help="account profile name in config/profiles/",
+        default=None,
     )
     parser.add_argument(
         "--version", action="version", version=f"smtm version: {__version__}"
     )
-    def _resolve_exchange_code(value):
-        """Convert legacy numeric trader values to exchange codes."""
-        legacy_map = {"0": "UPB", "1": "BTH"}
-        return legacy_map.get(value, value)
+    return parser
 
-    args = parser.parse_args()
+
+def load_config(path):
+    with open(path, "r", encoding="utf-8") as config_file:
+        raw_config = json.load(config_file)
+
+    if not isinstance(raw_config, dict):
+        raise ValueError("config file must contain a JSON object")
+
+    config = {}
+    allowed_keys = set(DEFAULT_CONFIG.keys()) | set(CONFIG_ALIASES.keys())
+    unknown_keys = sorted(set(raw_config.keys()) - allowed_keys)
+    if unknown_keys:
+        raise ValueError(f"unknown config key(s): {', '.join(unknown_keys)}")
+
+    for key, value in raw_config.items():
+        config[CONFIG_ALIASES.get(key, key)] = value
+    return config
+
+
+def merge_config(args):
+    config = dict(DEFAULT_CONFIG)
+    if args.config:
+        config.update(load_config(args.config))
+
+    if getattr(args, "profile", None):
+        # 프로파일은 config 파일보다 뒤, CLI 플래그보다 앞에 반영된다.
+        # MVP 범위: 프로파일의 키는 모두 이 config 딕셔너리에 병합되지만,
+        # Controller가 실제로 사용하는 것은 그중 6개 키(exchange/currency/
+        # budget/virtual/term/strategy)뿐이다. strategy_params/safety 등은
+        # 병합되어도 Controller 부팅 경로에서는 읽히지 않으므로 CLI 부팅
+        # 시에는 적용되지 않는다 — 해당 값은 실행 중 에이전트의
+        # switch_profile 경로로 적용된다.
+        from .profile_store import ProfileStore
+        profile = ProfileStore().load(args.profile)
+        for key, value in profile.items():
+            if key == "name":
+                continue
+            config[CONFIG_ALIASES.get(key, key)] = value
+
+    for key in DEFAULT_CONFIG:
+        cli_value = getattr(args, key, None)
+        if cli_value is not None:
+            config[key] = cli_value
+
+    return argparse.Namespace(config=args.config, profile=args.profile, **config)
+
+
+def parse_args(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        return parser, merge_config(args)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        parser.error(str(exc))
+
+
+def main(argv=None):
+    parser, args = parse_args(argv)
     if args.log is not None:
         LogManager.change_log_file(args.log)
 
@@ -104,52 +158,24 @@ python -m smtm --mode 5 --budget 50000 --title SMA_6H_week --strategy SMA --curr
         parser.print_help()
         sys.exit(0)
 
-    if args.mode == 0 or args.mode == 1:
-        simulator = Simulator(
-            budget=args.budget,
-            interval=args.term,
-            strategy=args.strategy,
-            currency=args.currency,
-            from_dash_to=args.from_dash_to,
-        )
-
     if args.mode == 0:
-        simulator.main()
-    elif args.mode == 1:
-        simulator.run_single()
-    elif args.mode == 2:
-        exchange = _resolve_exchange_code(args.trader)
         controller = Controller(
             budget=args.budget,
             interval=args.term,
-            strategy=args.strategy,
             currency=args.currency,
-            exchange=exchange,
+            exchange=args.exchange,
+            paper=args.paper,
+            strategy=args.strategy,
         )
         controller.main()
-    elif args.mode == 3:
+    elif args.mode == 1:
         try:
             tcb = TelegramController(token=args.token, chat_id=args.chatid)
-        except ValueError as e:
+        except ValueError:
             print("Please check your telegram chat-bot token")
             sys.exit(0)
+        tcb.main()
 
-        tcb.main(demo=args.demo == 1)
-    elif args.mode == 4:
-        if args.config == "":
-            parser.print_help()
-            sys.exit(0)
 
-        mass = MassSimulator()
-        mass.run(args.config, args.process)
-    elif args.mode == 5:
-        result = MassSimulator.make_config_json(
-            title=args.title,
-            budget=args.budget,
-            strategy_code=args.strategy,
-            currency=args.currency,
-            from_dash_to=args.from_dash_to,
-            offset_min=args.offset,
-            filepath=args.file,
-        )
-        print(f"{result} is generated")
+if __name__ == "__main__":
+    main()
