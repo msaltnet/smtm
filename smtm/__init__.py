@@ -65,6 +65,7 @@ from .strategy.strategy_sma import StrategySma
 from .strategy.strategy_llm import StrategyLlm
 from .strategy.strategy_factory import StrategyFactory
 from .profile_store import ProfileStore
+from .account_store import AccountStore
 
 __all__ = [
     "LogManager",
@@ -73,6 +74,7 @@ __all__ = [
     "JptController",
     "TelegramController",
     "ProfileStore",
+    "AccountStore",
 ]
 
 __version__ = "2.0.0"
