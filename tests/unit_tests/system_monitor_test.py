@@ -56,3 +56,30 @@ class SystemMonitorTests(unittest.TestCase):
         self.assertEqual(usage["total_input_tokens"], 300)
         self.assertEqual(usage["total_output_tokens"], 130)
         self.assertEqual(usage["call_count"], 2)
+
+
+class SystemMonitorSessionTagTests(unittest.TestCase):
+    def setUp(self):
+        self.monitor = SystemMonitor()
+
+    def test_logs_carry_session_tag(self):
+        self.monitor.log_market_data([{"type": "primary_candle"}], session="s1")
+        self.monitor.log_trade_request({"id": "r1"}, session="s1")
+        self.monitor.log_trade_result({"state": "done"}, session="s1")
+        self.monitor.log_safety_event({"type": "blocked"}, session="s1")
+        self.assertEqual(self.monitor.market_data_log[0]["session"], "s1")
+        self.assertEqual(self.monitor.trade_request_log[0]["session"], "s1")
+        self.assertEqual(self.monitor.trade_result_log[0]["session"], "s1")
+        self.assertEqual(self.monitor.safety_event_log[0]["session"], "s1")
+
+    def test_untagged_logs_default_to_none(self):
+        self.monitor.log_trade_result({"state": "done"})
+        self.assertIsNone(self.monitor.trade_result_log[0]["session"])
+
+    def test_get_trade_log_filters_by_session(self):
+        self.monitor.log_trade_result({"n": 1}, session="s1")
+        self.monitor.log_trade_result({"n": 2}, session="s2")
+        logs = self.monitor.get_trade_log(session="s1")
+        self.assertEqual(len(logs), 1)
+        self.assertEqual(logs[0]["result"]["n"], 1)
+        self.assertEqual(len(self.monitor.get_trade_log()), 2)
