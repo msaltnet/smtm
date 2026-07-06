@@ -10,6 +10,7 @@ PROFILE_PROPERTIES = {
     "strategy": {"type": "string", "description": "전략 코드 예: BNH/RSI/SMA/LLM"},
     "strategy_params": {"type": "object", "description": "전략 파라미터"},
     "safety": {"type": "object", "description": "안전장치 설정"},
+    "account": {"type": "string", "description": "계좌 별칭 (실거래 세션에 필요, 가상매매는 불필요)"},
 }
 
 

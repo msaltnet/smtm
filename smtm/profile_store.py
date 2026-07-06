@@ -12,7 +12,7 @@ class ProfileStore:
 
     ALLOWED_FIELDS = {
         "name", "exchange", "currency", "budget", "virtual",
-        "term", "strategy", "strategy_params", "safety",
+        "term", "strategy", "strategy_params", "safety", "account",
     }
     NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
