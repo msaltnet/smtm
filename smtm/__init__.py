@@ -75,4 +75,4 @@ __all__ = [
     "ProfileStore",
 ]
 
-__version__ = "1.8.0"
+__version__ = "2.0.0"
