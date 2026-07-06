@@ -76,3 +76,12 @@ class AccountStoreTests(unittest.TestCase):
     def test_load_missing_raises(self):
         with self.assertRaises(ValueError):
             self.store.load("nope")
+
+    def test_list_survives_account_file_missing_required_keys(self):
+        self.store.save(ACCOUNT)
+        import json
+        with open(os.path.join(self.tmp.name, "broken.json"), "w") as f:
+            json.dump({"name": "broken"}, f)  # 필수 키 누락 dict
+        accounts = self.store.list_accounts()  # 크래시 없이 동작
+        names = [a["name"] for a in accounts]
+        self.assertIn("main", names)

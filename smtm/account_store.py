@@ -33,12 +33,13 @@ class AccountStore:
                 raise ValueError(f"필수 계좌 필드가 없습니다: {key}")
 
     def missing_env_vars(self, account: dict) -> list:
-        """설정되지 않은 키 환경변수 '이름' 목록 (값은 읽지 않는다)"""
-        return [
-            account[key]
-            for key in ("access_key_env", "secret_key_env")
-            if not os.environ.get(account.get(key, ""), "")
-        ]
+        """설정되지 않은 키 환경변수 '이름' 목록 (값을 저장하거나 반환하지 않는다)"""
+        missing = []
+        for key in ("access_key_env", "secret_key_env"):
+            env_name = account.get(key)
+            if not env_name or not os.environ.get(env_name, ""):
+                missing.append(env_name or key)
+        return missing
 
     def save(self, account: dict) -> dict:
         self.validate(account)
