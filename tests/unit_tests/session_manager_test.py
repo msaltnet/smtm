@@ -236,3 +236,35 @@ class SessionManagerRealTradeValidationTests(unittest.TestCase):
         result = self.manager.create_session(profile)
         self.assertTrue(result["success"])
         self.assertEqual(self.manager.get_session("default").account, "legacy")
+
+    def test_replace_survives_trader_constructor_exception(self):
+        self.manager.create_session(self.real_profile)
+        with patch("smtm.trader.trader_factory.TraderFactory.create",
+                   side_effect=UserWarning("not supported currency: SOL")):
+            result = self.manager.replace_session(
+                "r1", {**self.real_profile, "currency": "SOL"})
+        self.assertFalse(result["success"])
+        # 기존 세션 유지 + 할당 원복
+        self.assertEqual(self.manager.get_session("r1").profile["currency"], "BTC")
+        self.assertEqual(self.manager.get_account_guard("main").total_allocated(), 300000)
+
+    def test_remove_session_stops_trader_worker(self):
+        self.manager.create_session(self.real_profile)
+        trader = self.manager.get_session("r1").trader
+        self.manager.remove_session("r1")
+        trader.worker.stop.assert_called_once()
+
+    def test_two_sessions_share_account_daily_limit(self):
+        self.manager.create_session(self.real_profile)
+        self.manager.create_session(
+            {**self.real_profile, "name": "r2", "currency": "ETH"})
+        guard = self.manager.get_account_guard("main")
+        for _ in range(guard.config.max_daily_trades):
+            guard.record_trade({})
+        # 두 세션의 컴포지트 가드 모두 계좌 한도로 차단
+        for name in ("r1", "r2"):
+            verdict = self.manager.get_session(name).operator.safety_guard.check_request(
+                {"id": "t", "type": "buy", "price": 100, "amount": 1,
+                 "date_time": "2026-07-06T12:00:00"})
+            self.assertFalse(verdict.allowed)
+            self.assertIn("계좌 일일 거래횟수", verdict.reason)
