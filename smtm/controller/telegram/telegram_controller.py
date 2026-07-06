@@ -11,6 +11,7 @@ from ...config import Config
 from ...log_manager import LogManager
 from ...llm.system_operator import SystemOperator
 from ...llm.claude_llm_client import ClaudeLlmClient
+from ...account_store import AccountStore
 from .message_handler import TelegramMessageHandler
 
 
@@ -45,14 +46,15 @@ class TelegramController:
             "strategy": "BNH",
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
-        self.operator = SystemOperator(llm_client, config)
+        self.operator = SystemOperator(llm_client, config,
+                                       account_store=AccountStore())
         try:
             self.operator.setup()
         except ValueError as err:
             print(str(err))
             return
 
-        self.operator.start_trading()
+        print("'start'를 입력하면 default 세션 매매가 시작됩니다")
 
         signal.signal(signal.SIGINT, self._terminate)
         signal.signal(signal.SIGTERM, self._terminate)
@@ -79,7 +81,7 @@ class TelegramController:
         self, signum: Optional[int] = None, frame: Optional[Any] = None
     ) -> None:
         if self.operator is not None:
-            self.operator.stop_trading()
+            self.operator.shutdown()
         self.message_handler.stop_polling()
         print("##### smtm telegram controller is terminated #####")
         print("Good Bye~")

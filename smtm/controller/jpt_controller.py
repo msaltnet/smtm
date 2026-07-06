@@ -2,6 +2,7 @@ import os
 from ..log_manager import LogManager
 from ..llm.system_operator import SystemOperator
 from ..llm.claude_llm_client import ClaudeLlmClient
+from ..account_store import AccountStore
 
 
 class JptController:
@@ -33,7 +34,8 @@ class JptController:
             "strategy": "BNH",
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
-        self.operator = SystemOperator(llm_client, config)
+        self.operator = SystemOperator(llm_client, config,
+                                       account_store=AccountStore())
         self.operator.setup()
         print("##### smtm LLM trading is initialized #####")
         print(f"interval: {self.interval}, budget: {self.budget}")
@@ -47,7 +49,7 @@ class JptController:
 
     def stop(self):
         if self.operator is not None:
-            self.operator.stop_trading()
+            self.operator.shutdown()
             print("자동 매매가 중지되었습니다")
 
     def chat(self, message):
