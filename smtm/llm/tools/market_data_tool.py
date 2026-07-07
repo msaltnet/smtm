@@ -3,7 +3,7 @@ from ...log_manager import LogManager
 
 
 class MarketDataTool(Tool):
-    """시장 데이터 조회 Tool — DataProvider 래핑"""
+    """시장 데이터 조회 Tool — 세션의 DataProvider 래핑"""
 
     name = "get_market_data"
     description = (
@@ -31,23 +31,23 @@ class MarketDataTool(Tool):
     input_schema = {
         "type": "object",
         "properties": {
-            "currency": {
-                "type": "string",
-                "enum": ["BTC", "ETH", "DOGE", "XRP"],
-                "description": "조회할 암호화폐 (primary_candle 기준)",
-            },
+            "session": {"type": "string",
+                       "description": "세션 이름 (기본 default)"},
         },
-        "required": ["currency"],
     }
 
-    def __init__(self, data_provider):
+    def __init__(self, session_manager):
         self.logger = LogManager.get_logger(__class__.__name__)
-        self.data_provider = data_provider
+        self.session_manager = session_manager
 
     def execute(self, arguments: dict) -> ToolResult:
         try:
-            data = self.data_provider.get_info()
+            session = self.session_manager.get_session(
+                arguments.get("session") or "default")
+            data = session.operator.data_provider.get_info()
             return ToolResult(success=True, data=data)
+        except ValueError as err:
+            return ToolResult(success=False, error=str(err))
         except Exception as e:
             self.logger.error(f"MarketDataTool error: {e}")
             return ToolResult(success=False, error=str(e))

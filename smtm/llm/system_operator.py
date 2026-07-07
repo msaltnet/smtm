@@ -2,7 +2,6 @@ import os
 from dataclasses import dataclass
 from ..log_manager import LogManager
 from .tool_router import ToolRouter
-from .safety_guard import SafetyGuard, SafetyConfig
 from .system_monitor import SystemMonitor
 
 
@@ -17,20 +16,22 @@ class ContextConfig:
 
 
 class SystemOperator:
-    """시스템 운영 LLM 에이전트 — 오케스트레이션 전용.
+    """시스템 운영 LLM 에이전트 — 멀티 세션 오케스트레이션 전용.
 
-    직접 매매하지 않는다. 매매는 TradingOperator의 Strategy → Trader 단일 경로.
+    직접 매매하지 않는다. 매매는 각 세션(TradingSession)의
+    Strategy → Trader 단일 경로. 세션 수명 주기는 SessionManager가 담당한다.
     """
 
     DEFAULT_STRATEGY = "BNH"
 
-    def __init__(self, llm_client, config: dict, profile_store=None):
+    def __init__(self, llm_client, config: dict, profile_store=None,
+                 account_store=None):
         self.logger = LogManager.get_logger(__class__.__name__)
         self.llm_client = llm_client
         self.config = config
-        self.state = "ready"
         self.budget = config.get("budget", 500000)
         self.profile_store = profile_store
+        self.account_store = account_store
 
         self.system_monitor = SystemMonitor(
             storage_path=config.get("monitor_storage_path", "output/monitor/"),
@@ -41,68 +42,42 @@ class SystemOperator:
         self.strategy_knowledge = self._load_strategy_knowledge(
             config.get("strategy_files", [])
         )
-
-        self.trading_operator = None
-        self.data_provider = None
-        self.trader = None
-        self.safety_guard = None
-        self.strategy_code = None
+        self.session_manager = None
         self.default_strategy_used = False
 
     # ------------------------------------------------------------------
     # 구성
     # ------------------------------------------------------------------
     def setup(self):
-        """트레이딩 컴포넌트 구성 + Tool 등록. Controller가 호출."""
-        self._build_trading_components(rebuild_infra=True)
+        """SessionManager 구성 + default 세션 생성 + Tool 등록. Controller가 호출."""
+        from ..session_manager import SessionManager
 
-    def _build_trading_components(self, rebuild_infra=True):
-        # 순환 import 방지를 위한 지역 import
-        from ..data.data_provider_factory import DataProviderFactory
-        from ..trader.trader_factory import TraderFactory
-        from ..strategy.strategy_factory import StrategyFactory
-        from ..trading_operator import TradingOperator
-        from ..analyzer import Analyzer
-        from ..config import Config
-
-        cfg = self.config
-        exchange = cfg.get("exchange", "UPB")
-        currency = cfg.get("currency", "BTC")
-        strategy_code = cfg.get("strategy") or self.DEFAULT_STRATEGY
-        self.default_strategy_used = not cfg.get("strategy")
-
-        if rebuild_infra or self.trader is None:
-            self.data_provider = DataProviderFactory.create(
-                exchange, currency=currency, interval=Config.candle_interval)
-            self.trader = TraderFactory.create(
-                exchange, budget=self.budget, currency=currency,
-                paper=bool(cfg.get("virtual", False)))
-            if self.data_provider is None or self.trader is None:
-                raise ValueError(f"올바르지 않은 거래소 코드입니다: {exchange}")
-
-        strategy = StrategyFactory.create(strategy_code, llm_client=self.llm_client)
-        if strategy is None:
-            raise ValueError(f"올바르지 않은 전략 코드입니다: {strategy_code}")
-
-        analyzer = Analyzer(self.system_monitor)
-        old_guard = self.safety_guard
-        self.safety_guard = SafetyGuard(SafetyConfig(
-            initial_budget=self.budget, **cfg.get("safety", {})))
-        if old_guard is not None:
-            # 일일 거래 한도는 구성 변경으로 리셋되지 않는다 (LLM 우회 방지).
-            # 손실률 추적(current_value)은 예산이 바뀔 수 있으므로 새
-            # initial_budget 기준으로 재시작한다.
-            self.safety_guard.daily_trade_count = old_guard.daily_trade_count
-            self.safety_guard.daily_date = old_guard.daily_date
-
-        operator = TradingOperator(
-            interval=cfg.get("interval", 60), currency=currency)
-        operator.initialize(
-            self.data_provider, strategy, self.trader, analyzer,
-            self.safety_guard, budget=self.budget)
-        self.trading_operator = operator
-        self.strategy_code = strategy_code
+        self.session_manager = SessionManager(
+            account_store=self.account_store,
+            llm_client=self.llm_client,
+            system_monitor=self.system_monitor,
+        )
+        self.default_strategy_used = not self.config.get("strategy")
+        result = self.session_manager.create_session(
+            self._config_to_profile(), name=SessionManager.DEFAULT_SESSION)
+        if not result.get("success"):
+            raise ValueError(result.get("error"))
         self._register_tools()
+
+    def _config_to_profile(self) -> dict:
+        cfg = self.config
+        profile = {"name": "default"}
+        mapping = {
+            "exchange": "exchange", "currency": "currency", "budget": "budget",
+            "virtual": "virtual", "interval": "term", "strategy": "strategy",
+            "strategy_params": "strategy_params", "safety": "safety",
+            "account": "account",
+        }
+        for config_key, profile_key in mapping.items():
+            if cfg.get(config_key) is not None:
+                profile[profile_key] = cfg[config_key]
+        profile.setdefault("strategy", self.DEFAULT_STRATEGY)
+        return profile
 
     def _register_tools(self):
         from .tools.market_data_tool import MarketDataTool
@@ -110,11 +85,10 @@ class SystemOperator:
         from .tools.trade_history_tool import TradeHistoryTool
         from .tools.performance_tool import PerformanceTool
 
-        self.tool_router.register(MarketDataTool(self.data_provider))
-        self.tool_router.register(PortfolioTool(self.trader))
+        self.tool_router.register(MarketDataTool(self.session_manager))
+        self.tool_router.register(PortfolioTool(self.session_manager))
         self.tool_router.register(TradeHistoryTool(self.system_monitor))
-        self.tool_router.register(PerformanceTool(
-            self.system_monitor, self.trader, self.budget))
+        self.tool_router.register(PerformanceTool(self.session_manager))
 
         from .tools.orchestration_tools import (
             ListStrategiesTool, DescribeStrategyTool, SelectStrategyTool,
@@ -139,82 +113,103 @@ class SystemOperator:
             self.tool_router.register(DeleteProfileTool(self.profile_store))
             self.tool_router.register(SwitchProfileTool(self.profile_store, self))
 
+        if self.account_store is not None:
+            from .tools.account_tools import (
+                RegisterAccountTool, ListAccountsTool, DeleteAccountTool,
+            )
+            self.tool_router.register(RegisterAccountTool(self.account_store))
+            self.tool_router.register(ListAccountsTool(self.account_store))
+            self.tool_router.register(DeleteAccountTool(
+                self.account_store, self.session_manager))
+
+        from .tools.session_tools import (
+            CreateSessionTool, StartSessionTool, StopSessionTool,
+            RemoveSessionTool, ListSessionsTool, ComparePerformanceTool,
+        )
+        self.tool_router.register(StartSessionTool(self.session_manager))
+        self.tool_router.register(StopSessionTool(self.session_manager))
+        self.tool_router.register(RemoveSessionTool(self.session_manager))
+        self.tool_router.register(ListSessionsTool(self.session_manager))
+        self.tool_router.register(ComparePerformanceTool(self.session_manager))
+        if self.profile_store is not None:
+            self.tool_router.register(CreateSessionTool(
+                self.profile_store, self.session_manager))
+
     # ------------------------------------------------------------------
-    # 오케스트레이션 API (Tool과 Controller에서 호출)
+    # 레거시 위임 (default 세션)
     # ------------------------------------------------------------------
+    def default_session(self):
+        return self.session_manager.get_session("default")
+
+    def default_strategy(self):
+        try:
+            return self.default_session().profile.get("strategy")
+        except ValueError:
+            return None
+
     def select_strategy(self, code: str) -> dict:
-        if self._is_trading_running():
-            return {"success": False,
-                    "error": "매매 중에는 전략을 변경할 수 없습니다. 먼저 매매를 중지하세요."}
         previous = self.config.get("strategy")
         self.config["strategy"] = code
-        try:
-            self._build_trading_components(rebuild_infra=False)
-        except Exception as err:
+        result = self.session_manager.replace_session(
+            "default", self._config_to_profile())
+        if not result.get("success"):
             self.config["strategy"] = previous
-            return {"success": False, "error": str(err)}
+            return result
+        self.default_strategy_used = False
         return {"success": True, "strategy": code}
 
     def start_trading(self) -> dict:
-        if self.trading_operator is None:
-            return {"success": False, "error": "트레이딩 컴포넌트가 구성되지 않았습니다"}
-        if self._is_trading_running():
-            return {"success": False, "error": "이미 매매가 진행 중입니다"}
-        started = self.trading_operator.start()
-        if not started:
-            return {"success": False, "error": "매매를 시작할 수 없습니다"}
-        result = {"success": True, "strategy": self.strategy_code}
-        if self.default_strategy_used:
+        result = self.session_manager.start_session("default")
+        if result.get("success") and self.default_strategy_used:
+            result["strategy"] = self.default_strategy()
             result["note"] = "전략이 지정되지 않아 기본 전략(BNH)으로 시작했습니다"
         return result
 
     def stop_trading(self) -> dict:
-        if self.trading_operator is None or not self._is_trading_running():
-            return {"success": True, "note": "매매가 진행 중이 아닙니다"}
-        self.trading_operator.stop()
-        return {"success": True}
+        return self.session_manager.stop_session("default")
 
-    def get_status(self) -> dict:
+    def apply_profile(self, profile: dict) -> dict:
+        # 현재 config를 기반으로 요청 프로파일을 오버레이 — 미지정 키는
+        # 기존 설정을 상속한다 (가상→실거래 무언 전환 방지)
+        effective = self._config_to_profile()
+        for key in ("exchange", "currency", "budget", "virtual", "term",
+                    "strategy", "strategy_params", "safety", "account"):
+            if key in profile:
+                effective[key] = profile[key]
+        effective["name"] = "default"
+        result = self.session_manager.replace_session("default", effective)
+        if result.get("success"):
+            # config를 유효 프로파일에 맞춰 동기화 (레거시 get_status 일관성)
+            for key in ("exchange", "currency", "budget", "virtual",
+                        "strategy", "strategy_params", "safety", "account"):
+                if key in effective:
+                    self.config[key] = effective[key]
+            if "term" in effective:
+                self.config["interval"] = effective["term"]
+            self.budget = self.config.get("budget", self.budget)
+            self.default_strategy_used = not self.config.get("strategy")
+            result["note"] = ("프로파일이 default 세션에 적용되었습니다. "
+                              "매매를 재개하려면 start_trading을 호출하세요.")
+        return result
+
+    def get_status(self, session=None) -> dict:
+        if session:
+            try:
+                return self.session_manager.get_session_status(session)
+            except ValueError as err:
+                return {"error": str(err)}
         return {
-            "trading_state": self.trading_operator.state if self.trading_operator else None,
-            "strategy": self.strategy_code,
-            "exchange": self.config.get("exchange"),
-            "currency": self.config.get("currency"),
-            "budget": self.budget,
-            "virtual": bool(self.config.get("virtual", False)),
-            "interval": self.config.get("interval", 60),
-            "safety": self.safety_guard.get_status() if self.safety_guard else None,
+            "sessions": self.session_manager.list_sessions(),
+            "accounts": {
+                alias: guard.get_status()
+                for alias, guard in self.session_manager.account_guards.items()
+            },
             "llm_usage": self.system_monitor.get_llm_usage(),
         }
 
-    def apply_profile(self, profile: dict) -> dict:
-        was_running = self._is_trading_running()
-        if was_running:
-            self.trading_operator.stop()
-        old_config = dict(self.config)
-        old_budget = self.budget
-        for key in ("exchange", "currency", "budget", "virtual", "term",
-                    "strategy", "strategy_params", "safety"):
-            if key in profile:
-                config_key = "interval" if key == "term" else key
-                self.config[config_key] = profile[key]
-        self.budget = self.config.get("budget", self.budget)
-        try:
-            self._build_trading_components(rebuild_infra=True)
-        except Exception as err:
-            # 현재 구성 유지: 스냅샷 복원 후 이전 구성으로 재구성
-            self.config.clear()
-            self.config.update(old_config)
-            self.budget = old_budget
-            self._build_trading_components(rebuild_infra=True)
-            return {"success": False, "error": str(err)}
-        return {"success": True, "profile": profile.get("name"),
-                "was_running": was_running,
-                "note": "프로파일이 적용되었습니다. 매매를 재개하려면 start_trading을 호출하세요."}
-
-    def _is_trading_running(self) -> bool:
-        return (self.trading_operator is not None
-                and self.trading_operator.state == "running")
+    def shutdown(self):
+        if self.session_manager is not None:
+            self.session_manager.stop_all()
 
     # ------------------------------------------------------------------
     # 대화 (LlmOperator에서 이관)
@@ -263,23 +258,24 @@ class SystemOperator:
     def _build_system_prompt(self) -> str:
         parts = [
             "당신은 암호화폐 자동매매 시스템의 운영 에이전트입니다.",
-            "직접 매매하지 않습니다. 매매는 선택된 전략(Strategy)이 고정 주기로 수행합니다.",
-            "제공된 Tool로 전략을 조회·선택하고, 매매를 시작/중지하고, 상태와 성과를 확인하고,",
-            "프로파일(실행 프리셋)을 관리하세요.",
-            "사용자의 요청을 정확히 파악하고, 위험한 변경(전략 전환, 프로파일 전환)은",
-            "실행 전에 사용자에게 확인하세요.",
+            "직접 매매하지 않습니다. 매매는 각 세션의 전략이 고정 주기로 수행합니다.",
+            "여러 세션(전략×계좌×심볼)을 병렬로 운영할 수 있습니다.",
+            "제공된 Tool로 계좌를 등록하고, 프로파일로 세션을 생성·시작·중지하고,",
+            "세션별 상태와 성과를 확인·비교하세요.",
+            "위험한 변경(실거래 세션 시작/교체/제거)은 실행 전에 사용자에게 확인하세요.",
+            "API 키 값은 절대 묻지도 저장하지도 마세요 — 환경변수 이름만 다룹니다.",
             "",
         ]
         if self.strategy_knowledge:
             parts.append("## 참고 전략 지식")
             parts.append(self.strategy_knowledge)
             parts.append("")
-        parts.append("## 현재 설정")
-        parts.append(f"- 거래소: {self.config.get('exchange', 'N/A')}")
-        parts.append(f"- 통화: {self.config.get('currency', 'N/A')}")
-        parts.append(f"- 초기 예산: {self.budget:,.0f}")
-        parts.append(f"- 현재 전략: {self.strategy_code or 'N/A'}")
-        parts.append(f"- 가상매매: {'예' if self.config.get('virtual') else '아니오'}")
+        parts.append("## 세션 현황")
+        for s in self.session_manager.list_sessions():
+            mode = "가상" if s["virtual"] else f"실거래({s['account']})"
+            parts.append(
+                f"- {s['name']}: {s['strategy']} / {s['exchange']} {s['currency']}"
+                f" / 예산 {(s['budget'] or 0):,.0f} / {mode} / 상태 {s['state']}")
         return "\n".join(parts)
 
     def _trim_conversation_history(self):

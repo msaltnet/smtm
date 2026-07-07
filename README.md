@@ -12,15 +12,15 @@ An LLM-powered autonomous cryptocurrency trading system made in Python. https://
 
 [![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
-A chat-driven LLM agent orchestrates the system -- selecting a strategy, starting/stopping trading, and managing account profiles -- while a separate fixed-interval loop executes the actual trades.
+A chat-driven LLM agent orchestrates the system -- registering accounts, managing profiles, and starting/stopping one or more trading sessions in parallel -- while each session runs its own separate fixed-interval loop that executes the actual trades.
 
-1. SystemOperator (the chat agent) selects/switches strategies and starts or stops trading via tools
-2. TradingOperator runs a fixed-interval loop: DataProvider -> Strategy -> SafetyGuard -> Trader -> Analyzer
+1. SystemOperator (the chat agent) manages sessions via tools -- create/start/stop/compare -- and still supports the legacy single-session select/start/stop flow
+2. Each session's TradingOperator runs a fixed-interval loop: DataProvider -> Strategy -> SafetyGuard -> Trader -> Analyzer
 3. Strategy is pluggable -- algorithmic (Buy & Hold, RSI, SMA) or a single LLM judgment per tick (`LLM`)
-4. SafetyGuard enforces trading limits before every order; SystemMonitor independently logs all activity
+4. SafetyGuard enforces trading limits before every order (with an account-level guard across sessions sharing an account); SystemMonitor independently logs all activity, tagged by session
 
 ## Features
-- Chat-based orchestration agent: select a strategy, start/stop trading, manage account profiles
+- Chat-based orchestration agent: register accounts, manage profiles, and create/start/stop parallel trading sessions
 - Pluggable trading strategies executed on a fixed interval: Buy & Hold, RSI, SMA, or a single LLM judgment per tick (`LLM`)
 - Safety guardrails (max trade amount, daily trade limit, loss ratio ceiling)
 - CLI interactive mode and Telegram chatbot control
@@ -256,11 +256,24 @@ All internal components (`SystemOperator`, `TradingOperator`, `ToolRouter`, `Saf
 
 ## Architecture
 
-The system is split into two layers:
+The system is split into two layers, coordinated by a SessionManager that runs one or more sessions in parallel:
 
-- **SystemOperator** — chat-based LLM agent; orchestrates strategy selection, start/stop, and account profiles via Tools (does not trade directly)
-- **TradingOperator** — fixed-interval loop: **DataProvider** -> **Strategy** -> **SafetyGuard** -> **Trader** -> **Analyzer**
+- **SystemOperator** — chat-based LLM agent; orchestrates account registration, profiles, and session lifecycle via Tools (does not trade directly)
+- **SessionManager** — owns all `TradingSession`s (default session plus any created via chat); validates budgets against real account balances and prevents duplicate (account, symbol) allocations
+- **TradingOperator** — one per session; fixed-interval loop: **DataProvider** -> **Strategy** -> **SafetyGuard** -> **Trader** -> **Analyzer**
 - **Strategy** — pluggable: algorithmic (Buy & Hold, RSI, SMA) or a single LLM judgment per tick (`LLM`)
-- **SystemMonitor** — independently logs all activity (market data, requests, results, safety events, LLM usage)
+- **SystemMonitor** — independently logs all activity (market data, requests, results, safety events, LLM usage), tagged by session
+
+### Multi-Session Parallel Trading
+
+Run multiple strategies across accounts and symbols in parallel — all
+controlled by chatting with the agent:
+
+- Register accounts by env-var *names* (`SMTM_KEY_1`...), never raw keys
+- Create profiles (strategy × exchange × symbol × budget × account)
+- `create_session` / `start_session` / `compare_performance` via chat
+- Per-session budgets are validated against the real account balance,
+  and an account-level guard caps daily trades across sessions
+- Designed for a handful of concurrent sessions — each session polls the exchange independently, so keep session count modest to respect API rate limits
 
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**

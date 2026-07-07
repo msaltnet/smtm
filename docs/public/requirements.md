@@ -40,7 +40,7 @@ smtm이 제공해야 하는 기능을 영역별로 정리한 문서입니다. `[
 
 - **[MVP] R-TOOL-01** — 다음 5개 Tool은 기본으로 등록돼야 한다: `get_market_data`, `execute_trade`, `get_portfolio`, `get_trade_history`, `get_performance`.
 - **[MVP] R-TOOL-02** — `execute_trade` 입력 스키마는 `{action: "buy"|"sell", currency, price, amount}`를 받는다.
-- **[MVP] R-TOOL-03** — `get_market_data` 입력 스키마는 최소 `currency ∈ {BTC, ETH, DOGE, XRP}`를 받는다.
+- **[MVP] R-TOOL-03** — `get_market_data` 입력 스키마는 조회 대상 `session`(세션 이름, 기본 `default`)을 받는다 — 통화는 세션 프로파일에 귀속된다.
 - **[MVP] R-TOOL-04** — 각 Tool의 `input_schema`는 JSON Schema 형태로 LLM에 그대로 노출된다.
 - **[MVP] R-TOOL-05** — Tool 실행 결과는 `ToolResult.to_dict()`으로 직렬화 가능한 dict여야 하며, 실패 시 `success=False`와 `error` 메시지를 담는다.
 - **[후속] R-TOOL-06** — Tool 추가·비활성화를 코드 변경 없이 설정 파일로 할 수 있게 한다.

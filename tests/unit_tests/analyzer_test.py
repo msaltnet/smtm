@@ -54,3 +54,9 @@ class AnalyzerTests(unittest.TestCase):
         self.analyzer.add_value_for_line_graph("2026-07-03T12:00:00", 200)
         self.assertEqual(len(self.analyzer.spots), 1)
         self.assertEqual(len(self.analyzer.lines), 1)
+
+    def test_analyzer_tags_session_name(self):
+        analyzer = Analyzer(self.monitor, session_name="s9")
+        analyzer.put_result({"state": "done"})
+        self.monitor.log_trade_result.assert_called_once_with(
+            {"state": "done"}, session="s9")

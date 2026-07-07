@@ -22,14 +22,14 @@ class SystemMonitor:
     def _timestamp(self) -> str:
         return datetime.now().strftime(self.ISO_DATEFORMAT)
 
-    def log_market_data(self, data: list):
-        self.market_data_log.append({"timestamp": self._timestamp(), "data": data})
+    def log_market_data(self, data: list, session=None):
+        self.market_data_log.append({"timestamp": self._timestamp(), "session": session, "data": data})
 
-    def log_trade_request(self, request: dict):
-        self.trade_request_log.append({"timestamp": self._timestamp(), "request": request})
+    def log_trade_request(self, request: dict, session=None):
+        self.trade_request_log.append({"timestamp": self._timestamp(), "session": session, "request": request})
 
-    def log_trade_result(self, result: dict):
-        self.trade_result_log.append({"timestamp": self._timestamp(), "result": result})
+    def log_trade_result(self, result: dict, session=None):
+        self.trade_result_log.append({"timestamp": self._timestamp(), "session": session, "result": result})
 
     def log_tool_call(self, tool_name: str, arguments: dict, result: dict):
         self.tool_call_log.append({
@@ -47,14 +47,16 @@ class SystemMonitor:
             "usage": usage,
         })
 
-    def log_safety_event(self, event: dict):
-        self.safety_event_log.append({"timestamp": self._timestamp(), "event": event})
+    def log_safety_event(self, event: dict, session=None):
+        self.safety_event_log.append({"timestamp": self._timestamp(), "session": session, "event": event})
 
     def take_snapshot(self, portfolio: dict):
         self.snapshots.append({"timestamp": self._timestamp(), "portfolio": portfolio})
 
-    def get_trade_log(self, start_time=None, end_time=None) -> list:
-        return self.trade_result_log
+    def get_trade_log(self, start_time=None, end_time=None, session=None) -> list:
+        if session is None:
+            return self.trade_result_log
+        return [log for log in self.trade_result_log if log.get("session") == session]
 
     def get_snapshots(self, start_time=None, end_time=None) -> list:
         return self.snapshots

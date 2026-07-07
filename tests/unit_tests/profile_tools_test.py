@@ -22,7 +22,7 @@ _data_provider_patcher = None
 
 
 def setUpModule():
-    # switch_profile/apply_profile은 rebuild_infra=True로 DataProvider를
+    # switch_profile/apply_profile은 replace_session으로 DataProvider를
     # 다시 생성하므로, 실 거래소 대신 스텁을 사용하도록 패치한다.
     global _data_provider_patcher
     _data_provider_patcher = patch(
@@ -100,7 +100,7 @@ class ProfileToolsTests(unittest.TestCase):
         })
         result = self.tools["switch_profile"].execute({"name": "rsi-small"})
         self.assertTrue(result.success)
-        self.assertEqual(self.operator.strategy_code, "RSI")
+        self.assertEqual(self.operator.default_strategy(), "RSI")
         self.assertEqual(self.operator.budget, 200000)
 
     def test_switch_missing_profile_fails(self):

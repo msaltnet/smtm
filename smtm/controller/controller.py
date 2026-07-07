@@ -5,6 +5,7 @@ from ..log_manager import LogManager
 from ..llm.system_operator import SystemOperator
 from ..llm.claude_llm_client import ClaudeLlmClient
 from ..profile_store import ProfileStore
+from ..account_store import AccountStore
 
 
 class Controller:
@@ -48,7 +49,8 @@ class Controller:
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
         operator = SystemOperator(llm_client, config,
-                                  profile_store=ProfileStore())
+                                  profile_store=ProfileStore(),
+                                  account_store=AccountStore())
         try:
             operator.setup()
         except Exception as err:
@@ -61,6 +63,7 @@ class Controller:
         if self.paper:
             print("!! 가상거래 모드 - 실제 주문은 전송되지 않습니다")
         print("'start'를 입력하면 자동 매매가 시작됩니다")
+        print("멀티 세션 지원 — 채팅으로 계좌 등록·세션 생성/시작이 가능합니다")
         print("==============================")
 
         signal.signal(signal.SIGINT, lambda s, f: self._terminate(operator))
@@ -88,6 +91,6 @@ class Controller:
 
     def _terminate(self, operator):
         print("프로그램 종료 중.....")
-        operator.stop_trading()
+        operator.shutdown()
         self.terminating = True
         print("Good Bye~")

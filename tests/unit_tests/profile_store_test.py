@@ -80,3 +80,8 @@ class ProfileStoreTests(unittest.TestCase):
             f.write("[1, 2, 3]")
         profiles = self.store.list_profiles()
         self.assertEqual(len(profiles), 1)
+
+    def test_account_field_is_allowed(self):
+        profile = {**PROFILE, "account": "main"}
+        self.store.save(profile)
+        self.assertEqual(self.store.load(PROFILE["name"])["account"], "main")

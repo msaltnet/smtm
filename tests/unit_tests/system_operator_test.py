@@ -1,5 +1,7 @@
 import unittest
+import tempfile
 from unittest.mock import patch
+from smtm import AccountStore
 from smtm.llm.system_operator import SystemOperator
 from smtm.llm.llm_client import LlmClient, LlmResponse, ToolCall
 
@@ -17,23 +19,26 @@ class StubDataProvider:
 
 
 _data_provider_patcher = None
+_account_dir = None
 
 
 def setUpModule():
-    # SystemOperator._build_trading_components는 DataProviderFactory를 지역
-    # import하므로, 실제 Factory의 create를 패치해 어떤 유닛 테스트도 실
-    # 거래소로 네트워크 틱을 보내지 않도록 한다 (apply_profile 등은
-    # rebuild_infra=True로 이 경로를 다시 탄다).
-    global _data_provider_patcher
+    # SessionManager._assemble은 DataProviderFactory를 지역 import하므로,
+    # 실제 Factory의 create를 패치해 어떤 유닛 테스트도 실 거래소로
+    # 네트워크 틱을 보내지 않도록 한다 (select_strategy/apply_profile 등은
+    # replace_session으로 이 경로를 다시 탄다).
+    global _data_provider_patcher, _account_dir
     _data_provider_patcher = patch(
         "smtm.data.data_provider_factory.DataProviderFactory.create",
-        return_value=StubDataProvider(),
+        side_effect=lambda *a, **k: StubDataProvider(),
     )
     _data_provider_patcher.start()
+    _account_dir = tempfile.TemporaryDirectory()
 
 
 def tearDownModule():
     _data_provider_patcher.stop()
+    _account_dir.cleanup()
 
 
 class StubLlmClient(LlmClient):
@@ -55,21 +60,24 @@ def make_operator(config_extra=None, responses=None):
         "interval": 60, "virtual": True, "strategy": "BNH",
         **(config_extra or {}),
     }
-    operator = SystemOperator(StubLlmClient(responses), config)
+    operator = SystemOperator(
+        StubLlmClient(responses), config,
+        account_store=AccountStore(dir_path=_account_dir.name))
     operator.setup()
     return operator
 
 
 class SystemOperatorSetupTests(unittest.TestCase):
-    def test_setup_builds_trading_operator_with_default_strategy(self):
+    def test_setup_builds_default_session_with_default_strategy(self):
         operator = make_operator()
-        self.assertIsNotNone(operator.trading_operator)
-        self.assertEqual(operator.trading_operator.state, "ready")
-        self.assertEqual(operator.strategy_code, "BNH")
+        session_operator = operator.session_manager.get_session("default").operator
+        self.assertIsNotNone(session_operator)
+        self.assertEqual(session_operator.state, "ready")
+        self.assertEqual(operator.default_strategy(), "BNH")
 
     def test_setup_without_strategy_falls_back_to_bnh(self):
         operator = make_operator(config_extra={"strategy": None})
-        self.assertEqual(operator.strategy_code, "BNH")
+        self.assertEqual(operator.default_strategy(), "BNH")
 
     def test_no_trade_tool_registered(self):
         operator = make_operator()
@@ -91,22 +99,28 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
     def test_start_and_stop_trading(self):
         result = self.operator.start_trading()
         self.assertTrue(result["success"])
-        self.assertEqual(self.operator.trading_operator.state, "running")
+        self.assertEqual(
+            self.operator.session_manager.get_session("default").operator.state,
+            "running")
         result = self.operator.stop_trading()
         self.assertTrue(result["success"])
-        self.assertEqual(self.operator.trading_operator.state, "ready")
+        self.assertEqual(
+            self.operator.session_manager.get_session("default").operator.state,
+            "ready")
 
     def test_select_strategy_rebuilds_with_new_strategy(self):
         result = self.operator.select_strategy("RSI")
         self.assertTrue(result["success"])
-        self.assertEqual(self.operator.strategy_code, "RSI")
-        self.assertEqual(self.operator.trading_operator.strategy.CODE, "RSI")
+        self.assertEqual(self.operator.default_strategy(), "RSI")
+        self.assertEqual(
+            self.operator.session_manager.get_session("default")
+            .operator.strategy.CODE, "RSI")
 
     def test_select_strategy_rejected_while_running(self):
         self.operator.start_trading()
         result = self.operator.select_strategy("RSI")
         self.assertFalse(result["success"])
-        self.assertEqual(self.operator.strategy_code, "BNH")
+        self.assertEqual(self.operator.default_strategy(), "BNH")
 
     def test_select_unknown_strategy_fails(self):
         result = self.operator.select_strategy("NOPE")
@@ -114,11 +128,9 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
 
     def test_get_status_contains_key_fields(self):
         status = self.operator.get_status()
-        self.assertEqual(status["trading_state"], "ready")
-        self.assertEqual(status["strategy"], "BNH")
-        self.assertEqual(status["exchange"], "UPB")
-        self.assertTrue(status["virtual"])
-        self.assertIn("safety", status)
+        self.assertEqual(status["sessions"][0]["name"], "default")
+        self.assertEqual(status["sessions"][0]["state"], "ready")
+        self.assertIn("llm_usage", status)
 
     def test_apply_profile_reconfigures(self):
         result = self.operator.apply_profile({
@@ -126,7 +138,7 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
             "virtual": True, "exchange": "UPB", "currency": "BTC",
         })
         self.assertTrue(result["success"])
-        self.assertEqual(self.operator.strategy_code, "RSI")
+        self.assertEqual(self.operator.default_strategy(), "RSI")
         self.assertEqual(self.operator.budget, 300000)
 
     def test_apply_profile_failure_keeps_current_config(self):
@@ -134,10 +146,10 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
             "name": "bad", "strategy": "NOPE", "budget": 999999,
         })
         self.assertFalse(result["success"])
-        self.assertEqual(self.operator.strategy_code, "BNH")
+        self.assertEqual(self.operator.default_strategy(), "BNH")
         self.assertEqual(self.operator.budget, 500000)
         self.assertEqual(self.operator.config.get("strategy"), "BNH")
-        # 재구성 후에도 매매 시작이 가능해야 한다 (일관 상태)
+        # 원복 후에도 매매 시작이 가능해야 한다 (일관 상태)
         self.assertTrue(self.operator.start_trading()["success"])
 
     def test_apply_profile_with_bad_safety_key_keeps_config(self):
@@ -152,11 +164,70 @@ class SystemOperatorOrchestrationTests(unittest.TestCase):
         # 복원 후에도 일관 상태
         self.assertTrue(self.operator.start_trading()["success"])
 
-    def test_select_strategy_preserves_daily_trade_count(self):
-        self.operator.safety_guard.record_trade({})
-        self.operator.safety_guard.record_trade({})
+    def test_read_tools_reflect_new_session_after_strategy_change(self):
+        # 읽기 Tool은 session_manager를 통해 execute 시점에 세션을 해석하므로
+        # (Task 10) 세션 교체 후에도 재등록 없이 최신 세션 데이터를 반환해야 한다.
+        portfolio_tool = self.operator.tool_router.tools["get_portfolio"]
         self.operator.select_strategy("RSI")
-        self.assertEqual(self.operator.safety_guard.daily_trade_count, 2)
+        session = self.operator.session_manager.get_session("default")
+        result = portfolio_tool.execute({})
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, session.trader.get_account_info())
+
+    def test_select_strategy_preserves_daily_trade_count(self):
+        self.operator.session_manager.get_session("default").session_guard.record_trade({})
+        self.operator.session_manager.get_session("default").session_guard.record_trade({})
+        self.operator.select_strategy("RSI")
+        self.assertEqual(
+            self.operator.session_manager.get_session("default")
+            .session_guard.daily_trade_count, 2)
+
+    def test_apply_partial_profile_inherits_current_virtual(self):
+        # virtual 미지정 부분 프로파일 → 기존 가상 모드 유지 (실거래 전환 금지)
+        result = self.operator.apply_profile({"name": "rsi-only", "strategy": "RSI"})
+        self.assertTrue(result["success"])
+        session = self.operator.session_manager.get_session("default")
+        self.assertTrue(session.profile.get("virtual"))
+
+    def test_apply_profile_recomputes_default_strategy_note(self):
+        operator = make_operator(config_extra={"strategy": None})
+        try:
+            self.assertTrue(operator.default_strategy_used)
+            operator.apply_profile({"name": "p", "strategy": "RSI", "virtual": True})
+            result = operator.start_trading()
+            self.assertTrue(result["success"])
+            self.assertNotIn("note", result)
+        finally:
+            operator.shutdown()
+
+
+class SystemOperatorMultiSessionTests(unittest.TestCase):
+    def setUp(self):
+        self.operator = make_operator()
+
+    def tearDown(self):
+        self.operator.shutdown()
+
+    def test_setup_creates_default_session_not_started(self):
+        session = self.operator.session_manager.get_session("default")
+        self.assertEqual(session.state, "ready")
+
+    def test_get_status_overview_lists_sessions(self):
+        status = self.operator.get_status()
+        names = [s["name"] for s in status["sessions"]]
+        self.assertIn("default", names)
+        self.assertIn("llm_usage", status)
+
+    def test_get_status_with_session_returns_detail(self):
+        status = self.operator.get_status(session="default")
+        self.assertEqual(status["name"], "default")
+        self.assertIn("safety", status)
+
+    def test_shutdown_stops_all_running_sessions(self):
+        self.operator.start_trading()
+        self.operator.shutdown()
+        self.assertEqual(
+            self.operator.session_manager.get_session("default").state, "ready")
 
 
 class SystemOperatorChatTests(unittest.TestCase):

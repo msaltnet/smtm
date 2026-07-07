@@ -15,7 +15,8 @@ class TraderFactory:
     ]
 
     @staticmethod
-    def create(code, budget=50000, currency="BTC", commission_ratio=0.0005, paper=False):
+    def create(code, budget=50000, currency="BTC", commission_ratio=0.0005,
+               paper=False, account=None):
         if paper:
             return SimulationTrader(
                 budget=budget,
@@ -25,11 +26,15 @@ class TraderFactory:
 
         for trader in TraderFactory.TRADER_LIST:
             if trader.CODE == code:
-                return trader(
-                    budget=budget,
-                    currency=currency,
-                    commission_ratio=commission_ratio,
-                )
+                kwargs = {
+                    "budget": budget,
+                    "currency": currency,
+                    "commission_ratio": commission_ratio,
+                }
+                if account:
+                    kwargs["access_key_env"] = account.get("access_key_env")
+                    kwargs["secret_key_env"] = account.get("secret_key_env")
+                return trader(**kwargs)
         return None
 
     @staticmethod
