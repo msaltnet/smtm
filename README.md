@@ -24,7 +24,7 @@ A chat-driven AI Agent orchestrates the system -- registering accounts, managing
 - Pluggable trading strategies executed on a fixed interval: Buy & Hold, RSI, SMA, or a single LLM judgment per tick (`LLM`)
 - Safety guardrails (max trade amount, daily trade limit, loss ratio ceiling)
 - Telegram chatbot control
-- Strategy knowledge loaded as documents (SMA, RSI, Buy & Hold)
+- Uses the implemented trading strategy modules (Buy & Hold, RSI, SMA); for the `LLM` strategy, strategy knowledge from `smtm/strategies/*.md` is injected into the prompt to inform its decisions
 - Pluggable LLM client interface — Claude is implemented; OpenAI / Ollama adapters are planned
 
 ## Setup

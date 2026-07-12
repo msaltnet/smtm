@@ -24,7 +24,7 @@ AI Agent 기반 자율 암호화폐 자동매매 프로그램. https://smtm.msal
 - 고정 주기로 실행되는 교체 가능한 매매 전략: Buy & Hold, RSI, SMA, 또는 매 틱 LLM 판단 1회(`LLM`)
 - 안전 가드레일 (최대 거래 금액, 일일 거래 제한, 손실 비율 상한)
 - 텔레그램 챗봇 제어
-- 전략 지식을 문서로 로딩 (SMA, RSI, Buy & Hold)
+- 구현된 매매 전략 모듈(Buy & Hold, RSI, SMA)을 사용하며, `LLM` 전략의 경우 `smtm/strategies/*.md` 문서로 전략 지식을 프롬프트에 주입해 판단에 활용
 - 교체 가능한 LLM 클라이언트 인터페이스 — 현재 Claude 구현. OpenAI / Ollama 어댑터는 예정
 
 ## 설치
