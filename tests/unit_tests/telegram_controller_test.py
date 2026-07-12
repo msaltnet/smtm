@@ -1,9 +1,12 @@
 import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
+from smtm.account_store import AccountStore
 from smtm.controller.telegram.telegram_controller import TelegramController
 from smtm.llm.llm_client import LlmClient, LlmResponse
+from smtm.profile_store import ProfileStore
 
 
 class StubDataProvider:
@@ -31,12 +34,24 @@ class TelegramControllerSetupTests(unittest.TestCase):
     """
 
     def setUp(self):
+        # 실제 config/ 디렉토리를 건드리지 않도록 임시 디렉토리를 먼저 만든다
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+
         self.patchers = [
             patch("smtm.data.data_provider_factory.DataProviderFactory.create",
                   side_effect=lambda *a, **k: StubDataProvider()),
             patch("smtm.controller.telegram.telegram_controller.ClaudeLlmClient",
                   side_effect=lambda *a, **k: StubLlmClient()),
             patch("smtm.controller.telegram.telegram_controller.TelegramMessageHandler"),
+            patch("smtm.controller.telegram.telegram_controller.ProfileStore",
+                  side_effect=lambda *a, **k: ProfileStore(
+                      dir_path=os.path.join(self.tmp.name, "profiles"))),
+            patch("smtm.controller.telegram.telegram_controller.AccountStore",
+                  side_effect=lambda *a, **k: AccountStore(
+                      dir_path=os.path.join(self.tmp.name, "accounts"))),
+            # terminating을 더 이상 지키지 않게 되어도 무한 대기 대신 빠르게 실패한다
+            patch("smtm.controller.telegram.telegram_controller.time.sleep"),
             patch.dict(os.environ, {"SMTM_LLM_API_KEY": "test-key"}),
         ]
         for patcher in self.patchers:
@@ -50,6 +65,7 @@ class TelegramControllerSetupTests(unittest.TestCase):
         controller.message_handler.terminating = True
         with patch("signal.signal"):
             controller.main()
+        self.addCleanup(controller.operator.shutdown)
         return controller.operator
 
     def test_profile_and_session_tools_are_registered(self):
