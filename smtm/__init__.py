@@ -49,7 +49,6 @@ from .data.data_provider_factory import DataProviderFactory
 from .trader.upbit_trader import UpbitTrader
 from .trader.bithumb_trader import BithumbTrader
 from .trader.trader_factory import TraderFactory
-from .controller.controller import Controller
 from .controller.jpt_controller import JptController
 from .controller.telegram import TelegramController
 from .llm.llm_client import LlmClient
@@ -71,7 +70,6 @@ from .session_manager import SessionManager, TradingSession
 __all__ = [
     "LogManager",
     "Analyzer",
-    "Controller",
     "JptController",
     "TelegramController",
     "ProfileStore",
