@@ -12,7 +12,17 @@ from ...log_manager import LogManager
 from ...llm.system_operator import SystemOperator
 from ...llm.claude_llm_client import ClaudeLlmClient
 from ...account_store import AccountStore
+from ...profile_store import ProfileStore
 from .message_handler import TelegramMessageHandler
+
+# main()이 부팅 시 콘솔에 출력하는 안내 메시지.
+# 별도 상수로 두어 실행 없이 검증할 수 있게 한다.
+# cp949(한국어 로케일 윈도우) 콘솔에서 인코딩 가능해야 한다 - ASCII 문장부호만 사용.
+BOOT_MESSAGES = (
+    "'start'를 입력하면 default 세션 매매가 시작됩니다",
+    "default 세션은 가상거래입니다 - 실제 주문은 전송되지 않습니다",
+    "실거래는 채팅으로 계좌를 등록한 뒤 세션을 만들어 시작하세요",
+)
 
 
 class TelegramController:
@@ -42,11 +52,12 @@ class TelegramController:
             "currency": currency,
             "budget": budget,
             "interval": Config.candle_interval,
-            "virtual": False,
+            "virtual": True,
             "strategy": "BNH",
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
         self.operator = SystemOperator(llm_client, config,
+                                       profile_store=ProfileStore(),
                                        account_store=AccountStore())
         try:
             self.operator.setup()
@@ -54,7 +65,8 @@ class TelegramController:
             print(str(err))
             return
 
-        print("'start'를 입력하면 default 세션 매매가 시작됩니다")
+        for message in BOOT_MESSAGES:
+            print(message)
 
         signal.signal(signal.SIGINT, self._terminate)
         signal.signal(signal.SIGTERM, self._terminate)

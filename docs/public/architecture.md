@@ -13,8 +13,8 @@ smtm의 시스템 구조·핵심 플로우·확장 포인트를 개요 수준으
 
 ```mermaid
 graph TD
-    User[사용자: CLI / Telegram / Jupyter]
-    Controller[Controller\n사용자 입력 루프]
+    User[사용자: Telegram / Jupyter]
+    Controller[TelegramController\n채팅 입력 루프]
     Operator[LlmOperator\n상태·타이머·대화이력]
     LLM[ClaudeLlmClient\nLLM 어댑터]
     Router[ToolRouter\nTool 디스패치]
@@ -45,7 +45,7 @@ graph TD
 
 | 레이어 | 책임 | 구성 요소 |
 |--------|------|-----------|
-| Presentation | 사용자 입력·출력 | `Controller`(CLI), `TelegramController`, `JptController` |
+| Presentation | 사용자 입력·출력 | `TelegramController`(유일한 실행 진입점), `JptController`(노트북 전용) |
 | Orchestration | 상태·타이머·대화 흐름 | `LlmOperator`, `Worker`(백그라운드 실행기) |
 | LLM 어댑터 | 벤더 API 추상화 | `LlmClient` (추상), `ClaudeLlmClient` (구현) |
 | Safety | Tool 실행 직전 한도 검사 | `SafetyGuard`, `SafetyConfig` |
@@ -100,7 +100,7 @@ class LlmResponse:
 | `max_trade_amount` | 100,000 | KRW, 1회 거래 최대 금액 |
 | `max_daily_trades` | 20 | 하루 거래 횟수 상한 |
 | `max_loss_ratio` | -0.20 | 누적 손실률 하한 (-20%) |
-| `initial_budget` | `--budget` 값 | 손실률 계산 기준 |
+| `initial_budget` | 세션의 `budget` 설정값 | 손실률 계산 기준 |
 
 ### 3.4 DataProvider 다형 데이터 계약
 
@@ -147,28 +147,29 @@ class LlmResponse:
 
 ## 4. 주요 플로우
 
-### 4.1 부팅 — `python -m smtm --mode 0 ...`
+### 4.1 부팅 — `python -m smtm --token <bot_token> --chatid <chat_id>`
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant M as __main__
-    participant C as Controller
-    participant O as LlmOperator
+    participant C as TelegramController
+    participant O as SystemOperator
     participant L as ClaudeLlmClient
     participant DP as DataProvider
     participant TR as Trader
 
-    M->>C: new Controller(args)
+    M->>C: new TelegramController(token, chat_id)
     C->>L: new ClaudeLlmClient(SMTM_LLM_API_KEY)
-    C->>O: new LlmOperator(llm_client, config)
+    C->>O: new SystemOperator(llm_client, config)
     O->>O: SafetyGuard · SystemMonitor · ToolRouter 초기화
-    C->>DP: DataProviderFactory.create(exchange)
-    C->>TR: TraderFactory.create(exchange, budget)
-    C->>O: setup_tools(dp, trader)
+    O->>DP: DataProviderFactory.create(exchange)
+    O->>TR: TraderFactory.create(exchange, budget) - default 세션은 가상거래
     O-->>C: ready
-    C-->>M: 사용자 입력 루프 진입
+    C-->>M: 텔레그램 롱폴링 시작
 ```
+
+`default` 세션은 항상 가상거래(`virtual: true`)로 생성됩니다. 실거래 세션은 사용자가 채팅으로 계좌를 등록하고 `virtual: false` + `account` 프로파일로 `create_session`을 요청해야만 만들어집니다.
 
 ### 4.2 사용자 메시지 처리
 
@@ -176,8 +177,8 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     participant U as User
-    participant C as Controller
-    participant O as LlmOperator
+    participant C as TelegramController
+    participant O as SystemOperator
     participant L as ClaudeLlmClient
     participant R as ToolRouter
     participant S as SafetyGuard
@@ -233,7 +234,7 @@ sequenceDiagram
     O->>O: "[주기적 시장 판단 요청] ..." 프롬프트 빌드
     O->>L: chat(prompt) ⇒ Tool use 루프
     L-->>O: text 응답
-    O->>TM: 다음 Timer 스케줄 (--term 초 뒤)
+    O->>TM: 다음 Timer 스케줄 (term 설정값 초 뒤)
 ```
 
 ### 4.4 한도 초과 시 재판단
@@ -264,15 +265,15 @@ sequenceDiagram
 1. `smtm/llm/<vendor>_llm_client.py`에서 `LlmClient` 상속.
 2. `create_message(system_prompt, messages, tools)` 구현. 반환값은 `LlmResponse`로 정규화.
 3. 벤더별 Tool use 응답 포맷을 `ToolCall` 리스트로 변환해야 함.
-4. Controller 생성 부분에서 `ClaudeLlmClient` 대신 해당 어댑터 인스턴스화.
+4. `TelegramController` 생성 부분에서 `ClaudeLlmClient` 대신 해당 어댑터 인스턴스화.
 
 ### 5.4 SafetyConfig 사용자 설정
 
-현재 CLI 미노출. `LlmOperator` 생성 시 `config["safety"]` dict로 주입.
+세션별 한도는 프로파일의 `safety` 설정값(채팅으로 지정)으로 조정합니다. 기본값 자체를 바꾸려면 `SystemOperator` 생성 시 `config["safety"]` dict로 주입합니다.
 
 ```python
 config = {"budget": 1_000_000, "safety": {"max_daily_trades": 10}}
-operator = LlmOperator(client, config)
+operator = SystemOperator(client, config)
 ```
 
 ---
@@ -305,7 +306,7 @@ operator = LlmOperator(client, config)
 
 ## 8. 배포 / 운영 개요
 
-- **실행 단위**: 단일 Python 프로세스. CLI(`--mode 0`) 또는 Telegram(`--mode 1`) 둘 중 하나.
+- **실행 단위**: 단일 Python 프로세스. 텔레그램 챗봇이 유일한 진입점 (`python -m smtm --token <bot_token> --chatid <chat_id>`).
 - **장기 구동**: `nohup` / `tmux` / `screen` 또는 systemd 유닛 권장 (공식 제공 스크립트는 없음).
 - **리소스**: 메모리 수백 MB 이내. LLM 호출이 주요 외부 비용이고 CPU는 대부분 유휴.
 - **네트워크**: 거래소 API(HTTPS), Anthropic API(HTTPS). 외부에서 들어오는 포트는 없음 (텔레그램은 아웃바운드 롱폴링).

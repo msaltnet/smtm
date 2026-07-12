@@ -6,13 +6,13 @@
 
 > It's a game to get money. 
 
-An LLM-powered autonomous cryptocurrency trading system made in Python. https://smtm.msalt.net
+An AI Agent-powered autonomous cryptocurrency trading system made in Python. https://smtm.msalt.net
 
 [한국어](https://github.com/msaltnet/smtm/blob/master/README-ko-kr.md) 👈
 
 [![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
-A chat-driven LLM agent orchestrates the system -- registering accounts, managing profiles, and starting/stopping one or more trading sessions in parallel -- while each session runs its own separate fixed-interval loop that executes the actual trades.
+A chat-driven AI Agent orchestrates the system -- registering accounts, managing profiles, and starting/stopping one or more trading sessions in parallel -- while each session runs its own separate fixed-interval loop that executes the actual trades.
 
 1. SystemOperator (the chat agent) manages sessions via tools -- create/start/stop/compare -- and still supports the legacy single-session select/start/stop flow
 2. Each session's TradingOperator runs a fixed-interval loop: DataProvider -> Strategy -> SafetyGuard -> Trader -> Analyzer
@@ -23,7 +23,7 @@ A chat-driven LLM agent orchestrates the system -- registering accounts, managin
 - Chat-based orchestration agent: register accounts, manage profiles, and create/start/stop parallel trading sessions
 - Pluggable trading strategies executed on a fixed interval: Buy & Hold, RSI, SMA, or a single LLM judgment per tick (`LLM`)
 - Safety guardrails (max trade amount, daily trade limit, loss ratio ceiling)
-- CLI interactive mode and Telegram chatbot control
+- Telegram chatbot control
 - Strategy knowledge loaded as documents (SMA, RSI, Buy & Hold)
 - Pluggable LLM client interface — Claude is implemented; OpenAI / Ollama adapters are planned
 
@@ -45,109 +45,75 @@ pip install -r requirements.txt
 Create a `.env` file in the project root (or export variables directly):
 
 ```bash
-# Required: LLM API key (currently Anthropic Claude — the only implemented vendor)
+# Required: LLM API key (currently Anthropic Claude is the only implemented vendor)
 SMTM_LLM_API_KEY=your_anthropic_api_key
 
-# Upbit exchange (when using --exchange UPB)
+# Upbit exchange (exchange code UPB)
 UPBIT_OPEN_API_ACCESS_KEY=your_upbit_access_key
 UPBIT_OPEN_API_SECRET_KEY=your_upbit_secret_key
 UPBIT_OPEN_API_SERVER_URL=https://api.upbit.com
 
-# Bithumb exchange (when using --exchange BTH)
+# Bithumb exchange (exchange code BTH)
 BITHUMB_API_ACCESS_KEY=your_bithumb_access_key
 BITHUMB_API_SECRET_KEY=your_bithumb_secret_key
 BITHUMB_API_SERVER_URL=https://api.bithumb.com
 
-# Telegram (mode 1 only)
+# Telegram (can be passed as --token / --chatid instead)
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 ```
 
 ## Usage
 
-### CLI Interactive Mode
+Telegram is the only entry point. Start the bot and control everything by chatting with it.
 
 ```bash
-python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
+python -m smtm --token <telegram_token> --chatid <chat_id>
 ```
 
-Chat with the LLM to control trading. Type messages to ask about the market, start/stop trading, or check portfolio status.
+If `--token` / `--chatid` are omitted, `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` are used. Without a usable token the process prints `Please check your telegram chat-bot token` and exits.
 
-You can also move run options into a JSON config file:
+Only messages from the given `chat_id` are accepted; everything else is ignored. All accepted messages are forwarded to the LLM agent.
 
-```bash
-python -m smtm --config config/virtual-upbit.json
-```
+### Paper trading by default
 
-Supported config keys are `mode`, `budget`, `currency`, `exchange`, `virtual`, `paper`, `term`, `strategy`, `log`, `token`, and `chatid`. `virtual` is the recommended key for virtual trading; `paper` remains supported as a compatibility alias. `interval` is accepted as an alias for `term`, and `chat_id` is accepted as an alias for `chatid`. CLI arguments override config-file values.
+The `default` session that boots with the process is a **paper-trading (virtual) session** -- real-time quotes, simulated balance, no order ever reaches the exchange.
 
-You can also pick a trading strategy directly, or load a saved account profile:
+To trade for real, do the following **through chat**:
 
-```bash
-# Run with an algorithmic strategy (no LLM call in the trading loop)
-python -m smtm --mode 0 --strategy RSI --virtual --budget 500000
+1. `register_account` -- register an account by the *names* of the env vars holding the keys (never the key values).
+2. `create_profile` -- create a profile with `virtual: false` and an `account`.
+3. `create_session` + `start_session` -- create a session from that profile and start it.
 
-# Run with the LLM decision strategy
-python -m smtm --mode 0 --strategy LLM --virtual
+### Settings are chat settings, not flags
 
-# Run with a saved account profile (config/profiles/<name>.json)
-python -m smtm --mode 0 --profile my-btc-virtual
-```
-
-#### Example chat session
+Budget, currency, exchange, tick interval (`term`), and strategy are **profile/session settings** set through chat -- they are not command-line flags. Ask the agent to create or update a profile instead.
 
 ```
-메시지를 입력하세요 (q: 종료): Switch to the RSI strategy
-[Agent → select_strategy(RSI)]
-Switched to the RSI strategy.
-
-메시지를 입력하세요 (q: 종료): start
-자동 매매가 시작되었습니다
-
-메시지를 입력하세요 (q: 종료): Show my portfolio
-[Agent → get_portfolio]
-Cash: 495,000 KRW · BTC: 0.0001 · Current value: 500,000 KRW (0.0%)
-
-메시지를 입력하세요 (q: 종료): stop
-자동 매매가 중지되었습니다
+Create a profile called my-btc: exchange UPB, currency BTC, budget 500000, strategy RSI, term 60, virtual true
+Create a session from my-btc and start it
+Show my portfolio
+Compare the performance of my sessions
 ```
-
-### Telegram Chatbot Mode
-
-```bash
-python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
-```
-
-Control trading through Telegram messenger. All messages are forwarded to the LLM.
 
 ### Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--config` | JSON config file path | None |
-| `--mode` | 0: CLI interactive, 1: Telegram chatbot | (shows help) |
-| `--budget` | Trading budget (KRW) | 500000 |
-| `--currency` | Trading currency (e.g. BTC, ETH) | BTC |
-| `--exchange` | Exchange code (UPB: Upbit, BTH: Bithumb) | UPB |
-| `--strategy` | Trading strategy code (BNH, RSI, SMA, LLM) | BNH |
-| `--profile` | Load a saved account profile from `config/profiles/` | None |
-| `--virtual` / `--paper` | Virtual trading mode with real-time quotes and simulated balance | False |
-| `--no-virtual` / `--no-paper` | Disable virtual trading when the config file enables it | False |
-| `--term` | Trading tick interval in seconds | 60 |
-| `--log` | Log file name | None |
+| `--token` | Telegram bot token | `TELEGRAM_BOT_TOKEN` |
+| `--chatid` | Telegram chat id | `TELEGRAM_CHAT_ID` |
+| `--log` | Log file name | None (`log/smtm.log`) |
+| `--version` | Print version and exit | - |
 
 ### Virtual Trading
 
-```bash
-python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB --virtual
-python -m smtm --mode 0 --currency BTC --exchange UFC --virtual
-```
+Virtual (paper) trading is the default for the `default` session, and any profile can enable it with the `virtual` setting.
 
 Virtual trading keeps the selected DataProvider but routes orders to the in-memory `SimulationTrader` instead of a real exchange. Orders are not sent to the exchange; they are applied to a virtual account so portfolio value and returns can be inspected. Quotes are injected from the latest `primary_candle` close. State is in-memory only and commission is currently 0.
 
 ### Supported Exchanges & Data Providers
 
-`--exchange` selects both the market data source and the order-placing trader. End-to-end trading requires a matching entry in both factories. Any code in this table can be combined with `--virtual` to route orders through `SimulationTrader` instead of the real exchange.
+The `exchange` profile setting selects both the market data source and the order-placing trader. End-to-end trading requires a matching entry in both factories. Any code in this table can be combined with the `virtual` setting to route orders through `SimulationTrader` instead of the real exchange.
 
 | Code | Data Provider | Trader | Notes |
 |------|---------------|--------|-------|
@@ -205,7 +171,7 @@ Building-block signal providers (use directly, not factory-registered). All use 
 | `max_trade_amount` | Max KRW value of a single trade | 100,000 |
 | `max_daily_trades` | Max number of trades per calendar day | 20 |
 | `max_loss_ratio` | Cumulative loss floor (negative ratio) | -0.20 (-20%) |
-| `initial_budget` | Baseline for loss-ratio calculation | value of `--budget` |
+| `initial_budget` | Baseline for loss-ratio calculation | the session's `budget` setting |
 
 To override the defaults, pass a `safety` entry into the operator config when wiring `SystemOperator`:
 
@@ -258,7 +224,7 @@ All internal components (`SystemOperator`, `TradingOperator`, `ToolRouter`, `Saf
 
 The system is split into two layers, coordinated by a SessionManager that runs one or more sessions in parallel:
 
-- **SystemOperator** — chat-based LLM agent; orchestrates account registration, profiles, and session lifecycle via Tools (does not trade directly)
+- **SystemOperator** — chat-based AI Agent; orchestrates account registration, profiles, and session lifecycle via Tools (does not trade directly)
 - **SessionManager** — owns all `TradingSession`s (default session plus any created via chat); validates budgets against real account balances and prevents duplicate (account, symbol) allocations
 - **TradingOperator** — one per session; fixed-interval loop: **DataProvider** -> **Strategy** -> **SafetyGuard** -> **Trader** -> **Analyzer**
 - **Strategy** — pluggable: algorithmic (Buy & Hold, RSI, SMA) or a single LLM judgment per tick (`LLM`)
