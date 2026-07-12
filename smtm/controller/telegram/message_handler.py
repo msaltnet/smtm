@@ -26,8 +26,7 @@ class TelegramMessageHandler:
     """
 
     API_HOST = "https://api.telegram.org/"
-    TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "telegram_token")
-    CHAT_ID = int(os.environ.get("TELEGRAM_CHAT_ID", "123456"))
+    PLACEHOLDER_TOKEN = "telegram_token"
     POLLING_TIMEOUT = 10
 
     def __init__(self, token: Optional[str] = None, chat_id: Optional[str] = None):
@@ -44,19 +43,31 @@ class TelegramMessageHandler:
         self.last_update_id = 0
         self.message_callback: Optional[Callable[[str], None]] = None
 
+        # 인자 > 환경변수 순으로 값을 결정한다. 환경변수는 __init__ 시점에
+        # 읽어야 테스트/실행 중 변경이 반영된다.
+        # Resolve from argument first, then environment variable.
+        if token is None:
+            token = os.environ.get("TELEGRAM_BOT_TOKEN")
+        if chat_id is None:
+            chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+
+        # 워커 스레드를 띄우기 전에 검증한다. 검증 실패 시 스레드가 새는 것을 막는다.
+        # Validate before starting the worker so a failure does not leak a thread.
+        if not token or token == self.PLACEHOLDER_TOKEN:
+            self.logger.error("Telegram token is not set")
+            raise ValueError("Telegram token is not set")
+
+        if not chat_id:
+            self.logger.error("Telegram chat id is not set")
+            raise ValueError("Telegram chat id is not set")
+
+        self.TOKEN = token
+        self.CHAT_ID = int(chat_id)
+
         # Initialize Worker for asynchronous message sending
         # 비동기 메시지 전송을 위한 Worker 초기화
         self.post_worker = Worker("Telegram-Message-Worker")
         self.post_worker.start()
-
-        if token is not None:
-            self.TOKEN = token
-        if chat_id is not None:
-            self.CHAT_ID = int(chat_id)
-
-        if token == "telegram_token":
-            self.logger.error("Telegram token is not set")
-            raise ValueError("Telegram token is not set")
 
     def set_message_callback(self, callback: Callable[[str], None]) -> None:
         """
