@@ -41,8 +41,8 @@ def main(argv=None):
 
     try:
         controller = TelegramController(token=args.token, chat_id=args.chatid)
-    except ValueError:
-        print("Please check your telegram chat-bot token")
+    except ValueError as exc:
+        print(f"Please check your telegram settings: {exc}")
         sys.exit(0)
     controller.main()
 
