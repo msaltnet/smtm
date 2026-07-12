@@ -12,6 +12,7 @@ from ...log_manager import LogManager
 from ...llm.system_operator import SystemOperator
 from ...llm.claude_llm_client import ClaudeLlmClient
 from ...account_store import AccountStore
+from ...profile_store import ProfileStore
 from .message_handler import TelegramMessageHandler
 
 
@@ -42,11 +43,12 @@ class TelegramController:
             "currency": currency,
             "budget": budget,
             "interval": Config.candle_interval,
-            "virtual": False,
+            "virtual": True,
             "strategy": "BNH",
             "strategy_files": ["sma_crossover.md", "rsi_strategy.md", "buy_and_hold.md"],
         }
         self.operator = SystemOperator(llm_client, config,
+                                       profile_store=ProfileStore(),
                                        account_store=AccountStore())
         try:
             self.operator.setup()
@@ -55,6 +57,8 @@ class TelegramController:
             return
 
         print("'start'를 입력하면 default 세션 매매가 시작됩니다")
+        print("default 세션은 가상거래입니다 — 실제 주문은 전송되지 않습니다")
+        print("실거래는 채팅으로 계좌를 등록한 뒤 세션을 만들어 시작하세요")
 
         signal.signal(signal.SIGINT, self._terminate)
         signal.signal(signal.SIGTERM, self._terminate)
