@@ -4,7 +4,7 @@
 
 | Layer | Module | Role |
 |:---:|:---:|:---:|
-| Controller Layer | Simulator, Controller, TelegramController| User Interface |
+| Controller Layer | TelegramController, JptController | User Interface |
 | Operator Layer | Operator, SimulationOperator |Operating Manager |
 | Core Layer |Analyzer, Trader, Strategy, Data Provider | Core Feature |
 
@@ -26,7 +26,7 @@ Layered architecture
 
 | Layer | Module | Role |
 |:---:|:---:|:---:|
-| Controller Layer | Simulator, Controller, TelegramController| User Interface |
+| Controller Layer | TelegramController, JptController | User Interface |
 | Operator Layer | Operator, SimulationOperator |Operating Manager |
 | Core Layer |Analyzer, Trader, Strategy, Data Provider | Core Feature |
 

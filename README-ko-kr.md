@@ -23,7 +23,7 @@ AI Agent 기반 자율 암호화폐 자동매매 프로그램. https://smtm.msal
 - 채팅 기반 오케스트레이션 에이전트: 계좌 등록, 프로파일 관리, 매매 세션 병렬 생성/시작/중지
 - 고정 주기로 실행되는 교체 가능한 매매 전략: Buy & Hold, RSI, SMA, 또는 매 틱 LLM 판단 1회(`LLM`)
 - 안전 가드레일 (최대 거래 금액, 일일 거래 제한, 손실 비율 상한)
-- CLI 인터랙티브 모드 및 텔레그램 챗봇 제어
+- 텔레그램 챗봇 제어
 - 전략 지식을 문서로 로딩 (SMA, RSI, Buy & Hold)
 - 교체 가능한 LLM 클라이언트 인터페이스 — 현재 Claude 구현. OpenAI / Ollama 어댑터는 예정
 
@@ -46,106 +46,72 @@ pip install -r requirements.txt
 # 필수: LLM API 키 (현재 구현된 벤더는 Anthropic Claude 하나입니다)
 SMTM_LLM_API_KEY=your_anthropic_api_key
 
-# Upbit 거래소 (--exchange UPB 사용 시)
+# Upbit 거래소 (거래소 코드 UPB)
 UPBIT_OPEN_API_ACCESS_KEY=your_upbit_access_key
 UPBIT_OPEN_API_SECRET_KEY=your_upbit_secret_key
 UPBIT_OPEN_API_SERVER_URL=https://api.upbit.com
 
-# Bithumb 거래소 (--exchange BTH 사용 시)
+# Bithumb 거래소 (거래소 코드 BTH)
 BITHUMB_API_ACCESS_KEY=your_bithumb_access_key
 BITHUMB_API_SECRET_KEY=your_bithumb_secret_key
 BITHUMB_API_SERVER_URL=https://api.bithumb.com
 
-# 텔레그램 (mode 1 전용)
+# 텔레그램 (--token / --chatid 로 대신 전달 가능)
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 ```
 
 ## 사용법
 
-### CLI 인터랙티브 모드
+제어 채널은 텔레그램 하나입니다. 봇을 띄운 뒤 모든 조작을 채팅으로 합니다.
 
 ```bash
-python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB
+python -m smtm --token <telegram_token> --chatid <chat_id>
 ```
 
-LLM과 채팅하며 거래를 제어합니다. 시장 분석, 거래 시작/중지, 포트폴리오 확인 등을 메시지로 요청할 수 있습니다.
+`--token` / `--chatid`를 생략하면 환경변수 `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID`를 사용합니다. 사용 가능한 토큰이 없으면 `Please check your telegram chat-bot token`을 출력하고 종료합니다.
 
-실행 옵션은 JSON 설정 파일로 옮길 수도 있습니다:
+지정한 `chat_id`의 메시지만 수용하고 나머지는 무시합니다. 수용된 메시지는 모두 LLM 에이전트에 전달됩니다.
 
-```bash
-python -m smtm --config config/virtual-upbit.json
-```
+### 기본은 가상거래
 
-지원하는 설정 키는 `mode`, `budget`, `currency`, `exchange`, `virtual`, `paper`, `term`, `strategy`, `log`, `token`, `chatid`입니다. 가상거래에는 `virtual` 사용을 권장하며, `paper`는 호환용 별칭으로 계속 지원합니다. `interval`은 `term`의 별칭으로, `chat_id`는 `chatid`의 별칭으로 사용할 수 있습니다. CLI 인자를 함께 주면 설정 파일 값보다 우선합니다.
+프로세스와 함께 뜨는 `default` 세션은 **가상거래(페이퍼 트레이딩) 세션**입니다. 실시간 시세를 쓰되 잔고는 가상이며, 주문이 거래소로 나가지 않습니다.
 
-전략을 직접 지정하거나, 저장된 계좌 프로파일을 불러올 수도 있습니다:
+실거래를 하려면 **채팅으로** 다음을 진행합니다.
 
-```bash
-# 알고리즘 전략으로 실행 (매매 루프에서 LLM을 호출하지 않음)
-python -m smtm --mode 0 --strategy RSI --virtual --budget 500000
+1. `register_account` — 키 '값'이 아니라 키가 담긴 환경변수 '이름'으로 계좌를 등록합니다.
+2. `create_profile` — `virtual: false`와 `account`를 지정한 프로파일을 만듭니다.
+3. `create_session` + `start_session` — 그 프로파일로 세션을 만들고 시작합니다.
 
-# LLM 판단 전략으로 실행
-python -m smtm --mode 0 --strategy LLM --virtual
+### 설정은 플래그가 아니라 채팅으로
 
-# 저장된 계좌 프로파일로 실행 (config/profiles/<name>.json)
-python -m smtm --mode 0 --profile my-btc-virtual
-```
-
-#### 채팅 예시
+예산(budget), 통화(currency), 거래소(exchange), 매매 주기(term), 전략(strategy)은 모두 **프로파일/세션 설정값**이며 명령행 플래그가 아닙니다. 에이전트에게 프로파일 생성·수정을 요청하세요.
 
 ```
-메시지를 입력하세요 (q: 종료): RSI 전략으로 바꿔줘
-[Agent → select_strategy(RSI)]
-RSI 전략으로 변경했습니다.
-
-메시지를 입력하세요 (q: 종료): start
-자동 매매가 시작되었습니다
-
-메시지를 입력하세요 (q: 종료): 포트폴리오 보여줘
-[Agent → get_portfolio]
-현금: 495,000 KRW · BTC: 0.0001 · 현재가치: 500,000 KRW (0.0%)
-
-메시지를 입력하세요 (q: 종료): stop
-자동 매매가 중지되었습니다
+my-btc 프로파일 만들어줘: 거래소 UPB, 통화 BTC, 예산 500000, 전략 RSI, 주기 60초, 가상거래
+my-btc로 세션 만들고 시작해줘
+포트폴리오 보여줘
+세션별 성과 비교해줘
 ```
-
-### 텔레그램 챗봇 모드
-
-```bash
-python -m smtm --mode 1 --token <telegram_token> --chatid <chat_id>
-```
-
-텔레그램 메신저를 통해 거래를 제어합니다. 모든 메시지가 LLM에 전달됩니다.
 
 ### 옵션
 
 | 옵션 | 설명 | 기본값 |
 |------|------|--------|
-| `--config` | JSON 설정 파일 경로 | None |
-| `--mode` | 0: CLI 인터랙티브, 1: 텔레그램 챗봇 | (도움말 표시) |
-| `--budget` | 거래 예산 (KRW) | 500000 |
-| `--currency` | 거래 통화 (예: BTC, ETH) | BTC |
-| `--exchange` | 거래소 코드 (UPB: 업비트, BTH: 빗썸) | UPB |
-| `--strategy` | 매매 전략 코드 (BNH, RSI, SMA, LLM) | BNH |
-| `--profile` | `config/profiles/`에 저장된 계좌 프로파일 로드 | None |
-| `--virtual` / `--paper` | 가상거래 모드 (실시간 시세 + 가상 잔고) | False |
-| `--no-virtual` / `--no-paper` | 설정 파일에서 켠 가상거래 모드를 CLI에서 끔 | False |
-| `--term` | 거래 주기 (초) | 60 |
-| `--log` | 로그 파일 이름 | None |
+| `--token` | 텔레그램 봇 토큰 | `TELEGRAM_BOT_TOKEN` |
+| `--chatid` | 텔레그램 chat id | `TELEGRAM_CHAT_ID` |
+| `--log` | 로그 파일 이름 | None (`log/smtm.log`) |
+| `--version` | 버전 출력 후 종료 | - |
 
 ### 가상거래
 
-```bash
-python -m smtm --mode 0 --budget 500000 --currency BTC --exchange UPB --virtual
-python -m smtm --mode 0 --currency BTC --exchange UFC --virtual
-```
+`default` 세션은 가상거래로 시작하며, 어떤 프로파일이든 `virtual` 설정값으로 가상거래를 켤 수 있습니다.
 
 가상거래 모드는 선택한 DataProvider는 그대로 쓰되, 실제 거래소로 주문을 전송하지 않고 인메모리 `SimulationTrader`의 가상계좌에서 매매를 처리합니다. 그래서 가상 잔고, 보유 자산, 포트폴리오 가치, 수익률을 확인할 수 있습니다. 시세는 최신 `primary_candle` 종가에서 주입되며, 상태는 메모리에만 저장됩니다. 현재 시뮬레이션 수수료는 0입니다.
 
 ### 지원 거래소 및 데이터 제공자
 
-`--exchange`는 시장 데이터 소스와 주문 실행 Trader를 동시에 선택합니다. 실제 매매까지 가능하려면 두 Factory에 모두 등록되어 있어야 합니다. 이 표의 모든 코드는 `--virtual`과 결합해 실제 거래소 대신 `SimulationTrader`로 주문을 보낼 수 있습니다.
+프로파일의 `exchange` 설정값은 시장 데이터 소스와 주문 실행 Trader를 동시에 선택합니다. 실제 매매까지 가능하려면 두 Factory에 모두 등록되어 있어야 합니다. 이 표의 모든 코드는 `virtual` 설정값과 결합해 실제 거래소 대신 `SimulationTrader`로 주문을 보낼 수 있습니다.
 
 | 코드 | Data Provider | Trader | 비고 |
 |------|---------------|--------|------|
@@ -203,7 +169,7 @@ Factory에 등록하지 않고 직접 코드로 사용하는 빌딩 블록형 Pr
 | `max_trade_amount` | 1회 최대 거래 금액 (KRW) | 100,000 |
 | `max_daily_trades` | 하루 최대 거래 횟수 | 20 |
 | `max_loss_ratio` | 누적 손실 한도 (음수 비율) | -0.20 (-20%) |
-| `initial_budget` | 손실률 계산 기준이 되는 초기 예산 | `--budget` 값 |
+| `initial_budget` | 손실률 계산 기준이 되는 초기 예산 | 세션의 `budget` 설정값 |
 
 기본값을 덮어쓰려면 `SystemOperator` 설정의 `safety` 항목으로 전달합니다:
 
