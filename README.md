@@ -6,13 +6,13 @@
 
 > It's a game to get money. 
 
-An LLM-powered autonomous cryptocurrency trading system made in Python. https://smtm.msalt.net
+An AI Agent-powered autonomous cryptocurrency trading system made in Python. https://smtm.msalt.net
 
 [한국어](https://github.com/msaltnet/smtm/blob/master/README-ko-kr.md) 👈
 
 [![icon_wide_gold](https://github.com/user-attachments/assets/ef1651bf-87e4-4afc-9cd9-b3e2b5d0cd1a)](https://smtm.msalt.net/)
 
-A chat-driven LLM agent orchestrates the system -- registering accounts, managing profiles, and starting/stopping one or more trading sessions in parallel -- while each session runs its own separate fixed-interval loop that executes the actual trades.
+A chat-driven AI Agent orchestrates the system -- registering accounts, managing profiles, and starting/stopping one or more trading sessions in parallel -- while each session runs its own separate fixed-interval loop that executes the actual trades.
 
 1. SystemOperator (the chat agent) manages sessions via tools -- create/start/stop/compare -- and still supports the legacy single-session select/start/stop flow
 2. Each session's TradingOperator runs a fixed-interval loop: DataProvider -> Strategy -> SafetyGuard -> Trader -> Analyzer
@@ -258,7 +258,7 @@ All internal components (`SystemOperator`, `TradingOperator`, `ToolRouter`, `Saf
 
 The system is split into two layers, coordinated by a SessionManager that runs one or more sessions in parallel:
 
-- **SystemOperator** — chat-based LLM agent; orchestrates account registration, profiles, and session lifecycle via Tools (does not trade directly)
+- **SystemOperator** — chat-based AI Agent; orchestrates account registration, profiles, and session lifecycle via Tools (does not trade directly)
 - **SessionManager** — owns all `TradingSession`s (default session plus any created via chat); validates budgets against real account balances and prevents duplicate (account, symbol) allocations
 - **TradingOperator** — one per session; fixed-interval loop: **DataProvider** -> **Strategy** -> **SafetyGuard** -> **Trader** -> **Analyzer**
 - **Strategy** — pluggable: algorithmic (Buy & Hold, RSI, SMA) or a single LLM judgment per tick (`LLM`)
