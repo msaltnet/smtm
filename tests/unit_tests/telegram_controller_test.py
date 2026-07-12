@@ -50,8 +50,6 @@ class TelegramControllerSetupTests(unittest.TestCase):
             patch("smtm.controller.telegram.telegram_controller.AccountStore",
                   side_effect=lambda *a, **k: AccountStore(
                       dir_path=os.path.join(self.tmp.name, "accounts"))),
-            # terminating을 더 이상 지키지 않게 되어도 무한 대기 대신 빠르게 실패한다
-            patch("smtm.controller.telegram.telegram_controller.time.sleep"),
             patch.dict(os.environ, {"SMTM_LLM_API_KEY": "test-key"}),
         ]
         for patcher in self.patchers:

@@ -57,7 +57,7 @@ class TelegramController:
             return
 
         print("'start'를 입력하면 default 세션 매매가 시작됩니다")
-        print("default 세션은 가상거래입니다 — 실제 주문은 전송되지 않습니다")
+        print("default 세션은 가상거래입니다 - 실제 주문은 전송되지 않습니다")
         print("실거래는 채팅으로 계좌를 등록한 뒤 세션을 만들어 시작하세요")
 
         signal.signal(signal.SIGINT, self._terminate)
