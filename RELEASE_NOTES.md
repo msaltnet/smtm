@@ -1,3 +1,179 @@
+## v2.0.0
+
+Major rewrite: the rule-based simulation/trading engine is replaced by an AI-Agent-powered two-layer trading system that is driven **entirely through Telegram chat**. It adds pluggable strategies, multi-account and multi-session parallel trading, and virtual trading that is on by default.
+
+### Breaking Changes
+- **Rule-based trading architecture removed**: `Simulator`, `SimulationOperator`, `MassSimulator`, demo mode, the legacy `Operator`, and the simulation / mass-simulation modes are all deleted. To validate a strategy without real orders, use the new virtual trading mode instead.
+  - https://github.com/msaltnet/smtm/commit/d46f60c501d5119c67733209b4d030ca0ab8ce19
+  - https://github.com/msaltnet/smtm/commit/c4be87024828610dcae10214b16662cdd7c58771
+- **CLI interactive mode removed — Telegram is the only entry point**: the interactive CLI controller is gone. smtm now launches solely as a Telegram bot (`python -m smtm --token <bot-token> --chatid <chat-id>`, or via the `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` environment variables). The only CLI flags left are `--token`, `--chatid`, `--log`, and `--version`; every configuration flag — `--mode`, `--budget`, `--currency`, `--exchange`, `--strategy`, `--profile`, `--term`, `--virtual`, `--config` — has been removed. Budget, currency, exchange, strategy, and interval are now **chat-driven profile / session settings**: you ask the agent in chat to create or edit a profile and to create and start sessions.
+  - https://github.com/msaltnet/smtm/commit/cd359d4ece6a75c8f14204864a98d49146d81ea0
+- **Virtual trading is the default session's default; real trading is opt-in via chat**: on boot the `default` session runs in virtual mode, so no real orders are ever sent. To trade for real, register an account in chat with `register_account` (which stores only the credential env-var *name*), create a profile with `virtual: false` and an `account`, then `create_session` and `start_session`.
+  - https://github.com/msaltnet/smtm/commit/0ae432782b377b82c76ad0caa3cf45b59212024b
+- **`SMTM_LLM_API_KEY` environment variable is now required**: the chat agent and the `LLM` strategy run on Anthropic Claude through the vendor-independent `LlmClient` abstraction, and boot aborts if the key is missing. `ClaudeLlmClient` is the first implementation, with forced tool use via `tool_choice`.
+  - https://github.com/msaltnet/smtm/commit/a049670d67354b7250975a206719147691c606a3
+  - https://github.com/msaltnet/smtm/commit/45d8af713993a8dd2749bc16fc36e115baddece9
+  - https://github.com/msaltnet/smtm/commit/8b87a83094e71e2a7ce37acfba5bd4d9a4b5fcb6
+
+### New Features
+- **Two-layer architecture: SystemOperator + TradingOperator**: `SystemOperator` is a chat-only orchestration agent — it registers accounts, manages profiles, and creates/starts/stops/compares trading sessions via tools, but never places orders itself (there is no `execute_trade` tool). Each session runs its own `TradingOperator`, a fixed-interval (default 60s) loop of DataProvider → Strategy → SafetyGuard → Trader → Analyzer.
+  - https://github.com/msaltnet/smtm/commit/892eceadb8b3c03ee151a2adf1f574495bce4f04
+  - https://github.com/msaltnet/smtm/commit/80f9de1427077bb0397580a53bc8f493d6ba82d2
+  - https://github.com/msaltnet/smtm/commit/f0cb67d4dbbaac5903c9b86436ed379209b83c7d
+  - https://github.com/msaltnet/smtm/commit/7be519e69cefca0c5ad6e1479c2b7c9059637da6
+- **Pluggable strategies with StrategyFactory**: the `Strategy` interface is back, with `BNH` (buy-and-hold), `RSI`, and `SMA` strategies registered in a `StrategyFactory` registry. Strategies are selected via chat.
+  - https://github.com/msaltnet/smtm/commit/3dde9573a574af6806c1d75163fbd93b78c17854
+  - https://github.com/msaltnet/smtm/commit/e63992aa11bf7014ffc9da55a1b59107933ad90e
+  - https://github.com/msaltnet/smtm/commit/4fe6896b465f844d318cc9cac1c7d3e5e67013fb
+  - https://github.com/msaltnet/smtm/commit/380f815d423a50ea06b22ddf457298bc455f74d3
+- **StrategyLlm — one structured LLM decision per tick**: the `LLM` strategy asks the model for a single structured buy/sell/hold decision on each tick (forced tool use), keeping LLM usage inside the trading loop bounded and predictable.
+  - https://github.com/msaltnet/smtm/commit/7fe587d3da58a06d1e5385f3d88df5a4d4130335
+- **Safety and monitoring layer**: `SafetyGuard` validates every order before execution (defaults: max trade amount 100,000 / max daily trades 20 / max loss ratio -20%), `SystemMonitor` independently records market data, trade requests/results, safety events, and LLM usage, and a lightweight `Analyzer` produces performance reports on top of it.
+  - https://github.com/msaltnet/smtm/commit/eb4d1b262753dda5f228cc755d5356c7cf0a4d82
+  - https://github.com/msaltnet/smtm/commit/385572d039ecc7d29d9b1974cbb8bd26483af720
+  - https://github.com/msaltnet/smtm/commit/c7433fd1a680c8503302f4c9f85863d6efe4cb97
+  - https://github.com/msaltnet/smtm/commit/dd15524a3aa30a8fd6f555963faff2f5bfd3a701
+- **Account profiles (ProfileStore + CRUD tools)**: a profile (`config/profiles/<name>.json`) captures strategy × exchange × symbol × budget × account. Profiles are managed entirely in chat (`list/describe/create/update/delete/switch_profile`).
+  - https://github.com/msaltnet/smtm/commit/b471a05f8fee3f23b531c42c50dfd3dfd7b7ac3a
+  - https://github.com/msaltnet/smtm/commit/448747cb1e3c8f9ba2ddf07f5a134313c8d20a44
+- **Multi-session parallel trading**: `SessionManager` runs multiple trading sessions concurrently, validating budgets against real account balances and preventing duplicate (account, symbol) allocations. Session tools (`create_session`, `start_session`, `stop_session`, `remove_session`, `list_sessions`, `compare_performance`) let the agent operate and compare sessions from chat, monitor logs are tagged with the session name, and controllers shut all sessions down cleanly on exit (no Telegram autostart).
+  - https://github.com/msaltnet/smtm/commit/13628fba926253c7f7452b1e5cb0334b5d6e3821
+  - https://github.com/msaltnet/smtm/commit/afd5e90dcef35205136e4b3c7fd1c64b4bed195b
+  - https://github.com/msaltnet/smtm/commit/66886cff49f58ff148a0745d0e1e8b1bca396196
+  - https://github.com/msaltnet/smtm/commit/aa278ba643e53172b69c9d818fd487c954ac31ad
+  - https://github.com/msaltnet/smtm/commit/18cdc4684296d0de9a6a19277505984433df0d5e
+- **Multi-account support with env-name-only credentials**: `AccountStore` stores only environment-variable *names* for exchange credentials (raw keys are never persisted), rejecting duplicate key-env pairs and key-value-shaped env names. Account tools (`register_account`, `list_accounts`, `delete_account`) manage accounts from chat, exchange traders accept per-account credential env names, and `AccountGuard` + `CompositeSafetyGuard` enforce account-level limits across all sessions sharing one account.
+  - https://github.com/msaltnet/smtm/commit/11d9491cbb77ac2203b96c2adeba32c41b339d0b
+  - https://github.com/msaltnet/smtm/commit/03dd452770cf9f49ef450b9f88a5c5bfedba78f7
+  - https://github.com/msaltnet/smtm/commit/71470f08619f0cdb091cbbfa85d810ab611777fc
+  - https://github.com/msaltnet/smtm/commit/9dae19d8372e394b6b90b6e2a1caa64b0500861e
+  - https://github.com/msaltnet/smtm/commit/7425d9490d6b392178db19f8a3a24238f9ca26f1
+- **Profile and session tools available in Telegram**: the Telegram controller now registers the full account/profile/session toolset (previously orchestration-only), so accounts, profiles, and parallel sessions can all be managed directly from Telegram chat.
+  - https://github.com/msaltnet/smtm/commit/0ae432782b377b82c76ad0caa3cf45b59212024b
+- **Virtual trading mode (default for the `default` session)**: run any strategy against live market data without placing real orders. Formerly named "paper trading" — `paper` is kept as a compatibility alias.
+  - https://github.com/msaltnet/smtm/commit/302d4cca3c7e74b1dbdeec6eb95b3ca11745e313
+  - https://github.com/msaltnet/smtm/commit/63cf010a93f625d0a1e8bbda5a6f2ea5026d9d91
+- **Massively expanded DataProvider catalog (~26 building-block sources)**: news RSS feeds, Reddit, Fear & Greed index, CoinGecko/CoinCap, macro data (Yahoo Finance), on-chain metrics (Blockchain.info, Mempool, Etherscan gas), Binance derivatives positioning (funding rate, open interest, long/short ratio), Upbit notices, exchange rates, Hacker News, and more — composed into exchange codes such as `UPN`, `UMN`, `USC`, `UFC`.
+  - https://github.com/msaltnet/smtm/commit/e5ecc165b80d7a80378eead7ac15bf269bbb476b
+- **Text-type data support in DataProvider**: `get_info()` now returns a list of typed entries, so text data (news, notices, social posts) can be mixed with candle data in a single payload for LLM consumption.
+  - https://github.com/msaltnet/smtm/commit/109075c1f421e8a9776eb5ca7db882ac04d62195
+
+### Fixed Bugs
+- **Telegram token and chat-id error handling**: a missing token is rejected at boot instead of silently booting with a placeholder, and a bad chat-id now surfaces the actual error instead of being misreported as a token problem.
+  - https://github.com/msaltnet/smtm/commit/c5fc984e9cc5b21bd5a0ab74bf20f59a832ee7b4
+  - https://github.com/msaltnet/smtm/commit/40f9d2b0fe62edb9e47a0f05b90d43586f1a43aa
+- **cp949-safe boot messages**: dropped an ineffective sleep patch and replaced a cp949-breaking em-dash so console/boot messages encode cleanly on Windows (cp949) consoles.
+  - https://github.com/msaltnet/smtm/commit/a193ba67789fbf2b6899b130fd9f4bd8eb41e0cd
+- **Trading loop robustness**: only completed trades count toward the daily quota, tick execution is guarded on running state, the daily trade count is preserved across reconfiguration, and non-dict trader results no longer break the trade callback.
+  - https://github.com/msaltnet/smtm/commit/d60cce4183d64639b3d3b81b7a942bfb4147bbde
+  - https://github.com/msaltnet/smtm/commit/6e57e980b00364623d4eb052733d7f36d06bcdc3
+  - https://github.com/msaltnet/smtm/commit/64f363a4be0946e8b345cde3ec09d5a558fb48f0
+- **Session lifecycle fixes**: `create_session` rolls back cleanly when trader construction fails, per-session trade counts appear correctly in performance reports, and a failure in one session no longer aborts stopping the others.
+  - https://github.com/msaltnet/smtm/commit/63b8e90c755f3e146f68af353b8f6e557ff92808
+  - https://github.com/msaltnet/smtm/commit/fda0fd30752e9338c10db3821f1181f3d56fe0d7
+  - https://github.com/msaltnet/smtm/commit/59fc8d434466be94df06fbf8324255824f1d8db8
+- **Virtual trading fills**: failed simulated fills now report zero price/amount instead of phantom values.
+  - https://github.com/msaltnet/smtm/commit/db68d4562336e9c6902457fc77d88f7875669085
+- **Partial profile application**: applying a profile that specifies only some fields now inherits the current config for the rest instead of resetting them.
+  - https://github.com/msaltnet/smtm/commit/2d1420d411f6cf423960b1b2ad886e16b60f8326
+
+### Docs & Testing
+- **"AI Agent" naming**: user-facing READMEs now refer to the LLM agent as an "AI Agent" for consistency.
+  - https://github.com/msaltnet/smtm/commit/9371b40cf915ad833091280bb79cd6076a99fecf
+- **E2E test framework without external APIs**: `tests/e2e_tests/` fakes only the boundaries (`FakeLlmClient`, `FakeDataProvider`, `SimulationTrader`) and runs the real internals, covering chat-driven trading and multi-session scenarios end to end.
+  - https://github.com/msaltnet/smtm/commit/bd48cf77a178727a760f926e4c4c0a329dacffc1
+  - https://github.com/msaltnet/smtm/commit/a8d7645275cefe669a58a3fd61b1dc33e647a610
+  - https://github.com/msaltnet/smtm/commit/435ade0c75b4ebe4a53352aa70156683bdef64c5
+
+## v2.0.0 (한국어)
+
+메이저 재작성: 룰 기반 시뮬레이션/매매 엔진을 AI 에이전트 기반 2계층 트레이딩 시스템으로 교체하였으며, **전 과정을 텔레그램 채팅으로 제어**합니다. 플러그블 전략, 멀티계정·멀티세션 병렬 트레이딩, 기본 활성화된 가상거래를 지원합니다.
+
+### 주요 변경 (Breaking Changes)
+- **룰 기반 트레이딩 아키텍처 제거**: `Simulator`, `SimulationOperator`, `MassSimulator`, 데모 모드, 구 `Operator`, 시뮬레이션/대량시뮬레이션 모드가 모두 삭제되었습니다. 실주문 없이 전략을 검증하려면 새로운 가상거래 모드를 사용하세요.
+  - https://github.com/msaltnet/smtm/commit/d46f60c501d5119c67733209b4d030ca0ab8ce19
+  - https://github.com/msaltnet/smtm/commit/c4be87024828610dcae10214b16662cdd7c58771
+- **CLI 대화형 모드 제거 — 텔레그램이 유일한 진입점**: 대화형 CLI 컨트롤러가 사라졌습니다. 이제 smtm은 텔레그램 봇으로만 실행됩니다(`python -m smtm --token <bot-token> --chatid <chat-id>`, 또는 환경변수 `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` 사용). 남은 CLI 플래그는 `--token`, `--chatid`, `--log`, `--version` 4개뿐이며, 설정용 플래그 — `--mode`, `--budget`, `--currency`, `--exchange`, `--strategy`, `--profile`, `--term`, `--virtual`, `--config` — 는 전부 제거되었습니다. 예산·통화·거래소·전략·주기(interval)는 이제 **채팅 기반 프로파일/세션 설정**입니다. 채팅으로 에이전트에게 프로파일을 만들거나 수정하고 세션을 생성·시작하도록 요청합니다.
+  - https://github.com/msaltnet/smtm/commit/cd359d4ece6a75c8f14204864a98d49146d81ea0
+- **가상거래가 default 세션의 기본값 — 실거래는 채팅으로 opt-in**: 부팅 시 `default` 세션은 가상 모드로 동작하므로 실제 주문이 전송되지 않습니다. 실거래를 하려면 채팅으로 `register_account`(자격증명 환경변수 *이름*만 저장)로 계정을 등록하고, `virtual: false`와 `account`를 지정한 프로파일을 만든 뒤 `create_session`·`start_session`을 실행합니다.
+  - https://github.com/msaltnet/smtm/commit/0ae432782b377b82c76ad0caa3cf45b59212024b
+- **`SMTM_LLM_API_KEY` 환경변수 필수화**: 채팅 에이전트와 `LLM` 전략은 벤더 독립 `LlmClient` 추상화를 통해 Anthropic Claude로 동작하며, 키가 없으면 부팅이 중단됩니다. 첫 구현체는 `ClaudeLlmClient`이고 `tool_choice`를 통한 강제 tool use를 지원합니다.
+  - https://github.com/msaltnet/smtm/commit/a049670d67354b7250975a206719147691c606a3
+  - https://github.com/msaltnet/smtm/commit/45d8af713993a8dd2749bc16fc36e115baddece9
+  - https://github.com/msaltnet/smtm/commit/8b87a83094e71e2a7ce37acfba5bd4d9a4b5fcb6
+
+### 기능 추가
+- **2계층 아키텍처: SystemOperator + TradingOperator**: `SystemOperator`는 채팅 오케스트레이션 전용 에이전트로, 계정 등록·프로파일 관리·세션 생성/시작/중지/비교를 Tool로 수행하며 직접 주문하지 않습니다(`execute_trade` 도구 없음). 각 세션은 자체 `TradingOperator`가 고정 주기(기본 60초)로 DataProvider → Strategy → SafetyGuard → Trader → Analyzer 루프를 실행합니다.
+  - https://github.com/msaltnet/smtm/commit/892eceadb8b3c03ee151a2adf1f574495bce4f04
+  - https://github.com/msaltnet/smtm/commit/80f9de1427077bb0397580a53bc8f493d6ba82d2
+  - https://github.com/msaltnet/smtm/commit/f0cb67d4dbbaac5903c9b86436ed379209b83c7d
+  - https://github.com/msaltnet/smtm/commit/7be519e69cefca0c5ad6e1479c2b7c9059637da6
+- **StrategyFactory 기반 플러그블 전략**: `Strategy` 인터페이스가 복원되었고 `BNH`(매수 후 보유), `RSI`, `SMA` 전략이 `StrategyFactory` 레지스트리에 등록되었습니다. 전략은 채팅으로 선택합니다.
+  - https://github.com/msaltnet/smtm/commit/3dde9573a574af6806c1d75163fbd93b78c17854
+  - https://github.com/msaltnet/smtm/commit/e63992aa11bf7014ffc9da55a1b59107933ad90e
+  - https://github.com/msaltnet/smtm/commit/4fe6896b465f844d318cc9cac1c7d3e5e67013fb
+  - https://github.com/msaltnet/smtm/commit/380f815d423a50ea06b22ddf457298bc455f74d3
+- **StrategyLlm — 틱당 1회 구조화된 LLM 판단**: `LLM` 전략은 매 틱마다 모델에 구조화된 매수/매도/보류 판단을 1회만 요청(강제 tool use)하여, 매매 루프 안의 LLM 사용량을 예측 가능하게 유지합니다.
+  - https://github.com/msaltnet/smtm/commit/7fe587d3da58a06d1e5385f3d88df5a4d4130335
+- **안전장치 및 모니터링 계층**: `SafetyGuard`가 모든 주문을 실행 전에 검증하고(기본값: 1회 최대 거래금액 100,000 / 일일 최대 20회 / 손실률 한도 -20%), `SystemMonitor`가 시장 데이터·거래 요청/결과·안전 이벤트·LLM 사용량을 독립적으로 기록하며, 그 위에서 경량 `Analyzer`가 성과 리포트를 생성합니다.
+  - https://github.com/msaltnet/smtm/commit/eb4d1b262753dda5f228cc755d5356c7cf0a4d82
+  - https://github.com/msaltnet/smtm/commit/385572d039ecc7d29d9b1974cbb8bd26483af720
+  - https://github.com/msaltnet/smtm/commit/c7433fd1a680c8503302f4c9f85863d6efe4cb97
+  - https://github.com/msaltnet/smtm/commit/dd15524a3aa30a8fd6f555963faff2f5bfd3a701
+- **계정 프로파일 (ProfileStore + CRUD 도구)**: 프로파일(`config/profiles/<name>.json`)은 전략 × 거래소 × 심볼 × 예산 × 계정 조합을 담습니다. 프로파일은 채팅으로 관리합니다(`list/describe/create/update/delete/switch_profile`).
+  - https://github.com/msaltnet/smtm/commit/b471a05f8fee3f23b531c42c50dfd3dfd7b7ac3a
+  - https://github.com/msaltnet/smtm/commit/448747cb1e3c8f9ba2ddf07f5a134313c8d20a44
+- **멀티세션 병렬 트레이딩**: `SessionManager`가 여러 트레이딩 세션을 동시에 운용하며, 예산을 실제 계좌 잔고와 대조 검증하고 (계정, 심볼) 중복 할당을 방지합니다. 세션 도구(`create_session`, `start_session`, `stop_session`, `remove_session`, `list_sessions`, `compare_performance`)로 채팅에서 세션을 운용·비교할 수 있고, 모니터 로그에 세션 이름이 태깅되며, 컨트롤러 종료 시 모든 세션이 정리됩니다(텔레그램 autostart 없음).
+  - https://github.com/msaltnet/smtm/commit/13628fba926253c7f7452b1e5cb0334b5d6e3821
+  - https://github.com/msaltnet/smtm/commit/afd5e90dcef35205136e4b3c7fd1c64b4bed195b
+  - https://github.com/msaltnet/smtm/commit/66886cff49f58ff148a0745d0e1e8b1bca396196
+  - https://github.com/msaltnet/smtm/commit/aa278ba643e53172b69c9d818fd487c954ac31ad
+  - https://github.com/msaltnet/smtm/commit/18cdc4684296d0de9a6a19277505984433df0d5e
+- **환경변수 이름만 저장하는 멀티계정 지원**: `AccountStore`는 거래소 자격증명의 환경변수 *이름*만 저장하며(원시 키는 절대 저장하지 않음), 중복 key-env 쌍과 키 값 형태의 env 이름을 거부합니다. 계정 도구(`register_account`, `list_accounts`, `delete_account`)로 채팅에서 계정을 관리하고, 거래소 Trader는 계정별 자격증명 env 이름을 지원하며, `AccountGuard`와 `CompositeSafetyGuard`가 같은 계정을 공유하는 모든 세션에 계정 수준 한도를 강제합니다.
+  - https://github.com/msaltnet/smtm/commit/11d9491cbb77ac2203b96c2adeba32c41b339d0b
+  - https://github.com/msaltnet/smtm/commit/03dd452770cf9f49ef450b9f88a5c5bfedba78f7
+  - https://github.com/msaltnet/smtm/commit/71470f08619f0cdb091cbbfa85d810ab611777fc
+  - https://github.com/msaltnet/smtm/commit/9dae19d8372e394b6b90b6e2a1caa64b0500861e
+  - https://github.com/msaltnet/smtm/commit/7425d9490d6b392178db19f8a3a24238f9ca26f1
+- **텔레그램에서 프로파일·세션 도구 사용 가능**: 텔레그램 컨트롤러가 이제 계정/프로파일/세션 전체 도구를 등록하여(기존에는 오케스트레이션 도구만), 계정·프로파일·병렬 세션을 텔레그램 채팅에서 직접 관리할 수 있습니다.
+  - https://github.com/msaltnet/smtm/commit/0ae432782b377b82c76ad0caa3cf45b59212024b
+- **가상거래(virtual trading) 모드 (`default` 세션 기본값)**: 실주문 없이 실시간 시장 데이터로 전략을 운용합니다. 기존 "paper trading"에서 개명되었으며 `paper`는 호환 별칭으로 유지됩니다.
+  - https://github.com/msaltnet/smtm/commit/302d4cca3c7e74b1dbdeec6eb95b3ca11745e313
+  - https://github.com/msaltnet/smtm/commit/63cf010a93f625d0a1e8bbda5a6f2ea5026d9d91
+- **DataProvider 카탈로그 대확장(빌딩블록 약 26종)**: 뉴스 RSS 피드, Reddit, Fear & Greed 지수, CoinGecko/CoinCap, 매크로 데이터(Yahoo Finance), 온체인 지표(Blockchain.info, Mempool, Etherscan gas), Binance 파생 포지셔닝(펀딩비, 미결제약정, 롱/숏 비율), Upbit 공지, 환율, Hacker News 등이 추가되어 `UPN`, `UMN`, `USC`, `UFC` 같은 거래소 코드로 조합됩니다.
+  - https://github.com/msaltnet/smtm/commit/e5ecc165b80d7a80378eead7ac15bf269bbb476b
+- **DataProvider 텍스트형 데이터 지원**: `get_info()`가 type이 부여된 항목의 리스트를 반환하도록 변경되어, 텍스트 데이터(뉴스, 공지, 소셜 게시글)를 캔들 데이터와 하나의 페이로드에 혼합해 LLM에 전달할 수 있습니다.
+  - https://github.com/msaltnet/smtm/commit/109075c1f421e8a9776eb5ca7db882ac04d62195
+
+### 버그 수정
+- **텔레그램 토큰·chat-id 오류 처리**: 토큰 누락 시 placeholder로 부팅하지 않고 거부하며, 잘못된 chat-id는 토큰 문제로 오인 보고하지 않고 실제 오류를 정확히 노출합니다.
+  - https://github.com/msaltnet/smtm/commit/c5fc984e9cc5b21bd5a0ab74bf20f59a832ee7b4
+  - https://github.com/msaltnet/smtm/commit/40f9d2b0fe62edb9e47a0f05b90d43586f1a43aa
+- **cp949 안전 부팅 메시지**: 효과 없는 sleep 패치를 제거하고 cp949에서 깨지는 em-dash를 교체하여, 콘솔/부팅 메시지가 Windows(cp949) 콘솔에서 정상 인코딩되도록 하였습니다.
+  - https://github.com/msaltnet/smtm/commit/a193ba67789fbf2b6899b130fd9f4bd8eb41e0cd
+- **매매 루프 견고성 개선**: 완료된 거래만 일일 거래 횟수에 집계하고, 틱 실행을 running 상태로 가드하며, 재설정 시에도 일일 거래 횟수를 유지하고, dict가 아닌 Trader 결과가 거래 콜백을 깨뜨리지 않도록 수정하였습니다.
+  - https://github.com/msaltnet/smtm/commit/d60cce4183d64639b3d3b81b7a942bfb4147bbde
+  - https://github.com/msaltnet/smtm/commit/6e57e980b00364623d4eb052733d7f36d06bcdc3
+  - https://github.com/msaltnet/smtm/commit/64f363a4be0946e8b345cde3ec09d5a558fb48f0
+- **세션 생명주기 수정**: Trader 생성 실패 시 `create_session`이 깔끔하게 롤백하고, 성과 리포트에 세션별 거래 횟수가 정확히 표시되며, 한 세션의 실패가 다른 세션들의 중지를 막지 않도록 수정하였습니다.
+  - https://github.com/msaltnet/smtm/commit/63b8e90c755f3e146f68af353b8f6e557ff92808
+  - https://github.com/msaltnet/smtm/commit/fda0fd30752e9338c10db3821f1181f3d56fe0d7
+  - https://github.com/msaltnet/smtm/commit/59fc8d434466be94df06fbf8324255824f1d8db8
+- **가상거래 체결 처리**: 실패한 모의 체결이 유령 값 대신 price/amount 0을 보고하도록 수정하였습니다.
+  - https://github.com/msaltnet/smtm/commit/db68d4562336e9c6902457fc77d88f7875669085
+- **부분 프로파일 적용**: 일부 필드만 지정한 프로파일 적용 시 나머지 필드를 초기화하지 않고 현재 설정을 상속하도록 수정하였습니다.
+  - https://github.com/msaltnet/smtm/commit/2d1420d411f6cf423960b1b2ad886e16b60f8326
+
+### 문서 & 테스트
+- **"AI Agent" 명칭 통일**: 사용자 대상 README에서 LLM 에이전트를 "AI Agent"로 일관되게 표기합니다.
+  - https://github.com/msaltnet/smtm/commit/9371b40cf915ad833091280bb79cd6076a99fecf
+- **외부 API 없는 E2E 테스트 프레임워크**: `tests/e2e_tests/`는 경계(`FakeLlmClient`, `FakeDataProvider`, `SimulationTrader`)만 Fake로 대체하고 내부는 실제 코드를 실행하며, 채팅 기반 매매와 멀티세션 시나리오를 처음부터 끝까지 검증합니다.
+  - https://github.com/msaltnet/smtm/commit/bd48cf77a178727a760f926e4c4c0a329dacffc1
+  - https://github.com/msaltnet/smtm/commit/a8d7645275cefe669a58a3fd61b1dc33e647a610
+  - https://github.com/msaltnet/smtm/commit/435ade0c75b4ebe4a53352aa70156683bdef64c5
+
+---
+
 ## v1.8.0
 
 ### New Features
