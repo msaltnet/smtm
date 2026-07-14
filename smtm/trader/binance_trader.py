@@ -61,6 +61,14 @@ class BinanceTrader(BaseExchangeTrader):
             self.SECRET_KEY.encode(), query_string.encode(), hashlib.sha256
         ).hexdigest()
 
+    @staticmethod
+    def _format_number(value):
+        """지수표기 없이 고정소수점 문자열로 포맷 (Binance 필터 대비).
+        최대 8자리 소수, 불필요한 0/소수점 제거. 심볼별 stepSize/tickSize
+        정밀 라운딩은 exchangeInfo가 필요하므로 후속(③) 과제."""
+        formatted = f"{float(value):.8f}".rstrip("0").rstrip(".")
+        return formatted if formatted else "0"
+
     def _signed_query(self, params):
         params = dict(params)
         params["timestamp"] = int(time.time() * 1000)
@@ -264,15 +272,15 @@ class BinanceTrader(BaseExchangeTrader):
         params = {"symbol": self.market, "side": side}
         if ord_type == order_spec.MARKET and side == "BUY":
             params["type"] = "MARKET"
-            params["quoteOrderQty"] = float(price) * float(amount)
+            params["quoteOrderQty"] = self._format_number(float(price) * float(amount))
         elif ord_type == order_spec.MARKET:
             params["type"] = "MARKET"
-            params["quantity"] = float(amount)
+            params["quantity"] = self._format_number(amount)
         else:
             params["type"] = "LIMIT"
             params["timeInForce"] = "GTC"
-            params["quantity"] = float(amount)
-            params["price"] = float(price)
+            params["quantity"] = self._format_number(amount)
+            params["price"] = self._format_number(price)
 
         self.logger.info(f"ORDER ##### {side} {params['type']}")
         self.logger.info(f"{self.market}, params: {params}")

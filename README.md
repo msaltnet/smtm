@@ -192,6 +192,8 @@ config = {
 operator = SystemOperator(llm_client, config)
 ```
 
+⚠️ For Binance (USDT) sessions, amount-based guards like `max_trade_amount`/`initial_budget` default to KRW, so **explicitly set them to USDT-denominated values** in the profile's `safety` config. (Per-exchange currency-aware defaults are tracked as a follow-up.)
+
 ## Testing
 
 ```bash

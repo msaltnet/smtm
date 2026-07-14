@@ -190,6 +190,8 @@ config = {
 operator = SystemOperator(llm_client, config)
 ```
 
+⚠️ Binance(USDT) 세션은 `max_trade_amount`/`initial_budget` 등 금액 기반 가드가 KRW 기본값이므로, 프로파일의 `safety` 설정에서 **USDT 기준 값으로 반드시 지정**하세요. (거래소별 통화 인지형 기본값은 후속 과제)
+
 ## 테스트
 
 ```bash

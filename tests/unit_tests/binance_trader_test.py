@@ -175,6 +175,19 @@ class BinanceTraderOrderTest(unittest.TestCase):
         trader._request_post.assert_not_called()
         callback.assert_called_once_with("error!")
 
+    def test_small_quantity_not_scientific_notation(self):
+        trader = self._trader()
+        trader._request_post = MagicMock(return_value={"orderId": 999})
+        trader._execute_order({
+            "request": {"id": "sm", "type": "sell", "price": 0, "amount": 0.00005,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        })
+        qs = trader._request_post.call_args[1]["params"]
+        qs = qs.decode() if isinstance(qs, (bytes, bytearray)) else qs
+        self.assertIn("quantity=0.00005", qs)
+        self.assertNotIn("e-", qs)  # no scientific notation
+
     def test_successful_order_registers_and_callbacks(self):
         trader = self._trader()
         trader._request_post = MagicMock(return_value={"orderId": 444})
