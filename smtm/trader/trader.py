@@ -9,6 +9,9 @@ class Trader(metaclass=ABCMeta):
     Abstract class for processing trading requests and account information requests
     """
 
+    #: 이 Trader가 지원하는 ord_type 집합. 하위호환 기본값은 지정가만.
+    SUPPORTED_ORD_TYPES = frozenset({"limit"})
+
     @abstractmethod
     def send_request(self, request_list: List[Dict[str, Any]], callback: Callable[[Dict[str, Any]], None]) -> None:
         """
