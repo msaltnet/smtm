@@ -5,6 +5,7 @@ import requests
 import jwt  # PyJWT
 from .base_exchange_trader import BaseExchangeTrader
 from ..http_session import request_with_retry
+from . import order_spec
 
 
 class UpbitTrader(BaseExchangeTrader):
@@ -27,6 +28,7 @@ class UpbitTrader(BaseExchangeTrader):
     }
     NAME = "Upbit"
     CODE = "UPB"
+    SUPPORTED_ORD_TYPES = frozenset({"limit", "market"})
 
     def __init__(
         self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True,
@@ -176,11 +178,20 @@ class UpbitTrader(BaseExchangeTrader):
             self.cancel_request(request["id"])
             return
 
-        if request["price"] == 0:
-            self.logger.warning("[REJECT] market price is not supported now")
+        ord_type = order_spec.get_ord_type(request)
+        if ord_type not in self.SUPPORTED_ORD_TYPES:
+            task["callback"](order_spec.make_rejected_result(
+                request, f"unsupported ord_type: {ord_type}"))
             return
 
         is_buy = request["type"] == "buy"
+        is_market = ord_type == order_spec.MARKET
+
+        if not is_market and request["price"] == 0:
+            # price==0은 기존 no-op(hold) 신호 — 지정가에서는 그대로 무시
+            self.logger.warning("[REJECT] limit order requires price")
+            return
+
         if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
             request_price = float(request["price"]) * float(request["amount"])
             self.logger.warning(
@@ -196,9 +207,18 @@ class UpbitTrader(BaseExchangeTrader):
             task["callback"]("error!")
             return
 
-        response = self._send_order(
-            self.market, is_buy, request["price"], request["amount"]
-        )
+        if is_market and is_buy:
+            # 시장가 매수: Upbit는 총액(KRW) 기준 → price 파라미터에 총액 전달
+            total_krw = float(request["price"]) * float(request["amount"])
+            response = self._send_order(self.market, True, price=total_krw, volume=None)
+        elif is_market:
+            # 시장가 매도: 수량 기준
+            response = self._send_order(
+                self.market, False, price=None, volume=float(request["amount"]))
+        else:
+            response = self._send_order(
+                self.market, is_buy, request["price"], request["amount"])
+
         if response is None:
             task["callback"]("error!")
             return

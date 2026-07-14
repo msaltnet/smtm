@@ -1175,3 +1175,54 @@ class UpditTraderBalanceTests(unittest.TestCase):
         self.assertEqual(trader.balance, 550000)
         self.assertEqual(trader.asset, (67000000, 1.000001))
         dummy_callback.assert_called_once_with(dummy_result)
+
+
+class UpbitTraderMarketOrderTest(unittest.TestCase):
+    def _trader(self):
+        trader = UpbitTrader(budget=1000000, currency="BTC")
+        trader.balance = 1000000
+        trader.asset = (50000, 1.0)  # 평단 50000, 1개 보유
+        return trader
+
+    @patch("smtm.trader.upbit_trader.UpbitTrader._send_order")
+    def test_market_sell_calls_send_order_with_volume_only(self, mock_send):
+        mock_send.return_value = {"uuid": "u1"}
+        trader = self._trader()
+        trader.is_opt_mode = False
+        task = {
+            "request": {"id": "ms", "type": "sell", "price": 0, "amount": 0.5,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        }
+        trader._execute_order(task)
+        # 시장가 매도: price=None, volume=amount
+        args, kwargs = mock_send.call_args
+        self.assertIsNone(kwargs.get("price", args[2] if len(args) > 2 else None))
+        self.assertEqual(kwargs.get("volume", args[3] if len(args) > 3 else None), 0.5)
+
+    @patch("smtm.trader.upbit_trader.UpbitTrader._send_order")
+    def test_unsupported_ord_type_rejected(self, mock_send):
+        trader = self._trader()
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "x", "type": "sell", "price": 0, "amount": 1,
+                        "ord_type": "oco"},
+            "callback": callback,
+        })
+        mock_send.assert_not_called()
+        result = callback.call_args[0][0]
+        self.assertEqual(result["state"], "failed")
+
+    @patch("smtm.trader.upbit_trader.UpbitTrader._send_order")
+    def test_legacy_limit_order_unchanged(self, mock_send):
+        mock_send.return_value = {"uuid": "u2"}
+        trader = self._trader()
+        trader.is_opt_mode = False
+        trader._execute_order({
+            "request": {"id": "lim", "type": "buy", "price": 50000, "amount": 0.1},
+            "callback": MagicMock(),
+        })
+        # 지정가: price/amount 그대로 전달
+        args, kwargs = mock_send.call_args
+        self.assertEqual(args[2], 50000)
+        self.assertEqual(args[3], 0.1)
