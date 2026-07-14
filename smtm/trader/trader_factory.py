@@ -1,5 +1,6 @@
 from .upbit_trader import UpbitTrader
 from .bithumb_trader import BithumbTrader
+from .binance_trader import BinanceTrader
 from .simulation_trader import SimulationTrader
 
 
@@ -12,6 +13,7 @@ class TraderFactory:
     TRADER_LIST = [
         UpbitTrader,
         BithumbTrader,
+        BinanceTrader,
     ]
 
     @staticmethod

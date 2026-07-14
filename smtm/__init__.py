@@ -48,6 +48,7 @@ from .data.upbit_full_context_data_provider import UpbitFullContextDataProvider
 from .data.data_provider_factory import DataProviderFactory
 from .trader.upbit_trader import UpbitTrader
 from .trader.bithumb_trader import BithumbTrader
+from .trader.binance_trader import BinanceTrader
 from .trader.trader_factory import TraderFactory
 from .controller.jpt_controller import JptController
 from .controller.telegram import TelegramController
