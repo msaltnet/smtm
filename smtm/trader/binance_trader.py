@@ -69,14 +69,42 @@ class BinanceTrader(BaseExchangeTrader):
     def _auth_headers(self):
         return {"X-MBX-APIKEY": self.ACCESS_KEY}
 
+    def get_trade_tick(self):
+        """최근 체결가(현재가) 조회 — public 엔드포인트"""
+        return self._request_get(
+            self.SERVER_URL + "/api/v3/ticker/price",
+            params={"symbol": self.market},
+        )
+
+    def get_account_info(self):
+        """계좌 정보를 요청한다 (로컬 잔고/자산 + 실시간 시세)
+
+        Returns:
+            {
+                balance: 계좌 현금 잔고 (USDT)
+                asset: {코인: (평균 매입가, 수량)}
+                quote: {코인: 현재가}
+                date_time: 현재 시간
+            }
+        """
+        from datetime import datetime
+
+        result = {
+            "balance": self.balance,
+            "asset": {self.market_currency: self.asset},
+            "quote": {},
+            "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
+        }
+        trade_info = self.get_trade_tick()
+        if trade_info is not None and "price" in trade_info:
+            result["quote"][self.market_currency] = float(trade_info["price"])
+        else:
+            self.logger.error("fail query quote")
+        self.logger.debug(f"account info {result}")
+        return result
+
     def cancel_request(self, request_id):
         """거래 요청을 취소한다 (추후 작업에서 구현 예정)"""
         raise NotImplementedError(
             "BinanceTrader.cancel_request will be implemented in a later task"
-        )
-
-    def get_account_info(self):
-        """계좌 정보를 요청한다 (추후 작업에서 구현 예정)"""
-        raise NotImplementedError(
-            "BinanceTrader.get_account_info will be implemented in a later task"
         )

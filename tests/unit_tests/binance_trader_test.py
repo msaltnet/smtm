@@ -51,6 +51,29 @@ class BinanceTraderScaffoldTest(unittest.TestCase):
 
 
 @patch.dict(os.environ, TEST_BINANCE_ENV)
+class BinanceTraderAccountTest(unittest.TestCase):
+    def test_get_trade_tick_calls_ticker_endpoint(self):
+        trader = BinanceTrader(currency="BTC")
+        trader._request_get = MagicMock(return_value={"symbol": "BTCUSDT", "price": "50000.0"})
+        result = trader.get_trade_tick()
+        args, kwargs = trader._request_get.call_args
+        self.assertIn("/api/v3/ticker/price", args[0])
+        self.assertEqual(kwargs["params"], {"symbol": "BTCUSDT"})
+        self.assertEqual(result["price"], "50000.0")
+
+    def test_get_account_info_returns_local_balance_and_live_quote(self):
+        trader = BinanceTrader(budget=1000, currency="BTC")
+        trader.balance = 1000
+        trader.asset = (50000, 0.02)
+        trader.get_trade_tick = MagicMock(return_value={"symbol": "BTCUSDT", "price": "51000.0"})
+        info = trader.get_account_info()
+        self.assertEqual(info["balance"], 1000)
+        self.assertEqual(info["asset"], {"BTC": (50000, 0.02)})
+        self.assertEqual(info["quote"], {"BTC": 51000.0})
+        self.assertIn("date_time", info)
+
+
+@patch.dict(os.environ, TEST_BINANCE_ENV)
 class BinanceTraderFactoryTest(unittest.TestCase):
     def test_factory_creates_binance_trader_for_bnc(self):
         trader = TraderFactory.create("BNC", budget=1000, currency="BTC")
