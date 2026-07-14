@@ -152,6 +152,9 @@ class BithumbTrader(BaseExchangeTrader):
             self.logger.warning("invalid price request.")
             return
 
+        # NOTE: 시장가 매수는 요청에 단가가 없고(units 기준) 캐시된 시세도 없어
+        # 클라이언트단 예산 가드를 적용할 수 없다. 예산 초과 주문은 거래소가
+        # 거부하며, 그 응답은 아래 status != "0000" 경로에서 "error!"로 처리된다.
         if is_buy and not is_market and \
                 float(request["price"]) * float(request["amount"]) > self.balance:
             self.logger.warning("invalid price request. balance is too small!")
@@ -245,6 +248,7 @@ class BithumbTrader(BaseExchangeTrader):
             "payment_currency": self.market_currency,
             "units": final_volume,
         }
+        self.logger.debug(f"query :{query}")
         return self.bithumb_api_call(endpoint, query)
 
     def _send_limit_order(self, is_buy, price=None, volume=0.0001):

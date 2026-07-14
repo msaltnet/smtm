@@ -741,6 +741,21 @@ class BithumbTraderMarketOrderTest(unittest.TestCase):
         self.assertEqual(query["units"], "0.5000")
 
     @patch("smtm.trader.bithumb_trader.BithumbTrader.bithumb_api_call")
+    def test_market_buy_calls_market_buy_endpoint(self, mock_call):
+        mock_call.return_value = {"status": "0000", "order_id": "o3"}
+        trader = self._trader()
+        trader._execute_order({
+            "request": {"id": "mb", "type": "buy", "price": 0, "amount": 0.25,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        })
+        endpoint = mock_call.call_args[0][0]
+        query = mock_call.call_args[0][1]
+        self.assertEqual(endpoint, "/trade/market_buy")
+        self.assertEqual(query["units"], "0.2500")
+        self.assertNotIn("price", query)
+
+    @patch("smtm.trader.bithumb_trader.BithumbTrader.bithumb_api_call")
     def test_unsupported_ord_type_rejected(self, mock_call):
         trader = self._trader()
         callback = MagicMock()
