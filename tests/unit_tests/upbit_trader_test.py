@@ -1226,3 +1226,30 @@ class UpbitTraderMarketOrderTest(unittest.TestCase):
         args, kwargs = mock_send.call_args
         self.assertEqual(args[2], 50000)
         self.assertEqual(args[3], 0.1)
+
+    @patch("smtm.trader.upbit_trader.UpbitTrader._send_order")
+    def test_market_buy_calls_send_order_with_total_krw(self, mock_send):
+        mock_send.return_value = {"uuid": "u3"}
+        trader = self._trader()
+        trader.is_opt_mode = False
+        trader._execute_order({
+            "request": {"id": "mb", "type": "buy", "price": 50000, "amount": 0.1,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        })
+        args, kwargs = mock_send.call_args
+        # 시장가 매수: 총액 KRW = price*amount = 5000, volume=None
+        self.assertEqual(kwargs.get("price"), 5000.0)
+        self.assertIsNone(kwargs.get("volume"))
+
+    @patch("smtm.trader.upbit_trader.UpbitTrader._send_order")
+    def test_market_buy_rejected_when_total_exceeds_balance(self, mock_send):
+        trader = self._trader()  # balance=1000000
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "mb2", "type": "buy", "price": 50000, "amount": 100,
+                        "ord_type": "market"},  # total = 5,000,000 > balance
+            "callback": callback,
+        })
+        mock_send.assert_not_called()
+        callback.assert_called_once_with("error!")
