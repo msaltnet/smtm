@@ -2,6 +2,8 @@ import time
 import hmac
 import hashlib
 from urllib.parse import urlencode
+import requests
+from ..http_session import request_with_retry
 from .base_exchange_trader import BaseExchangeTrader
 from . import order_spec
 
@@ -103,11 +105,99 @@ class BinanceTrader(BaseExchangeTrader):
         self.logger.debug(f"account info {result}")
         return result
 
-    def cancel_request(self, request_id):
-        """거래 요청을 취소한다 (추후 작업에서 구현 예정)"""
-        raise NotImplementedError(
-            "BinanceTrader.cancel_request will be implemented in a later task"
+    def _query_order(self, order_id):
+        """주문 상태 조회 (signed GET /api/v3/order)"""
+        if not self._validate_credentials():
+            return None
+        query_string = self._signed_query(
+            {"symbol": self.market, "orderId": order_id}).encode()
+        return self._request_get(
+            self.SERVER_URL + "/api/v3/order",
+            params=query_string,
+            headers=self._auth_headers(),
         )
+
+    def _update_order_result(self, task):
+        del task
+        waiting_request = {}
+        self.logger.debug(f"waiting order count {len(self.order_map)}")
+        for request_id, order in self.order_map.items():
+            response = self._query_order(order["order_id"])
+            if response is None:
+                waiting_request[request_id] = order
+                continue
+            if response.get("status") == "FILLED":
+                from datetime import datetime
+
+                result = order["result"]
+                result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)
+                result["price"] = self._fill_price(response)
+                result["amount"] = float(response.get("executedQty", 0))
+                result["state"] = "done"
+                self._call_callback(order["callback"], result)
+            else:
+                waiting_request[request_id] = order
+
+        self.order_map = waiting_request
+        self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
+        self._stop_timer()
+        if len(self.order_map) > 0:
+            self._start_timer()
+
+    @staticmethod
+    def _fill_price(response):
+        """체결 단가. 시장가 주문은 price가 0으로 오므로
+        체결총액(cummulativeQuoteQty)/체결수량(executedQty)으로 평단을 산출한다."""
+        price = float(response["price"]) if response.get("price") else 0
+        if price > 0:
+            return price
+        executed = float(response.get("executedQty", 0))
+        quote = float(response.get("cummulativeQuoteQty", 0))
+        return quote / executed if executed else 0
+
+    def cancel_request(self, request_id):
+        """거래 요청을 취소한다"""
+        if request_id not in self.order_map:
+            self.logger.debug(f"already canceled or unknown: {request_id}")
+            return
+
+        order = self.order_map[request_id]
+        del self.order_map[request_id]
+        result = order["result"]
+        response = self._cancel_order(order["order_id"])
+
+        if response is None:
+            # 이미 체결됐을 수 있으므로 조회로 확정
+            response = self._query_order(order["order_id"])
+            if response is None:
+                return
+
+        from datetime import datetime
+
+        result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)
+        result["price"] = self._fill_price(response)
+        result["amount"] = float(response.get("executedQty", 0))
+        result["state"] = "done"
+        self._call_callback(order["callback"], result)
+
+    def _cancel_order(self, order_id):
+        """주문 취소 (signed DELETE /api/v3/order)"""
+        if not self._validate_credentials():
+            return None
+        query_string = self._signed_query(
+            {"symbol": self.market, "orderId": order_id}).encode()
+        try:
+            response = request_with_retry(
+                requests.delete,
+                self.SERVER_URL + "/api/v3/order",
+                params=query_string,
+                headers=self._auth_headers(),
+            )
+            response.raise_for_status()
+            return response.json()
+        except (ValueError, requests.exceptions.RequestException) as err:
+            self.logger.error(f"cancel order fail: {err}")
+            return None
 
     def _execute_order(self, task):
         request = task["request"]

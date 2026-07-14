@@ -186,3 +186,66 @@ class BinanceTraderOrderTest(unittest.TestCase):
         self.assertEqual(trader.order_map["ok"]["order_id"], 444)
         callback.assert_called_once()
         trader._start_timer.assert_called_once()
+
+
+@patch.dict(os.environ, TEST_BINANCE_ENV)
+class BinanceTraderPollingTest(unittest.TestCase):
+    def _trader_with_open_order(self):
+        trader = BinanceTrader(budget=1000000, currency="BTC")
+        trader.balance = 1000000
+        trader.asset = (0, 0)
+        trader._start_timer = MagicMock()
+        trader._stop_timer = MagicMock()
+        cb = MagicMock()
+        trader.order_map["ok"] = {
+            "order_id": 444,
+            "callback": cb,
+            "result": {"state": "requested", "request": {"id": "ok"},
+                       "type": "buy", "price": 50000, "amount": 0.1, "msg": "success"},
+        }
+        return trader, cb
+
+    def test_filled_order_triggers_done_callback_and_clears_map(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "orderId": 444, "status": "FILLED", "price": "50000.0",
+            "executedQty": "0.1", "cummulativeQuoteQty": "5000.0",
+        })
+        trader._update_order_result(None)
+        done = cb.call_args[0][0]
+        self.assertEqual(done["state"], "done")
+        self.assertEqual(done["amount"], 0.1)
+        self.assertNotIn("ok", trader.order_map)
+
+    def test_unfilled_order_stays_in_map(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "orderId": 444, "status": "NEW", "price": "50000.0",
+            "executedQty": "0.0", "cummulativeQuoteQty": "0.0",
+        })
+        trader._update_order_result(None)
+        self.assertIn("ok", trader.order_map)
+
+    def test_market_buy_fill_derives_price_from_quote(self):
+        # 시장가 주문은 price가 0으로 오므로 체결총액/체결수량으로 평단 산출
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "orderId": 444, "status": "FILLED", "price": "0.0",
+            "executedQty": "0.1", "cummulativeQuoteQty": "5000.0",
+        })
+        trader._update_order_result(None)
+        done = cb.call_args[0][0]
+        self.assertEqual(done["price"], 50000.0)  # 5000 / 0.1
+
+    def test_cancel_request_calls_delete_and_removes_order(self):
+        trader, cb = self._trader_with_open_order()
+        trader._cancel_order = MagicMock(return_value={"orderId": 444, "status": "CANCELED"})
+        trader.cancel_request("ok")
+        trader._cancel_order.assert_called_once_with(444)
+        self.assertNotIn("ok", trader.order_map)
+
+    def test_cancel_unknown_id_is_noop(self):
+        trader, cb = self._trader_with_open_order()
+        trader._cancel_order = MagicMock()
+        trader.cancel_request("does-not-exist")
+        trader._cancel_order.assert_not_called()
