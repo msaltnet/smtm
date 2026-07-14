@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List
 
 from ..log_manager import LogManager
+from . import order_spec
 from .trader import Trader
 
 
@@ -10,6 +11,7 @@ class SimulationTrader(Trader):
 
     NAME = "Simulation Trader"
     CODE = "SIM"
+    SUPPORTED_ORD_TYPES = frozenset({"limit", "market"})
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(self, budget=50000, currency="BTC", commission_ratio=0):
@@ -30,6 +32,11 @@ class SimulationTrader(Trader):
         callback: Callable[[Dict[str, Any]], None],
     ) -> None:
         for request in request_list:
+            ord_type = order_spec.get_ord_type(request)
+            if request.get("type") != "cancel" and ord_type not in self.SUPPORTED_ORD_TYPES:
+                callback(order_spec.make_rejected_result(
+                    request, f"unsupported ord_type: {ord_type}"))
+                continue
             result = self._execute_request(request)
             self.order_history.append(result)
             callback(result)

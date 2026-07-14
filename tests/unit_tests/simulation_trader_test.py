@@ -156,5 +156,42 @@ class TraderFactoryPaperFlagTest(unittest.TestCase):
         self.assertEqual(trader.currency, "ETH")
 
 
+class SimulationTraderCapabilityTest(unittest.TestCase):
+    def _trader(self):
+        trader = SimulationTrader(budget=500000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        return trader
+
+    def test_market_buy_fills_at_current_quote(self):
+        trader = self._trader()
+        results = []
+        trader.send_request([{
+            "id": "m1", "type": "buy", "price": 0, "amount": 0.01,
+            "ord_type": "market", "date_time": "2026-07-03T12:00:00",
+        }], results.append)
+        self.assertEqual(results[0]["state"], "done")
+        self.assertEqual(results[0]["price"], 50000)
+
+    def test_unknown_ord_type_is_rejected(self):
+        trader = self._trader()
+        results = []
+        trader.send_request([{
+            "id": "x1", "type": "buy", "price": 50000, "amount": 0.01,
+            "ord_type": "banana", "date_time": "2026-07-03T12:00:00",
+        }], results.append)
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertIn("banana", results[0]["msg"])
+        self.assertEqual(trader.balance, 500000)  # 잔고 변화 없음
+
+    def test_legacy_buy_without_ord_type_still_fills(self):
+        trader = self._trader()
+        results = []
+        trader.send_request([{
+            "id": "b1", "type": "buy", "price": 1, "amount": 0.01,
+            "date_time": "2026-07-03T12:00:00",
+        }], results.append)
+        self.assertEqual(results[0]["state"], "done")
+
+
 if __name__ == "__main__":
     unittest.main()
