@@ -58,6 +58,11 @@ BITHUMB_API_ACCESS_KEY=your_bithumb_access_key
 BITHUMB_API_SECRET_KEY=your_bithumb_secret_key
 BITHUMB_API_SERVER_URL=https://api.bithumb.com
 
+# Binance exchange (exchange code BNC)
+BINANCE_API_ACCESS_KEY=your_binance_access_key
+BINANCE_API_SECRET_KEY=your_binance_secret_key
+BINANCE_API_SERVER_URL=https://api.binance.com
+
 # Telegram (can be passed as --token / --chatid instead)
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
@@ -119,7 +124,7 @@ The `exchange` profile setting selects both the market data source and the order
 |------|---------------|--------|-------|
 | `UPB` | Upbit | Upbit | Default |
 | `BTH` | Bithumb | Bithumb | |
-| `BNC` | Binance | — | Data only; no trader yet |
+| `BNC` | Binance | Binance | Spot trading supported, USDT-based budget |
 | `UBD` | Upbit + Binance (merged) | — | Data only; no trader yet |
 | `UPN` | Upbit + Crypto News RSS (CoinDesk) | Upbit | Candle + text news items in one feed |
 | `UMN` | Upbit + Multi-source News (CoinDesk / CoinTelegraph / Decrypt / CryptoSlate) | Upbit | Candle + aggregated news from four sources |

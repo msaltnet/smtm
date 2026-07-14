@@ -56,6 +56,11 @@ BITHUMB_API_ACCESS_KEY=your_bithumb_access_key
 BITHUMB_API_SECRET_KEY=your_bithumb_secret_key
 BITHUMB_API_SERVER_URL=https://api.bithumb.com
 
+# Binance 거래소 (거래소 코드 BNC)
+BINANCE_API_ACCESS_KEY=your_binance_access_key
+BINANCE_API_SECRET_KEY=your_binance_secret_key
+BINANCE_API_SERVER_URL=https://api.binance.com
+
 # 텔레그램 (--token / --chatid 로 대신 전달 가능)
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
@@ -117,7 +122,7 @@ my-btc로 세션 만들고 시작해줘
 |------|---------------|--------|------|
 | `UPB` | Upbit | Upbit | 기본값 |
 | `BTH` | Bithumb | Bithumb | |
-| `BNC` | Binance | — | 데이터만 지원, Trader 미구현 |
+| `BNC` | Binance | Binance | 현물(spot) 매매 지원, 예산은 USDT 기준 |
 | `UBD` | Upbit + Binance 병합 | — | 데이터만 지원, Trader 미구현 |
 | `UPN` | Upbit + 암호화폐 뉴스 RSS(CoinDesk) | Upbit | 캔들 + 텍스트형 뉴스 항목을 함께 제공 |
 | `UMN` | Upbit + 다중 소스 뉴스(CoinDesk / CoinTelegraph / Decrypt / CryptoSlate) | Upbit | 캔들 + 네 곳의 뉴스를 집계해 제공 |
