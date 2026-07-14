@@ -74,3 +74,29 @@ class SafetyGuardCheckRequestTests(unittest.TestCase):
         result = self.guard.check_request(self._request())
         self.assertFalse(result.allowed)
         self.assertIn("손실 한도", result.reason)
+
+    def test_stop_loss_uses_trigger_for_amount(self):
+        # trigger 48000 * amount 1 = 48000 <= max_trade_amount(100000) → 허용
+        req = {"id": "s1", "type": "sell", "price": 0, "amount": 1.0,
+               "ord_type": "stop_loss", "trigger": 48000,
+               "date_time": "2026-07-03T12:00:00"}
+        self.assertTrue(self.guard.check_request(req).allowed)
+
+    def test_stop_loss_blocked_when_trigger_amount_exceeds_limit(self):
+        # trigger 200000 * amount 1 = 200000 > 100000 → 차단
+        req = {"id": "s2", "type": "sell", "price": 0, "amount": 1.0,
+               "ord_type": "stop_loss", "trigger": 200000,
+               "date_time": "2026-07-03T12:00:00"}
+        self.assertFalse(self.guard.check_request(req).allowed)
+
+    def test_take_profit_uses_trigger_for_amount(self):
+        req = {"id": "t1", "type": "sell", "price": 0, "amount": 1.0,
+               "ord_type": "take_profit", "trigger": 55000,
+               "date_time": "2026-07-03T12:00:00"}
+        self.assertTrue(self.guard.check_request(req).allowed)
+
+    def test_legacy_limit_request_still_uses_price(self):
+        # 신규 필드 없는 기존 요청은 price*amount 그대로 (회귀 방지)
+        req = {"id": "l1", "type": "buy", "price": 50000, "amount": 1.0,
+               "date_time": "2026-07-03T12:00:00"}
+        self.assertTrue(self.guard.check_request(req).allowed)

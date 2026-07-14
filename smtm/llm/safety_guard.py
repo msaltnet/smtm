@@ -34,8 +34,17 @@ class SafetyGuard:
         """거래 요청(request dict) 사전 검증. cancel 요청은 검사 제외."""
         if request.get("type") == "cancel":
             return SafetyResult(allowed=True)
-        trade_amount = float(request.get("price", 0)) * float(request.get("amount", 0))
-        return self._check_limits(trade_amount)
+        return self._check_limits(self._trade_amount(request))
+
+    @staticmethod
+    def _trade_amount(request: dict) -> float:
+        """요청의 예상 거래금액. 조건부(stop_loss/take_profit)는 trigger 기준."""
+        from ..trader.order_spec import get_ord_type, STOP_LOSS, TAKE_PROFIT
+
+        amount = float(request.get("amount", 0) or 0)
+        if get_ord_type(request) in (STOP_LOSS, TAKE_PROFIT):
+            return float(request.get("trigger", 0) or 0) * amount
+        return float(request.get("price", 0) or 0) * amount
 
     def _check_limits(self, trade_amount: float) -> SafetyResult:
         self._reset_daily_if_needed()
