@@ -279,3 +279,30 @@ if ord_type not in self.SUPPORTED_ORD_TYPES:
 - **인증 방식 차이**: Binance HMAC은 Upbit JWT와 달라 서명 로직을 공유하지 못함.
 - **OCO 세부 규칙**: Binance OCO는 가격 관계 제약(예: LIMIT_MAKER > 현재가 > STOP)이 있어
   정책 계산 시 검증 필요.
+
+---
+
+## 10. ②③ 착수 전 반드시 반영할 통합 이슈 (① 최종 리뷰에서 발견)
+
+하위 프로젝트 ①(기반)은 완결·병합되었으나, 조건부/시장가 주문을 **파이프라인으로 실제
+생성하는 producer가 아직 없어** 아래 이슈들은 ①에서는 비활성(dormant)이다. ②③에서
+producer(세션 정책/LLM, BinanceTrader)를 붙이기 전에 반드시 설계에 반영해야 한다.
+
+1. **전략의 cancel-and-replace가 무장된 조건부 주문을 자동 취소한다 (최우선).**
+   조건부 주문 등록 시 콜백이 `state:"requested"`로 오고, `StrategyLlm`/`StrategyRsi`의
+   `update_result`가 그 id를 `waiting_requests`에 저장한다. 다음 틱에 `get_request`가
+   `waiting_requests`의 **모든** id에 대해 `cancel`을 발행 → 방금 건 손절/익절이 발동 전에
+   취소된다. **대응**: "무장된 조건부"와 "체결 대기 중인 지정가(교체 대상)"를 구분해야 함
+   — 조건부는 `waiting_requests`에 넣지 않거나, 자동 취소 루프에서 조건부 id를 제외.
+
+2. **시장가 매수 의미가 거래소마다 다르다.** 동일한 `{type:buy, ord_type:market, price, amount}`에
+   대해 Upbit은 `price*amount` KRW를 지출(amount가 KRW 총액 승수), Bithumb/Simulation은
+   `amount` **코인 수량**을 매수한다. `price ≈ 현재가`일 때만 일치. **대응**: 시장가 매수
+   계약(`price`/`amount`의 의미)을 확정·문서화하거나 Upbit을 코인 수량 기준으로 정규화.
+
+3. **SafetyGuard가 `market`/`oco` 금액을 제한하지 못한다.** `market`은 `price==0`이면 거래금액이
+   0으로 계산되어 `max_trade_amount`를 통과하고, `oco`는 trigger 기반 추정이 아닌 `price*amount`
+   분기로 빠진다(스펙 §5.5가 요구하는 것과 다름). ②③에서 producer와 함께 보완.
+
+4. **조건부 발동 시점에는 SafetyGuard 재검증이 없다** (등록 시점에만 한도 검사). 리스크 축소형
+   손절/익절에는 합리적이나, ②③에서 정책 설계 시 명시적으로 고려.
