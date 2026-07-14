@@ -8,6 +8,7 @@ import hmac
 import hashlib
 import requests
 from .base_exchange_trader import BaseExchangeTrader
+from . import order_spec
 
 
 class BithumbTrader(BaseExchangeTrader):
@@ -25,6 +26,7 @@ class BithumbTrader(BaseExchangeTrader):
     AVAILABLE_CURRENCY = {"BTC": ("BTC", "KRW"), "ETH": ("ETH", "KRW")}
     NAME = "Bithumb"
     CODE = "BTH"
+    SUPPORTED_ORD_TYPES = frozenset({"limit", "market"})
 
     def __init__(
         self, budget=50000, currency="BTC", commission_ratio=0.0005, opt_mode=True,
@@ -137,13 +139,21 @@ class BithumbTrader(BaseExchangeTrader):
             self.cancel_request(request["id"])
             return
 
-        is_buy = request["type"] == "buy"
+        ord_type = order_spec.get_ord_type(request)
+        if ord_type not in self.SUPPORTED_ORD_TYPES:
+            task["callback"](order_spec.make_rejected_result(
+                request, f"unsupported ord_type: {ord_type}"))
+            return
 
-        if request["price"] == 0:
+        is_buy = request["type"] == "buy"
+        is_market = ord_type == order_spec.MARKET
+
+        if not is_market and request["price"] == 0:
             self.logger.warning("invalid price request.")
             return
 
-        if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
+        if is_buy and not is_market and \
+                float(request["price"]) * float(request["amount"]) > self.balance:
             self.logger.warning("invalid price request. balance is too small!")
             task["callback"]("error!")
             return
@@ -155,7 +165,11 @@ class BithumbTrader(BaseExchangeTrader):
             task["callback"]("error!")
             return
 
-        response = self._send_limit_order(is_buy, request["price"], request["amount"])
+        if is_market:
+            response = self._send_market_order(is_buy, request["amount"])
+        else:
+            response = self._send_limit_order(
+                is_buy, request["price"], request["amount"])
 
         if response is None or response["status"] != "0000":
             self.logger.error(f"Order error {response}")
@@ -219,6 +233,19 @@ class BithumbTrader(BaseExchangeTrader):
         self._stop_timer()
         if len(self.order_map) > 0:
             self._start_timer()
+
+    def _send_market_order(self, is_buy, volume):
+        """시장가 주문 전송 (Bithumb market_buy / market_sell, units 기준)"""
+        final_volume = "{0:.4f}".format(round(float(volume), 4))
+        endpoint = "/trade/market_buy" if is_buy else "/trade/market_sell"
+        self.logger.info(f"MARKET ORDER ##### {'BUY' if is_buy else 'SELL'}")
+        self.logger.info(f"{self.market}, units: {final_volume}")
+        query = {
+            "order_currency": self.market,
+            "payment_currency": self.market_currency,
+            "units": final_volume,
+        }
+        return self.bithumb_api_call(endpoint, query)
 
     def _send_limit_order(self, is_buy, price=None, volume=0.0001):
         """

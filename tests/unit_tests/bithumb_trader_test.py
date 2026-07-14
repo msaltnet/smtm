@@ -2,6 +2,7 @@ import os
 import unittest
 from smtm import BithumbTrader
 from unittest.mock import *
+from unittest.mock import patch, MagicMock
 
 TEST_BITHUMB_ENV = {
     "BITHUMB_API_ACCESS_KEY": "test_access_key",
@@ -716,3 +717,47 @@ class BithumbTraderBasicTests(unittest.TestCase):
         expected_data = "endpoint=get%2Fapple&order_currency=apple&payment_currency=KRW"
 
         self.assertEqual(trader.bithumb_api_call("get/apple", dummy_query), None)
+
+
+class BithumbTraderMarketOrderTest(unittest.TestCase):
+    def _trader(self):
+        trader = BithumbTrader(budget=1000000, currency="BTC")
+        trader.balance = 1000000
+        trader.asset = (50000, 1.0)
+        return trader
+
+    @patch("smtm.trader.bithumb_trader.BithumbTrader.bithumb_api_call")
+    def test_market_sell_calls_market_sell_endpoint(self, mock_call):
+        mock_call.return_value = {"status": "0000", "order_id": "o1"}
+        trader = self._trader()
+        trader._execute_order({
+            "request": {"id": "ms", "type": "sell", "price": 0, "amount": 0.5,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        })
+        endpoint = mock_call.call_args[0][0]
+        query = mock_call.call_args[0][1]
+        self.assertEqual(endpoint, "/trade/market_sell")
+        self.assertEqual(query["units"], "0.5000")
+
+    @patch("smtm.trader.bithumb_trader.BithumbTrader.bithumb_api_call")
+    def test_unsupported_ord_type_rejected(self, mock_call):
+        trader = self._trader()
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "x", "type": "sell", "price": 0, "amount": 1,
+                        "ord_type": "stop_loss"},
+            "callback": callback,
+        })
+        mock_call.assert_not_called()
+        self.assertEqual(callback.call_args[0][0]["state"], "failed")
+
+    @patch("smtm.trader.bithumb_trader.BithumbTrader._send_limit_order")
+    def test_legacy_limit_order_uses_limit_path(self, mock_limit):
+        mock_limit.return_value = {"status": "0000", "order_id": "o2"}
+        trader = self._trader()
+        trader._execute_order({
+            "request": {"id": "lim", "type": "buy", "price": 50000, "amount": 0.1},
+            "callback": MagicMock(),
+        })
+        mock_limit.assert_called_once()
