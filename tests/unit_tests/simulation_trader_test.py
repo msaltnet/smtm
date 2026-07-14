@@ -193,5 +193,74 @@ class SimulationTraderCapabilityTest(unittest.TestCase):
         self.assertEqual(results[0]["state"], "done")
 
 
+class SimulationTraderConditionalTest(unittest.TestCase):
+    def _holding_trader(self):
+        # BTC 1개를 50000에 보유한 상태로 세팅
+        trader = SimulationTrader(budget=1000000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        trader.send_request([{
+            "id": "buy", "type": "buy", "price": 50000, "amount": 1.0,
+            "date_time": "2026-07-03T12:00:00",
+        }], lambda r: None)
+        return trader
+
+    def test_stop_loss_registered_returns_requested(self):
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([{
+            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
+            "ord_type": "stop_loss", "trigger": 47000,
+            "date_time": "2026-07-03T12:00:00",
+        }], results.append)
+        self.assertEqual(results[0]["state"], "requested")
+        self.assertEqual(len(trader.pending_conditionals), 1)
+
+    def test_stop_loss_fires_when_price_drops_to_trigger(self):
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([{
+            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
+            "ord_type": "stop_loss", "trigger": 47000,
+        }], results.append)
+        trader.update_quote("BTC", 47000)  # 트리거 도달
+        self.assertEqual(results[-1]["state"], "done")
+        self.assertEqual(results[-1]["type"], "sell")
+        self.assertEqual(results[-1]["price"], 47000)
+        self.assertNotIn("BTC", trader.assets)  # 전량 매도
+        self.assertEqual(len(trader.pending_conditionals), 0)
+
+    def test_stop_loss_does_not_fire_above_trigger(self):
+        trader = self._holding_trader()
+        trader.send_request([{
+            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
+            "ord_type": "stop_loss", "trigger": 47000,
+        }], lambda r: None)
+        trader.update_quote("BTC", 48000)  # 아직 트리거 위
+        self.assertEqual(len(trader.pending_conditionals), 1)
+
+    def test_take_profit_fires_when_price_rises_to_trigger(self):
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([{
+            "id": "tp", "type": "sell", "price": 0, "amount": 1.0,
+            "ord_type": "take_profit", "trigger": 55000,
+        }], results.append)
+        trader.update_quote("BTC", 55000)
+        self.assertEqual(results[-1]["state"], "done")
+        self.assertEqual(results[-1]["price"], 55000)
+        self.assertEqual(len(trader.pending_conditionals), 0)
+
+    def test_cancel_removes_pending_conditional(self):
+        trader = self._holding_trader()
+        trader.send_request([{
+            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
+            "ord_type": "stop_loss", "trigger": 47000,
+        }], lambda r: None)
+        trader.cancel_request("sl")
+        self.assertEqual(len(trader.pending_conditionals), 0)
+        trader.update_quote("BTC", 47000)  # 취소되었으므로 발동 안 함
+        self.assertIn("BTC", trader.assets)  # 여전히 보유 (매도 안 됨)
+
+
 if __name__ == "__main__":
     unittest.main()
