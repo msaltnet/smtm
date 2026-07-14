@@ -108,3 +108,88 @@ class BinanceTrader(BaseExchangeTrader):
         raise NotImplementedError(
             "BinanceTrader.cancel_request will be implemented in a later task"
         )
+
+    def _execute_order(self, task):
+        request = task["request"]
+        if request["type"] == "cancel":
+            self.cancel_request(request["id"])
+            return
+
+        ord_type = order_spec.get_ord_type(request)
+        if ord_type not in self.SUPPORTED_ORD_TYPES:
+            task["callback"](order_spec.make_rejected_result(
+                request, f"unsupported ord_type: {ord_type}"))
+            return
+
+        is_buy = request["type"] == "buy"
+        is_market = ord_type == order_spec.MARKET
+
+        if not is_market and request["price"] == 0:
+            # price==0 은 기존 no-op(hold) 신호 — 지정가에서는 무시
+            self.logger.warning("[REJECT] limit order requires price")
+            return
+
+        if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
+            self.logger.warning(
+                f"[REJECT] balance is too small! "
+                f"{float(request['price']) * float(request['amount'])} > {self.balance}"
+            )
+            task["callback"]("error!")
+            return
+
+        if is_buy is False and float(request["amount"]) > self.asset[1]:
+            self.logger.warning(
+                f"[REJECT] invalid amount {float(request['amount'])} > {self.asset[1]}"
+            )
+            task["callback"]("error!")
+            return
+
+        side = "BUY" if is_buy else "SELL"
+        response = self._send_order(
+            side, ord_type, request["price"], request["amount"])
+        if response is None or "orderId" not in response:
+            task["callback"]("error!")
+            return
+
+        result = self._create_success_result(request)
+        self.order_map[request["id"]] = {
+            "order_id": response["orderId"],
+            "callback": task["callback"],
+            "result": result,
+        }
+        task["callback"](result)
+        self.logger.debug(f"request inserted {self.order_map[request['id']]}")
+        self._start_timer()
+
+    def _send_order(self, side, ord_type, price, amount):
+        """Binance 현물 주문 전송 (signed POST /api/v3/order)
+
+        - 지정가:      type=LIMIT, timeInForce=GTC, quantity, price
+        - 시장가 매도:  type=MARKET, quantity
+        - 시장가 매수:  type=MARKET, quoteOrderQty(=price*amount, USDT 총액)
+        """
+        if not self._validate_credentials():
+            return None
+
+        params = {"symbol": self.market, "side": side}
+        if ord_type == order_spec.MARKET and side == "BUY":
+            params["type"] = "MARKET"
+            params["quoteOrderQty"] = float(price) * float(amount)
+        elif ord_type == order_spec.MARKET:
+            params["type"] = "MARKET"
+            params["quantity"] = float(amount)
+        else:
+            params["type"] = "LIMIT"
+            params["timeInForce"] = "GTC"
+            params["quantity"] = float(amount)
+            params["price"] = float(price)
+
+        self.logger.info(f"ORDER ##### {side} {params['type']}")
+        self.logger.info(f"{self.market}, params: {params}")
+
+        query_string = self._signed_query(params).encode()
+        return self._request_post(
+            self.SERVER_URL + "/api/v3/order",
+            params=query_string,
+            headers=self._auth_headers(),
+        )
