@@ -118,6 +118,8 @@ my-btc로 세션 만들고 시작해줘
 
 프로파일의 `exchange` 설정값은 시장 데이터 소스와 주문 실행 Trader를 동시에 선택합니다. 실제 매매까지 가능하려면 두 Factory에 모두 등록되어 있어야 합니다. 이 표의 모든 코드는 `virtual` 설정값과 결합해 실제 거래소 대신 `SimulationTrader`로 주문을 보낼 수 있습니다.
 
+> 💡 거래소별 사용법·환경변수·세션 생성 예시는 **[지원 거래소와 매매 가이드](docs/exchanges-and-trading-ko.md)**를 참고하세요. (Upbit·Bithumb·Binance 실거래 지원)
+
 | 코드 | Data Provider | Trader | 비고 |
 |------|---------------|--------|------|
 | `UPB` | Upbit | Upbit | 기본값 |
