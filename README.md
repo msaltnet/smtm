@@ -63,6 +63,13 @@ BINANCE_API_ACCESS_KEY=your_binance_access_key
 BINANCE_API_SECRET_KEY=your_binance_secret_key
 BINANCE_API_SERVER_URL=https://api.binance.com
 
+# OKX exchange (exchange code OKX)
+OKX_API_ACCESS_KEY=your_okx_access_key
+OKX_API_SECRET_KEY=your_okx_secret_key
+OKX_API_PASSPHRASE=your_okx_api_passphrase
+OKX_API_SERVER_URL=https://www.okx.com
+# OKX_API_DEMO=1   # demo trading; needs API keys issued by the OKX demo account
+
 # Telegram (can be passed as --token / --chatid instead)
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
@@ -125,6 +132,7 @@ The `exchange` profile setting selects both the market data source and the order
 | `UPB` | Upbit | Upbit | Default |
 | `BTH` | Bithumb | Bithumb | |
 | `BNC` | Binance | Binance | Spot trading supported, USDT-based budget |
+| `OKX` | OKX | OKX | Spot trading supported, USDT-based budget; requires an API passphrase |
 | `UBD` | Upbit + Binance (merged) | — | Data only; no trader yet |
 | `UPN` | Upbit + Crypto News RSS (CoinDesk) | Upbit | Candle + text news items in one feed |
 | `UMN` | Upbit + Multi-source News (CoinDesk / CoinTelegraph / Decrypt / CryptoSlate) | Upbit | Candle + aggregated news from four sources |

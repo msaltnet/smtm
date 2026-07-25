@@ -59,7 +59,7 @@ smtm은 **LLM(대규모 언어 모델)이 시장을 분석하고 매매를 실�
 - **Jupyter Notebook (`JptController`)** — 실행 진입점이 아닌 노트북 전용 유틸리티. 셀에서 직접 `operator.chat()` 호출
 
 ### 3.5 데이터 / 거래소 연동
-- **DataProvider(Factory 등록)**: Upbit, Bithumb, Binance, Upbit+Binance 병합, Upbit+뉴스(CoinDesk), Upbit+다중 뉴스, Upbit+소셜, **Upbit+풀 컨텍스트** 총 8종
+- **DataProvider(Factory 등록)**: Upbit, Bithumb, Binance, OKX, Upbit+Binance 병합, Upbit+뉴스(CoinDesk), Upbit+다중 뉴스, Upbit+소셜, **Upbit+풀 컨텍스트** 총 9종
 - **DataProvider 빌딩 블록(무료·키 불필요, 직접 사용)**:
   - **크립토 뉴스**: CoinTelegraph / Decrypt / CryptoSlate / Bitcoin Magazine / The Block, 여러 소스 합산(`MultiNewsDataProvider`)
   - **경제/금융 뉴스**: WSJ Markets / MarketWatch / CNBC Finance (일반 금융·매크로 포함)
@@ -71,7 +71,7 @@ smtm은 **LLM(대규모 언어 모델)이 시장을 분석하고 매매를 실�
   - **파생/포지셔닝**: `BinanceFundingRateDataProvider`(펀딩비), `BinanceOpenInterestDataProvider`(미결제약정), `BinanceLongShortRatioDataProvider`(롱/숏 비율)
   - **거래소 공지**: `UpbitNoticeDataProvider`
   - **환율**: `ExchangeRateDataProvider`(USD→KRW/JPY/EUR/CNY)
-- **Trader**: Upbit, Bithumb 2종 (실주문 가능)
+- **Trader**: Upbit, Bithumb, Binance, OKX 4종 (실주문 가능)
 - 프로파일의 `exchange` 설정값(`UPB`/`BTH`/`UPN`/`UMN`/`USC`/`UFC` 등) 하나로 데이터 소스와 거래소를 함께 선택
 - DataProvider 한 번의 응답에 캔들(`primary_candle`)·보조 거래소(`binance`)·뉴스(`news`) 같은 여러 타입을 섞어 반환할 수 있음 — 상세는 [`architecture.md §3.4`](architecture.md#34-dataprovider-다형-데이터-계약)
 
@@ -83,7 +83,7 @@ smtm은 **LLM(대규모 언어 모델)이 시장을 분석하고 매매를 실�
 |--------|------|
 | 언어 / 런타임 | Python 3.9+ |
 | LLM 벤더 | Anthropic Claude (`claude-sonnet-4-20250514`) — SDK: `anthropic>=0.25` |
-| 거래소 API | Upbit, Bithumb, Binance REST |
+| 거래소 API | Upbit, Bithumb, Binance, OKX REST |
 | 인증 | PyJWT (거래소 서명), 환경변수 기반 API 키 |
 | HTTP | `requests` |
 | 설정 | `python-dotenv` |

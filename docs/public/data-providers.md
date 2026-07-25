@@ -41,9 +41,10 @@
 | `UpbitDataProvider` | `UPB` | `https://api.upbit.com/v1/candles/minutes/{1,3,5,10}` | market, date_time, opening_price, high_price, low_price, closing_price, acc_price, acc_volume | 불필요 |
 | `BithumbDataProvider` | `BTH` | `https://api.bithumb.com/public/candlestick/{BTC_KRW}/1m` | 동일 스키마 | 불필요 |
 | `BinanceDataProvider` | `BNC` | `https://api.binance.com/api/v3/klines` | 동일 스키마(환산) | 불필요 |
+| `OkxDataProvider` | `OKX` | `https://www.okx.com/api/v5/market/candles` | 동일 스키마(환산) | 불필요 |
 | `UpbitBinanceDataProvider` | `UBD` | Upbit + Binance 병합 | `primary_candle`(Upbit) + `binance`(Binance) 두 건 | 불필요 |
 
-> **주문 가능 여부**: Trader가 존재하는 거래소는 Upbit(`UPB`) · Bithumb(`BTH`) 두 곳입니다. `BNC` · `UBD`는 데이터 전용.
+> **주문 가능 여부**: Trader가 존재하는 거래소는 Upbit(`UPB`) · Bithumb(`BTH`) · Binance(`BNC`) · OKX(`OKX`) 네 곳입니다. `UBD`는 데이터 전용.
 
 ---
 

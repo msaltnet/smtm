@@ -208,7 +208,8 @@ def _execute_trading(self, task):
 |------|--------|------|------|
 | `UPB` | Upbit | Upbit | 기본값 |
 | `BTH` | Bithumb | Bithumb | |
-| `BNC` | Binance | — | 데이터 전용 |
+| `BNC` | Binance | Binance | 현물(spot), USDT 기준 |
+| `OKX` | OKX | OKX | 현물(spot), USDT 기준, passphrase 필요 |
 | `UBD` | Upbit + Binance 병합 | — | 데이터 전용 |
 | `UPN` | Upbit + 암호화폐 뉴스 RSS | Upbit | 캔들 + 뉴스 |
 | `UMN` | Upbit + 멀티소스 뉴스 | Upbit | 4개 뉴스 소스 통합 |

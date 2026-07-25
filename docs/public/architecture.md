@@ -50,7 +50,7 @@ graph TD
 | LLM 어댑터 | 벤더 API 추상화 | `LlmClient` (추상), `ClaudeLlmClient` (구현) |
 | Safety | Tool 실행 직전 한도 검사 | `SafetyGuard`, `SafetyConfig` |
 | Tool 계층 | LLM이 호출 가능한 능력 | `ToolRouter`, `tools/*` |
-| Integration | 시장 데이터 / 주문 실행 | `DataProvider` 8종 (UPB · BTH · BNC · UBD · UPN · UMN · USC · UFC) + 신호 빌딩 블록 (크립토 뉴스 NWS·CTN·DCN·CSN·BMN·TBN·MNS / 경제 뉴스 WSJ·MWN·CNB / 소셜 RDT·RCC·RBT·HNS / 감정 FGI / 가격 CGK·CCP·CGL / 전통시장 YFN / 온체인 BCI·MPF·EGS / 파생·포지셔닝 BFR·BOI·BLS / 공지 UPT / 환율 FXR), `Trader` 2종 (+ Factory) |
+| Integration | 시장 데이터 / 주문 실행 | `DataProvider` 9종 (UPB · BTH · BNC · OKX · UBD · UPN · UMN · USC · UFC) + 신호 빌딩 블록 (크립토 뉴스 NWS·CTN·DCN·CSN·BMN·TBN·MNS / 경제 뉴스 WSJ·MWN·CNB / 소셜 RDT·RCC·RBT·HNS / 감정 FGI / 가격 CGK·CCP·CGL / 전통시장 YFN / 온체인 BCI·MPF·EGS / 파생·포지셔닝 BFR·BOI·BLS / 공지 UPT / 환율 FXR), `Trader` 4종 (UPB · BTH · BNC · OKX, + Factory) |
 | Observability | 로그·모니터링 | `LogManager`(파일 로그), `SystemMonitor`(인메모리 구조화 로그) |
 
 ---

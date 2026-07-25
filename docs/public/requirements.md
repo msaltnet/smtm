@@ -59,7 +59,7 @@ smtm이 제공해야 하는 기능을 영역별로 정리한 문서입니다. `[
 ### 2.5 시장 데이터 (DataProvider)
 
 - **[MVP] R-DATA-01** — `DataProvider`는 `get_info()`를 통해 `type` 필드로 구분되는 타입별 딕셔너리를 리스트로 반환한다. 주 거래 캔들은 반드시 `type='primary_candle'` 형태로 포함돼야 한다.
-- **[MVP] R-DATA-02** — 다음 코드를 지원한다: `UPB`(Upbit), `BTH`(Bithumb), `BNC`(Binance), `UBD`(Upbit+Binance 병합), `UPN`(Upbit+뉴스 RSS).
+- **[MVP] R-DATA-02** — 다음 코드를 지원한다: `UPB`(Upbit), `BTH`(Bithumb), `BNC`(Binance), `OKX`(OKX), `UBD`(Upbit+Binance 병합), `UPN`(Upbit+뉴스 RSS).
 - **[MVP] R-DATA-03** — `DataProviderFactory`는 `CODE` 속성으로 공급자를 식별한다.
 - **[MVP] R-DATA-04** — 캔들 간격은 `Config.candle_interval`(기본 60초)로 설정된다.
 - **[MVP] R-DATA-05** — 텍스트형 데이터(`type='news'` 등) 역시 같은 리스트에 섞어 반환할 수 있어야 하며, 네트워크 실패나 파싱 오류는 빈 리스트로 흡수해 매매 루프를 중단시키지 않아야 한다.
@@ -135,8 +135,9 @@ smtm이 제공해야 하는 기능을 영역별로 정리한 문서입니다. `[
 - [ ] 텔레그램 토큰 누락/플레이스홀더 시 안내 메시지 출력 후 정상 종료되는가
 - [ ] 기동 시 `default` 세션이 가상거래로 뜨는가 (실주문이 나가지 않는가)
 - [ ] 거래소 키 누락 시 실거래 세션 생성/주문에서 명확한 실패 메시지가 반환되는가
-- [ ] `exchange` 설정값을 `BNC`처럼 Trader가 없는 코드로 지정하면 안전하게 거부되는가
+- [ ] `exchange` 설정값을 `UBD`처럼 Trader가 없는 코드로 지정하면 안전하게 거부되는가
 - [ ] `--version`이 현재 `__version__`과 일치하는가
+- [ ] OKX 실거래 세션에서 `OKX_API_PASSPHRASE`(또는 계좌의 `passphrase_env`)가 없으면 주문이 차단되고 명확한 로그가 남는가
 
 ### 4.2 대화
 - [ ] 텔레그램에서 `start` → 60초 주기로 매매 루프 로그가 확인되는가

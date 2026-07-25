@@ -16,7 +16,7 @@ A. 아니요. smtm은 **LLM이 매매 판단을 수행하는 실행 프레임워
 A. 현재 코드에 구현된 벤더는 Anthropic Claude(`claude-sonnet-4-20250514`) 하나입니다. `LlmClient` 추상 계층은 존재하므로 OpenAI / Ollama 어댑터를 추가할 수 있도록 설계돼 있지만, 아직 구현되지 않았습니다.
 
 **Q. 어떤 거래소를 지원하나요?**
-A. 실주문까지 가능한 거래소(Trader 구현 존재)는 **Upbit(`UPB`)** 와 **Bithumb(`BTH`)** 두 곳입니다. Binance(`BNC`)와 Upbit+Binance 병합(`UBD`)은 **데이터 조회만** 지원합니다.
+A. 실주문까지 가능한 거래소(Trader 구현 존재)는 **Upbit(`UPB`)**, **Bithumb(`BTH`)**, **Binance(`BNC`)**, **OKX(`OKX`)** 네 곳입니다. Upbit+Binance 병합(`UBD`)은 **데이터 조회만** 지원합니다.
 
 **Q. 지원 통화는?**
 A. `execute_trade` Tool 입력 스키마상 BTC, ETH, DOGE, XRP를 받으며, 실제 거래소에 해당 페어가 존재해야 합니다.
@@ -102,7 +102,7 @@ A. 없습니다. `SafetyGuard.check()`는 **Tool 실행 직전 코드**에서 �
 ### 3.4 데이터 / 거래소
 
 **Q. 거래소 코드 `UPB`와 `BNC`의 차이는?** (프로파일의 `exchange` 설정값)
-A. `UPB`는 Upbit 시장 데이터 + Upbit 실주문을 모두 사용합니다. `BNC`(Binance)는 시장 데이터는 제공하지만 **Trader 구현이 없어** 주문이 불가합니다 (Factory가 `None`을 반환해 실행이 중단됩니다).
+A. 결제 통화와 거래소가 다릅니다. `UPB`는 Upbit 시장 데이터 + Upbit 실주문(KRW 기준), `BNC`는 Binance 시장 데이터 + Binance 현물 실주문(USDT 기준)입니다. `OKX`도 USDT 기준 현물 실주문을 지원하며, access/secret 외에 **API passphrase**가 추가로 필요합니다. 반면 `UBD`처럼 Trader가 없는 코드는 주문이 불가합니다(Factory가 `None`을 반환해 실행이 중단됩니다).
 
 **Q. `UBD`는 무엇인가요?**
 A. `UpbitBinanceDataProvider`로 Upbit과 Binance 양쪽 데이터를 병합해 제공하는 DataProvider 코드입니다. 역시 Trader 구현은 없습니다.

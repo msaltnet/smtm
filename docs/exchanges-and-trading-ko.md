@@ -1,6 +1,6 @@
 # 지원 거래소와 매매 가이드
 
-smtm은 이제 **Upbit·Bithumb·Binance** 세 거래소에서 실거래가 가능하며, 어떤 설정이든 **가상거래(페이퍼 트레이딩)**로 먼저 검증할 수 있습니다. 이 문서는 각 거래소의 사용법과 주의사항을 정리합니다.
+smtm은 이제 **Upbit·Bithumb·Binance·OKX** 네 거래소에서 실거래가 가능하며, 어떤 설정이든 **가상거래(페이퍼 트레이딩)**로 먼저 검증할 수 있습니다. 이 문서는 각 거래소의 사용법과 주의사항을 정리합니다.
 
 > 모든 제어는 텔레그램 챗봇의 AI Agent와의 대화로 이뤄집니다. 예산·통화·거래소·전략·주기는 **프로파일/세션 설정값**입니다(명령행 플래그 아님).
 
@@ -11,21 +11,22 @@ smtm은 이제 **Upbit·Bithumb·Binance** 세 거래소에서 실거래가 가�
 | `UPB` | Upbit | KRW | BTC, ETH, DOGE, XRP | ✅ | 기본값 |
 | `BTH` | Bithumb | KRW | BTC, ETH | ✅ | |
 | `BNC` | Binance | **USDT** | BTC, ETH, DOGE, XRP | ✅ | **신규** — 예산·금액이 USDT 기준 |
+| `OKX` | OKX | **USDT** | BTC, ETH, DOGE, XRP | ✅ | **신규** — API passphrase 필요, 예산·금액이 USDT 기준 |
 | (가상) | Simulation | 프로파일 예산 통화 | 선택한 코인 | 가상 | `virtual: true`면 어느 코드든 인메모리 시뮬레이터로 실행 |
 
-> 뉴스·소셜·온체인 등 **복합 데이터 소스 코드**(`UPN`/`UMN`/`USC`/`UFC`/`UBD` 등)는 시장 데이터 확장용입니다. 실주문 실행 Trader가 연결된 코드는 현재 `UPB`/`BTH`/`BNC` 세 가지이며, 그 외 코드는 **가상거래 모드**로 사용하세요. 전체 데이터 소스 목록은 [README](../README-ko-kr.md#지원-거래소-및-데이터-제공자)를 참고하세요.
+> 뉴스·소셜·온체인 등 **복합 데이터 소스 코드**(`UPN`/`UMN`/`USC`/`UFC`/`UBD` 등)는 시장 데이터 확장용입니다. 실주문 실행 Trader가 연결된 코드는 현재 `UPB`/`BTH`/`BNC`/`OKX` 네 가지이며, 그 외 코드는 **가상거래 모드**로 사용하세요. 전체 데이터 소스 목록은 [README](../README-ko-kr.md#지원-거래소-및-데이터-제공자)를 참고하세요.
 
 ## 지원하는 주문 유형
 
-| 주문 유형 | Upbit / Bithumb / Binance (실거래) | 가상거래(Simulation) |
+| 주문 유형 | Upbit / Bithumb / Binance / OKX (실거래) | 가상거래(Simulation) |
 |-----------|:---:|:---:|
 | 지정가 (limit) | ✅ | ✅ |
 | 시장가 (market) | ✅ | ✅ |
 | 손절 / 익절 (stop-loss / take-profit) | ⏳ 예정 | ✅ (로컬 에뮬레이션) |
 | OCO / 트레일링 | ⏳ 예정 | ⏳ 예정 |
 
-- **시장가/지정가**는 세 거래소 모두에서 동작합니다. (요청에 `ord_type` 필드가 없으면 기존과 동일하게 지정가로 처리 — 하위호환)
-- **손절/익절**은 현재 가상거래에서 매 틱 시세로 트리거를 검사해 발동하도록 에뮬레이션됩니다. 실거래소의 네이티브 조건부 주문(Binance stop/OCO 등)과 세션 단위 자동 손절/익절 정책은 후속 작업에서 제공될 예정입니다.
+- **시장가/지정가**는 네 거래소 모두에서 동작합니다. (요청에 `ord_type` 필드가 없으면 기존과 동일하게 지정가로 처리 — 하위호환)
+- **손절/익절**은 현재 가상거래에서 매 틱 시세로 트리거를 검사해 발동하도록 에뮬레이션됩니다. 실거래소의 네이티브 조건부 주문(Binance/OKX stop·OCO 등)과 세션 단위 자동 손절/익절 정책은 후속 작업에서 제공될 예정입니다.
 
 ## 환경변수 설정
 
@@ -49,9 +50,16 @@ BITHUMB_API_SERVER_URL=https://api.bithumb.com
 BINANCE_API_ACCESS_KEY=your_binance_access_key
 BINANCE_API_SECRET_KEY=your_binance_secret_key
 BINANCE_API_SERVER_URL=https://api.binance.com
+
+# OKX (거래소 코드 OKX) — 현물(spot)
+OKX_API_ACCESS_KEY=your_okx_access_key
+OKX_API_SECRET_KEY=your_okx_secret_key
+OKX_API_PASSPHRASE=your_okx_api_passphrase
+OKX_API_SERVER_URL=https://www.okx.com
 ```
 
 > 실거래 계좌는 키 '값'이 아니라 키가 담긴 **환경변수 이름**으로 등록합니다(`register_account`). 키 원문은 저장되지 않습니다.
+> OKX는 access/secret 외에 **passphrase**가 필요합니다. 계좌 등록 시 `passphrase_env`에 passphrase가 담긴 환경변수 '이름'을 함께 지정하세요(값이 아닙니다). 지정하지 않으면 전역 `OKX_API_PASSPHRASE`를 사용합니다.
 
 ## 매매 세션 만드는 법 (채팅)
 
@@ -77,6 +85,16 @@ binance-eth로 세션 만들고 시작해줘
 
 > Binance는 **USDT 페어**(BTCUSDT 등)로 거래하므로 `budget`과 모든 금액이 **USDT 기준**입니다. 위 예시의 `300`은 300 USDT입니다.
 
+### 예시 — OKX (USDT)
+
+```
+my-okx 계좌 등록해줘: 거래소 OKX, 액세스키 환경변수 OKX_API_ACCESS_KEY, 시크릿키 환경변수 OKX_API_SECRET_KEY, passphrase 환경변수 OKX_API_PASSPHRASE
+okx-btc 프로파일 만들어줘: 거래소 OKX, 통화 BTC, 예산 300, 전략 SMA, 주기 60초, 실거래(virtual false), 계좌 my-okx
+okx-btc로 세션 만들고 시작해줘
+```
+
+> **데모 거래로 먼저 확인하기**: `OKX_API_DEMO=1`을 설정하면 같은 엔드포인트에 `x-simulated-trading: 1` 헤더가 붙어 OKX 데모 환경으로 주문이 나갑니다. 단 **데모 환경은 데모 계정에서 별도 발급한 API 키만 받습니다** — 실계정 키를 그대로 쓰면 인증 오류가 납니다. 거래소 API를 아예 타지 않는 완전한 오프라인 검증이 필요하면 `virtual: true`(가상거래)를 쓰세요.
+
 ### 예시 — 가상거래로 먼저 검증
 
 ```
@@ -87,13 +105,15 @@ sim-btc로 세션 만들고 시작해줘
 
 ## 주의사항
 
-- **Binance는 USDT 기준**: 예산·수익·거래금액이 모두 USDT입니다. KRW 거래소(Upbit/Bithumb)와 숫자를 혼동하지 마세요.
-- **⚠️ USDT 세션의 안전장치 설정**: `SafetyGuard`의 금액 기반 기본값(`max_trade_amount=100000`, `initial_budget`)은 **KRW 전제**입니다. Binance(USDT) 세션은 프로파일의 `safety` 설정에서 **반드시 USDT 기준 값으로 지정**하세요. (거래소별 통화 인지형 기본값은 후속 과제)
-- **시장가 매수 의미 차이**: 시장가 매수 시 Upbit/Binance는 "총액 지출"(price×amount) 기준으로 동작합니다. 시장가 매도는 세 거래소 모두 "수량" 기준입니다.
+- **Binance·OKX는 USDT 기준**: 예산·수익·거래금액이 모두 USDT입니다. KRW 거래소(Upbit/Bithumb)와 숫자를 혼동하지 마세요.
+- **⚠️ USDT 세션의 안전장치 설정**: `SafetyGuard`의 금액 기반 기본값(`max_trade_amount=100000`, `initial_budget`)은 **KRW 전제**입니다. Binance·OKX(USDT) 세션은 프로파일의 `safety` 설정에서 **반드시 USDT 기준 값으로 지정**하세요. 지정하지 않으면 사실상 한도가 없는 것과 같습니다. (거래소별 통화 인지형 기본값은 후속 과제)
+- **시장가 매수 의미 차이**: 시장가 매수 시 Upbit/Binance/OKX는 "총액 지출"(price×amount) 기준으로 동작합니다(OKX는 `tgtCcy=quote_ccy`). 시장가 매도는 네 거래소 모두 "수량" 기준입니다.
 - **API 호출 한도**: 세션마다 거래소를 독립적으로 폴링하므로 소수의 세션 운영을 전제로 합니다.
 - **수수료**: 가상거래 수수료는 0이며, 실거래 수수료 비율은 거래소별로 다릅니다(로컬 수익 계산용 값).
+- **주문 수량 정밀도**: Binance·OKX 모두 심볼별 최소 주문 단위(`lotSz`/`stepSize`)와 가격 단위(`tickSz`/`tickSize`) 라운딩이 아직 적용되지 않았습니다. 소액 주문이 거래소에서 거부될 수 있습니다. (후속 과제)
 
 ## 관련 문서
 
 - 전체 데이터 소스·거래소 표: [README (한국어)](../README-ko-kr.md)
 - 설계/구현 배경: `docs/superpowers/specs/2026-07-14-order-types-and-binance-trader-design.md`
+- OKX 지원 설계: `docs/superpowers/specs/2026-07-25-okx-exchange-support-design.md`
