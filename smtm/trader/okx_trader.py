@@ -225,6 +225,18 @@ class OkxTrader(BaseExchangeTrader):
         OKX cancel-order 응답에는 체결 정보(accFillSz/avgPx)가 없으므로 취소
         성공/실패와 무관하게 주문 조회로 최종 상태를 확정한다. 취소 실패는
         이미 체결됐을 가능성을 포함하므로 같은 경로로 처리된다.
+
+        단, 재조회 결과의 state가 TERMINAL_STATES(filled/canceled/mmp_canceled)가
+        아니면(예: live, partially_filled) 주문은 거래소에 여전히 살아있는
+        것이다. 취소 POST가 네트워크 오류나 sCode 오류로 실패했는데 주문이
+        아직 live 상태로 남아있거나, 취소 시도 중 부분체결만 반영된 경우가
+        이에 해당한다. 이때 done 콜백을 쏘면 이미 order_map에서 지운 주문을
+        영영 놓치고 이후 체결/잔여 수량을 반영하지 못하므로, order_map에
+        되돌리고 폴링 타이머를 재시작해 기존 폴링 루프가 정상적으로
+        재조회하도록 한다. (Binance는 취소 실패 시 재조회 결과의 상태를
+        확인하지 않고 그대로 done 처리하는데, OKX cancel-order 응답이 체결
+        정보를 전혀 담지 않아 상태 확인이 필수이므로 이 부분만 다르게
+        처리한다. BinanceTrader는 건드리지 않는다.)
         """
         if request_id not in self.order_map:
             self.logger.debug(f"already canceled or unknown: {request_id}")
@@ -239,6 +251,14 @@ class OkxTrader(BaseExchangeTrader):
         if response is None:
             self.logger.error(
                 f"fail confirm order state after cancel: {order['order_id']}")
+            return
+
+        if response.get("state") not in self.TERMINAL_STATES:
+            self.logger.warning(
+                f"order still working after cancel attempt, keep tracking: "
+                f"{order['order_id']} state={response.get('state')}")
+            self.order_map[request_id] = order
+            self._start_timer()
             return
 
         result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)

@@ -4,6 +4,7 @@ import hmac
 import json
 import os
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
 from smtm.trader.okx_trader import OkxTrader
 from smtm.trader.trader_factory import TraderFactory
@@ -50,6 +51,13 @@ class OkxTraderScaffoldTest(unittest.TestCase):
         self.assertEqual(len(stamp), 24)  # 2026-07-25T09:08:57.715Z
         self.assertEqual(stamp[10], "T")
         self.assertEqual(stamp[19], ".")
+        # local-time 구현(datetime.now() without tz)도 위 네 조건은 통과하지만
+        # OKX는 그런 타임스탬프를 50102 Timestamp request expired로 거부한다.
+        # 실제 UTC 시각과 몇 초 이내로 일치하는지까지 확인해 회귀를 막는다.
+        parsed = datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+            tzinfo=timezone.utc)
+        now_utc = datetime.now(timezone.utc)
+        self.assertLess(abs((now_utc - parsed).total_seconds()), 5)
 
     def test_signature_is_base64_hmac_sha256_of_prehash(self):
         trader = OkxTrader(currency="BTC")
@@ -327,6 +335,34 @@ class OkxTraderCancelTest(unittest.TestCase):
         trader.cancel_request("ok")
         cb.assert_not_called()
         self.assertNotIn("ok", trader.order_map)
+
+    def test_cancel_request_keeps_tracking_when_still_live_after_failed_cancel(self):
+        # 취소 POST가 실패했는데 재조회 결과가 아직 live면 주문은 거래소에
+        # 살아있는 것 — done 콜백을 쏘지 않고 order_map에 되돌려 폴링을 이어간다.
+        trader, cb = self._trader_with_open_order()
+        trader._cancel_order = MagicMock(return_value=None)
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "live", "avgPx": "", "accFillSz": "0",
+        })
+        trader.cancel_request("ok")
+        cb.assert_not_called()
+        self.assertIn("ok", trader.order_map)
+        self.assertEqual(trader.order_map["ok"]["order_id"], "444")
+        trader._start_timer.assert_called_once()
+
+    def test_cancel_request_keeps_tracking_partial_fill_as_still_live(self):
+        # 취소 시도 중 부분체결만 반영된 경우도 non-terminal이므로 콜백 없이
+        # 계속 추적해야 한다 (체결분만 확정하고 나머지를 잃어버리면 안 된다).
+        trader, cb = self._trader_with_open_order()
+        trader._cancel_order = MagicMock(return_value=None)
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "partially_filled",
+            "avgPx": "50000.0", "accFillSz": "0.05",
+        })
+        trader.cancel_request("ok")
+        cb.assert_not_called()
+        self.assertIn("ok", trader.order_map)
+        trader._start_timer.assert_called_once()
 
     def test_cancel_unknown_id_is_noop(self):
         trader, _ = self._trader_with_open_order()
