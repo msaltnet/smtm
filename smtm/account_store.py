@@ -11,8 +11,11 @@ class AccountStore:
     경로: <dir_path>/<name>.json
     """
 
-    ALLOWED_FIELDS = {"name", "exchange", "access_key_env", "secret_key_env"}
+    ALLOWED_FIELDS = {"name", "exchange", "access_key_env", "secret_key_env",
+                      "passphrase_env"}
     REQUIRED_FIELDS = ("name", "exchange", "access_key_env", "secret_key_env")
+    #: 환경변수 '이름' 형식을 검증할 필드 (passphrase_env는 OKX 등에서만 선택적으로 쓰임)
+    ENV_NAME_FIELDS = ("access_key_env", "secret_key_env", "passphrase_env")
     NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
     ENV_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 
@@ -32,7 +35,7 @@ class AccountStore:
         for key in self.REQUIRED_FIELDS:
             if not account.get(key):
                 raise ValueError(f"필수 계좌 필드가 없습니다: {key}")
-        for key in ("access_key_env", "secret_key_env"):
+        for key in self.ENV_NAME_FIELDS:
             value = account.get(key, "")
             if value and not self.ENV_NAME_PATTERN.match(str(value)):
                 raise ValueError(
@@ -45,6 +48,11 @@ class AccountStore:
             env_name = account.get(key)
             if not env_name or not os.environ.get(env_name, ""):
                 missing.append(env_name or key)
+        # passphrase_env는 등록된 계좌에서만 검사한다. 필수로 취급하면
+        # passphrase가 없는 기존 거래소 계좌가 모두 env_ready=False가 된다.
+        passphrase_env = account.get("passphrase_env")
+        if passphrase_env and not os.environ.get(passphrase_env, ""):
+            missing.append(passphrase_env)
         return missing
 
     def save(self, account: dict) -> dict:
@@ -95,6 +103,7 @@ class AccountStore:
                     "exchange": account.get("exchange"),
                     "access_key_env": account.get("access_key_env"),
                     "secret_key_env": account.get("secret_key_env"),
+                    "passphrase_env": account.get("passphrase_env"),
                     "env_ready": len(self.missing_env_vars(account)) == 0,
                 })
             except (json.JSONDecodeError, OSError) as err:

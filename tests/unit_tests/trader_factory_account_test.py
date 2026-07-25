@@ -3,6 +3,8 @@ import unittest
 from unittest.mock import patch
 from smtm.trader.trader_factory import TraderFactory
 from smtm.trader.simulation_trader import SimulationTrader
+from smtm.trader.trader import Trader
+from smtm.trader.binance_trader import BinanceTrader
 
 
 class TraderFactoryAccountTests(unittest.TestCase):
@@ -48,4 +50,22 @@ class TraderFactoryAccountTests(unittest.TestCase):
         trader.order_map = {"r1": {"uuid": "u1"}, "r2": {"uuid": "u2"}}
         trader.cancel_all_requests()
         self.assertEqual(sorted(cancelled), ["r1", "r2"])
+        trader.worker.stop()
+
+    def test_trader_defaults_to_no_passphrase(self):
+        self.assertFalse(Trader.USES_PASSPHRASE)
+        self.assertFalse(BinanceTrader.USES_PASSPHRASE)
+
+    def test_passphrase_env_not_passed_to_trader_that_does_not_use_it(self):
+        # passphrase_env가 섞인 계좌로 BNC를 만들어도 TypeError 없이 생성돼야 한다
+        with patch.dict(os.environ, {
+            "SMTM_KEY_8": "a", "SMTM_SECRET_8": "b",
+            "BINANCE_API_SERVER_URL": "https://api.binance.com",
+        }):
+            trader = TraderFactory.create(
+                "BNC", budget=1000, currency="BTC",
+                account={"access_key_env": "SMTM_KEY_8",
+                         "secret_key_env": "SMTM_SECRET_8",
+                         "passphrase_env": "SMTM_PASS_8"})
+        self.assertIsInstance(trader, BinanceTrader)
         trader.worker.stop()

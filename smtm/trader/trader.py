@@ -12,6 +12,10 @@ class Trader(metaclass=ABCMeta):
     #: 이 Trader가 지원하는 ord_type 집합. 하위호환 기본값은 지정가만.
     SUPPORTED_ORD_TYPES = frozenset({"limit"})
 
+    #: 이 Trader가 access/secret 외에 passphrase를 요구하는지 여부.
+    #: True인 Trader에만 TraderFactory가 passphrase_env를 전달한다.
+    USES_PASSPHRASE = False
+
     @abstractmethod
     def send_request(self, request_list: List[Dict[str, Any]], callback: Callable[[Dict[str, Any]], None]) -> None:
         """

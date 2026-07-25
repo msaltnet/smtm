@@ -36,6 +36,11 @@ class TraderFactory:
                 if account:
                     kwargs["access_key_env"] = account.get("access_key_env")
                     kwargs["secret_key_env"] = account.get("secret_key_env")
+                    # passphrase를 받지 않는 Trader에 넘기면 TypeError가 나므로
+                    # USES_PASSPHRASE를 선언한 Trader에만 전달한다.
+                    if (account.get("passphrase_env")
+                            and getattr(trader, "USES_PASSPHRASE", False)):
+                        kwargs["passphrase_env"] = account["passphrase_env"]
                 return trader(**kwargs)
         return None
 

@@ -7,6 +7,9 @@ ACCOUNT_PROPERTIES = {
                        "description": "액세스 키가 담긴 환경변수 이름 (키 값 아님)"},
     "secret_key_env": {"type": "string",
                        "description": "시크릿 키가 담긴 환경변수 이름 (키 값 아님)"},
+    "passphrase_env": {"type": "string",
+                       "description": "passphrase가 담긴 환경변수 이름."
+                                      " OKX처럼 passphrase를 요구하는 거래소에만 필요"},
 }
 
 

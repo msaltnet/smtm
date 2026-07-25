@@ -96,3 +96,42 @@ class AccountStoreTests(unittest.TestCase):
     def test_validate_rejects_key_value_shaped_env_name(self):
         with self.assertRaises(ValueError):
             self.store.validate({**ACCOUNT, "access_key_env": "AKIA1234+secret/value=="})
+
+    def test_validate_accepts_optional_passphrase_env(self):
+        self.store.validate({**ACCOUNT, "exchange": "OKX",
+                             "passphrase_env": "SMTM_TEST_PASSPHRASE_1"})
+
+    def test_validate_rejects_key_value_shaped_passphrase_env(self):
+        with self.assertRaises(ValueError):
+            self.store.validate({**ACCOUNT, "passphrase_env": "my+raw/passphrase=="})
+
+    def test_missing_env_vars_includes_unset_passphrase_env(self):
+        account = {**ACCOUNT, "passphrase_env": "SMTM_TEST_PASSPHRASE_1"}
+        with patch.dict(os.environ, {"SMTM_TEST_KEY_1": "a", "SMTM_TEST_SECRET_1": "b"}):
+            os.environ.pop("SMTM_TEST_PASSPHRASE_1", None)
+            missing = self.store.missing_env_vars(account)
+        self.assertEqual(missing, ["SMTM_TEST_PASSPHRASE_1"])
+
+    def test_missing_env_vars_empty_when_passphrase_env_is_set(self):
+        account = {**ACCOUNT, "passphrase_env": "SMTM_TEST_PASSPHRASE_1"}
+        with patch.dict(os.environ, {"SMTM_TEST_KEY_1": "a", "SMTM_TEST_SECRET_1": "b",
+                                     "SMTM_TEST_PASSPHRASE_1": "c"}):
+            self.assertEqual(self.store.missing_env_vars(account), [])
+
+    def test_account_without_passphrase_env_stays_env_ready(self):
+        # 하위호환: passphrase_env를 등록하지 않은 기존 계좌는 누락으로 보고되지 않는다
+        with patch.dict(os.environ, {"SMTM_TEST_KEY_1": "a", "SMTM_TEST_SECRET_1": "b"}):
+            self.assertEqual(self.store.missing_env_vars(ACCOUNT), [])
+
+    def test_save_and_load_roundtrip_with_passphrase_env(self):
+        account = {**ACCOUNT, "exchange": "OKX",
+                   "passphrase_env": "SMTM_TEST_PASSPHRASE_1"}
+        self.store.save(account)
+        self.assertEqual(self.store.load("main"), account)
+
+    def test_list_accounts_includes_passphrase_env(self):
+        account = {**ACCOUNT, "exchange": "OKX",
+                   "passphrase_env": "SMTM_TEST_PASSPHRASE_1"}
+        self.store.save(account)
+        summary = self.store.list_accounts()[0]
+        self.assertEqual(summary["passphrase_env"], "SMTM_TEST_PASSPHRASE_1")
