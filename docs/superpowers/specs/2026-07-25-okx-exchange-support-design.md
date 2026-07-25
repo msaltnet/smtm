@@ -358,6 +358,77 @@ _unwrap(response):
 5. **데모 거래는 별도 API 키가 필요** — OKX 데모 환경은 실계정 키를 받지 않는다.
    `OKX_API_DEMO=1`로 켜면서 실계정 키를 그대로 쓰면 인증 오류가 난다. 문서에 명시한다.
 
+### 6.1 구현 후 최종 리뷰에서 나온 이월 항목 (2026-07-25)
+
+전체 브랜치 리뷰에서 발견됐으나 이번 세션에서 고치지 않기로 **결정한** 항목들.
+1·2번은 실금액 경로이므로 다음 작업 세션의 우선 후보다.
+
+1. **`cancel_request`의 재조회 실패 시 미아 주문** *(사용자 판단으로 이월)* —
+   `cancel_request`는 취소 POST 후 `_query_order`가 `None`이면 이미 `order_map`에서 지운 주문을
+   **복원하지 않고 콜백도 쏘지 않는다**(§5.7이 명시적으로 지시한 동작). 재조회가 일시적으로
+   실패하면(네트워크 반짝, 429 — `cancel_all_requests`가 주문마다 취소+조회를 연속 발사하므로
+   rate limit에 걸리기 쉬운 구간) 주문이 거래소에는 살아 있는데 로컬 추적에서 사라진다. 이후
+   폴링도 콜백도 없고, 나중에 체결되면 로컬 잔고·자산이 거래소와 **영구 괴리**되어 이후 주문
+   사이징과 `SafetyGuard` 한도가 틀린 숫자 위에서 계산된다.
+   바로 옆 `_update_order_result`는 같은 `response is None` 조건에서 주문을 **유지**하므로 동일
+   코드베이스가 같은 "상태 불명"을 반대로 처리하고 있다.
+   수정 방향: `response is None` 분기를 비종료 분기와 동일하게 `order_map` 복원 + 타이머 재시작으로.
+   폴링이 재조회해 `canceled`를 확인하면 0체결 `done`(회계 무영향)으로 안전히 정리된다.
+   **함께 뒤집어야 할 것**: 본 문서 §5.7의 서술, §7의 해당 테스트 항목,
+   `tests/unit_tests/okx_trader_test.py`의 `test_cancel_request_without_query_result_does_not_callback`
+   (현재 `assertNotIn("ok", trader.order_map)`으로 이 동작을 못 박고 있다).
+
+2. **`order_map` 스레드 경합 (Trader 4종 공통 기존 결함)** — `_update_order_result`는 트레이더
+   워커 스레드의 타이머 콜백이고, `TradingOperator.stop()`(`smtm/trading_operator.py:58`)은
+   **제어 스레드**에서 `cancel_all_requests()` → `cancel_request()`를 호출한다. 스윕이 반복마다
+   네트워크 왕복을 하는 동안 취소가 `del`/재삽입하면 `RuntimeError: dictionary changed size
+   during iteration`이 발생하고, 재대입에 도달하지 못한 예외가 워커로 전파된다.
+   `Worker.looper`(`smtm/worker.py:77-80`)는 예외 시 `self.thread = None` 후 재던지며 **되살리는
+   코드가 없어** 해당 트레이더가 영구 정지한다(매매가 조용히 멈춤).
+   이번 브랜치는 순회를 `list(...)`로 감싸 크래시만 국소 차단했다. **"잃어버린 업데이트"(복원
+   유실 또는 종료된 주문의 부활) 경합은 남아 있다.** 근본 해결은 `order_map`에 `threading.Lock`을
+   두거나 취소도 워커 큐를 경유시키는 것이며, `binance_trader.py:132`·`bithumb_trader.py:215`·
+   `upbit_trader.py:239,251`이 같은 순회 형태를 공유하므로 4종을 함께 고쳐야 한다.
+   `cancel_all_requests`의 `copy.deepcopy(self.order_map)`도 같은 이유로 던질 수 있고,
+   `SessionManager.stop_session`은 `operator.stop()`을 try로 감싸지 않아 그대로 전파된다.
+
+3. **⚠️ 시장가 매수 `accFillSz` 단위 미검증 — OKX 시장가를 켜기 전 필수 확인** —
+   시장가 매수는 `tgtCcy=quote_ccy`로 **USDT 총액**을 보내는데, 체결 회계는 `accFillSz`를
+   **코인 수량**으로 간주한다(`_fill_amount`). OKX 현물의 `accFillSz`는 base ccy 표기이고
+   `avgPx`와 짝이 맞는 것으로 이해하지만, 만약 시장가 매수에서 quote 표기로 온다면
+   `_call_callback`이 자산 수량에 5000(USDT)을 더하고 평단을 50000으로 잡는 **파괴적 회계 오염**이
+   된다. 지정가 경로에는 이 모호성이 없다.
+   현재 어떤 전략도 `ord_type`을 만들지 않아 시장가 경로는 도달 불가이며 이것이 유일한 안전판이다.
+   **데모에서 시장가 매수 1건의 `accFillSz`를 눈으로 확인하기 전까지 OKX 시장가를 켜지 말 것.**
+
+4. **주문 조회 실패와 "그런 주문 없음"이 구분되지 않음** — `_unwrap`은 일시적 네트워크 실패와
+   거래소의 "주문 없음"(top-level `code=51603`, `data=[]`)을 모두 `None`으로 뭉갠다. 후자에서
+   폴링 루프는 주문을 영구 보존해 5초마다 서명 요청을 영원히 보내고 전략은 `done`을 못 받는다.
+   시도 횟수 상한이 필요하다. `requirements.md`의 `[후속] R-EXEC-06`(재시도 정책)이 이 영역이다.
+
+5. **passphrase 미등록 OKX 계좌가 `env_ready`를 통과** — `passphrase_env`를 등록하지 않은 OKX
+   계좌는 `missing_env_vars()`가 아무것도 보고하지 않아 세션 생성 검증을 통과한다.
+   `create_session`이 부르는 `get_account_info()`는 public 티커만 쓰므로 역시 통과한다. 그런데
+   전역 `OKX_API_PASSPHRASE`가 없으면 이후 **모든 주문이 100% 거부**되고, 사용자는 실매매가 도는
+   줄 안다. fail-closed이므로 자금 손실은 없다. 값싼 개선: `missing_env_vars`/세션 생성이
+   `USES_PASSPHRASE`를 참조하게 하거나, 실거래 세션 생성 시 서명 엔드포인트를 1회 프로브.
+
+6. **`OKX_API_SERVER_URL` 말미 슬래시 미정규화** — `https://www.okx.com/`로 설정하면 전송 경로는
+   `//api/v5/...`, 서명 경로는 `/api/v5/...`가 되어 전부 실패한다(fail-closed이지만 원인 파악이
+   어렵다). Binance도 동일한 형태다.
+
+7. **OKX는 `candle_interval` 60/180/300초만 지원** — `Config.candle_interval = 600`이면 OKX 세션
+   조립이 실패한다. 600 거부는 의도된 올바른 결정이지만(조용한 15m 대체보다 낫다), Binance는
+   600을 받으므로 거래소를 `BNC`→`OKX`로 바꾼 사용자는 원인 없는 "세션 조립 실패"만 본다.
+   사용자용 문서에 한 줄 안내가 필요하다.
+
+8. **서명 경로가 실제 OKX 서버를 통과한 적 없음** — 개발 샌드박스에 외부 호스트로의 신뢰 CA
+   경로가 없어 모든 네트워크 통합 테스트가 실패한다(기존 `binance_data_provider_ITG_test.py`도
+   동일하게 실패). 검증은 로컬 재구성 HMAC 벡터 + `requests` 경로 동일성까지다.
+   **릴리스 전 `OKX_API_DEMO=1` + 데모 전용 키로 주문 1건 왕복을 반드시 수행할 것.**
+   `python -m pytest tests/integration_tests/okx_data_provider_ITG_test.py -v`도 네트워크가 있는
+   환경에서 재실행이 필요하다.
+
 ---
 
 ## 7. 테스트 계획
