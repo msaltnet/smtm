@@ -540,3 +540,118 @@ class OkxTraderOrderTest(unittest.TestCase):
             "callback": MagicMock(),
         })
         trader.cancel_request.assert_called_once_with("c1")
+
+
+@patch.dict(os.environ, TEST_OKX_ENV)
+class OkxTraderPollingTest(unittest.TestCase):
+    def _trader_with_open_order(self):
+        trader = OkxTrader(budget=1000000, currency="BTC")
+        trader.balance = 1000000
+        trader.asset = (0, 0)
+        trader._start_timer = MagicMock()
+        trader._stop_timer = MagicMock()
+        cb = MagicMock()
+        trader.order_map["ok"] = {
+            "order_id": "444",
+            "callback": cb,
+            "result": {"state": "requested", "request": {"id": "ok"},
+                       "type": "buy", "price": 50000, "amount": 0.1, "msg": "success"},
+        }
+        return trader, cb
+
+    def test_filled_order_triggers_done_callback_and_clears_map(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "filled", "avgPx": "50000.0",
+            "accFillSz": "0.1", "sz": "0.1",
+        })
+        trader._update_order_result(None)
+        done = cb.call_args[0][0]
+        self.assertEqual(done["state"], "done")
+        self.assertEqual(done["price"], 50000.0)
+        self.assertEqual(done["amount"], 0.1)
+        self.assertNotIn("ok", trader.order_map)
+
+    def test_live_order_stays_in_map(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "live", "avgPx": "", "accFillSz": "0",
+        })
+        trader._update_order_result(None)
+        self.assertIn("ok", trader.order_map)
+        cb.assert_not_called()
+
+    def test_partially_filled_order_stays_in_map(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "partially_filled",
+            "avgPx": "50000.0", "accFillSz": "0.05",
+        })
+        trader._update_order_result(None)
+        self.assertIn("ok", trader.order_map)
+        cb.assert_not_called()
+
+    def test_query_failure_keeps_order_in_map(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value=None)
+        trader._update_order_result(None)
+        self.assertIn("ok", trader.order_map)
+
+    def test_canceled_order_is_terminal_and_clears_map(self):
+        # 취소된 주문은 오더북에 없다 — 남겨두면 타이머가 영구 폴링한다
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "canceled", "avgPx": "", "accFillSz": "0",
+        })
+        trader._update_order_result(None)
+        self.assertNotIn("ok", trader.order_map)
+        done = cb.call_args[0][0]
+        self.assertEqual(done["state"], "done")
+        self.assertEqual(done["price"], 0)
+        self.assertEqual(done["amount"], 0)
+
+    def test_unfilled_cancel_does_not_change_balance_or_asset(self):
+        trader, cb = self._trader_with_open_order()
+        trader.balance = 1000000
+        trader.asset = (0, 0)
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "canceled", "avgPx": "", "accFillSz": "0",
+        })
+        trader._update_order_result(None)
+        self.assertEqual(trader.balance, 1000000)
+        self.assertEqual(trader.asset, (0, 0))
+
+    def test_mmp_canceled_is_terminal(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "mmp_canceled", "avgPx": "", "accFillSz": "0",
+        })
+        trader._update_order_result(None)
+        self.assertNotIn("ok", trader.order_map)
+
+    def test_partial_fill_then_cancel_reports_filled_amount(self):
+        trader, cb = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "canceled",
+            "avgPx": "49000.0", "accFillSz": "0.04",
+        })
+        trader._update_order_result(None)
+        done = cb.call_args[0][0]
+        self.assertEqual(done["price"], 49000.0)
+        self.assertEqual(done["amount"], 0.04)
+
+    def test_remaining_orders_restart_the_timer(self):
+        trader, _ = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "live", "avgPx": "", "accFillSz": "0",
+        })
+        trader._update_order_result(None)
+        trader._start_timer.assert_called_once()
+
+    def test_no_remaining_orders_does_not_restart_the_timer(self):
+        trader, _ = self._trader_with_open_order()
+        trader._query_order = MagicMock(return_value={
+            "ordId": "444", "state": "filled", "avgPx": "50000.0", "accFillSz": "0.1",
+        })
+        trader._update_order_result(None)
+        trader._start_timer.assert_not_called()

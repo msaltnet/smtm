@@ -288,6 +288,33 @@ class OkxTrader(BaseExchangeTrader):
         return self._signed_post(
             "/api/v5/trade/cancel-order", {"instId": self.market, "ordId": order_id})
 
+    def _update_order_result(self, task):
+        del task
+        waiting_request = {}
+        self.logger.debug(f"waiting order count {len(self.order_map)}")
+        for request_id, order in self.order_map.items():
+            response = self._query_order(order["order_id"])
+            if response is None:
+                waiting_request[request_id] = order
+                continue
+            # filled 외에 canceled/mmp_canceled도 종료 상태다. 남겨두면
+            # 오더북에 없는 주문을 타이머가 영구 폴링한다.
+            if response.get("state") in self.TERMINAL_STATES:
+                result = order["result"]
+                result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)
+                result["price"] = self._fill_price(response)
+                result["amount"] = self._fill_amount(response)
+                result["state"] = "done"
+                self._call_callback(order["callback"], result)
+            else:
+                waiting_request[request_id] = order
+
+        self.order_map = waiting_request
+        self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
+        self._stop_timer()
+        if len(self.order_map) > 0:
+            self._start_timer()
+
     @staticmethod
     def _fill_price(response):
         """체결 평단. OKX는 avgPx를 직접 제공하며, 미체결이면 빈 문자열로 온다."""
