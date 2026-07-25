@@ -323,11 +323,16 @@ _unwrap(response):
 
 `POST /api/v5/trade/cancel-order`, 바디 `{"instId": ..., "ordId": ...}` (**DELETE가 아님**)
 
-`cancel_request(request_id)` 흐름은 `BinanceTrader`와 동일: `order_map`에서 제거 → 취소 요청 →
-실패하면 **이미 체결됐을 가능성**이 있으므로 `_query_order`로 최종 상태를 확정 → `done` 콜백.
+**Binance와 다른 핵심 차이**: OKX의 취소 응답은 `{ordId, clOrdId, sCode, sMsg}`뿐이고
+**체결 정보(`accFillSz`/`avgPx`)를 담지 않는다.** Binance의 `DELETE /api/v3/order`는 체결 정보를
+주므로 그 응답을 그대로 결과로 썼지만, OKX는 **취소 성공/실패와 무관하게 항상 `_query_order`로
+최종 상태를 재조회**해야 한다.
 
-OKX는 이미 체결/취소된 주문에 대해 `sCode=51400` 계열 오류를 주므로 `_unwrap`이 `None`을 반환하고
-위 재조회 경로로 넘어간다.
+`cancel_request(request_id)` 흐름: `order_map`에서 제거 → 취소 요청 → `_query_order`로 최종 상태
+확정 → `done` 콜백(`avgPx`/`accFillSz` 기준). 재조회까지 실패하면 콜백 없이 에러 로깅만 한다.
+
+취소 실패는 **이미 체결됐을 가능성**을 포함한다. OKX는 이미 체결/취소된 주문에 `sCode=51400` 계열
+오류를 주므로 `_unwrap`이 `None`을 반환하지만, 어차피 항상 재조회하므로 성공·실패 경로가 같다.
 
 `cancel_all_requests()`는 기반 클래스 구현을 그대로 사용한다.
 
@@ -382,7 +387,8 @@ OKX는 이미 체결/취소된 주문에 대해 `sCode=51400` 계열 오류를 �
 - 주문 폴링: `filled` → `avgPx`/`accFillSz`로 `done` 콜백, `order_map` 비워짐
 - 주문 폴링: **`canceled` → `order_map` 비워짐**(영구 폴링 방지), `amount=0` `done` 콜백
 - 주문 폴링: `live`/`partially_filled` → `order_map` 유지
-- 취소: `POST /api/v5/trade/cancel-order` 사용(DELETE 아님), 취소 실패 시 재조회 경로
+- 취소: `POST /api/v5/trade/cancel-order` 사용(DELETE 아님), **취소 성공 시에도 재조회**해
+  `accFillSz`/`avgPx`를 확정(취소 응답에 체결 정보가 없음), 재조회 실패 시 콜백 없음
 - 잔고 초과 매수 거부, 보유량 초과 매도 거부
 - 미지원 `ord_type` → `make_rejected_result`
 - 지정가 `price == 0` → no-op
@@ -436,8 +442,10 @@ OKX는 이미 체결/취소된 주문에 대해 `sCode=51400` 계열 오류를 �
 1. `OkxDataProvider` + 단위 테스트 + `DataProviderFactory` 등록 (인증 없어 독립적으로 완결)
 2. `AccountStore`/`account_tools` passphrase 확장 + `Trader.USES_PASSPHRASE` +
    `TraderFactory` 전달 + 테스트 (Trader 없이도 검증 가능)
-3. `OkxTrader` 골격 — 서명, 헤더, 데모 스위치, `_unwrap`, `_validate_credentials`, 시세/계좌 조회
+3. `OkxTrader` 골격 — 서명, 헤더, 데모 스위치, `_unwrap`, `_validate_credentials`, 시세/계좌 조회,
+   **주문 조회 + 취소**, `TraderFactory` 등록 + export.
+   `cancel_request`는 `BaseExchangeTrader`에 남은 추상 메서드(`{cancel_request, get_account_info}`)이므로
+   이 단계에서 구현해야 클래스를 인스턴스화할 수 있다 — 뒤로 미룰 수 없다.
 4. `OkxTrader` 주문 전송 — 지정가/시장가, `tgtCcy`, 가드
-5. `OkxTrader` 폴링 + 취소 — 종료 상태 처리
-6. `TraderFactory` 등록 + `smtm/__init__.py` export + 팩토리 테스트
-7. 통합 테스트 + 문서 갱신(§8)
+5. `OkxTrader` 체결 폴링 — `filled`/`canceled`/`mmp_canceled` 종료 상태 처리
+6. 문서 갱신(§8)
