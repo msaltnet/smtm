@@ -10,6 +10,7 @@ from .data.upbit_data_provider import UpbitDataProvider
 from .data.upbit_binance_data_provider import UpbitBinanceDataProvider
 from .data.bithumb_data_provider import BithumbDataProvider
 from .data.binance_data_provider import BinanceDataProvider
+from .data.okx_data_provider import OkxDataProvider
 from .data.news_data_provider import NewsDataProvider
 from .data.news_sources import (
     CoinTelegraphNewsDataProvider,

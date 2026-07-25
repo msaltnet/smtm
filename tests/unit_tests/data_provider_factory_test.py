@@ -2,6 +2,7 @@ import unittest
 from smtm import (
     DataProviderFactory,
     BinanceDataProvider,
+    OkxDataProvider,
     UpbitDataProvider,
     BithumbDataProvider,
     UpbitBinanceDataProvider,
@@ -45,6 +46,14 @@ class DataProviderFactoryTests(unittest.TestCase):
         self.assertTrue(
             DataProviderFactory.get_name("UBD"), UpbitBinanceDataProvider.NAME
         )
+
+    def test_create_should_return_okx_data_provider_for_okx(self):
+        self.assertTrue(
+            isinstance(DataProviderFactory.create("OKX"), OkxDataProvider)
+        )
+
+    def test_get_name_should_return_okx_name(self):
+        self.assertEqual(DataProviderFactory.get_name("OKX"), OkxDataProvider.NAME)
 
     def test_get_all_strategy_info_return_correct_info(self):
         all = DataProviderFactory.get_all_strategy_info()

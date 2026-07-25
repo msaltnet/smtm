@@ -1,4 +1,5 @@
 from .binance_data_provider import BinanceDataProvider
+from .okx_data_provider import OkxDataProvider
 from .upbit_data_provider import UpbitDataProvider
 from .bithumb_data_provider import BithumbDataProvider
 from .upbit_binance_data_provider import UpbitBinanceDataProvider
@@ -16,6 +17,7 @@ class DataProviderFactory:
 
     DataProvider_LIST = [
         BinanceDataProvider,
+        OkxDataProvider,
         UpbitDataProvider,
         BithumbDataProvider,
         UpbitBinanceDataProvider,
