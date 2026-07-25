@@ -113,23 +113,33 @@ class OkxTrader(BaseExchangeTrader):
 
         업무 오류가 HTTP 200으로 오고, 실패가 최상위 code와 data[0].sCode 두 층에
         나뉜다. 최상위 code!=0일 때 구체적 사유는 data[0].sMsg에만 담긴다.
+
+        data가 list가 아니면(dict, str 등 기형 봉투) data[0] 인덱싱 자체가
+        예외거나 엉뚱한 값(문자열의 첫 글자 등)을 낼 수 있으므로, list이고
+        비어있지 않음을 먼저 확인한 뒤에만 인덱싱한다.
         """
         if response is None:
             return None
-        data = response.get("data") or []
-        first = data[0] if data and isinstance(data[0], dict) else None
+        data = response.get("data")
+        is_list = isinstance(data, list)
+        first = data[0] if is_list and data and isinstance(data[0], dict) else None
         if str(response.get("code")) != "0":
             detail = first.get("sMsg") if first else None
             self.logger.error(
                 f"OKX error {response.get('code')}: {detail or response.get('msg')}")
             return None
-        if not data:
-            self.logger.error("OKX response has empty data")
+        if not is_list or not data:
+            self.logger.error(f"OKX response has empty or malformed data: {data!r}")
             return None
-        if first is not None and first.get("sCode") not in (None, "", "0"):
-            self.logger.error(
-                f"OKX order error {first.get('sCode')}: {first.get('sMsg')}")
-            return None
+        if first is not None:
+            scode = first.get("sCode")
+            # sCode는 str(0)처럼 정수로 올 수도 있어 top-level code와 같은
+            # 방식(str 정규화)으로 비교한다. 그렇지 않으면 정수 0이 오류로
+            # 오인되어(fail-open) 실제로는 성공한 주문이 실패로 보고된다.
+            if scode is not None and str(scode) not in ("", "0"):
+                self.logger.error(
+                    f"OKX order error {first.get('sCode')}: {first.get('sMsg')}")
+                return None
         return data[0]
 
     def _signed_get(self, path, params):
@@ -292,7 +302,11 @@ class OkxTrader(BaseExchangeTrader):
         del task
         waiting_request = {}
         self.logger.debug(f"waiting order count {len(self.order_map)}")
-        for request_id, order in self.order_map.items():
+        # 스냅샷을 순회한다: 이 루프는 워커 스레드에서 실행되는데, 컨트롤
+        # 스레드의 cancel_request가 네트워크 왕복 도중 order_map을 삭제/재삽입
+        # 할 수 있어 원본 딕셔너리를 그대로 순회하면
+        # "dictionary changed size/keys during iteration"으로 죽을 수 있다.
+        for request_id, order in list(self.order_map.items()):
             response = self._query_order(order["order_id"])
             if response is None:
                 waiting_request[request_id] = order

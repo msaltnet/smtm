@@ -159,6 +159,30 @@ class OkxTraderUnwrapTest(unittest.TestCase):
     def test_unwrap_returns_none_on_empty_data(self):
         self.assertIsNone(self._trader()._unwrap({"code": "0", "msg": "", "data": []}))
 
+    def test_unwrap_returns_none_when_data_is_dict_not_list(self):
+        # OKX가 data를 list가 아니라 dict로 보내는 기형 봉투 — data[0] 인덱싱이
+        # KeyError를 내면 워커 스레드가 영구히 죽는다. raise 없이 None이어야 한다.
+        self.assertIsNone(self._trader()._unwrap({
+            "code": "0", "msg": "", "data": {"ordId": "42"},
+        }))
+
+    def test_unwrap_returns_none_when_data_is_string(self):
+        # data가 문자열이면 data[0]은 첫 글자를 내놓고, isinstance(str, dict)가
+        # False라서 모든 가드를 통과해 문자를 주문 객체인 척 반환할 수 있었다.
+        self.assertIsNone(self._trader()._unwrap({
+            "code": "0", "msg": "", "data": "oops",
+        }))
+
+    def test_unwrap_accepts_integer_scode_zero(self):
+        # sCode가 문자열 "0"이 아니라 정수 0으로 오는 경우도 성공으로 처리해야
+        # 한다. str() 정규화 없이 raw 비교하면 fail-open(주문은 성공했는데
+        # 실패로 보고)이 되어 거래소에 추적되지 않는 live 주문이 남는다.
+        result = self._trader()._unwrap({
+            "code": "0", "msg": "",
+            "data": [{"ordId": "8", "sCode": 0, "sMsg": ""}],
+        })
+        self.assertEqual(result["ordId"], "8")
+
 
 @patch.dict(os.environ, TEST_OKX_ENV)
 class OkxTraderSignedRequestTest(unittest.TestCase):
@@ -596,6 +620,10 @@ class OkxTraderPollingTest(unittest.TestCase):
         trader._query_order = MagicMock(return_value=None)
         trader._update_order_result(None)
         self.assertIn("ok", trader.order_map)
+        # result는 아직 요청 당시의 price/amount를 들고 있다. 여기서 done
+        # 콜백이 잘못 발사되면 체결되지 않은 주문의 전액이 잔고/자산에
+        # 반영되는 실사고(real-money regression)로 이어진다.
+        cb.assert_not_called()
 
     def test_canceled_order_is_terminal_and_clears_map(self):
         # 취소된 주문은 오더북에 없다 — 남겨두면 타이머가 영구 폴링한다
