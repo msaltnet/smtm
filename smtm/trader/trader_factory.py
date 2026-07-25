@@ -1,6 +1,7 @@
 from .upbit_trader import UpbitTrader
 from .bithumb_trader import BithumbTrader
 from .binance_trader import BinanceTrader
+from .okx_trader import OkxTrader
 from .simulation_trader import SimulationTrader
 
 
@@ -14,6 +15,7 @@ class TraderFactory:
         UpbitTrader,
         BithumbTrader,
         BinanceTrader,
+        OkxTrader,
     ]
 
     @staticmethod
