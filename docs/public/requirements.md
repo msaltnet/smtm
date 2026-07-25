@@ -69,10 +69,10 @@ smtm이 제공해야 하는 기능을 영역별로 정리한 문서입니다. `[
 ### 2.6 거래소 (Trader)
 
 - **[MVP] R-EXEC-01** — `Trader`는 `send_request(request)`, `get_account_info()` 계약을 제공해야 한다.
-- **[MVP] R-EXEC-02** — 현재 지원 거래소: `UPB`(Upbit), `BTH`(Bithumb).
+- **[MVP] R-EXEC-02** — 현재 지원 거래소: `UPB`(Upbit), `BTH`(Bithumb), `BNC`(Binance), `OKX`(OKX).
 - **[MVP] R-EXEC-03** — 거래소 API 키는 환경변수로만 받고 로그에는 절대 남지 않아야 한다.
 - **[MVP] R-EXEC-04** — Trader 생성 시 `commission_ratio`가 주입 가능해야 하며, 기본 0.0005(0.05%).
-- **[후속] R-EXEC-05** — Binance Trader 구현 추가.
+- **[MVP] R-EXEC-05** — Binance·OKX Trader 구현 완료.
 - **[후속] R-EXEC-06** — 주문 실행 후 체결 확인 재시도 정책(재연결, 타임아웃 재시도).
 
 ### 2.7 관찰 가능성 (SystemMonitor / Log)
