@@ -377,3 +377,166 @@ class OkxTraderCancelTest(unittest.TestCase):
         trader.cancel_request = lambda request_id: cancelled.append(request_id)
         trader.cancel_all_requests()
         self.assertEqual(sorted(cancelled), ["ok", "ok2"])
+
+
+@patch.dict(os.environ, TEST_OKX_ENV)
+class OkxTraderOrderTest(unittest.TestCase):
+    def _trader(self):
+        trader = OkxTrader(budget=1000000, currency="BTC")
+        trader.balance = 1000000
+        trader.asset = (50000, 1.0)
+        trader._start_timer = MagicMock()
+        return trader
+
+    @staticmethod
+    def _sent_payload(trader):
+        return json.loads(trader._request_post.call_args[1]["data"])
+
+    def test_limit_order_sends_px_and_sz_with_cash_mode(self):
+        trader = self._trader()
+        trader._request_post = MagicMock(
+            return_value={"code": "0", "msg": "", "data": [{"ordId": "111", "sCode": "0"}]})
+        trader._execute_order({
+            "request": {"id": "l1", "type": "buy", "price": 50000, "amount": 0.1},
+            "callback": MagicMock(),
+        })
+        payload = self._sent_payload(trader)
+        self.assertEqual(payload["instId"], "BTC-USDT")
+        self.assertEqual(payload["tdMode"], "cash")
+        self.assertEqual(payload["side"], "buy")
+        self.assertEqual(payload["ordType"], "limit")
+        self.assertEqual(payload["px"], "50000")
+        self.assertEqual(payload["sz"], "0.1")
+        self.assertNotIn("tgtCcy", payload)
+        self.assertIn("/api/v5/trade/order", trader._request_post.call_args[0][0])
+
+    def test_market_buy_sends_quote_ccy_total(self):
+        trader = self._trader()
+        trader._request_post = MagicMock(
+            return_value={"code": "0", "msg": "", "data": [{"ordId": "222", "sCode": "0"}]})
+        trader._execute_order({
+            "request": {"id": "mb", "type": "buy", "price": 50000, "amount": 0.1,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        })
+        payload = self._sent_payload(trader)
+        self.assertEqual(payload["ordType"], "market")
+        self.assertEqual(payload["side"], "buy")
+        self.assertEqual(payload["tgtCcy"], "quote_ccy")
+        self.assertEqual(payload["sz"], "5000")  # price * amount
+        self.assertNotIn("px", payload)
+
+    def test_market_sell_sends_base_ccy_amount(self):
+        trader = self._trader()
+        trader._request_post = MagicMock(
+            return_value={"code": "0", "msg": "", "data": [{"ordId": "333", "sCode": "0"}]})
+        trader._execute_order({
+            "request": {"id": "ms", "type": "sell", "price": 0, "amount": 0.5,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        })
+        payload = self._sent_payload(trader)
+        self.assertEqual(payload["ordType"], "market")
+        self.assertEqual(payload["side"], "sell")
+        self.assertEqual(payload["tgtCcy"], "base_ccy")
+        self.assertEqual(payload["sz"], "0.5")
+        self.assertNotIn("px", payload)
+
+    def test_small_quantity_not_scientific_notation(self):
+        trader = self._trader()
+        trader._request_post = MagicMock(
+            return_value={"code": "0", "msg": "", "data": [{"ordId": "444", "sCode": "0"}]})
+        trader._execute_order({
+            "request": {"id": "sm", "type": "sell", "price": 0, "amount": 0.00005,
+                        "ord_type": "market"},
+            "callback": MagicMock(),
+        })
+        body = trader._request_post.call_args[1]["data"]
+        self.assertIn('"sz": "0.00005"', body)
+        self.assertNotIn("e-", body)
+
+    def test_limit_order_with_zero_price_is_noop(self):
+        # price==0은 기존 hold 신호 — 지정가에서는 주문을 내지 않는다
+        trader = self._trader()
+        trader._request_post = MagicMock()
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "z1", "type": "buy", "price": 0, "amount": 0.1},
+            "callback": callback,
+        })
+        trader._request_post.assert_not_called()
+        callback.assert_not_called()
+
+    def test_unsupported_ord_type_rejected(self):
+        trader = self._trader()
+        trader._request_post = MagicMock()
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "x", "type": "sell", "price": 0, "amount": 1,
+                        "ord_type": "oco"},
+            "callback": callback,
+        })
+        trader._request_post.assert_not_called()
+        self.assertEqual(callback.call_args[0][0]["state"], "failed")
+
+    def test_buy_rejected_when_balance_too_small(self):
+        trader = self._trader()
+        trader.balance = 100
+        trader._request_post = MagicMock()
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "b2", "type": "buy", "price": 50000, "amount": 1.0},
+            "callback": callback,
+        })
+        trader._request_post.assert_not_called()
+        callback.assert_called_once_with("error!")
+
+    def test_sell_rejected_when_amount_exceeds_asset(self):
+        trader = self._trader()
+        trader.asset = (50000, 0.1)
+        trader._request_post = MagicMock()
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "s2", "type": "sell", "price": 50000, "amount": 1.0},
+            "callback": callback,
+        })
+        trader._request_post.assert_not_called()
+        callback.assert_called_once_with("error!")
+
+    def test_successful_order_registers_and_callbacks(self):
+        trader = self._trader()
+        trader._request_post = MagicMock(
+            return_value={"code": "0", "msg": "", "data": [{"ordId": "555", "sCode": "0"}]})
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "ok", "type": "buy", "price": 50000, "amount": 0.1},
+            "callback": callback,
+        })
+        self.assertEqual(trader.order_map["ok"]["order_id"], "555")
+        callback.assert_called_once()
+        self.assertEqual(callback.call_args[0][0]["state"], "requested")
+        trader._start_timer.assert_called_once()
+
+    def test_business_error_envelope_reports_error(self):
+        # code=1 + sCode 로 오는 업무 오류는 주문 실패로 처리한다
+        trader = self._trader()
+        trader._request_post = MagicMock(return_value={
+            "code": "1", "msg": "",
+            "data": [{"ordId": "", "sCode": "51008", "sMsg": "Insufficient balance"}],
+        })
+        callback = MagicMock()
+        trader._execute_order({
+            "request": {"id": "e1", "type": "buy", "price": 50000, "amount": 0.1},
+            "callback": callback,
+        })
+        callback.assert_called_once_with("error!")
+        self.assertNotIn("e1", trader.order_map)
+
+    def test_cancel_type_request_delegates_to_cancel_request(self):
+        trader = self._trader()
+        trader.cancel_request = MagicMock()
+        trader._execute_order({
+            "request": {"id": "c1", "type": "cancel", "price": 0, "amount": 0},
+            "callback": MagicMock(),
+        })
+        trader.cancel_request.assert_called_once_with("c1")
