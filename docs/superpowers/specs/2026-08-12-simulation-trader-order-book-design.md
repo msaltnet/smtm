@@ -1,7 +1,7 @@
 # SimulationTrader 가상 주문장 및 JptController 제거 설계
 
 - 작성일: 2026-08-12
-- 상태: **사용자 리뷰 대기**
+- 상태: **승인됨**
 - 관련 파일: `smtm/trader/simulation_trader.py`, `smtm/trading_operator.py`,
   `smtm/strategy/strategy.py`, `smtm/strategy/strategy_bnh.py`,
   `smtm/strategy/strategy_rsi.py`, `smtm/strategy/strategy_sma.py`,
@@ -312,10 +312,15 @@ BNH, RSI, SMA, LLM 전략은 체결 결과에 `fee`가 있으면 그 값을 사�
 - `docs/wiki/SMTM_프로젝트_소개.md`
 - `docs/wiki/architecture.md`
 - `docs/wiki/how-to-setup-and-run.md`
+- `docs/smtm_class.puml`
+- `docs/smtm_component.puml`
+- `docs/TODO.md`
 
 `notebook/` 디렉터리의 개별 모듈 실험 자료는 전체 시스템 Controller와 다른 용도이므로 유지한다.
 과거 구현 의사결정을 기록한 `docs/superpowers/specs/`, `docs/superpowers/plans/`의 기존 문서는
-역사 자료이므로 소급 수정하지 않는다.
+역사 자료이므로 소급 수정하지 않는다. `docs/claw-branch-review.md`와 release notes도 특정 시점의
+기록이므로 그대로 유지한다. `docs/smtm_class.png`는 현재 PlantUML 원본과 이미 불일치하는 생성
+산출물이므로 삭제하고, 아키텍처 문서는 갱신된 `.puml` 원본을 기준으로 안내한다.
 
 ## 12. 문서화
 
