@@ -713,6 +713,35 @@ class SimulationTraderConditionalLifecycleTest(unittest.TestCase):
         ])
         self.assertEqual(trader.assets["BTC"], (50000, 1))
 
+    def test_quote_processing_does_not_evaluate_reentrant_order_in_other_currency(self):
+        trader = SimulationTrader(budget=0, currency="BTC")
+        trader.assets["BTC"] = (50000, 2)
+        trader.assets["ETH"] = (3000, 1)
+        replacement_results = []
+
+        def replace_second_after_first_fills(result):
+            if result["state"] == "done" and result["msg"] == "success":
+                trader.cancel_request("second")
+                replacement = self._conditional(
+                    "second", "stop_loss", trigger=47000,
+                )
+                replacement["currency"] = "ETH"
+                trader.send_request([replacement], replacement_results.append)
+
+        trader.send_request([
+            self._conditional("first", "stop_loss", trigger=47000),
+        ], replace_second_after_first_fills)
+        trader.send_request([
+            self._conditional("second", "stop_loss", trigger=47000),
+        ], lambda _: None)
+
+        trader.update_quote("BTC", 47000)
+
+        self.assertEqual(replacement_results[0]["state"], "requested")
+        self.assertEqual(trader.pending_orders["second"]["currency"], "ETH")
+        self.assertEqual(trader.assets["ETH"], (3000, 1))
+        self.assertEqual(trader.balance, 47000)
+
     def test_history_contains_only_terminal_results(self):
         trader = self._holding_trader()
         results = []

@@ -309,7 +309,8 @@ class SimulationTrader(Trader):
         ]
         for request_id in pending_ids:
             entry = self.pending_orders.get(request_id)
-            if entry is not None and self._pending_fires(entry["request"], quote):
+            if entry is not None and entry["currency"] == currency and \
+                    self._pending_fires(entry["request"], quote):
                 self._fill_pending(request_id, quote)
 
     def _pending_fires(self, request, quote):
