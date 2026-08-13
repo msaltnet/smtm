@@ -335,6 +335,22 @@ class SimulationTraderPrecisionTest(unittest.TestCase):
         self.assertEqual(trader.assets, {})
         self.assertEqual(len(trader.order_history), 1)
 
+    def test_one_micro_unit_market_buy_is_accepted(self):
+        trader = SimulationTrader(budget=1, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+
+        trader.send_request([{
+            "id": "one-micro", "type": "buy", "price": 1,
+            "amount": 0.000001, "ord_type": "market",
+        }], results.append)
+
+        self.assertEqual(results[0]["state"], "done")
+        self.assertEqual(results[0]["amount"], 0.000001)
+        self.assertEqual(results[0]["fee"], 0)
+        self.assertEqual(trader.assets["BTC"], (50000, 0.000001))
+        self.assertEqual(trader.balance, 0.95)
+
 
 class TraderFactoryPaperFlagTest(unittest.TestCase):
     def test_paper_flag_returns_simulation_trader(self):
