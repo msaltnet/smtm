@@ -245,6 +245,36 @@ class TradingOperatorTickTests(unittest.TestCase):
         self.assertEqual(monitor.trade_result_log[-1]["result"]["state"], "done")
         self.assertEqual(operator.safety_guard.daily_trade_count, 0)
 
+    def test_invalid_terminal_amounts_are_logged_without_consuming_daily_quota(self):
+        for amount in (True, float("nan"), float("inf"), float("-inf")):
+            with self.subTest(amount=amount):
+                operator, _, _, monitor = self._make()
+                strategy = MagicMock()
+                operator.strategy = strategy
+                callback_result = {
+                    "type": "buy", "price": 50000, "amount": amount,
+                    "msg": "success", "state": "done",
+                }
+                callback_trader = MagicMock(
+                    spec=["send_request", "cancel_request", "cancel_all_requests",
+                          "get_account_info"]
+                )
+
+                def send_request(requests, callback):
+                    callback_result["request"] = requests[0]
+                    callback(callback_result)
+
+                callback_trader.send_request.side_effect = send_request
+                operator.trader = callback_trader
+                operator._send_requests([{
+                    "id": "invalid-fill", "type": "buy", "price": 50000,
+                    "amount": 0.5, "date_time": "2026-07-03T12:00:00",
+                }])
+
+                strategy.update_result.assert_called_once_with(callback_result)
+                self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+                self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
 
 class TradingOperatorLifecycleTests(unittest.TestCase):
     def tearDown(self):

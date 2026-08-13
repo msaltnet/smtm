@@ -119,6 +119,9 @@ class TradingOperator:
         self.analyzer.put_requests(allowed)
 
     def _is_positive_finite_amount(self, amount):
+        if isinstance(amount, bool):
+            self.logger.warning("Ignoring terminal result with invalid amount: %r", amount)
+            return False
         try:
             numeric_amount = float(amount or 0)
         except (TypeError, ValueError, OverflowError):
