@@ -75,6 +75,8 @@ class SimulationTrader(Trader):
 
     @staticmethod
     def _positive_finite(value):
+        if isinstance(value, bool):
+            return None
         try:
             number = float(value)
         except (TypeError, ValueError, OverflowError):

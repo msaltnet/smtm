@@ -235,7 +235,7 @@ class SimulationTraderValidationTest(unittest.TestCase):
                 self._assert_rejected(request, "잘못된 주문 ID")
 
     def test_rejects_nonpositive_or_nonfinite_amount(self):
-        for amount in (0, -1, float("nan"), float("inf")):
+        for amount in (0, -1, float("nan"), float("inf"), True):
             with self.subTest(amount=amount):
                 self._assert_rejected({
                     "id": "amount", "type": "buy", "price": 1,
@@ -243,7 +243,7 @@ class SimulationTraderValidationTest(unittest.TestCase):
                 }, "잘못된 수량")
 
     def test_rejects_nonpositive_or_nonfinite_limit_price(self):
-        for price in (0, -1, float("nan"), float("inf")):
+        for price in (0, -1, float("nan"), float("inf"), True):
             with self.subTest(price=price):
                 self._assert_rejected({
                     "id": "price", "type": "buy", "price": price,
@@ -251,7 +251,7 @@ class SimulationTraderValidationTest(unittest.TestCase):
                 }, "잘못된 가격")
 
     def test_rejects_nonpositive_or_nonfinite_conditional_trigger(self):
-        for trigger in (0, -1, float("nan"), float("inf")):
+        for trigger in (0, -1, float("nan"), float("inf"), True):
             with self.subTest(trigger=trigger):
                 self._assert_rejected({
                     "id": "trigger", "type": "sell", "price": 0,
@@ -298,6 +298,22 @@ class SimulationTraderValidationTest(unittest.TestCase):
         }], result.append)
         self.assertEqual(result[0]["fee"], 0)
         self.assertEqual(trader.balance, 99500)
+
+    def test_terminal_history_keeps_independent_request_copy(self):
+        request = {
+            "id": "copy", "type": "buy", "price": 1, "amount": 0.01,
+            "ord_type": "market", "metadata": {"marker": "original"},
+        }
+        results = []
+        self.trader.send_request([request], results.append)
+
+        request["metadata"]["marker"] = "mutated request"
+        results[0]["request"]["metadata"]["marker"] = "mutated callback"
+
+        self.assertEqual(
+            self.trader.order_history[0]["request"]["metadata"]["marker"],
+            "original",
+        )
 
 
 class SimulationTraderConditionalTest(unittest.TestCase):
