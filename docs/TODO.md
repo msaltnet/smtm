@@ -36,7 +36,7 @@
 | `docs/wiki/how-to-test.md` | 테스트 분류(unit / e2e / integration)와 실행 명령이 현재와 맞는지 |
 
 `docs/wiki/architecture.md`의 인터페이스 레이어 표는 `TelegramController` 전용으로 갱신했습니다.
-`docs/smtm_class.png`는 저장소 안에서 재현할 수 없는 생성 이미지이므로 제거했습니다. 다이어그램은 `.puml` 소스를 기준으로 관리합니다.
+`docs/smtm_class.png`와 `docs/smtm_component.png`는 저장소 안에서 렌더링을 재현할 수 없는 오래된 생성 이미지이므로 제거했습니다. 현재 상세 아키텍처는 `docs/public/architecture.md`에서 관리합니다.
 
 ---
 

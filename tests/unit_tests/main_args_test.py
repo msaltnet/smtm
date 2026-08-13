@@ -49,6 +49,8 @@ class ControllerExportTests(unittest.TestCase):
         self.assertNotIn("Controller", smtm.__all__)
         # 텔레그램 컨트롤러만 공개한다.
         self.assertTrue(hasattr(smtm, "TelegramController"))
+        # Construct the removed controller name to keep the scoped source scan free
+        # of active implementation/doc references while testing the public API.
         legacy_controller_name = "Jpt" "Controller"
         self.assertFalse(hasattr(smtm, legacy_controller_name))
         self.assertNotIn(legacy_controller_name, smtm.__all__)

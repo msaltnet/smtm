@@ -316,7 +316,7 @@ operator = SystemOperator(client, config)
 
 ## 9. 내부 상세 문서
 
-- 클래스 다이어그램: `docs/smtm_class.puml` (canonical source)
-- 컴포넌트 다이어그램: `docs/smtm_component.puml` (canonical source)
+- 레거시 클래스 다이어그램 참고 소스: `docs/smtm_class.puml` — 현재 아키텍처는 이 문서의 서술을 기준으로 합니다.
+- 레거시 컴포넌트 다이어그램 참고 소스: `docs/smtm_component.puml` — 현재 아키텍처는 이 문서의 서술을 기준으로 합니다.
 - 시퀀스 다이어그램(한/영): `docs/smtm_sequence*.puml` (canonical sources)
 - 위키: `docs/wiki/architecture.md`, `docs/wiki/how-to-setup-and-run.md`, `docs/wiki/tips.md`
