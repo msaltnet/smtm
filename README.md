@@ -136,7 +136,7 @@ Virtual-trading limitations:
 
 - Virtual balances, pending orders, and order history live only in memory and disappear on restart.
 - Pending-order conditions are evaluated only when the latest `primary_candle` closing quote arrives; an intrabar touch and reversal can go undetected.
-- Virtual fees are zero, and the simulator does not model slippage, partial fills, order-book depth, exchange minimum-order rules, tick sizes, or quantity precision.
+- Virtual fees are zero, and the simulator does not model slippage, partial fills, order-book depth, or exchange-specific minimum-order rules, tick sizes, or quantity precision.
 - Pending buys reserve cash; pending sells, stop-losses, and take-profits reserve the asset.
 - OCO is unavailable, so a stop-loss and take-profit cannot both be placed against the same entire position. Real Traders reject stop-loss and take-profit orders because those order types are out of scope.
 
