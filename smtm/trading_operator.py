@@ -106,7 +106,13 @@ class TradingOperator:
             if result.get("state") == "requested":
                 return
             self.analyzer.put_result(result)
-            if result.get("state") == "done" and result.get("type") in ("buy", "sell"):
+            is_fill = (
+                result.get("state") == "done"
+                and result.get("msg") == "success"
+                and result.get("type") in ("buy", "sell")
+                and float(result.get("amount") or 0) > 0
+            )
+            if is_fill:
                 self.safety_guard.record_trade(result)
 
         self.trader.send_request(allowed, callback)
