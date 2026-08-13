@@ -24,6 +24,7 @@ class SimulationTrader(Trader):
         self.assets = {}
         self.quotes = {}
         self.order_history = []
+        self.pending_orders = {}
         self.pending_conditionals = []  # [{"request":..., "callback":...}]
 
     def update_quote(self, currency: str, price: float) -> None:
@@ -34,6 +35,7 @@ class SimulationTrader(Trader):
                                 price)
             return
         self.quotes[currency] = valid_price
+        self._check_pending_orders(currency, valid_price)
         self._check_conditionals(currency, valid_price)
 
     def send_request(
@@ -53,8 +55,10 @@ class SimulationTrader(Trader):
             if order_spec.is_conditional(request):
                 self._register_conditional(request, callback)
                 continue
-            result = self._execute_request(request)
-            self._finish(result, callback)
+            if ord_type == order_spec.MARKET:
+                self._submit_market(request, callback)
+            elif ord_type == order_spec.LIMIT:
+                self._submit_limit(request, callback)
 
     def cancel_request(self, request_id: str) -> None:
         self.pending_conditionals = [
@@ -68,8 +72,24 @@ class SimulationTrader(Trader):
     def get_account_info(self) -> Dict[str, Any]:
         return {
             "balance": self.balance,
-            "asset": dict(self.assets),
+            "available_balance": self._available_balance(),
+            "reserved_balance": self._reserved_balance(),
+            "asset": copy.deepcopy(self.assets),
+            "available_asset": {
+                currency: self._available_asset(currency)
+                for currency in self.assets
+            },
+            "reserved_asset": self._reserved_assets(),
             "quote": dict(self.quotes),
+            "open_orders": [
+                {
+                    "request": copy.deepcopy(entry["request"]),
+                    "state": "requested",
+                    "reserved_balance": entry["reserved_balance"],
+                    "reserved_asset": entry["reserved_asset"],
+                }
+                for entry in self.pending_orders.values()
+            ],
             "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
         }
 
@@ -122,6 +142,8 @@ class SimulationTrader(Trader):
         request_id = request.get("id")
         if not isinstance(request_id, str) or not request_id.strip():
             return "잘못된 주문 ID"
+        if request_id in self.pending_orders:
+            return "중복 주문 ID"
 
         order_type = request.get("type")
         if order_type not in {"buy", "sell"}:
@@ -141,27 +163,125 @@ class SimulationTrader(Trader):
                 return "매도 조건 주문만 지원"
         return None
 
-    def _execute_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    def _reserved_balance(self):
+        return sum(entry["reserved_balance"] for entry in self.pending_orders.values())
+
+    def _reserved_assets(self):
+        reserved = {}
+        for entry in self.pending_orders.values():
+            amount = entry["reserved_asset"]
+            if amount:
+                currency = entry["currency"]
+                reserved[currency] = reserved.get(currency, 0) + amount
+        return reserved
+
+    def _available_balance(self):
+        return self.balance - self._reserved_balance()
+
+    def _available_asset(self, currency):
+        _, amount = self.assets.get(currency, (0, 0))
+        return amount - self._reserved_assets().get(currency, 0)
+
+    def _queue(self, request, callback, reserved_balance=0, reserved_asset=0):
+        self.pending_orders[request["id"]] = {
+            "request": copy.deepcopy(request),
+            "callback": callback,
+            "currency": request.get("currency", self.currency),
+            "reserved_balance": reserved_balance,
+            "reserved_asset": reserved_asset,
+        }
+        callback(self._result(
+            request, "requested", "success", request.get("price", 0),
+            request.get("amount", 0),
+        ))
+
+    def _submit_market(self, request, callback):
         currency = request.get("currency", self.currency)
         fill_price = self._positive_finite(self.quotes.get(currency))
         if fill_price is None:
-            return self._result(request, "failed", "시세 없음")
+            return self._reject(request, callback, "시세 없음")
+        return self._finish(self._fill(request, callback, fill_price), callback)
 
+    def _limit_fires(self, request, quote):
+        limit_price = self._positive_finite(request.get("price"))
+        if limit_price is None:
+            return False
+        if request.get("type") == "buy":
+            return quote <= limit_price
+        if request.get("type") == "sell":
+            return quote >= limit_price
+        return False
+
+    def _submit_limit(self, request, callback):
+        currency = request.get("currency", self.currency)
+        quote = self._positive_finite(self.quotes.get(currency))
+        if quote is not None and self._limit_fires(request, quote):
+            return self._finish(self._fill(request, callback, quote), callback)
+
+        amount = self._positive_finite(request.get("amount"))
+        if request.get("type") == "buy":
+            reservation = self._positive_finite(request.get("price")) * amount
+            if reservation > self._available_balance():
+                return self._reject(request, callback, "잔고 부족")
+            return self._queue(request, callback, reserved_balance=reservation)
+        if amount > self._available_asset(currency):
+            return self._reject(request, callback, "보유 수량 부족")
+        return self._queue(request, callback, reserved_asset=amount)
+
+    def _fill(self, request, callback, fill_price):
+        currency = request.get("currency", self.currency)
         amount = self._positive_finite(request.get("amount"))
         if amount is None:
             return self._result(request, "failed", "잘못된 수량")
 
-        result = self._result(request, "done", "success", fill_price, amount)
+        fee = fill_price * amount * self.commission_ratio
+        result = self._result(request, "done", "success", fill_price, amount, fee)
 
         if request.get("type") == "buy":
-            self._buy(currency, fill_price, amount, result)
+            trade_value = fill_price * amount
+            if trade_value + fee > self._available_balance():
+                return self._fail(result, "잔고 부족")
+
+            old_price, old_amount = self.assets.get(currency, (0, 0))
+            new_amount = round(old_amount + amount, 6)
+            new_value = old_price * old_amount + trade_value
+            avg_price = round(new_value / new_amount, 6) if new_amount else 0
+            self.balance -= trade_value + fee
+            self.assets[currency] = (avg_price, new_amount)
         elif request.get("type") == "sell":
-            self._sell(currency, fill_price, amount, result)
+            old_price, old_amount = self.assets.get(currency, (0, 0))
+            if amount > self._available_asset(currency):
+                return self._fail(result, "보유 수량 부족")
+
+            trade_value = fill_price * amount
+            new_amount = round(old_amount - amount, 6)
+            self.balance += trade_value - fee
+            if new_amount <= 0:
+                self.assets.pop(currency, None)
+            else:
+                self.assets[currency] = (old_price, new_amount)
         else:
-            self._fail(result, "지원하지 않는 주문 유형")
+            return self._fail(result, "지원하지 않는 주문 유형")
 
         result["balance"] = self.balance
         return result
+
+    def _check_pending_orders(self, currency, quote):
+        pending_ids = [
+            request_id for request_id, entry in self.pending_orders.items()
+            if entry["currency"] == currency
+        ]
+        for request_id in pending_ids:
+            entry = self.pending_orders.get(request_id)
+            if entry is not None and self._limit_fires(entry["request"], quote):
+                self._fill_pending(request_id, quote)
+
+    def _fill_pending(self, request_id, quote):
+        entry = self.pending_orders.pop(request_id, None)
+        if entry is not None:
+            result = self._fill(entry["request"], entry["callback"], quote)
+            return self._finish(result, entry["callback"])
+        return None
 
     def _buy(self, currency: str, price: float, amount: float, result: Dict[str, Any]):
         trade_value = price * amount

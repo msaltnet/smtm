@@ -149,6 +149,136 @@ class SimulationTraderAccountTest(unittest.TestCase):
         self.assertEqual(trader.order_history, [])
 
 
+class SimulationTraderLimitOrderTest(unittest.TestCase):
+    def _request(self, request_id, side, price, amount):
+        return {
+            "id": request_id,
+            "type": side,
+            "price": price,
+            "amount": amount,
+            "ord_type": "limit",
+        }
+
+    def test_marketable_limit_buy_fills_at_quote_with_price_improvement(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+
+        trader.send_request([
+            self._request("buy-now", "buy", 55000, 1),
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "done")
+        self.assertEqual(results[0]["price"], 50000)
+        self.assertEqual(trader.balance, 50000)
+
+    def test_nonmarketable_limit_buy_reserves_balance_and_snapshot_is_defensive(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+        trader.send_request([
+            self._request("buy-later", "buy", 40000, 2),
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "requested")
+        self.assertEqual(trader.balance, 100000)
+        account = trader.get_account_info()
+        self.assertEqual(account["reserved_balance"], 80000)
+        self.assertEqual(account["available_balance"], 20000)
+        self.assertEqual(len(account["open_orders"]), 1)
+        account["open_orders"][0]["request"]["price"] = 1
+        account["quote"]["BTC"] = 1
+        fresh_account = trader.get_account_info()
+        self.assertEqual(fresh_account["open_orders"][0]["request"]["price"], 40000)
+        self.assertEqual(fresh_account["quote"]["BTC"], 50000)
+
+        trader.update_quote("BTC", 39000)
+
+        self.assertEqual(results[-1]["state"], "done")
+        self.assertEqual(results[-1]["price"], 39000)
+        self.assertEqual(trader.balance, 22000)
+        self.assertEqual(trader.get_account_info()["reserved_balance"], 0)
+
+    def test_nonmarketable_limit_sell_reserves_asset_until_fill(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        trader.assets["BTC"] = (50000, 2)
+        trader.update_quote("BTC", 50000)
+        results = []
+        trader.send_request([
+            self._request("sell-later", "sell", 60000, 1.5),
+        ], results.append)
+
+        account = trader.get_account_info()
+        self.assertEqual(account["reserved_asset"], {"BTC": 1.5})
+        self.assertEqual(account["available_asset"], {"BTC": 0.5})
+
+        trader.update_quote("BTC", 61000)
+
+        self.assertEqual(results[-1]["state"], "done")
+        self.assertEqual(results[-1]["price"], 61000)
+        self.assertEqual(trader.assets["BTC"], (50000, 0.5))
+
+    def test_limit_reservations_prevent_double_spend(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        first_results = []
+        second_results = []
+        trader.send_request([
+            self._request("first", "buy", 40000, 2),
+        ], first_results.append)
+        trader.send_request([
+            self._request("second", "buy", 30000, 1),
+        ], second_results.append)
+
+        self.assertEqual(first_results[0]["state"], "requested")
+        self.assertEqual(second_results[0]["state"], "failed")
+        self.assertEqual(second_results[0]["msg"], "잔고 부족")
+
+    def test_limit_can_queue_before_first_quote_then_fill(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        results = []
+        trader.send_request([
+            self._request("before-quote", "buy", 50000, 1),
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "requested")
+        trader.update_quote("BTC", 49000)
+        self.assertEqual(results[-1]["state"], "done")
+        self.assertEqual(results[-1]["price"], 49000)
+
+    def test_duplicate_pending_limit_id_is_rejected(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+        trader.send_request([
+            self._request("duplicate", "buy", 40000, 1),
+        ], results.append)
+        trader.send_request([
+            self._request("duplicate", "buy", 30000, 1),
+        ], results.append)
+
+        self.assertEqual(results[0]["state"], "requested")
+        self.assertEqual(results[1]["state"], "failed")
+        self.assertEqual(results[1]["msg"], "중복 주문 ID")
+
+    def test_account_info_includes_order_book_contract_keys(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+
+        account = trader.get_account_info()
+
+        self.assertEqual(set(account), {
+            "balance", "available_balance", "reserved_balance", "asset",
+            "available_asset", "reserved_asset", "quote", "open_orders",
+            "date_time",
+        })
+        self.assertEqual(account["available_balance"], 100000)
+        self.assertEqual(account["reserved_balance"], 0)
+        self.assertEqual(account["available_asset"], {})
+        self.assertEqual(account["reserved_asset"], {})
+        self.assertEqual(account["open_orders"], [])
+
+
 class TraderFactoryPaperFlagTest(unittest.TestCase):
     def test_paper_flag_returns_simulation_trader(self):
         trader = TraderFactory.create("UPB", budget=500000, currency="BTC", paper=True)
