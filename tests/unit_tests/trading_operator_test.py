@@ -201,6 +201,50 @@ class TradingOperatorTickTests(unittest.TestCase):
             "date_time": "2026-07-03T12:00:00",
         }])
 
+    def test_malformed_terminal_amount_is_logged_without_consuming_daily_quota(self):
+        operator, _, _, monitor = self._make()
+        strategy = MagicMock()
+        operator.strategy = strategy
+        malformed_trader = MagicMock(
+            spec=["send_request", "cancel_request", "cancel_all_requests",
+                  "get_account_info"]
+        )
+        malformed_trader.send_request.side_effect = lambda requests, callback: callback({
+            "request": requests[0], "type": "buy", "price": 50000,
+            "amount": "not-a-number", "msg": "success", "state": "done",
+        })
+        operator.trader = malformed_trader
+
+        operator._send_requests([{
+            "id": "malformed-fill", "type": "buy", "price": 50000,
+            "amount": 0.5, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        self.assertEqual(monitor.trade_result_log[-1]["result"]["state"], "done")
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+        strategy.update_result.assert_called_once()
+
+    def test_zero_amount_terminal_success_does_not_consume_daily_quota(self):
+        operator, _, _, monitor = self._make()
+        operator.strategy = MagicMock()
+        zero_fill_trader = MagicMock(
+            spec=["send_request", "cancel_request", "cancel_all_requests",
+                  "get_account_info"]
+        )
+        zero_fill_trader.send_request.side_effect = lambda requests, callback: callback({
+            "request": requests[0], "type": "buy", "price": 50000,
+            "amount": 0, "msg": "success", "state": "done",
+        })
+        operator.trader = zero_fill_trader
+
+        operator._send_requests([{
+            "id": "zero-fill", "type": "buy", "price": 50000,
+            "amount": 0.5, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        self.assertEqual(monitor.trade_result_log[-1]["result"]["state"], "done")
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
 
 class TradingOperatorLifecycleTests(unittest.TestCase):
     def tearDown(self):

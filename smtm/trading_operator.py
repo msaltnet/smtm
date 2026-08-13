@@ -1,3 +1,4 @@
+import math
 import threading
 from .log_manager import LogManager
 from .worker import Worker
@@ -110,13 +111,23 @@ class TradingOperator:
                 result.get("state") == "done"
                 and result.get("msg") == "success"
                 and result.get("type") in ("buy", "sell")
-                and float(result.get("amount") or 0) > 0
             )
-            if is_fill:
+            if is_fill and self._is_positive_finite_amount(result.get("amount")):
                 self.safety_guard.record_trade(result)
 
         self.trader.send_request(allowed, callback)
         self.analyzer.put_requests(allowed)
+
+    def _is_positive_finite_amount(self, amount):
+        try:
+            numeric_amount = float(amount or 0)
+        except (TypeError, ValueError, OverflowError):
+            self.logger.warning("Ignoring terminal result with invalid amount: %r", amount)
+            return False
+        if not math.isfinite(numeric_amount):
+            self.logger.warning("Ignoring terminal result with invalid amount: %r", amount)
+            return False
+        return numeric_amount > 0
 
     def _sync_trader_quote(self, market_data):
         """가상매매 트레이더에 최신 종가 주입 (덕 타이핑 — 실거래 트레이더는 no-op)"""
