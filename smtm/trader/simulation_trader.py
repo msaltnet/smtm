@@ -27,7 +27,6 @@ class SimulationTrader(Trader):
         self.quotes = {}
         self.order_history = []
         self.pending_orders = {}
-        self.pending_conditionals = []  # [{"request":..., "callback":...}]
 
     def update_quote(self, currency: str, price: float) -> None:
         valid_price = self._positive_finite(price)
@@ -38,7 +37,6 @@ class SimulationTrader(Trader):
             return
         self.quotes[currency] = valid_price
         self._check_pending_orders(currency, valid_price)
-        self._check_conditionals(currency, valid_price)
 
     def send_request(
         self,
@@ -54,22 +52,24 @@ class SimulationTrader(Trader):
             if validation_error:
                 self._reject(request, callback, validation_error)
                 continue
-            if order_spec.is_conditional(request):
-                self._register_conditional(request, callback)
-                continue
             if ord_type == order_spec.MARKET:
                 self._submit_market(request, callback)
             elif ord_type == order_spec.LIMIT:
                 self._submit_limit(request, callback)
+            elif ord_type in {order_spec.STOP_LOSS, order_spec.TAKE_PROFIT}:
+                self._submit_conditional(request, callback)
 
     def cancel_request(self, request_id: str) -> None:
-        self.pending_conditionals = [
-            e for e in self.pending_conditionals
-            if e["request"].get("id") != request_id
-        ]
+        if not isinstance(request_id, str):
+            return
+        entry = self.pending_orders.pop(request_id, None)
+        if entry is not None:
+            result = self._result(entry["request"], "done", "canceled")
+            self._finish(result, entry["callback"])
 
     def cancel_all_requests(self) -> None:
-        return
+        for request_id in list(self.pending_orders):
+            self.cancel_request(request_id)
 
     def get_account_info(self) -> Dict[str, Any]:
         return {
@@ -247,6 +247,17 @@ class SimulationTrader(Trader):
             return self._reject(request, callback, "보유 수량 부족")
         return self._queue(request, callback, reserved_asset=amount)
 
+    def _submit_conditional(self, request, callback):
+        currency = request.get("currency", self.currency)
+        quote = self._positive_finite(self.quotes.get(currency))
+        if quote is not None and self._conditional_fires(request, quote):
+            return self._finish(self._fill(request, callback, quote), callback)
+
+        amount = self._valid_amount(request.get("amount"))
+        if not self._resource_available(amount, self._available_asset(currency)):
+            return self._reject(request, callback, "보유 수량 부족")
+        return self._queue(request, callback, reserved_asset=amount)
+
     def _fill(self, request, callback, fill_price):
         currency = request.get("currency", self.currency)
         amount = self._valid_amount(request.get("amount"))
@@ -298,8 +309,24 @@ class SimulationTrader(Trader):
         ]
         for request_id in pending_ids:
             entry = self.pending_orders.get(request_id)
-            if entry is not None and self._limit_fires(entry["request"], quote):
+            if entry is not None and self._pending_fires(entry["request"], quote):
                 self._fill_pending(request_id, quote)
+
+    def _pending_fires(self, request, quote):
+        if order_spec.get_ord_type(request) == order_spec.LIMIT:
+            return self._limit_fires(request, quote)
+        return self._conditional_fires(request, quote)
+
+    def _conditional_fires(self, request, quote):
+        trigger = self._positive_finite(request.get("trigger"))
+        if trigger is None:
+            return False
+        ord_type = order_spec.get_ord_type(request)
+        if ord_type == order_spec.STOP_LOSS:
+            return quote <= trigger
+        if ord_type == order_spec.TAKE_PROFIT:
+            return quote >= trigger
+        return False
 
     def _fill_pending(self, request_id, quote):
         entry = self.pending_orders.pop(request_id, None)
@@ -308,36 +335,6 @@ class SimulationTrader(Trader):
             return self._finish(result, entry["callback"])
         return None
 
-    def _buy(self, currency: str, price: float, amount: float, result: Dict[str, Any]):
-        trade_value = price * amount
-        total_cost = trade_value
-        if total_cost > self.balance:
-            self._fail(result, "잔고 부족")
-            return
-
-        old_price, old_amount = self.assets.get(currency, (0, 0))
-        new_amount = round(old_amount + amount, 6)
-        new_value = old_price * old_amount + trade_value
-        avg_price = round(new_value / new_amount, 6) if new_amount else 0
-
-        self.balance -= total_cost
-        self.assets[currency] = (avg_price, new_amount)
-
-    def _sell(self, currency: str, price: float, amount: float, result: Dict[str, Any]):
-        old_price, old_amount = self.assets.get(currency, (0, 0))
-        if old_amount < amount:
-            self._fail(result, "보유 수량 부족")
-            return
-
-        trade_value = price * amount
-        new_amount = round(old_amount - amount, 6)
-
-        self.balance += trade_value
-        if new_amount <= 0:
-            self.assets.pop(currency, None)
-        else:
-            self.assets[currency] = (old_price, new_amount)
-
     @staticmethod
     def _fail(result: Dict[str, Any], message: str) -> Dict[str, Any]:
         result["state"] = "failed"
@@ -345,50 +342,4 @@ class SimulationTrader(Trader):
         result["price"] = 0
         result["amount"] = 0
         result["fee"] = 0
-        return result
-
-    def _register_conditional(self, request, callback):
-        self.pending_conditionals.append({
-            "request": copy.deepcopy(request), "callback": callback,
-        })
-        callback(self._result(
-            request, "requested", "success", request.get("price", 0),
-            request.get("amount", 0),
-        ))
-
-    def _condition_fired(self, request, price):
-        ord_type = order_spec.get_ord_type(request)
-        trigger = self._positive_finite(request.get("trigger"))
-        if trigger is None:
-            return False
-        if ord_type == order_spec.STOP_LOSS:
-            return price <= trigger
-        if ord_type == order_spec.TAKE_PROFIT:
-            return price >= trigger
-        return False
-
-    def _check_conditionals(self, currency, price):
-        remaining = []
-        for entry in self.pending_conditionals:
-            request = entry["request"]
-            if request.get("currency", self.currency) == currency and \
-                    self._condition_fired(request, price):
-                result = self._fill_conditional(request, currency, price)
-                self._finish(result, entry["callback"])
-            else:
-                remaining.append(entry)
-        self.pending_conditionals = remaining
-
-    def _fill_conditional(self, request, currency, price):
-        amount = self._positive_finite(request.get("amount"))
-        if amount is None:
-            return self._result(request, "failed", "잘못된 수량")
-        result = self._result(request, "done", "success", price, amount)
-        if request.get("type") == "sell":
-            self._sell(currency, price, amount, result)
-        elif request.get("type") == "buy":
-            self._buy(currency, price, amount, result)
-        else:
-            return self._fail(result, "지원하지 않는 주문 유형")
-        result["balance"] = self.balance
         return result

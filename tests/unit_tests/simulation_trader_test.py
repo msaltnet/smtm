@@ -478,6 +478,7 @@ class SimulationTraderValidationTest(unittest.TestCase):
         self.assertEqual(trader.order_history[0]["state"], "failed")
 
     def test_invalid_quote_does_not_replace_or_evaluate_conditionals(self):
+        self.trader.assets["BTC"] = (50000, 0.01)
         results = []
         self.trader.send_request([{
             "id": "stop", "type": "sell", "price": 0, "amount": 0.01,
@@ -487,7 +488,7 @@ class SimulationTraderValidationTest(unittest.TestCase):
             with self.subTest(price=price):
                 self.trader.update_quote("BTC", price)
                 self.assertEqual(self.trader.quotes["BTC"], 50000)
-                self.assertEqual(len(self.trader.pending_conditionals), 1)
+                self.assertEqual(len(self.trader.pending_orders), 1)
                 self.assertEqual(len(results), 1)
 
     def test_commission_ratio_is_ignored_for_balance_and_results(self):
@@ -519,9 +520,8 @@ class SimulationTraderValidationTest(unittest.TestCase):
         )
 
 
-class SimulationTraderConditionalTest(unittest.TestCase):
+class SimulationTraderConditionalLifecycleTest(unittest.TestCase):
     def _holding_trader(self):
-        # BTC 1개를 50000에 보유한 상태로 세팅
         trader = SimulationTrader(budget=1000000, currency="BTC")
         trader.update_quote("BTC", 50000)
         trader.send_request([{
@@ -530,62 +530,203 @@ class SimulationTraderConditionalTest(unittest.TestCase):
         }], lambda r: None)
         return trader
 
-    def test_stop_loss_registered_returns_requested(self):
-        trader = self._holding_trader()
-        results = []
-        trader.send_request([{
-            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
-            "ord_type": "stop_loss", "trigger": 47000,
-            "date_time": "2026-07-03T12:00:00",
-        }], results.append)
-        self.assertEqual(results[0]["state"], "requested")
-        self.assertEqual(len(trader.pending_conditionals), 1)
+    @staticmethod
+    def _conditional(request_id, ord_type, amount=1.0, trigger=47000):
+        return {
+            "id": request_id,
+            "type": "sell",
+            "price": 0,
+            "amount": amount,
+            "ord_type": ord_type,
+            "trigger": trigger,
+        }
 
-    def test_stop_loss_fires_when_price_drops_to_trigger(self):
+    def test_stop_loss_and_take_profit_trigger_inclusively_at_boundary(self):
         trader = self._holding_trader()
-        results = []
-        trader.send_request([{
-            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
-            "ord_type": "stop_loss", "trigger": 47000,
-        }], results.append)
-        trader.update_quote("BTC", 47000)  # 트리거 도달
-        self.assertEqual(results[-1]["state"], "done")
-        self.assertEqual(results[-1]["type"], "sell")
-        self.assertEqual(results[-1]["price"], 47000)
-        self.assertNotIn("BTC", trader.assets)  # 전량 매도
-        self.assertEqual(len(trader.pending_conditionals), 0)
+        stop_results = []
+        trader.send_request([
+            self._conditional("stop", "stop_loss", trigger=47000),
+        ], stop_results.append)
+        trader.update_quote("BTC", 47000)
+        self.assertEqual(stop_results[-1]["state"], "done")
+        self.assertEqual(stop_results[-1]["price"], 47000)
 
-    def test_stop_loss_does_not_fire_above_trigger(self):
         trader = self._holding_trader()
-        trader.send_request([{
-            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
-            "ord_type": "stop_loss", "trigger": 47000,
-        }], lambda r: None)
-        trader.update_quote("BTC", 48000)  # 아직 트리거 위
-        self.assertEqual(len(trader.pending_conditionals), 1)
-
-    def test_take_profit_fires_when_price_rises_to_trigger(self):
-        trader = self._holding_trader()
-        results = []
-        trader.send_request([{
-            "id": "tp", "type": "sell", "price": 0, "amount": 1.0,
-            "ord_type": "take_profit", "trigger": 55000,
-        }], results.append)
+        take_results = []
+        trader.send_request([
+            self._conditional("take", "take_profit", trigger=55000),
+        ], take_results.append)
         trader.update_quote("BTC", 55000)
-        self.assertEqual(results[-1]["state"], "done")
-        self.assertEqual(results[-1]["price"], 55000)
-        self.assertEqual(len(trader.pending_conditionals), 0)
+        self.assertEqual(take_results[-1]["state"], "done")
+        self.assertEqual(take_results[-1]["price"], 55000)
 
-    def test_cancel_removes_pending_conditional(self):
+    def test_conditional_buys_are_rejected(self):
         trader = self._holding_trader()
-        trader.send_request([{
-            "id": "sl", "type": "sell", "price": 0, "amount": 1.0,
-            "ord_type": "stop_loss", "trigger": 47000,
-        }], lambda r: None)
-        trader.cancel_request("sl")
-        self.assertEqual(len(trader.pending_conditionals), 0)
-        trader.update_quote("BTC", 47000)  # 취소되었으므로 발동 안 함
-        self.assertIn("BTC", trader.assets)  # 여전히 보유 (매도 안 됨)
+        for ord_type in ("stop_loss", "take_profit"):
+            with self.subTest(ord_type=ord_type):
+                results = []
+                request = self._conditional("buy-" + ord_type, ord_type)
+                request["type"] = "buy"
+                trader.send_request([request], results.append)
+                self.assertEqual(results[0]["state"], "failed")
+                self.assertEqual(results[0]["msg"], "매도 조건 주문만 지원")
+
+    def test_conditionals_queue_before_first_quote_reserve_assets_and_fire_one(self):
+        trader = SimulationTrader(budget=0, currency="BTC")
+        trader.assets["BTC"] = (50000, 2)
+        stop_results = []
+        take_results = []
+        trader.send_request([
+            self._conditional("stop", "stop_loss", trigger=47000),
+        ], stop_results.append)
+        trader.send_request([
+            self._conditional("take", "take_profit", trigger=55000),
+        ], take_results.append)
+
+        self.assertEqual(trader.get_account_info()["reserved_asset"], {"BTC": 2})
+        self.assertEqual(list(trader.pending_orders), ["stop", "take"])
+        trader.update_quote("BTC", 47000)
+
+        self.assertEqual(stop_results[-1]["state"], "done")
+        self.assertEqual(stop_results[-1]["price"], 47000)
+        self.assertEqual(len(take_results), 1)
+        self.assertEqual(take_results[0]["state"], "requested")
+        self.assertEqual(list(trader.pending_orders), ["take"])
+        self.assertEqual(trader.get_account_info()["reserved_asset"], {"BTC": 1})
+
+    def test_conditionals_fill_immediately_when_latest_quote_already_fires(self):
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([
+            self._conditional("stop-now", "stop_loss", trigger=50000),
+        ], results.append)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["state"], "done")
+        self.assertNotIn("stop-now", trader.pending_orders)
+
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([
+            self._conditional("take-now", "take_profit", trigger=50000),
+        ], results.append)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["state"], "done")
+        self.assertNotIn("take-now", trader.pending_orders)
+
+    def test_conditionals_cannot_reserve_the_same_asset_twice(self):
+        trader = SimulationTrader(budget=0, currency="BTC")
+        trader.assets["BTC"] = (50000, 2)
+        first_results = []
+        second_results = []
+        trader.send_request([
+            self._conditional("stop", "stop_loss", amount=2),
+        ], first_results.append)
+        trader.send_request([
+            self._conditional("take", "take_profit", amount=2, trigger=55000),
+        ], second_results.append)
+        self.assertEqual(first_results[0]["state"], "requested")
+        self.assertEqual(second_results[0]["state"], "failed")
+        self.assertEqual(second_results[0]["msg"], "보유 수량 부족")
+
+    def test_cancel_request_finishes_original_callback_once_and_releases_reservation(self):
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([
+            self._conditional("stop", "stop_loss"),
+        ], results.append)
+
+        trader.cancel_request("missing")
+        trader.cancel_request([])
+        trader.cancel_request("stop")
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[-1]["state"], "done")
+        self.assertEqual(results[-1]["msg"], "canceled")
+        self.assertEqual(
+            {key: results[-1][key] for key in ("price", "amount", "fee")},
+            {"price": 0, "amount": 0, "fee": 0},
+        )
+        self.assertNotIn("stop", trader.pending_orders)
+        self.assertEqual(trader.get_account_info()["reserved_asset"], {})
+        self.assertEqual(len(trader.order_history), 2)
+        self.assertEqual(trader.order_history[-1]["msg"], "canceled")
+
+    def test_cancel_request_via_send_request_uses_pending_callback(self):
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([
+            self._conditional("stop", "stop_loss"),
+        ], results.append)
+        trader.send_request([{"id": "stop", "type": "cancel"}], lambda _: None)
+        self.assertEqual([result["msg"] for result in results], ["success", "canceled"])
+        self.assertEqual(len(trader.order_history), 2)
+
+    def test_cancel_all_cancels_in_registration_order_and_prevents_later_fill(self):
+        trader = SimulationTrader(budget=0, currency="BTC")
+        trader.assets["BTC"] = (50000, 2)
+        results = []
+        trader.send_request([
+            self._conditional("stop", "stop_loss", trigger=47000),
+        ], results.append)
+        trader.send_request([
+            self._conditional("take", "take_profit", trigger=55000),
+        ], results.append)
+
+        trader.cancel_all_requests()
+        trader.update_quote("BTC", 47000)
+
+        self.assertEqual([result["msg"] for result in results], [
+            "success", "success", "canceled", "canceled",
+        ])
+        self.assertEqual([result["request"]["id"] for result in results[-2:]], [
+            "stop", "take",
+        ])
+        self.assertEqual(trader.pending_orders, {})
+        self.assertEqual(trader.assets["BTC"], (50000, 2))
+
+    def test_quote_processing_is_ordered_and_skips_entries_canceled_by_callback(self):
+        trader = SimulationTrader(budget=0, currency="BTC")
+        trader.assets["BTC"] = (50000, 2)
+        results = []
+
+        def cancel_take_on_stop(result):
+            results.append(result)
+            if result["state"] == "done" and result["msg"] == "success":
+                trader.cancel_request("take")
+
+        trader.send_request([
+            self._conditional("stop", "stop_loss", trigger=47000),
+        ], cancel_take_on_stop)
+        trader.send_request([
+            self._conditional("take", "stop_loss", trigger=47000),
+        ], results.append)
+        trader.update_quote("BTC", 47000)
+
+        terminal_results = [
+            result for result in results if result["state"] != "requested"
+        ]
+        self.assertEqual([result["request"]["id"] for result in terminal_results], [
+            "stop", "take",
+        ])
+        self.assertEqual([result["msg"] for result in terminal_results], [
+            "success", "canceled",
+        ])
+        self.assertEqual(trader.assets["BTC"], (50000, 1))
+
+    def test_history_contains_only_terminal_results(self):
+        trader = self._holding_trader()
+        results = []
+        trader.send_request([
+            self._conditional("stop", "stop_loss"),
+        ], results.append)
+        self.assertEqual(results[0]["state"], "requested")
+        self.assertEqual(trader.order_history, [
+            result for result in trader.order_history if result["state"] != "requested"
+        ])
+        trader.cancel_request("stop")
+        self.assertEqual([result["state"] for result in trader.order_history], [
+            "done", "done",
+        ])
 
 
 if __name__ == "__main__":
