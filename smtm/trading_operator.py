@@ -103,7 +103,12 @@ class TradingOperator:
             if not isinstance(result, dict):
                 self.logger.error(f"request fail: {result}")
                 return
-            self.strategy.update_result(result)
+            strategy_updated = True
+            try:
+                self.strategy.update_result(result)
+            except Exception as err:
+                strategy_updated = False
+                self.logger.error(f"strategy result update error: {err}")
             if result.get("state") == "requested":
                 return
             self.analyzer.put_result(result)
@@ -112,25 +117,36 @@ class TradingOperator:
                 and result.get("msg") == "success"
                 and result.get("type") in ("buy", "sell")
             )
-            if is_fill and self._is_positive_finite_amount(result.get("amount")):
+            if (
+                strategy_updated
+                and is_fill
+                and self._is_positive_finite_value(result.get("amount"), "amount")
+                and self._is_positive_finite_value(result.get("price"), "price")
+            ):
                 self.safety_guard.record_trade(result)
 
         self.trader.send_request(allowed, callback)
         self.analyzer.put_requests(allowed)
 
-    def _is_positive_finite_amount(self, amount):
-        if isinstance(amount, bool):
-            self.logger.warning("Ignoring terminal result with invalid amount: %r", amount)
+    def _is_positive_finite_value(self, value, field):
+        if isinstance(value, bool):
+            self.logger.warning(
+                "Ignoring terminal result with invalid %s: %r", field, value
+            )
             return False
         try:
-            numeric_amount = float(amount or 0)
+            numeric_value = float(value)
         except (TypeError, ValueError, OverflowError):
-            self.logger.warning("Ignoring terminal result with invalid amount: %r", amount)
+            self.logger.warning(
+                "Ignoring terminal result with invalid %s: %r", field, value
+            )
             return False
-        if not math.isfinite(numeric_amount):
-            self.logger.warning("Ignoring terminal result with invalid amount: %r", amount)
+        if not math.isfinite(numeric_value) or numeric_value <= 0:
+            self.logger.warning(
+                "Ignoring terminal result with invalid %s: %r", field, value
+            )
             return False
-        return numeric_amount > 0
+        return True
 
     def _sync_trader_quote(self, market_data):
         """가상매매 트레이더에 최신 종가 주입 (덕 타이핑 — 실거래 트레이더는 no-op)"""

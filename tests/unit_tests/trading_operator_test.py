@@ -203,6 +203,56 @@ class TradingOperatorTickTests(unittest.TestCase):
             "date_time": "2026-07-03T12:00:00",
         }])
 
+    def test_missing_request_terminal_callback_is_logged_when_strategy_rejects_it(self):
+        operator, _, strategy, monitor = self._make()
+        callback_result = {
+            "type": "buy", "state": "done", "msg": "success",
+            "price": 50000, "amount": 1,
+        }
+
+        class CallbackTrader:
+            def send_request(self, requests, callback):
+                callback(callback_result)
+
+        operator.trader = CallbackTrader()
+
+        operator._send_requests([{
+            "id": "missing-request", "type": "buy", "price": 50000,
+            "amount": 1, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        self.assertEqual(len(monitor.trade_result_log), 1)
+        self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+        self.assertEqual(strategy.result, [])
+
+    def test_invalid_terminal_prices_are_logged_without_consuming_daily_quota(self):
+        for price in (float("nan"), True, float("inf"), float("-inf"), 0, -1):
+            with self.subTest(price=price):
+                operator, _, _, monitor = self._make()
+                strategy = MagicMock()
+                operator.strategy = strategy
+                callback_result = {
+                    "type": "buy", "state": "done", "msg": "success",
+                    "price": price, "amount": 1,
+                }
+
+                class CallbackTrader:
+                    def send_request(self, requests, callback):
+                        callback_result["request"] = requests[0]
+                        callback(callback_result)
+
+                operator.trader = CallbackTrader()
+                operator._send_requests([{
+                    "id": "invalid-price", "type": "buy", "price": 50000,
+                    "amount": 1, "date_time": "2026-07-03T12:00:00",
+                }])
+
+                self.assertEqual(len(monitor.trade_result_log), 1)
+                self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+                strategy.update_result.assert_called_once_with(callback_result)
+                self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
     def test_malformed_terminal_amount_is_logged_without_consuming_daily_quota(self):
         operator, _, _, monitor = self._make()
         strategy = MagicMock()
