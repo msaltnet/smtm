@@ -103,23 +103,23 @@ class TradingOperator:
             if not isinstance(result, dict):
                 self.logger.error(f"request fail: {result}")
                 return
-            strategy_updated = True
             try:
                 self.strategy.update_result(result)
             except Exception as err:
-                strategy_updated = False
                 self.logger.error(f"strategy result update error: {err}")
             if result.get("state") == "requested":
                 return
             self.analyzer.put_result(result)
+            if not isinstance(result.get("request"), dict):
+                self.logger.warning("Ignoring terminal result without a request")
+                return
             is_fill = (
                 result.get("state") == "done"
                 and result.get("msg") == "success"
                 and result.get("type") in ("buy", "sell")
             )
             if (
-                strategy_updated
-                and is_fill
+                is_fill
                 and self._is_positive_finite_value(result.get("amount"), "amount")
                 and self._is_positive_finite_value(result.get("price"), "price")
             ):

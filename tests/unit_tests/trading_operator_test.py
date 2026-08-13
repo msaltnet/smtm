@@ -226,6 +226,31 @@ class TradingOperatorTickTests(unittest.TestCase):
         self.assertEqual(operator.safety_guard.daily_trade_count, 0)
         self.assertEqual(strategy.result, [])
 
+    def test_valid_fill_consumes_daily_quota_when_strategy_result_update_fails(self):
+        operator, _, _, monitor = self._make()
+        strategy = MagicMock()
+        strategy.update_result.side_effect = RuntimeError("strategy failure")
+        operator.strategy = strategy
+        callback_result = {
+            "request": {"id": "valid"}, "type": "buy", "state": "done",
+            "msg": "success", "price": 50000, "amount": 1, "fee": 0,
+        }
+
+        class CallbackTrader:
+            def send_request(self, requests, callback):
+                callback(callback_result)
+
+        operator.trader = CallbackTrader()
+
+        operator._send_requests([{
+            "id": "valid", "type": "buy", "price": 50000,
+            "amount": 1, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        strategy.update_result.assert_called_once_with(callback_result)
+        self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertEqual(operator.safety_guard.daily_trade_count, 1)
+
     def test_invalid_terminal_prices_are_logged_without_consuming_daily_quota(self):
         for price in (float("nan"), True, float("inf"), float("-inf"), 0, -1):
             with self.subTest(price=price):
