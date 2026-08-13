@@ -16,6 +16,7 @@ class SimulationTraderBuyTest(unittest.TestCase):
                 "type": "buy",
                 "price": 1,
                 "amount": 0.01,
+                "ord_type": "market",
                 "date_time": "2026-04-26T12:00:00",
             }
         ], results.append)
@@ -88,7 +89,10 @@ class SimulationTraderSellTest(unittest.TestCase):
         trader.update_quote("BTC", 60000)
         results = []
         trader.send_request([
-            {"id": "2", "type": "sell", "price": 1, "amount": 0.01}
+            {
+                "id": "2", "type": "sell", "price": 1, "amount": 0.01,
+                "ord_type": "market",
+            }
         ], results.append)
 
         self.assertEqual(results[0]["state"], "done")
@@ -187,10 +191,110 @@ class SimulationTraderCapabilityTest(unittest.TestCase):
         trader = self._trader()
         results = []
         trader.send_request([{
-            "id": "b1", "type": "buy", "price": 1, "amount": 0.01,
+            "id": "b1", "type": "buy", "price": 50000, "amount": 0.01,
             "date_time": "2026-07-03T12:00:00",
         }], results.append)
         self.assertEqual(results[0]["state"], "done")
+
+
+class SimulationTraderValidationTest(unittest.TestCase):
+    def setUp(self):
+        self.trader = SimulationTrader(budget=100000, currency="BTC")
+        self.trader.update_quote("BTC", 50000)
+
+    def _send_one(self, request):
+        results = []
+        self.trader.send_request([request], results.append)
+        self.assertEqual(len(results), 1)
+        return results[0]
+
+    def _assert_rejected(self, request, message):
+        result = self._send_one(request)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(result["msg"], message)
+        self.assertEqual(result["fee"], 0)
+
+    def test_rejects_invalid_order_ids(self):
+        invalid_requests = [
+            ("none", {"id": None}),
+            ("missing", {}),
+            ("empty", {"id": ""}),
+            ("whitespace", {"id": "   "}),
+            ("non_string", {"id": 123}),
+        ]
+        for name, request_id in invalid_requests:
+            with self.subTest(name=name):
+                request = {
+                    "type": "buy", "price": 1, "amount": 0.01,
+                    "ord_type": "market",
+                }
+                request.update(request_id)
+                self._assert_rejected(request, "잘못된 주문 ID")
+
+    def test_rejects_nonpositive_or_nonfinite_amount(self):
+        for amount in (0, -1, float("nan"), float("inf")):
+            with self.subTest(amount=amount):
+                self._assert_rejected({
+                    "id": "amount", "type": "buy", "price": 1,
+                    "amount": amount, "ord_type": "market",
+                }, "잘못된 수량")
+
+    def test_rejects_nonpositive_or_nonfinite_limit_price(self):
+        for price in (0, -1, float("nan"), float("inf")):
+            with self.subTest(price=price):
+                self._assert_rejected({
+                    "id": "price", "type": "buy", "price": price,
+                    "amount": 0.01, "ord_type": "limit",
+                }, "잘못된 가격")
+
+    def test_rejects_nonpositive_or_nonfinite_conditional_trigger(self):
+        for trigger in (0, -1, float("nan"), float("inf")):
+            with self.subTest(trigger=trigger):
+                self._assert_rejected({
+                    "id": "trigger", "type": "sell", "price": 0,
+                    "amount": 0.01, "ord_type": "stop_loss", "trigger": trigger,
+                }, "잘못된 트리거")
+
+    def test_rejects_oco_before_other_request_details(self):
+        self._assert_rejected({"ord_type": "oco"}, "지원하지 않는 주문 유형: oco")
+
+    def test_market_buy_without_quote_is_recorded_as_terminal_failure(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        results = []
+        trader.send_request([{
+            "id": "market-no-quote", "type": "buy", "price": 0,
+            "amount": 0.01, "ord_type": "market",
+        }], results.append)
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertEqual(results[0]["msg"], "시세 없음")
+        self.assertEqual(results[0]["fee"], 0)
+        self.assertEqual(len(trader.order_history), 1)
+        self.assertEqual(trader.order_history[0]["state"], "failed")
+
+    def test_invalid_quote_does_not_replace_or_evaluate_conditionals(self):
+        results = []
+        self.trader.send_request([{
+            "id": "stop", "type": "sell", "price": 0, "amount": 0.01,
+            "ord_type": "stop_loss", "trigger": 49000,
+        }], results.append)
+        for price in (0, -1, float("nan"), float("inf")):
+            with self.subTest(price=price):
+                self.trader.update_quote("BTC", price)
+                self.assertEqual(self.trader.quotes["BTC"], 50000)
+                self.assertEqual(len(self.trader.pending_conditionals), 1)
+                self.assertEqual(len(results), 1)
+
+    def test_commission_ratio_is_ignored_for_balance_and_results(self):
+        trader = SimulationTrader(
+            budget=100000, currency="BTC", commission_ratio=0.25)
+        trader.update_quote("BTC", 50000)
+        result = []
+        trader.send_request([{
+            "id": "zero-fee", "type": "buy", "price": 1, "amount": 0.01,
+            "ord_type": "market",
+        }], result.append)
+        self.assertEqual(result[0]["fee"], 0)
+        self.assertEqual(trader.balance, 99500)
 
 
 class SimulationTraderConditionalTest(unittest.TestCase):

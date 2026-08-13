@@ -1,3 +1,5 @@
+import copy
+import math
 from datetime import datetime
 from typing import Any, Callable, Dict, List
 
@@ -25,8 +27,14 @@ class SimulationTrader(Trader):
         self.pending_conditionals = []  # [{"request":..., "callback":...}]
 
     def update_quote(self, currency: str, price: float) -> None:
-        self.quotes[currency] = float(price)
-        self._check_conditionals(currency, float(price))
+        valid_price = self._positive_finite(price)
+        if not isinstance(currency, str) or not currency.strip() or \
+                valid_price is None:
+            self.logger.warning("Ignoring invalid simulation quote: %r=%r", currency,
+                                price)
+            return
+        self.quotes[currency] = valid_price
+        self._check_conditionals(currency, valid_price)
 
     def send_request(
         self,
@@ -38,16 +46,15 @@ class SimulationTrader(Trader):
                 self.cancel_request(request.get("id"))
                 continue
             ord_type = order_spec.get_ord_type(request)
-            if ord_type not in self.SUPPORTED_ORD_TYPES:
-                callback(order_spec.make_rejected_result(
-                    request, f"unsupported ord_type: {ord_type}"))
+            validation_error = self._validate_request(request, ord_type)
+            if validation_error:
+                self._reject(request, callback, validation_error)
                 continue
             if order_spec.is_conditional(request):
                 self._register_conditional(request, callback)
                 continue
             result = self._execute_request(request)
-            self.order_history.append(result)
-            callback(result)
+            self._finish(result, callback)
 
     def cancel_request(self, request_id: str) -> None:
         self.pending_conditionals = [
@@ -66,31 +73,83 @@ class SimulationTrader(Trader):
             "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
         }
 
-    def _execute_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        currency = request.get("currency", self.currency)
-        result = {
-            "request": request,
+    @staticmethod
+    def _positive_finite(value):
+        try:
+            number = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return number if math.isfinite(number) and number > 0 else None
+
+    @staticmethod
+    def _numeric(value):
+        try:
+            number = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return 0
+        return number if math.isfinite(number) else 0
+
+    def _result(self, request, state, message, price=0, amount=0, fee=0):
+        return {
+            "request": copy.deepcopy(request),
             "type": request.get("type"),
-            "price": request.get("price", 0),
-            "amount": request.get("amount", 0),
-            "msg": "success",
+            "price": self._numeric(price),
+            "amount": self._numeric(amount),
+            "fee": self._numeric(fee),
+            "msg": message,
             "balance": self.balance,
-            "state": "done",
-            "date_time": request.get(
-                "date_time", datetime.now().strftime(self.ISO_DATEFORMAT)
+            "state": state,
+            "date_time": request.get("date_time") or datetime.now().strftime(
+                self.ISO_DATEFORMAT
             ),
         }
 
-        fill_price = self.quotes.get(currency)
+    def _finish(self, result, callback):
+        if result["state"] in {"done", "failed"}:
+            self.order_history.append(copy.deepcopy(result))
+        callback(result)
+        return result
+
+    def _reject(self, request, callback, message):
+        return self._finish(self._result(request, "failed", message), callback)
+
+    def _validate_request(self, request, ord_type):
+        if ord_type not in self.SUPPORTED_ORD_TYPES:
+            return f"지원하지 않는 주문 유형: {ord_type}"
+
+        request_id = request.get("id")
+        if not isinstance(request_id, str) or not request_id.strip():
+            return "잘못된 주문 ID"
+
+        order_type = request.get("type")
+        if order_type not in {"buy", "sell"}:
+            return f"지원하지 않는 매매 유형: {order_type}"
+
+        if self._positive_finite(request.get("amount")) is None:
+            return "잘못된 수량"
+
+        if ord_type == order_spec.LIMIT and \
+                self._positive_finite(request.get("price")) is None:
+            return "잘못된 가격"
+
+        if ord_type in {order_spec.STOP_LOSS, order_spec.TAKE_PROFIT}:
+            if self._positive_finite(request.get("trigger")) is None:
+                return "잘못된 트리거"
+            if order_type != "sell":
+                return "매도 조건 주문만 지원"
+        return None
+
+    def _execute_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        currency = request.get("currency", self.currency)
+        fill_price = self._positive_finite(self.quotes.get(currency))
         if fill_price is None:
-            return self._fail(result, "시세 없음")
+            return self._result(request, "failed", "시세 없음")
 
-        amount = float(request.get("amount", 0))
-        if amount <= 0:
-            return self._fail(result, "잘못된 수량")
+        amount = self._positive_finite(request.get("amount"))
+        if amount is None:
+            return self._result(request, "failed", "잘못된 수량")
 
-        result["price"] = fill_price
-        result["amount"] = amount
+        result = self._result(request, "done", "success", fill_price, amount)
 
         if request.get("type") == "buy":
             self._buy(currency, fill_price, amount, result)
@@ -104,8 +163,7 @@ class SimulationTrader(Trader):
 
     def _buy(self, currency: str, price: float, amount: float, result: Dict[str, Any]):
         trade_value = price * amount
-        fee = trade_value * self.commission_ratio
-        total_cost = trade_value + fee
+        total_cost = trade_value
         if total_cost > self.balance:
             self._fail(result, "잔고 부족")
             return
@@ -125,10 +183,9 @@ class SimulationTrader(Trader):
             return
 
         trade_value = price * amount
-        fee = trade_value * self.commission_ratio
         new_amount = round(old_amount - amount, 6)
 
-        self.balance += trade_value - fee
+        self.balance += trade_value
         if new_amount <= 0:
             self.assets.pop(currency, None)
         else:
@@ -140,26 +197,23 @@ class SimulationTrader(Trader):
         result["msg"] = message
         result["price"] = 0
         result["amount"] = 0
+        result["fee"] = 0
         return result
 
     def _register_conditional(self, request, callback):
-        self.pending_conditionals.append({"request": request, "callback": callback})
-        callback({
-            "request": request,
-            "type": request.get("type"),
-            "price": request.get("price", 0),
-            "amount": request.get("amount", 0),
-            "msg": "success",
-            "balance": self.balance,
-            "state": "requested",
-            "date_time": request.get(
-                "date_time", datetime.now().strftime(self.ISO_DATEFORMAT)
-            ),
+        self.pending_conditionals.append({
+            "request": copy.deepcopy(request), "callback": callback,
         })
+        callback(self._result(
+            request, "requested", "success", request.get("price", 0),
+            request.get("amount", 0),
+        ))
 
     def _condition_fired(self, request, price):
         ord_type = order_spec.get_ord_type(request)
-        trigger = float(request.get("trigger", 0) or 0)
+        trigger = self._positive_finite(request.get("trigger"))
+        if trigger is None:
+            return False
         if ord_type == order_spec.STOP_LOSS:
             return price <= trigger
         if ord_type == order_spec.TAKE_PROFIT:
@@ -173,26 +227,16 @@ class SimulationTrader(Trader):
             if request.get("currency", self.currency) == currency and \
                     self._condition_fired(request, price):
                 result = self._fill_conditional(request, currency, price)
-                self.order_history.append(result)
-                entry["callback"](result)
+                self._finish(result, entry["callback"])
             else:
                 remaining.append(entry)
         self.pending_conditionals = remaining
 
     def _fill_conditional(self, request, currency, price):
-        amount = float(request.get("amount", 0) or 0)
-        result = {
-            "request": request,
-            "type": request.get("type"),
-            "price": price,
-            "amount": amount,
-            "msg": "success",
-            "balance": self.balance,
-            "state": "done",
-            "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
-        }
-        if amount <= 0:
-            return self._fail(result, "잘못된 수량")
+        amount = self._positive_finite(request.get("amount"))
+        if amount is None:
+            return self._result(request, "failed", "잘못된 수량")
+        result = self._result(request, "done", "success", price, amount)
         if request.get("type") == "sell":
             self._sell(currency, price, amount, result)
         elif request.get("type") == "buy":
