@@ -121,7 +121,24 @@ Compare the performance of my sessions
 
 Virtual (paper) trading is the default for the `default` session, and any profile can enable it with the `virtual` setting.
 
-Virtual trading keeps the selected DataProvider but routes orders to the in-memory `SimulationTrader` instead of a real exchange. Orders are not sent to the exchange; they are applied to a virtual account so portfolio value and returns can be inspected. Quotes are injected from the latest `primary_candle` close. State is in-memory only and commission is currently 0.
+Virtual trading keeps the selected DataProvider but routes orders to the in-memory `SimulationTrader` instead of a real exchange. Orders are not sent to the exchange; they are applied to a virtual account so portfolio value and returns can be inspected. The current quote is the latest `primary_candle` closing quote.
+
+| Order type | Real Trader (UPB/BTH/BNC/OKX) | `SimulationTrader` |
+|------------|:------------------------------:|:-------------------:|
+| Market | ✅ | ✅ Fills immediately at the current closing quote |
+| Limit | ✅ | ✅ Waits until its condition is met, then fills at the favorable current closing quote |
+| Sell stop-loss | ❌ | ✅ Fills when the closing quote is at or below the trigger |
+| Sell take-profit | ❌ | ✅ Fills when the closing quote is at or above the trigger |
+| OCO | ❌ | ❌ |
+| Trailing stop | ❌ | ❌ |
+
+Virtual-trading limitations:
+
+- Virtual balances, pending orders, and order history live only in memory and disappear on restart.
+- Pending-order conditions are evaluated only when the latest `primary_candle` closing quote arrives; an intrabar touch and reversal can go undetected.
+- Virtual fees are zero, and the simulator does not model slippage, partial fills, order-book depth, exchange minimum-order rules, tick sizes, or quantity precision.
+- Pending buys reserve cash; pending sells, stop-losses, and take-profits reserve the asset.
+- OCO is unavailable, so a stop-loss and take-profit cannot both be placed against the same entire position. Real Traders reject stop-loss and take-profit orders because those order types are out of scope.
 
 ### Supported Exchanges & Data Providers
 
