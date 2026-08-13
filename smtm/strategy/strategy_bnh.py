@@ -95,7 +95,7 @@ class StrategyBuyAndHold(Strategy):
                 del self.waiting_requests[request["id"]]
 
             total = float(result["price"]) * float(result["amount"])
-            fee = total * self.COMMISSION_RATIO
+            fee = self._result_fee(result, self.COMMISSION_RATIO)
             if result["type"] == "buy":
                 self.balance -= round(total + fee)
             else:

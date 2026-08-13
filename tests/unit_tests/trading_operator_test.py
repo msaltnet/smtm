@@ -66,13 +66,15 @@ class TradingOperatorTickTests(unittest.TestCase):
                     operator.timer.cancel()
 
     def test_tick_executes_full_pipeline_and_buys(self):
-        operator, trader, _, monitor = self._make()
+        operator, trader, strategy, monitor = self._make()
         operator.state = "running"
         operator._execute_trading(None)
         # BnH는 예산의 1/5 매수 → SimulationTrader 잔고 감소
         self.assertLess(trader.balance, 500000)
         self.assertEqual(len(trader.order_history), 1)
         self.assertEqual(trader.order_history[0]["state"], "done")
+        self.assertEqual(strategy.balance, trader.balance)
+        self.assertEqual(trader.order_history[0]["fee"], 0)
         # 기록 확인
         self.assertEqual(len(monitor.market_data_log), 1)
         self.assertEqual(len(monitor.trade_request_log), 1)
