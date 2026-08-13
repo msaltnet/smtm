@@ -279,6 +279,63 @@ class SimulationTraderLimitOrderTest(unittest.TestCase):
         self.assertEqual(account["open_orders"], [])
 
 
+class SimulationTraderPrecisionTest(unittest.TestCase):
+    def _limit(self, request_id, side, amount):
+        return {
+            "id": request_id,
+            "type": side,
+            "price": 1 if side == "buy" else 60000,
+            "amount": amount,
+            "ord_type": "limit",
+        }
+
+    def test_limit_buy_reservations_accept_exact_float_budget(self):
+        trader = SimulationTrader(budget=0.3, currency="BTC")
+        trader.update_quote("BTC", 2)
+        results = []
+
+        trader.send_request([self._limit("buy-0.1", "buy", 0.1)], results.append)
+        trader.send_request([self._limit("buy-0.2", "buy", 0.2)], results.append)
+
+        self.assertEqual([result["state"] for result in results], [
+            "requested", "requested",
+        ])
+        self.assertEqual(trader.get_account_info()["available_balance"], 0)
+
+    def test_limit_sell_reservations_accept_exact_float_asset(self):
+        trader = SimulationTrader(budget=0, currency="BTC")
+        trader.assets["BTC"] = (50000, 0.3)
+        trader.update_quote("BTC", 50000)
+        results = []
+
+        trader.send_request([self._limit("sell-0.1", "sell", 0.1)], results.append)
+        trader.send_request([self._limit("sell-0.2", "sell", 0.2)], results.append)
+
+        self.assertEqual([result["state"] for result in results], [
+            "requested", "requested",
+        ])
+        self.assertEqual(trader.get_account_info()["available_asset"], {"BTC": 0})
+
+    def test_sub_micro_unit_market_buy_is_rejected_without_debit(self):
+        trader = SimulationTrader(budget=100000, currency="BTC")
+        trader.update_quote("BTC", 50000)
+        results = []
+
+        trader.send_request([{
+            "id": "sub-micro", "type": "buy", "price": 1,
+            "amount": 0.0000001, "ord_type": "market",
+        }], results.append)
+
+        self.assertEqual(results[0]["state"], "failed")
+        self.assertEqual(results[0]["msg"], "잘못된 수량")
+        self.assertEqual(results[0]["price"], 0)
+        self.assertEqual(results[0]["amount"], 0)
+        self.assertEqual(results[0]["fee"], 0)
+        self.assertEqual(trader.balance, 100000)
+        self.assertEqual(trader.assets, {})
+        self.assertEqual(len(trader.order_history), 1)
+
+
 class TraderFactoryPaperFlagTest(unittest.TestCase):
     def test_paper_flag_returns_simulation_trader(self):
         trader = TraderFactory.create("UPB", budget=500000, currency="BTC", paper=True)

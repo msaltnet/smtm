@@ -15,6 +15,8 @@ class SimulationTrader(Trader):
     CODE = "SIM"
     SUPPORTED_ORD_TYPES = frozenset({"limit", "market", "stop_loss", "take_profit"})
     ISO_DATEFORMAT = "%Y-%m-%dT%H:%M:%S"
+    RESOURCE_EPSILON = 1e-12
+    MINIMUM_AMOUNT = 1e-6
 
     def __init__(self, budget=50000, currency="BTC", commission_ratio=0):
         self.logger = LogManager.get_logger(__class__.__name__)
@@ -149,7 +151,7 @@ class SimulationTrader(Trader):
         if order_type not in {"buy", "sell"}:
             return f"지원하지 않는 매매 유형: {order_type}"
 
-        if self._positive_finite(request.get("amount")) is None:
+        if self._valid_amount(request.get("amount")) is None:
             return "잘못된 수량"
 
         if ord_type == order_spec.LIMIT and \
@@ -176,11 +178,27 @@ class SimulationTrader(Trader):
         return reserved
 
     def _available_balance(self):
-        return self.balance - self._reserved_balance()
+        return self._normalize_resource(self.balance - self._reserved_balance())
 
     def _available_asset(self, currency):
         _, amount = self.assets.get(currency, (0, 0))
-        return amount - self._reserved_assets().get(currency, 0)
+        return self._normalize_resource(
+            amount - self._reserved_assets().get(currency, 0)
+        )
+
+    @classmethod
+    def _normalize_resource(cls, value):
+        return 0.0 if abs(value) <= cls.RESOURCE_EPSILON else value
+
+    @classmethod
+    def _resource_available(cls, required, available):
+        return required <= available + cls.RESOURCE_EPSILON
+
+    def _valid_amount(self, value):
+        amount = self._positive_finite(value)
+        if amount is None or amount < self.MINIMUM_AMOUNT:
+            return None
+        return amount
 
     def _queue(self, request, callback, reserved_balance=0, reserved_asset=0):
         self.pending_orders[request["id"]] = {
@@ -218,19 +236,20 @@ class SimulationTrader(Trader):
         if quote is not None and self._limit_fires(request, quote):
             return self._finish(self._fill(request, callback, quote), callback)
 
-        amount = self._positive_finite(request.get("amount"))
+        amount = self._valid_amount(request.get("amount"))
         if request.get("type") == "buy":
             reservation = self._positive_finite(request.get("price")) * amount
-            if reservation > self._available_balance():
+            if not self._resource_available(
+                    reservation, self._available_balance()):
                 return self._reject(request, callback, "잔고 부족")
             return self._queue(request, callback, reserved_balance=reservation)
-        if amount > self._available_asset(currency):
+        if not self._resource_available(amount, self._available_asset(currency)):
             return self._reject(request, callback, "보유 수량 부족")
         return self._queue(request, callback, reserved_asset=amount)
 
     def _fill(self, request, callback, fill_price):
         currency = request.get("currency", self.currency)
-        amount = self._positive_finite(request.get("amount"))
+        amount = self._valid_amount(request.get("amount"))
         if amount is None:
             return self._result(request, "failed", "잘못된 수량")
 
@@ -239,23 +258,29 @@ class SimulationTrader(Trader):
 
         if request.get("type") == "buy":
             trade_value = fill_price * amount
-            if trade_value + fee > self._available_balance():
+            if not self._resource_available(
+                    trade_value + fee, self._available_balance()):
                 return self._fail(result, "잔고 부족")
 
             old_price, old_amount = self.assets.get(currency, (0, 0))
             new_amount = round(old_amount + amount, 6)
             new_value = old_price * old_amount + trade_value
             avg_price = round(new_value / new_amount, 6) if new_amount else 0
-            self.balance -= trade_value + fee
+            self.balance = self._normalize_resource(
+                self.balance - trade_value - fee
+            )
             self.assets[currency] = (avg_price, new_amount)
         elif request.get("type") == "sell":
             old_price, old_amount = self.assets.get(currency, (0, 0))
-            if amount > self._available_asset(currency):
+            if not self._resource_available(
+                    amount, self._available_asset(currency)):
                 return self._fail(result, "보유 수량 부족")
 
             trade_value = fill_price * amount
             new_amount = round(old_amount - amount, 6)
-            self.balance += trade_value - fee
+            self.balance = self._normalize_resource(
+                self.balance + trade_value - fee
+            )
             if new_amount <= 0:
                 self.assets.pop(currency, None)
             else:
