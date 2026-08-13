@@ -52,7 +52,6 @@ from .trader.bithumb_trader import BithumbTrader
 from .trader.binance_trader import BinanceTrader
 from .trader.okx_trader import OkxTrader
 from .trader.trader_factory import TraderFactory
-from .controller.jpt_controller import JptController
 from .controller.telegram import TelegramController
 from .llm.llm_client import LlmClient
 from .llm.claude_llm_client import ClaudeLlmClient
@@ -73,7 +72,6 @@ from .session_manager import SessionManager, TradingSession
 __all__ = [
     "LogManager",
     "Analyzer",
-    "JptController",
     "TelegramController",
     "ProfileStore",
     "AccountStore",

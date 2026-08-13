@@ -94,24 +94,6 @@ my-btc로 세션 만들고 시작해줘
 | `--log` | 로그 파일 이름 | None (`log/smtm.log`) |
 | `--version` | 버전 출력 후 종료 | - |
 
-### 프로그램/Jupyter에서 사용 (JptController)
-
-텔레그램 없이 파이썬 코드나 Jupyter 노트북에서 직접 제어하려면 `JptController`를 사용합니다.
-
-```python
-from smtm import JptController
-
-controller = JptController(interval=60, budget=500000, currency="BTC")
-controller.initialize(interval=60, budget=500000, exchange="UPB")
-controller.chat("포트폴리오 보여줘")
-controller.start()   # 자동 매매 시작
-controller.stop()    # 자동 매매 중지
-JptController.set_log_level(20)  # 로그 레벨 (10/20/30/40)
-```
-
-⚠️ 텔레그램의 default 세션과 달리, `JptController.initialize()`는 **실거래(virtual=False)** 로 부팅하며 거래소 API 키가 필요합니다. 가상거래가 아니므로 실제 주문이 거래소로 전송될 수 있으니 주의하세요.
-
-
 # How to setup and run
 
 Python 3.9 or higher is required. Clone the source and install the packages.
@@ -207,20 +189,3 @@ Compare the performance of my sessions
 | `--chatid` | Telegram chat id | `TELEGRAM_CHAT_ID` |
 | `--log` | Log file name | None (`log/smtm.log`) |
 | `--version` | Print version and exit | - |
-
-### Using it from a program / Jupyter (JptController)
-
-To drive the system directly from Python code or a Jupyter notebook without Telegram, use `JptController`.
-
-```python
-from smtm import JptController
-
-controller = JptController(interval=60, budget=500000, currency="BTC")
-controller.initialize(interval=60, budget=500000, exchange="UPB")
-controller.chat("Show my portfolio")
-controller.start()   # start automated trading
-controller.stop()    # stop automated trading
-JptController.set_log_level(20)  # log level (10/20/30/40)
-```
-
-⚠️ Unlike the Telegram `default` session, `JptController.initialize()` boots in **real-trading mode (virtual=False)** and requires exchange API keys. Because it is not paper trading, real orders may be sent to the exchange -- use it with care.

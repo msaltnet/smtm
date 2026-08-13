@@ -99,19 +99,6 @@ default 세션은 가상거래입니다 - 실제 주문은 전송되지 않습�
 2. **프로파일 생성** — `create_profile`. `virtual: false`와 위에서 등록한 `account`를 지정합니다.
 3. **세션 생성·시작** — `create_session` → `start_session`.
 
-### 2.3 Jupyter Notebook
-
-노트북에서는 `JptController`로 동일한 오퍼레이터를 직접 띄울 수 있습니다. (실행 진입점이 아니라 노트북 전용 유틸리티입니다.)
-
-```python
-from smtm import JptController
-controller = JptController(interval=60, budget=500000, currency="BTC", exchange="UPB")
-controller.initialize()
-# 이후 셀에서 controller.operator.chat("시장 상황 알려줘") 등으로 호출
-```
-
----
-
 ## 3. 명령행 옵션 요약
 
 명령행 옵션은 텔레그램 접속과 로그에 관한 것뿐입니다. 매매 관련 설정은 전부 채팅으로 합니다.

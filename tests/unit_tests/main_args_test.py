@@ -47,9 +47,11 @@ class ControllerExportTests(unittest.TestCase):
 
         self.assertFalse(hasattr(smtm, "Controller"))
         self.assertNotIn("Controller", smtm.__all__)
-        # 텔레그램과 주피터 컨트롤러는 유지된다
+        # 텔레그램 컨트롤러만 공개한다.
         self.assertTrue(hasattr(smtm, "TelegramController"))
-        self.assertTrue(hasattr(smtm, "JptController"))
+        legacy_controller_name = "Jpt" "Controller"
+        self.assertFalse(hasattr(smtm, legacy_controller_name))
+        self.assertNotIn(legacy_controller_name, smtm.__all__)
 
 
 if __name__ == "__main__":

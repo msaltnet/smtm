@@ -56,7 +56,6 @@ smtm은 **LLM(대규모 언어 모델)이 시장을 분석하고 매매를 실�
 
 ### 3.4 제어 채널
 - **텔레그램 챗봇** — 유일한 실행 진입점. `python -m smtm --token <bot_token> --chatid <chat_id>`로 띄우고 메신저로 원격 제어합니다. 기동 시 뜨는 `default` 세션은 **가상거래**이며, 실거래는 채팅으로 계좌를 등록한 뒤 세션을 만들어 시작합니다.
-- **Jupyter Notebook (`JptController`)** — 실행 진입점이 아닌 노트북 전용 유틸리티. 셀에서 직접 `operator.chat()` 호출
 
 ### 3.5 데이터 / 거래소 연동
 - **DataProvider(Factory 등록)**: Upbit, Bithumb, Binance, OKX, Upbit+Binance 병합, Upbit+뉴스(CoinDesk), Upbit+다중 뉴스, Upbit+소셜, **Upbit+풀 컨텍스트** 총 9종
@@ -87,7 +86,7 @@ smtm은 **LLM(대규모 언어 모델)이 시장을 분석하고 매매를 실�
 | 인증 | PyJWT (거래소 서명), 환경변수 기반 API 키 |
 | HTTP | `requests` |
 | 설정 | `python-dotenv` |
-| 제어 채널 | 텔레그램 Bot API(롱폴링), ipykernel(Jupyter) |
+| 제어 채널 | 텔레그램 Bot API(롱폴링) |
 | 로그 / 모니터링 | `logging` + `RotatingFileHandler` (파일 로그), `SystemMonitor` (인메모리 구조화 로그) |
 | 테스트 | pytest (unit / e2e / integration) |
 
