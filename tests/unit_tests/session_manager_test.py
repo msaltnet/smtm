@@ -5,6 +5,7 @@ import tempfile
 from unittest.mock import patch, MagicMock
 from smtm import SessionManager, AccountStore
 from smtm.llm.system_monitor import SystemMonitor
+from smtm.trader.simulation_trader import SimulationTrader
 
 
 class StubDataProvider:
@@ -64,6 +65,18 @@ class SessionManagerVirtualTests(unittest.TestCase):
         self.assertEqual(s2.trader.balance, 500000)
         self.manager.stop_session("v1")
         self.manager.stop_session("v2")
+
+    def test_virtual_profile_uses_simulation_trader_without_account(self):
+        for exchange in ("UPB", "BTH", "BNC", "OKX", "UBD"):
+            with self.subTest(exchange=exchange):
+                name = f"virtual-{exchange.lower()}"
+                result = self.manager.create_session({
+                    **VIRTUAL_PROFILE, "name": name, "exchange": exchange,
+                })
+                self.assertTrue(result["success"])
+                session = self.manager.get_session(name)
+                self.assertIsInstance(session.trader, SimulationTrader)
+                self.assertIsNone(session.account)
 
     def test_duplicate_name_rejected(self):
         self.manager.create_session(VIRTUAL_PROFILE)
