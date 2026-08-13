@@ -31,7 +31,10 @@ class SimulationTraderBuyTest(unittest.TestCase):
         results = []
 
         trader.send_request([
-            {"id": "1", "type": "buy", "price": 50000, "amount": 0.01}
+            {
+                "id": "1", "type": "buy", "price": 50000, "amount": 0.01,
+                "ord_type": "market",
+            }
         ], results.append)
 
         self.assertEqual(results[0]["state"], "failed")
