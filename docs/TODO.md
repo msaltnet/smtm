@@ -35,8 +35,8 @@
 | `docs/wiki/SMTM_프로젝트_소개.md` | 위와 동일 |
 | `docs/wiki/how-to-test.md` | 테스트 분류(unit / e2e / integration)와 실행 명령이 현재와 맞는지 |
 
-`docs/wiki/architecture.md`의 레이어 표는 이번에 `TelegramController, JptController`로 갱신했지만,
-같은 문서의 컴포넌트/클래스/시퀀스 다이어그램 이미지는 여전히 구버전입니다. 함께 재생성해야 합니다.
+`docs/wiki/architecture.md`의 인터페이스 레이어 표는 `TelegramController` 전용으로 갱신했습니다.
+`docs/smtm_class.png`와 `docs/smtm_component.png`는 저장소 안에서 렌더링을 재현할 수 없는 오래된 생성 이미지이므로 제거했습니다. 현재 상세 아키텍처는 `docs/public/architecture.md`에서 관리합니다.
 
 ---
 

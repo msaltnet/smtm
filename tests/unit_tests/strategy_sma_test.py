@@ -346,6 +346,17 @@ class StrategySmaTests(unittest.TestCase):
         self.assertEqual(sma.result[-1]["msg"], "success")
         self.assertEqual(sma.result[-1]["balance"], 1000)
 
+    def test_update_result_uses_zero_fee_from_successful_buy(self):
+        sma = StrategySma()
+        sma.initialize(500000, 10)
+
+        sma.update_result({
+            "request": {"id": "b"}, "type": "buy", "state": "done",
+            "msg": "success", "price": 50000, "amount": 2, "fee": 0,
+        })
+
+        self.assertEqual(sma.balance, 400000)
+
     def test_update_result_ignore_result_when_not_yet_initialized(self):
         sma = StrategySma()
         sma.update_result("orange")

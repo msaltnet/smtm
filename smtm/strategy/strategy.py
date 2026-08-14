@@ -12,6 +12,12 @@ class Strategy(metaclass=ABCMeta):
     CODE = "---"
     NAME = "---"
 
+    @staticmethod
+    def _result_fee(result: Dict[str, Any], commission_ratio: float) -> float:
+        if "fee" in result:
+            return float(result.get("fee") or 0)
+        return float(result["price"]) * float(result["amount"]) * commission_ratio
+
     @abstractmethod
     def initialize(
         self,

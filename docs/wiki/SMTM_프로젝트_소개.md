@@ -30,7 +30,7 @@
 - 데이터 수집 → 전략 판단 → 안전장치 검증 → 거래 실행 → 분석의 반복 프로세스
 - 다양한 거래소 지원 (Upbit, Bithumb 매매 / Binance 등 데이터 제공)
 - 뉴스·소셜·온체인·매크로 지표 등 20여 종의 공개 데이터 소스 결합 가능
-- 텔레그램 챗봇을 통한 원격 거래 제어 (프로그램/Jupyter 제어용 `JptController`도 별도 제공)
+- 텔레그램 챗봇을 통한 원격 거래 제어
 
 > 참고: 구 버전(1.x)에서 제공되던 과거 데이터 기반 시뮬레이션(백테스팅), 대량 시뮬레이션, 데모 모드, CLI 대화형 모드는 v2.0.0 재작성 과정에서 제거되었습니다. 전략 검증은 현재 가상거래(`default` 세션 또는 프로파일의 `virtual` 설정값)로 수행합니다.
 
@@ -46,7 +46,6 @@ SMTM은 **2계층 아키텍처**로 설계되어 있고, 두 계층 사이를 Se
 flowchart TD
     subgraph UI["Controller 계층 (진입점)"]
         TG["TelegramController<br/>(텔레그램 챗봇, 유일 진입점)"]
-        JPT["JptController<br/>(프로그램/Jupyter 대체 진입점)"]
     end
 
     subgraph ORCH["오케스트레이션 계층"]
@@ -67,7 +66,6 @@ flowchart TD
     MON["SystemMonitor<br/>(모든 활동 독립 기록)"]
 
     TG --> SO
-    JPT --> SO
     SO --> TOOLS --> SM
     SM --> TO
     TO --> DP
@@ -116,7 +114,6 @@ Trader → Strategy/Analyzer: 체결 결과 콜백 전달
 
 1. **Controller 계층**: 사용자 인터페이스 제공
    - 텔레그램 챗봇 TelegramController (유일한 실행 진입점)
-   - 프로그램/Jupyter Notebook용 JptController (대체 진입점)
 
 2. **오케스트레이션 계층**: 시스템 운영 관리
    - SystemOperator: LLM과의 대화, Tool 라우팅
@@ -381,10 +378,6 @@ def get_return_report(self) -> dict:
 - 부팅 시 콘솔에 안내를 출력합니다: "'start'를 입력하면 default 세션 매매가 시작됩니다" / "default 세션은 가상거래입니다 - 실제 주문은 전송되지 않습니다" / "실거래는 채팅으로 계좌를 등록한 뒤 세션을 만들어 시작하세요".
 - `SMTM_LLM_API_KEY`가 없으면 부팅을 중단합니다.
 
-#### JptController (`smtm/controller/jpt_controller.py`)
-- **프로그램/Jupyter Notebook에서 시스템을 제어**할 때 쓰는 대체 진입점 (`from smtm import JptController`)
-- ⚠️ **주의**: `JptController.initialize()`는 텔레그램의 `default` 세션과 달리 **실거래(`virtual: False`)** 로 부팅하며 `profile_store` 없이 `account_store`만 사용합니다 — 즉 거래소 API 키가 설정되어 있어야 하고, 시작하면 실제 주문이 나갈 수 있습니다.
-
 ### 11. LlmClient (`smtm/llm/llm_client.py`)
 
 - LLM 벤더 추상화 인터페이스. 현재 구현체는 `ClaudeLlmClient`(Anthropic Claude)가 유일하며, OpenAI/Ollama 어댑터는 계획 단계입니다.
@@ -480,23 +473,6 @@ my-btc로 세션 만들고 시작해줘
 | `--log` | 로그 파일 이름 | None (`log/smtm.log`) |
 | `--version` | 버전 출력 후 종료 | - |
 
-#### 프로그램/Jupyter에서 제어 (JptController)
-
-텔레그램 대신 코드나 노트북에서 제어하려면 `JptController`를 사용합니다.
-
-```python
-from smtm import JptController
-
-jpt = JptController(interval=60, budget=500000, currency="BTC")
-jpt.initialize(interval=60, budget=500000, exchange="UPB")  # ⚠️ 실거래로 부팅됨
-jpt.chat("포트폴리오 보여줘")
-jpt.start()
-jpt.stop()
-JptController.set_log_level(20)  # 로그 레벨 조정 (10/20/30/40)
-```
-
-> ⚠️ `JptController.initialize()`는 텔레그램 `default` 세션과 달리 **실거래(`virtual: False`)** 로 부팅합니다. 거래소 API 키가 설정되어 있어야 하며, 검증 목적이라면 거래소 코드와 예산을 신중히 지정하세요.
-
 ### 테스트 방법
 
 ```bash
@@ -534,7 +510,7 @@ coverage report
 
 #### 2. 디버깅
 - **로그**: `log/smtm.log`에 롤링 파일 로그가 기록됨 (`--log`로 파일 이름 변경 가능). 스트림 로그 레벨은 `Config.operation_log_level`로 조정
-- **Jupyter Notebook**: `notebook/` 폴더에 거래소 API 등 개별 모듈 실험용 노트북 제공. `JptController`로 시스템 전체를 코드에서 제어 가능
+- **Jupyter Notebook**: `notebook/` 폴더에 거래소 API 등 개별 모듈 실험용 노트북 제공
 - **가상거래 모드**: 실제 주문 없이 전략과 파이프라인 동작 확인
 
 ---
@@ -710,7 +686,7 @@ class StrategyFactory:
 ### 4. 전략 테스트 방법
 
 #### 가상거래로 검증 (실제 주문 없음)
-새 전략은 가상거래 프로파일로 검증합니다. 텔레그램 채팅으로 다음과 같이 요청하거나, `JptController`로 코드에서 세션을 시작합니다.
+새 전략은 가상거래 프로파일로 검증합니다. 텔레그램 채팅으로 다음과 같이 요청합니다.
 
 ```
 mcs-test 프로파일 만들어줘: 전략 MCS, 통화 BTC, 예산 100000, 가상거래
@@ -811,7 +787,7 @@ def calculate_position_size(self, price, risk_percent=0.02):
 
 #### 자연어 기반 제어
 - **텔레그램 봇**: 명령어 암기 없이 자연어로, 모바일에서 원격 거래 제어
-- **Jupyter Notebook / 프로그램**: `JptController`로 코드에서 대화형 분석 및 실험
+- **Jupyter Notebook**: `notebook/`의 거래소·데이터 모듈 실험 참고
 
 #### 안전한 운영
 - **가상거래 기본값**: `default` 세션이 가상거래로 부팅되어, 실제 자금 없이 실시간 시세로 전략 검증

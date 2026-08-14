@@ -93,6 +93,17 @@ class StrategyLlmTests(unittest.TestCase):
         self.assertLess(strategy.balance, 500000)
         self.assertEqual(strategy.asset_amount, 0.5)
 
+    def test_update_result_uses_zero_fee_from_successful_buy(self):
+        strategy = StrategyLlm(llm_client=None)
+        strategy.initialize(500000)
+
+        strategy.update_result({
+            "request": {"id": "b"}, "type": "buy", "state": "done",
+            "msg": "success", "price": 50000, "amount": 2, "fee": 0,
+        })
+
+        self.assertEqual(strategy.balance, 400000)
+
     def test_not_initialized_returns_none(self):
         strategy = StrategyLlm(llm_client=ScriptedLlmClient())
         self.assertIsNone(strategy.get_request())

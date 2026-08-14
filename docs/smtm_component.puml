@@ -12,7 +12,6 @@ package "Operation Layer" {
 
 package "Controller Layer" {
     [TelegramController]
-    [JptController]
     [Controller]
     [Simulator]
 }
@@ -24,7 +23,6 @@ Operator --> Analyzer
 
 Simulator --> Operator
 Controller --> Operator
-JptController --> Operator
 TelegramController --> Operator
 
 @enduml

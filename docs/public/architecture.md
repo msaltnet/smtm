@@ -13,7 +13,7 @@ smtm의 시스템 구조·핵심 플로우·확장 포인트를 개요 수준으
 
 ```mermaid
 graph TD
-    User[사용자: Telegram / Jupyter]
+    User[사용자: Telegram]
     Controller[TelegramController\n채팅 입력 루프]
     Operator[LlmOperator\n상태·타이머·대화이력]
     LLM[ClaudeLlmClient\nLLM 어댑터]
@@ -45,7 +45,7 @@ graph TD
 
 | 레이어 | 책임 | 구성 요소 |
 |--------|------|-----------|
-| Presentation | 사용자 입력·출력 | `TelegramController`(유일한 실행 진입점), `JptController`(노트북 전용) |
+| Presentation | 사용자 입력·출력 | `TelegramController`(유일한 실행 진입점) |
 | Orchestration | 상태·타이머·대화 흐름 | `LlmOperator`, `Worker`(백그라운드 실행기) |
 | LLM 어댑터 | 벤더 API 추상화 | `LlmClient` (추상), `ClaudeLlmClient` (구현) |
 | Safety | Tool 실행 직전 한도 검사 | `SafetyGuard`, `SafetyConfig` |
@@ -316,7 +316,7 @@ operator = SystemOperator(client, config)
 
 ## 9. 내부 상세 문서
 
-- 클래스 다이어그램: `docs/smtm_class.puml` → `smtm_class.png`
-- 컴포넌트 다이어그램: `docs/smtm_component.puml`
-- 시퀀스 다이어그램(한/영): `docs/smtm_sequence*.puml`
+- 레거시 클래스 다이어그램 참고 소스: `docs/smtm_class.puml` — 현재 아키텍처는 이 문서의 서술을 기준으로 합니다.
+- 레거시 컴포넌트 다이어그램 참고 소스: `docs/smtm_component.puml` — 현재 아키텍처는 이 문서의 서술을 기준으로 합니다.
+- 시퀀스 다이어그램(한/영): `docs/smtm_sequence*.puml` (canonical sources)
 - 위키: `docs/wiki/architecture.md`, `docs/wiki/how-to-setup-and-run.md`, `docs/wiki/tips.md`

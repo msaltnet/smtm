@@ -89,7 +89,11 @@ class StrategyTradingE2ETest(unittest.TestCase):
         self.assertEqual(len(trader.order_history), 1)
         self.assertEqual(trader.order_history[0]["type"], "buy")
         self.assertEqual(trader.order_history[0]["price"], 50000)
-        self.assertLess(trader.balance, 500000)
+        account = trader.get_account_info()
+        self.assertLess(account["balance"], 500000)
+        self.assertEqual(account["available_balance"], account["balance"])
+        self.assertEqual(account["reserved_balance"], 0)
+        self.assertEqual(account["open_orders"], [])
 
     def test_algorithmic_tick_makes_zero_llm_calls(self):
         """알고리즘 전략 틱은 LLM을 호출하지 않는다"""

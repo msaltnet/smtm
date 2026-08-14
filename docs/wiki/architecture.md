@@ -4,7 +4,7 @@
 
 | Layer | Module | Role |
 |:---:|:---:|:---:|
-| Interface Layer | TelegramController, JptController | 사용자 인터페이스 (텔레그램 챗봇 / Jupyter) |
+| Interface Layer | TelegramController | 사용자 인터페이스 (텔레그램 챗봇) |
 | Orchestration Layer | SystemOperator, ToolRouter, LlmClient, SessionManager, AccountStore, ProfileStore | 채팅 기반 오케스트레이션, 세션·계좌·프로파일 관리 |
 | Trading Layer | TradingOperator, DataProvider, Strategy, SafetyGuard, Trader, Analyzer | 세션별 고정 주기 매매 루프 |
 | Monitoring | SystemMonitor | 모든 활동을 세션별로 태깅하여 독립 기록 |
@@ -24,7 +24,6 @@
 flowchart TB
     subgraph Interface["Interface Layer"]
         TG["TelegramController<br/>(텔레그램 챗봇, 유일 진입점)"]
-        JPT["JptController<br/>(Jupyter, 프로그램용)"]
     end
 
     subgraph Orchestration["Orchestration Layer"]
@@ -48,7 +47,6 @@ flowchart TB
     MON["SystemMonitor"]
 
     TG --> SO
-    JPT --> SO
     SO <--> LC
     SO --> TR
     TR --> SM
@@ -99,7 +97,7 @@ The system is split into two layers. A chat-based LLM agent (SystemOperator) han
 
 | Layer | Module | Role |
 |:---:|:---:|:---:|
-| Interface Layer | TelegramController, JptController | User interface (Telegram chatbot / Jupyter) |
+| Interface Layer | TelegramController | User interface (Telegram chatbot) |
 | Orchestration Layer | SystemOperator, ToolRouter, LlmClient, SessionManager, AccountStore, ProfileStore | Chat-based orchestration; session, account, and profile management |
 | Trading Layer | TradingOperator, DataProvider, Strategy, SafetyGuard, Trader, Analyzer | Per-session fixed-interval trading loop |
 | Monitoring | SystemMonitor | Independently logs all activity, tagged by session |

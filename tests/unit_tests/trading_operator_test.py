@@ -66,13 +66,15 @@ class TradingOperatorTickTests(unittest.TestCase):
                     operator.timer.cancel()
 
     def test_tick_executes_full_pipeline_and_buys(self):
-        operator, trader, _, monitor = self._make()
+        operator, trader, strategy, monitor = self._make()
         operator.state = "running"
         operator._execute_trading(None)
         # BnH는 예산의 1/5 매수 → SimulationTrader 잔고 감소
         self.assertLess(trader.balance, 500000)
         self.assertEqual(len(trader.order_history), 1)
         self.assertEqual(trader.order_history[0]["state"], "done")
+        self.assertEqual(strategy.balance, trader.balance)
+        self.assertEqual(trader.order_history[0]["fee"], 0)
         # 기록 확인
         self.assertEqual(len(monitor.market_data_log), 1)
         self.assertEqual(len(monitor.trade_request_log), 1)
@@ -110,8 +112,8 @@ class TradingOperatorTickTests(unittest.TestCase):
         operator._execute_trading(None)
         self.assertEqual(len(trader.order_history), 0)
 
-    def test_failed_trade_does_not_consume_daily_quota(self):
-        operator, trader, _, _ = self._make()
+    def test_failed_trade_is_logged_without_consuming_daily_quota(self):
+        operator, trader, _, monitor = self._make()
         operator.state = "running"
         trader.update_quote("BTC", 50000)
         # 보유 수량 없이 매도 → SimulationTrader가 failed 결과 반환
@@ -120,6 +122,66 @@ class TradingOperatorTickTests(unittest.TestCase):
             "date_time": "2026-07-03T12:00:00",
         }])
         self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+        self.assertEqual(monitor.trade_result_log[-1]["result"]["state"], "failed")
+
+    def test_limit_order_is_logged_only_after_quote_fills_it(self):
+        operator, trader, _, monitor = self._make()
+        operator._send_requests([{
+            "id": "limit-buy", "type": "buy", "ord_type": "limit",
+            "price": 40000, "amount": 1.0,
+            "date_time": "2026-07-03T12:00:00",
+        }])
+
+        self.assertIn("limit-buy", trader.pending_orders)
+        self.assertIn("limit-buy", operator.strategy.waiting_requests)
+        self.assertEqual(monitor.trade_result_log, [])
+
+        operator._sync_trader_quote([{
+            "type": "primary_candle", "market": "BTC", "closing_price": 39000,
+        }])
+
+        self.assertNotIn("limit-buy", trader.pending_orders)
+        self.assertEqual(monitor.trade_result_log[-1]["result"]["state"], "done")
+        self.assertEqual(operator.safety_guard.daily_trade_count, 1)
+
+    def test_cancelled_limit_order_is_logged_without_consuming_daily_quota(self):
+        operator, trader, _, monitor = self._make()
+        operator._send_requests([{
+            "id": "cancel-buy", "type": "buy", "ord_type": "limit",
+            "price": 40000, "amount": 1.0,
+            "date_time": "2026-07-03T12:00:00",
+        }])
+
+        trader.cancel_request("cancel-buy")
+
+        result = monitor.trade_result_log[-1]["result"]
+        self.assertEqual(result["msg"], "canceled")
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
+    def test_stop_loss_and_take_profit_fill_after_operator_quote_sync(self):
+        for request_id, ord_type, trigger, closing_price in (
+            ("stop-loss", "stop_loss", 45000, 44000),
+            ("take-profit", "take_profit", 55000, 56000),
+        ):
+            with self.subTest(ord_type=ord_type):
+                operator, trader, _, monitor = self._make()
+                trader.assets["BTC"] = (50000, 1.0)
+                trader.update_quote("BTC", 50000)
+
+                operator._send_requests([{
+                    "id": request_id, "type": "sell", "ord_type": ord_type,
+                    "trigger": trigger, "price": 0, "amount": 1.0,
+                    "date_time": "2026-07-03T12:00:00",
+                }])
+                operator._sync_trader_quote([{
+                    "type": "primary_candle", "market": "BTC",
+                    "closing_price": closing_price,
+                }])
+
+                result = monitor.trade_result_log[-1]["result"]
+                self.assertEqual(result["state"], "done")
+                self.assertEqual(result["msg"], "success")
+                self.assertEqual(operator.safety_guard.daily_trade_count, 1)
 
     def test_tick_is_noop_when_not_running(self):
         operator, trader, _, _ = self._make()
@@ -141,8 +203,161 @@ class TradingOperatorTickTests(unittest.TestCase):
             "date_time": "2026-07-03T12:00:00",
         }])
 
+    def test_missing_request_terminal_callback_is_logged_when_strategy_rejects_it(self):
+        operator, _, strategy, monitor = self._make()
+        callback_result = {
+            "type": "buy", "state": "done", "msg": "success",
+            "price": 50000, "amount": 1,
+        }
+
+        class CallbackTrader:
+            def send_request(self, requests, callback):
+                callback(callback_result)
+
+        operator.trader = CallbackTrader()
+
+        operator._send_requests([{
+            "id": "missing-request", "type": "buy", "price": 50000,
+            "amount": 1, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        self.assertEqual(len(monitor.trade_result_log), 1)
+        self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+        self.assertEqual(strategy.result, [])
+
+    def test_valid_fill_consumes_daily_quota_when_strategy_result_update_fails(self):
+        operator, _, _, monitor = self._make()
+        strategy = MagicMock()
+        strategy.update_result.side_effect = RuntimeError("strategy failure")
+        operator.strategy = strategy
+        callback_result = {
+            "request": {"id": "valid"}, "type": "buy", "state": "done",
+            "msg": "success", "price": 50000, "amount": 1, "fee": 0,
+        }
+
+        class CallbackTrader:
+            def send_request(self, requests, callback):
+                callback(callback_result)
+
+        operator.trader = CallbackTrader()
+
+        operator._send_requests([{
+            "id": "valid", "type": "buy", "price": 50000,
+            "amount": 1, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        strategy.update_result.assert_called_once_with(callback_result)
+        self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertEqual(operator.safety_guard.daily_trade_count, 1)
+
+    def test_invalid_terminal_prices_are_logged_without_consuming_daily_quota(self):
+        for price in (float("nan"), True, float("inf"), float("-inf"), 0, -1):
+            with self.subTest(price=price):
+                operator, _, _, monitor = self._make()
+                strategy = MagicMock()
+                operator.strategy = strategy
+                callback_result = {
+                    "type": "buy", "state": "done", "msg": "success",
+                    "price": price, "amount": 1,
+                }
+
+                class CallbackTrader:
+                    def send_request(self, requests, callback):
+                        callback_result["request"] = requests[0]
+                        callback(callback_result)
+
+                operator.trader = CallbackTrader()
+                operator._send_requests([{
+                    "id": "invalid-price", "type": "buy", "price": 50000,
+                    "amount": 1, "date_time": "2026-07-03T12:00:00",
+                }])
+
+                self.assertEqual(len(monitor.trade_result_log), 1)
+                self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+                strategy.update_result.assert_called_once_with(callback_result)
+                self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
+    def test_malformed_terminal_amount_is_logged_without_consuming_daily_quota(self):
+        operator, _, _, monitor = self._make()
+        strategy = MagicMock()
+        operator.strategy = strategy
+        malformed_trader = MagicMock(
+            spec=["send_request", "cancel_request", "cancel_all_requests",
+                  "get_account_info"]
+        )
+        malformed_trader.send_request.side_effect = lambda requests, callback: callback({
+            "request": requests[0], "type": "buy", "price": 50000,
+            "amount": "not-a-number", "msg": "success", "state": "done",
+        })
+        operator.trader = malformed_trader
+
+        operator._send_requests([{
+            "id": "malformed-fill", "type": "buy", "price": 50000,
+            "amount": 0.5, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        self.assertEqual(monitor.trade_result_log[-1]["result"]["state"], "done")
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+        strategy.update_result.assert_called_once()
+
+    def test_zero_amount_terminal_success_does_not_consume_daily_quota(self):
+        operator, _, _, monitor = self._make()
+        operator.strategy = MagicMock()
+        zero_fill_trader = MagicMock(
+            spec=["send_request", "cancel_request", "cancel_all_requests",
+                  "get_account_info"]
+        )
+        zero_fill_trader.send_request.side_effect = lambda requests, callback: callback({
+            "request": requests[0], "type": "buy", "price": 50000,
+            "amount": 0, "msg": "success", "state": "done",
+        })
+        operator.trader = zero_fill_trader
+
+        operator._send_requests([{
+            "id": "zero-fill", "type": "buy", "price": 50000,
+            "amount": 0.5, "date_time": "2026-07-03T12:00:00",
+        }])
+
+        self.assertEqual(monitor.trade_result_log[-1]["result"]["state"], "done")
+        self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
+    def test_invalid_terminal_amounts_are_logged_without_consuming_daily_quota(self):
+        for amount in (True, float("nan"), float("inf"), float("-inf")):
+            with self.subTest(amount=amount):
+                operator, _, _, monitor = self._make()
+                strategy = MagicMock()
+                operator.strategy = strategy
+                callback_result = {
+                    "type": "buy", "price": 50000, "amount": amount,
+                    "msg": "success", "state": "done",
+                }
+                callback_trader = MagicMock(
+                    spec=["send_request", "cancel_request", "cancel_all_requests",
+                          "get_account_info"]
+                )
+
+                def send_request(requests, callback):
+                    callback_result["request"] = requests[0]
+                    callback(callback_result)
+
+                callback_trader.send_request.side_effect = send_request
+                operator.trader = callback_trader
+                operator._send_requests([{
+                    "id": "invalid-fill", "type": "buy", "price": 50000,
+                    "amount": 0.5, "date_time": "2026-07-03T12:00:00",
+                }])
+
+                strategy.update_result.assert_called_once_with(callback_result)
+                self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+                self.assertEqual(operator.safety_guard.daily_trade_count, 0)
+
 
 class TradingOperatorLifecycleTests(unittest.TestCase):
+    def tearDown(self):
+        if hasattr(self, "operator"):
+            self.operator.stop()
+
     def test_start_stop_start_cycle(self):
         operator, _, _, _ = make_operator()
         self.assertTrue(operator.start())
@@ -157,3 +372,18 @@ class TradingOperatorLifecycleTests(unittest.TestCase):
         operator.start()
         self.assertFalse(operator.start())
         operator.stop()
+
+    def test_stop_cancels_queued_orders_after_worker_start(self):
+        self.operator, trader, _, _ = make_operator()
+        self.operator._send_requests([{
+            "id": "queued-buy", "type": "buy", "ord_type": "limit",
+            "price": 40000, "amount": 1.0,
+            "date_time": "2026-07-03T12:00:00",
+        }])
+        self.assertIn("queued-buy", trader.pending_orders)
+
+        self.assertTrue(self.operator.start())
+        self.operator.stop()
+
+        self.assertEqual(trader.pending_orders, {})
+        self.assertEqual(trader.get_account_info()["reserved_balance"], 0)

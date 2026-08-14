@@ -86,7 +86,7 @@ class StrategyLlm(Strategy):
             price = float(result["price"])
             amount = float(result["amount"])
             total = price * amount
-            fee = total * self.COMMISSION_RATIO
+            fee = self._result_fee(result, self.COMMISSION_RATIO)
             if result["type"] == "buy":
                 self.balance -= round(total + fee)
             else:

@@ -90,6 +90,17 @@ class StrategyBuyAndHoldTests(unittest.TestCase):
         self.assertEqual(bnh.result[-1]["msg"], "melon")
         self.assertEqual(bnh.result[-1]["balance"], 9500)
 
+    def test_update_result_uses_zero_fee_from_successful_buy(self):
+        bnh = StrategyBuyAndHold()
+        bnh.initialize(500000, 10)
+
+        bnh.update_result({
+            "request": {"id": "b"}, "type": "buy", "state": "done",
+            "msg": "success", "price": 50000, "amount": 2, "fee": 0,
+        })
+
+        self.assertEqual(bnh.balance, 400000)
+
     def test_update_result_update_balance_at_sell(self):
         bnh = StrategyBuyAndHold()
         bnh.initialize(100000, 10)
