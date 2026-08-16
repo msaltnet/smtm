@@ -25,7 +25,7 @@ AI Agent 기반 자율 암호화폐 자동매매 프로그램. https://smtm.msal
 - 안전 가드레일 (최대 거래 금액, 일일 거래 제한, 손실 비율 상한)
 - 텔레그램 챗봇 제어
 - 구현된 매매 전략 모듈(Buy & Hold, RSI, SMA)을 사용하며, `LLM` 전략의 경우 `smtm/strategies/*.md` 문서로 전략 지식을 프롬프트에 주입해 판단에 활용
-- 교체 가능한 LLM 클라이언트 인터페이스 — 현재 Claude 구현. OpenAI / Ollama 어댑터는 예정
+- 교체 가능한 LLM 클라이언트 인터페이스 — `LlmClient` 어댑터로 Anthropic Claude와 OpenAI 지원
 
 ## 설치
 
@@ -43,8 +43,16 @@ pip install -r requirements.txt
 프로젝트 루트에 `.env` 파일을 생성하거나 환경변수를 직접 설정합니다:
 
 ```bash
-# 필수: LLM API 키 (현재 구현된 벤더는 Anthropic Claude 하나입니다)
+# Claude가 기본 제공자입니다. 선택한 제공자의 키만 필요합니다.
+SMTM_LLM_PROVIDER=claude
 SMTM_LLM_API_KEY=your_anthropic_api_key
+
+# OpenAI 사용 시 (Claude 대신 선택)
+# SMTM_LLM_PROVIDER=openai
+# OPENAI_API_KEY=sk-...
+# 선택 사항. 기본값은 gpt-5.6-luna이며 OpenAI 계정이 해당 모델에 접근할 수 있어야 합니다.
+# SMTM_OPENAI_MODEL=gpt-5.6-luna
+# API 키 값은 텔레그램으로 절대 보내지 마세요.
 
 # Upbit 거래소 (거래소 코드 UPB)
 UPBIT_OPEN_API_ACCESS_KEY=your_upbit_access_key

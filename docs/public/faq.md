@@ -13,7 +13,7 @@
 A. 아니요. smtm은 **LLM이 매매 판단을 수행하는 실행 프레임워크**입니다. 수익 여부는 시장 상황과 LLM의 판단 품질에 따라 달라지며, 손실 가능성이 항상 존재합니다. 기본 SafetyGuard는 **최대 -20% 누적 손실**까지만 허용하도록 설계돼 있습니다.
 
 **Q. 어떤 LLM을 쓸 수 있나요?**
-A. 현재 코드에 구현된 벤더는 Anthropic Claude(`claude-sonnet-4-20250514`) 하나입니다. `LlmClient` 추상 계층은 존재하므로 OpenAI / Ollama 어댑터를 추가할 수 있도록 설계돼 있지만, 아직 구현되지 않았습니다.
+A. `LlmClient` 어댑터로 Anthropic Claude(`claude-sonnet-4-20250514`)와 OpenAI를 지원합니다. 기본값은 Claude이며, OpenAI를 쓰려면 `SMTM_LLM_PROVIDER=openai`, `OPENAI_API_KEY`를 설정하세요. 선택 사항인 `SMTM_OPENAI_MODEL`의 기본값은 `gpt-5.6-luna`이고, OpenAI 계정이 해당 모델에 접근할 수 있어야 합니다.
 
 **Q. 어떤 거래소를 지원하나요?**
 A. 실주문까지 가능한 거래소(Trader 구현 존재)는 **Upbit(`UPB`)**, **Bithumb(`BTH`)**, **Binance(`BNC`)**, **OKX(`OKX`)** 네 곳입니다. Upbit+Binance 병합(`UBD`)은 **데이터 조회만** 지원합니다.
@@ -64,8 +64,8 @@ A. 현재 설계상 **세션 상태를 영속 저장하지 않습니다.** 대�
 
 ### 3.1 인증 / 환경변수
 
-**Q. `SMTM_LLM_API_KEY`를 설정하지 않으면?**
-A. 기동 시 콘솔에 "`SMTM_LLM_API_KEY` 환경변수를 설정해주세요" 메시지가 뜨고 종료됩니다. 텔레그램 토큰이 없을 때도 마찬가지로 "Please check your telegram chat-bot token"을 출력하고 정상 종료합니다.
+**Q. LLM API 키를 설정하지 않으면?**
+A. 기본 Claude는 `SMTM_LLM_API_KEY`, OpenAI(`SMTM_LLM_PROVIDER=openai`)는 `OPENAI_API_KEY`가 없으면 키 이름만 콘솔에 출력하고 시작하지 않습니다. 선택하지 않은 제공자의 키는 필요하지 않으며, 어떤 API 키 값도 텔레그램으로 보내면 안 됩니다. 텔레그램 토큰이 없을 때도 "Please check your telegram chat-bot token"을 출력하고 정상 종료합니다.
 
 **Q. 거래소 키는 언제 검증되나요?**
 A. 주문을 실제로 전송하는 시점에 거래소가 검증합니다. 잘못된 키의 경우 `execute_trade` Tool 결과가 실패로 돌아오고, LLM이 해당 오류 메시지를 받아 후속 판단에 반영합니다.

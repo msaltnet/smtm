@@ -25,7 +25,7 @@ A chat-driven AI Agent orchestrates the system -- registering accounts, managing
 - Safety guardrails (max trade amount, daily trade limit, loss ratio ceiling)
 - Telegram chatbot control
 - Uses the implemented trading strategy modules (Buy & Hold, RSI, SMA); for the `LLM` strategy, strategy knowledge from `smtm/strategies/*.md` is injected into the prompt to inform its decisions
-- Pluggable LLM client interface — Claude is implemented; OpenAI / Ollama adapters are planned
+- Pluggable LLM client interface — Anthropic Claude and OpenAI are supported through `LlmClient` adapters
 
 ## Setup
 
@@ -45,8 +45,16 @@ pip install -r requirements.txt
 Create a `.env` file in the project root (or export variables directly):
 
 ```bash
-# Required: LLM API key (currently Anthropic Claude is the only implemented vendor)
+# Claude is the default provider. Only the selected provider's key is required.
+SMTM_LLM_PROVIDER=claude
 SMTM_LLM_API_KEY=your_anthropic_api_key
+
+# OpenAI (select this instead of Claude)
+# SMTM_LLM_PROVIDER=openai
+# OPENAI_API_KEY=sk-...
+# Optional; defaults to gpt-5.6-luna. Your OpenAI account must have access to it.
+# SMTM_OPENAI_MODEL=gpt-5.6-luna
+# Never send API keys through Telegram.
 
 # Upbit exchange (exchange code UPB)
 UPBIT_OPEN_API_ACCESS_KEY=your_upbit_access_key

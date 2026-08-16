@@ -16,7 +16,7 @@ graph TD
     User[사용자: Telegram]
     Controller[TelegramController\n채팅 입력 루프]
     Operator[LlmOperator\n상태·타이머·대화이력]
-    LLM[ClaudeLlmClient\nLLM 어댑터]
+    LLM[LlmClient\nClaude / OpenAI 어댑터]
     Router[ToolRouter\nTool 디스패치]
     Safety[SafetyGuard\n규칙 기반 안전장치]
     Monitor[SystemMonitor\n구조화 로그]
@@ -24,7 +24,7 @@ graph TD
     DP[DataProvider\nUpbit · Bithumb · Binance · Upbit+Binance · Upbit+News]
     Trader[Trader\nUpbit · Bithumb]
     Ext1[(거래소 API)]
-    Ext2[(Anthropic API)]
+    Ext2[(Anthropic / OpenAI API)]
 
     User --> Controller
     Controller --> Operator
@@ -47,7 +47,7 @@ graph TD
 |--------|------|-----------|
 | Presentation | 사용자 입력·출력 | `TelegramController`(유일한 실행 진입점) |
 | Orchestration | 상태·타이머·대화 흐름 | `LlmOperator`, `Worker`(백그라운드 실행기) |
-| LLM 어댑터 | 벤더 API 추상화 | `LlmClient` (추상), `ClaudeLlmClient` (구현) |
+| LLM 어댑터 | 벤더 API 추상화 | `LlmClient` (추상), `ClaudeLlmClient` 및 `OpenAILlmClient` (구현) |
 | Safety | Tool 실행 직전 한도 검사 | `SafetyGuard`, `SafetyConfig` |
 | Tool 계층 | LLM이 호출 가능한 능력 | `ToolRouter`, `tools/*` |
 | Integration | 시장 데이터 / 주문 실행 | `DataProvider` 9종 (UPB · BTH · BNC · OKX · UBD · UPN · UMN · USC · UFC) + 신호 빌딩 블록 (크립토 뉴스 NWS·CTN·DCN·CSN·BMN·TBN·MNS / 경제 뉴스 WSJ·MWN·CNB / 소셜 RDT·RCC·RBT·HNS / 감정 FGI / 가격 CGK·CCP·CGL / 전통시장 YFN / 온체인 BCI·MPF·EGS / 파생·포지셔닝 BFR·BOI·BLS / 공지 UPT / 환율 FXR), `Trader` 4종 (UPB · BTH · BNC · OKX, + Factory) |
@@ -60,7 +60,7 @@ graph TD
 | 영역 | 스택 |
 |------|------|
 | 언어 | Python 3.9+ |
-| LLM | Anthropic Claude (`claude-sonnet-4-20250514`), SDK `anthropic>=0.25` |
+| LLM | Anthropic Claude (`claude-sonnet-4-20250514`) 및 OpenAI (`gpt-5.6-luna` 기본값), SDK `anthropic`, `openai` |
 | HTTP | `requests>=2.28` |
 | 인증 (거래소) | `pyjwt>=2.0` (서명), 환경변수 기반 API 키 |
 | 설정 | `python-dotenv` |
@@ -155,12 +155,12 @@ sequenceDiagram
     participant M as __main__
     participant C as TelegramController
     participant O as SystemOperator
-    participant L as ClaudeLlmClient
+    participant L as LlmClient
     participant DP as DataProvider
     participant TR as Trader
 
     M->>C: new TelegramController(token, chat_id)
-    C->>L: new ClaudeLlmClient(SMTM_LLM_API_KEY)
+    C->>L: provider별 클라이언트 생성 (Claude 또는 OpenAI)
     C->>O: new SystemOperator(llm_client, config)
     O->>O: SafetyGuard · SystemMonitor · ToolRouter 초기화
     O->>DP: DataProviderFactory.create(exchange)
@@ -309,7 +309,7 @@ operator = SystemOperator(client, config)
 - **실행 단위**: 단일 Python 프로세스. 텔레그램 챗봇이 유일한 진입점 (`python -m smtm --token <bot_token> --chatid <chat_id>`).
 - **장기 구동**: `nohup` / `tmux` / `screen` 또는 systemd 유닛 권장 (공식 제공 스크립트는 없음).
 - **리소스**: 메모리 수백 MB 이내. LLM 호출이 주요 외부 비용이고 CPU는 대부분 유휴.
-- **네트워크**: 거래소 API(HTTPS), Anthropic API(HTTPS). 외부에서 들어오는 포트는 없음 (텔레그램은 아웃바운드 롱폴링).
+- **네트워크**: 거래소 API(HTTPS), Anthropic 또는 OpenAI API(HTTPS). 외부에서 들어오는 포트는 없음 (텔레그램은 아웃바운드 롱폴링).
 - **데이터**: 영속 상태 없음. 재시작 시 대화 이력 / 일일 거래 카운터 / SystemMonitor 로그 모두 초기화.
 
 ---

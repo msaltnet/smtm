@@ -26,7 +26,7 @@ smtm은 **LLM(대규모 언어 모델)이 시장을 분석하고 매매를 실�
 
 - **LLM 자율성**: 시장 분석·매매 판단·포트폴리오 관리·성과 확인을 LLM이 Tool use로 직접 수행합니다.
 - **규칙 기반 안전장치**: LLM의 판단과 별개로 하드 리밋이 항상 동작합니다. 한도 초과 시 해당 거래는 거부되고 사유가 기록됩니다.
-- **벤더 독립 LLM 인터페이스**: `LlmClient` 추상 계층이 있고 현재 Anthropic Claude가 구현돼 있습니다. OpenAI / Ollama 어댑터는 예정 항목입니다.
+- **벤더 독립 LLM 인터페이스**: `LlmClient` 어댑터로 Anthropic Claude와 OpenAI를 지원합니다. 기본 제공자는 Claude이며 OpenAI는 환경변수로 선택합니다.
 - **관찰 가능성**: `SystemMonitor`가 LLM 호출, Tool 실행, 시장 데이터, 거래 요청·결과, 안전장치 차단 이벤트까지 모두 구조화된 로그로 남깁니다.
 - **대화형 온보딩**: "BTC 시장 분석해줘"처럼 평소 말투로 상호작용하며, `start` / `stop` 같은 명령으로 자동 매매 루프를 토글합니다.
 
@@ -81,7 +81,7 @@ smtm은 **LLM(대규모 언어 모델)이 시장을 분석하고 매매를 실�
 | 레이어 | 구성 |
 |--------|------|
 | 언어 / 런타임 | Python 3.9+ |
-| LLM 벤더 | Anthropic Claude (`claude-sonnet-4-20250514`) — SDK: `anthropic>=0.25` |
+| LLM 벤더 | Anthropic Claude (`claude-sonnet-4-20250514`) 및 OpenAI (`gpt-5.6-luna` 기본값) — SDK: `anthropic`, `openai` |
 | 거래소 API | Upbit, Bithumb, Binance, OKX REST |
 | 인증 | PyJWT (거래소 서명), 환경변수 기반 API 키 |
 | HTTP | `requests` |

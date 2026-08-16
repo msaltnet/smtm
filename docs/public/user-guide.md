@@ -16,7 +16,7 @@ smtm의 제어 채널은 **텔레그램 챗봇 하나**입니다. 예산·통화
 | 항목 | 설명 |
 |------|------|
 | Python 3.9+ | `python --version`으로 확인 |
-| Anthropic Claude API 키 | [Anthropic Console](https://console.anthropic.com) 발급, `SMTM_LLM_API_KEY`로 주입 |
+| LLM API 키 | 기본 Claude는 [Anthropic Console](https://console.anthropic.com)의 `SMTM_LLM_API_KEY`, OpenAI는 `OPENAI_API_KEY` |
 | 거래소 API 키 | Upbit 또는 Bithumb (실주문용). 가상거래만 할 거라면 없어도 됩니다. |
 | 텔레그램 Bot | **필수.** BotFather로 토큰 발급, `chat_id` 확인 |
 
@@ -33,8 +33,16 @@ pip install -r requirements.txt
 프로젝트 루트의 `.env` 파일 또는 쉘 환경에 다음을 설정합니다.
 
 ```bash
-# 필수 (현재 구현된 LLM 벤더는 Claude 하나)
+# Claude가 기본 제공자이며 선택한 제공자의 키만 필요합니다.
+SMTM_LLM_PROVIDER=claude
 SMTM_LLM_API_KEY=sk-ant-xxxxx
+
+# OpenAI를 사용할 경우 Claude 대신 아래 설정을 사용합니다.
+# SMTM_LLM_PROVIDER=openai
+# OPENAI_API_KEY=sk-...
+# 선택 사항. 기본값은 gpt-5.6-luna이며 계정 접근 권한이 필요합니다.
+# SMTM_OPENAI_MODEL=gpt-5.6-luna
+# API 키 값은 텔레그램 채팅으로 보내지 마세요.
 
 # Upbit (거래소 코드 UPB)
 UPBIT_OPEN_API_ACCESS_KEY=...
