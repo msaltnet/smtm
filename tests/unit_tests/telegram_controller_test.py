@@ -7,6 +7,7 @@ from smtm.account_store import AccountStore
 from smtm.controller.telegram.telegram_controller import (
     BOOT_MESSAGES,
     TelegramController,
+    create_llm_client_from_env,
 )
 from smtm.llm.llm_client import LlmClient, LlmResponse
 from smtm.profile_store import ProfileStore
@@ -103,6 +104,38 @@ class BootMessageEncodingTests(unittest.TestCase):
         # em-dash 같은 비-ASCII 문장부호는 cp949로 인코딩되지 않는다.
         with self.assertRaises(UnicodeEncodeError):
             "실제 주문은 전송되지 않습니다 — 주의".encode("cp949")
+
+
+class LlmProviderFactoryTests(unittest.TestCase):
+    @patch("smtm.controller.telegram.telegram_controller.ClaudeLlmClient")
+    def test_provider_defaults_to_claude(self, mock_claude):
+        with patch.dict(os.environ, {"SMTM_LLM_API_KEY": "claude-key"}, clear=True):
+            create_llm_client_from_env()
+
+        mock_claude.assert_called_once_with(api_key="claude-key")
+
+    @patch("smtm.controller.telegram.telegram_controller.OpenAILlmClient")
+    def test_openai_provider_uses_key_and_optional_model(self, mock_openai):
+        with patch.dict(os.environ, {
+            "SMTM_LLM_PROVIDER": "openai",
+            "OPENAI_API_KEY": "openai-key",
+            "SMTM_OPENAI_MODEL": "gpt-5.6-terra",
+        }, clear=True):
+            create_llm_client_from_env()
+
+        mock_openai.assert_called_once_with(
+            api_key="openai-key", model="gpt-5.6-terra"
+        )
+
+    def test_openai_provider_rejects_missing_key(self):
+        with patch.dict(os.environ, {"SMTM_LLM_PROVIDER": "openai"}, clear=True):
+            with self.assertRaisesRegex(ValueError, "OPENAI_API_KEY"):
+                create_llm_client_from_env()
+
+    def test_unknown_provider_is_rejected(self):
+        with patch.dict(os.environ, {"SMTM_LLM_PROVIDER": "unknown"}, clear=True):
+            with self.assertRaisesRegex(ValueError, "claude 또는 openai"):
+                create_llm_client_from_env()
 
 
 if __name__ == "__main__":
