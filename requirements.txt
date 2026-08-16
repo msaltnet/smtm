@@ -2,5 +2,6 @@ requests
 pyjwt
 python-dotenv
 anthropic
+openai
 numpy
 pandas
