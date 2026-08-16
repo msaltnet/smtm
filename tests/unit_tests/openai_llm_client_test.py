@@ -63,3 +63,23 @@ def test_create_message_converts_forced_tool_choice(mock_openai):
     assert sdk_client.chat.completions.create.call_args.kwargs["tool_choice"] == {
         "type": "function", "function": {"name": "submit_decision"}
     }
+
+
+def test_convert_messages_preserves_assistant_calls_and_tool_results():
+    messages = [
+        {"role": "assistant", "content": [
+            {"type": "text", "text": "확인하겠습니다"},
+            {"type": "tool_use", "id": "call_1", "name": "get_status", "input": {}},
+        ]},
+        {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": "call_1", "content": "{'ok': True}"},
+        ]},
+    ]
+
+    assert OpenAILlmClient._convert_messages(messages) == [
+        {"role": "assistant", "content": "확인하겠습니다", "tool_calls": [{
+            "id": "call_1", "type": "function",
+            "function": {"name": "get_status", "arguments": "{}"},
+        }]},
+        {"role": "tool", "tool_call_id": "call_1", "content": "{'ok': True}"},
+    ]

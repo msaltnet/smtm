@@ -22,7 +22,46 @@ class OpenAILlmClient(LlmClient):
 
     @staticmethod
     def _convert_messages(messages):
-        return [{"role": message["role"], "content": message["content"]} for message in messages]
+        converted = []
+        for message in messages:
+            content = message["content"]
+            if isinstance(content, str):
+                converted.append({"role": message["role"], "content": content})
+                continue
+
+            text_parts, tool_calls, tool_results = [], [], []
+            for block in content:
+                if block["type"] == "text":
+                    text_parts.append(block["text"])
+                elif block["type"] == "tool_use":
+                    tool_calls.append({
+                        "id": block["id"],
+                        "type": "function",
+                        "function": {
+                            "name": block["name"],
+                            "arguments": json.dumps(block["input"], ensure_ascii=False),
+                        },
+                    })
+                elif block["type"] == "tool_result":
+                    tool_results.append({
+                        "role": "tool",
+                        "tool_call_id": block["tool_use_id"],
+                        "content": block["content"],
+                    })
+                else:
+                    raise ValueError(f"Unsupported message block type: {block['type']}")
+
+            if tool_calls:
+                converted.append({
+                    "role": "assistant",
+                    "content": "".join(text_parts) or None,
+                    "tool_calls": tool_calls,
+                })
+            elif text_parts:
+                converted.append({"role": message["role"], "content": "".join(text_parts)})
+            converted.extend(tool_results)
+
+        return converted
 
     @staticmethod
     def _convert_tools(tools):
