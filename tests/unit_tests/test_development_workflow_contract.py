@@ -24,6 +24,12 @@ def test_repository_exposes_issue_to_draft_pr_workflow():
     assert "Draft PR is the only routine development approval gate" in agents
     assert "real-money order" in agents
     assert "live external side effects" in agents
+    assert "Keep the local task branch and worktree until the PR is merged" in agents
+    assert "After confirming the merge, update the base branch" in agents
+    assert "verify the task worktree is clean" in agents
+    assert "remove the worktree and delete the local task branch" in agents
+    assert "preserve both and request an explicit cleanup decision" in agents
+    assert "cleanup of a closed-unmerged or dirty task worktree" in agents
     assert "Never merge, deploy, release, trade, or close the Issue" in agents
 
     assert "Approved Issue: autonomous implementation" in workflow
@@ -35,6 +41,12 @@ def test_repository_exposes_issue_to_draft_pr_workflow():
     assert "Real-money trading" in workflow
     assert "live external side effect" in workflow
     assert "external publication" in workflow
+    assert "After the PR is confirmed merged" in workflow
+    assert "update the base branch" in workflow
+    assert "verify the task worktree is clean" in workflow
+    assert "remove the worktree and delete the local task branch" in workflow
+    assert "preserve both and request an explicit cleanup decision" in workflow
+    assert "cleanup of a closed-unmerged PR worktree" in workflow
     assert (
         "Automatic merge, deployment, release, trading, and Issue closure" in workflow
     )

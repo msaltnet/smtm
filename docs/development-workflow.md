@@ -47,7 +47,8 @@ The agent stops only when:
 - a live external side effect is required, except for the separately approved Issue mutation and Draft PR creation;
 - deployment, package publication, release, or other external publication is required;
 - privacy, security, compliance, or legal judgment is required;
-- verification remains unresolved after investigation.
+- verification remains unresolved after investigation;
+- cleanup of a closed-unmerged PR worktree or a worktree with uncommitted changes is required.
 
 Automatic merge, deployment, release, trading, and Issue closure are outside standing authorization.
 
@@ -58,6 +59,8 @@ Automatic merge, deployment, release, trading, and Issue closure are outside sta
 ## 4. Manual QA, review, and merge
 
 The user follows the Draft PR's manual QA steps and evaluates product behavior, usability, and any environment-specific result. The agent addresses review feedback and re-runs verification. The user approves merge and any deployment, release, or live-system action separately.
+
+Keep the local task branch and worktree throughout Draft PR review. After the PR is confirmed merged, update the base branch, verify the task worktree is clean, then remove the worktree and delete the local task branch. If the PR is closed without merge or uncommitted changes remain, preserve both and request an explicit cleanup decision.
 
 **Done when:** review evidence is recorded and the approved PR is merged.
 
