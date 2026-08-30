@@ -30,6 +30,14 @@ def test_repository_exposes_issue_to_draft_pr_workflow():
     assert "remove the worktree and delete the local task branch" in agents
     assert "preserve both and request an explicit cleanup decision" in agents
     assert "cleanup of a closed-unmerged or dirty task worktree" in agents
+    assert "explicit ClickUp task ID or URL" in agents
+    assert "mark it Complete after confirming the PR merge" in agents
+    assert "one-way completion follow-up, not GitHub synchronization" in agents
+    assert "Do not search for, create, or infer a ClickUp task" in agents
+    assert "does not block GitHub completion or local cleanup" in agents
+    assert "read the current task status before any retry" in agents
+    assert "without making a duplicate mutation" in agents
+    assert "linked ClickUp completion after a confirmed PR merge" in agents
     assert "Never merge, deploy, release, trade, or close the Issue" in agents
 
     assert "Approved Issue: autonomous implementation" in workflow
@@ -47,6 +55,14 @@ def test_repository_exposes_issue_to_draft_pr_workflow():
     assert "remove the worktree and delete the local task branch" in workflow
     assert "preserve both and request an explicit cleanup decision" in workflow
     assert "cleanup of a closed-unmerged PR worktree" in workflow
+    assert "explicit ClickUp task ID or URL" in workflow
+    assert "mark the linked ClickUp task Complete" in workflow
+    assert "one-way completion follow-up, not GitHub synchronization" in workflow
+    assert "do not search for, create, or infer one" in workflow
+    assert "does not block GitHub completion or local cleanup" in workflow
+    assert "read the current task status before any retry" in workflow
+    assert "without making a duplicate mutation" in workflow
+    assert "linked ClickUp completion after a confirmed PR merge" in workflow
     assert (
         "Automatic merge, deployment, release, trading, and Issue closure" in workflow
     )

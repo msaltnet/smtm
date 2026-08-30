@@ -44,7 +44,7 @@ The agent stops only when:
 - irreversible deletion or migration is required;
 - a paid service or cost is required;
 - Real-money trading, exchange-account mutation, or a live order is required;
-- a live external side effect is required, except for the separately approved Issue mutation and Draft PR creation;
+- a live external side effect is required, except for the separately approved Issue mutation, Draft PR creation, and linked ClickUp completion after a confirmed PR merge;
 - deployment, package publication, release, or other external publication is required;
 - privacy, security, compliance, or legal judgment is required;
 - verification remains unresolved after investigation;
@@ -67,6 +67,8 @@ Keep the local task branch and worktree throughout Draft PR review. After the PR
 **Output:** reviewed and merged PR.
 
 ## 5. Close and improve
+
+If an explicit ClickUp task ID or URL is linked, mark the linked ClickUp task Complete after confirming the PR merge. This is a one-way completion follow-up, not GitHub synchronization. When no link is provided, do not search for, create, or infer one. A failed ClickUp update does not block GitHub completion or local cleanup. If the response is uncertain, read the current task status before any retry and report the result without making a duplicate mutation.
 
 After merge approval, connect the PR and Issue, update source-of-truth documentation, and separate out-of-scope work into follow-up candidates. Close the Issue only when authorized and repository policy permits it.
 
