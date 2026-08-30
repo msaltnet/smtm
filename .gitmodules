@@ -1,0 +1,3 @@
+[submodule ".agents/skills"]
+	url = git@github.com:msaltnet/my-skills.git
+	path = .agents/skills

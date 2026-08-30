@@ -252,6 +252,10 @@ E2E 테스트는 외부 API 호출 없이 전체 흐름을 검증합니다. 시�
 
 내부 컴포넌트(`SystemOperator`, `TradingOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, 모든 Strategy와 Tool)는 실제 코드로 동작합니다.
 
+## 개발 워크플로
+
+개발은 조사와 승인을 마친 GitHub Issue에서 시작해 Draft PR까지 자율적으로 진행합니다. Issue 작성, 검수 게이트와 실거래 안전 경계는 [개발 워크플로](docs/development-workflow.md)를 따릅니다.
+
 ## Architecture
 
 시스템은 2계층으로 나뉘며, SessionManager가 하나 이상의 세션을 병렬로 조율합니다:

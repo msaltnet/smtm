@@ -252,6 +252,10 @@ E2E tests verify the complete flow without calling any external APIs. Only the s
 
 All internal components (`SystemOperator`, `TradingOperator`, `ToolRouter`, `SafetyGuard`, `SystemMonitor`, all Strategies and Tools) run with real code.
 
+## Development workflow
+
+Development starts from a researched, approved GitHub Issue and proceeds autonomously through a Draft PR. See [the development workflow](docs/development-workflow.md) for Issue preparation, review gates, and real-trading safety boundaries.
+
 ## Architecture
 
 The system is split into two layers, coordinated by a SessionManager that runs one or more sessions in parallel:
