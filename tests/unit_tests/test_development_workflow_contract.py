@@ -111,5 +111,5 @@ def test_shared_skill_is_pinned_as_repository_submodule():
         text=True,
     ).stdout.strip()
     assert index_entry == (
-        "160000 3bc548d707d8628628181a7e3afa249df8e6b79e 0\t.agents/skills"
+        "160000 e059657ba7abeea47b1b4a0fd290af98c864dcad 0\t.agents/skills"
     )
