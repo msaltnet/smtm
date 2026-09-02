@@ -1,7 +1,7 @@
 ---
 status: active
-version: 1.0
-last-updated: 2026-08-30
+version: 1.1
+last-updated: 2026-09-01
 review-cycle: every-5-completed-issues
 ---
 
@@ -58,9 +58,13 @@ Automatic merge, deployment, release, trading, and Issue closure are outside sta
 
 ## 4. Manual QA, review, and merge
 
-The user follows the Draft PR's manual QA steps and evaluates product behavior, usability, and any environment-specific result. The agent addresses review feedback and re-runs verification. The user approves merge and any deployment, release, or live-system action separately.
+Use `$pr-qa` for an implemented Draft PR. The agent inspects the exact PR head and affected behavior, runs focused tests followed by `python -m pytest tests/unit_tests -q`, and records the verified head SHA. It then prepares a safe local or mocked manual QA entry point using fakes, mocks, or recorded data. An explicitly authorized sandbox may be used when necessary, but PR QA never reads `.env` values or places a real-money order.
 
-Keep the local task branch and worktree throughout Draft PR review. After the PR is confirmed merged, update the base branch, verify the task worktree is clean, then remove the worktree and delete the local task branch. If the PR is closed without merge or uncommitted changes remain, preserve both and request an explicit cleanup decision.
+Keep the PR in Draft and retain the local task branch and worktree while the user follows the change-specific QA steps. The agent addresses feedback on the same PR, repeats verification and safe QA preparation for the new head, and requests QA again.
+
+An unambiguous `검수 완료` authorizes merge only for the exact tested head SHA. Immediately before merge, re-read the remote head, required CI, conflicts, review blocks, and branch protection. A changed head invalidates verification and QA. When every gate passes, merge using the repository's default allowed method and confirm the remote merged state before any cleanup.
+
+QA approval does not authorize deployment, package publication, access to production credentials, live-account mutation, sandbox use that requires credentials, or live trading. Each remains a separate authorization boundary.
 
 **Done when:** review evidence is recorded and the approved PR is merged.
 
@@ -68,9 +72,11 @@ Keep the local task branch and worktree throughout Draft PR review. After the PR
 
 ## 5. Close and improve
 
-If an explicit ClickUp task ID or URL is linked, mark the linked ClickUp task Complete after confirming the PR merge. This is a one-way completion follow-up, not GitHub synchronization. When no link is provided, do not search for, create, or infer one. A failed ClickUp update does not block GitHub completion or local cleanup. If the response is uncertain, read the current task status before any retry and report the result without making a duplicate mutation.
+Only after confirming the PR merge, close a linked Issue when the merged PR demonstrably satisfies it. If an explicit ClickUp task ID or URL is linked, mark only that task Complete. This is a one-way completion follow-up, not GitHub synchronization. When no link is provided, do not search for, create, or infer one. A failed ClickUp update does not block GitHub completion or local cleanup. If the response is uncertain, read the current task status before any retry and report the result without making a duplicate mutation.
 
-After merge approval, connect the PR and Issue, update source-of-truth documentation, and separate out-of-scope work into follow-up candidates. Close the Issue only when authorized and repository policy permits it.
+Update the local base branch from its remote, then verify the task worktree is clean before removing it and deleting the local feature branch. Preserve an unmerged, closed-without-merge, or dirty worktree and branch and request an explicit cleanup decision.
+
+Connect the PR and Issue, confirm required source-of-truth documentation was included in the merged PR, and separate out-of-scope work into follow-up candidates. Missing documentation becomes a proposed follow-up rather than a direct edit to the base branch.
 
 Record workflow friction when it materially delays or weakens a task. Review accumulated candidates every five completed Issues and adopt only repeated or high-impact improvements.
 
