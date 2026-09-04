@@ -1,5 +1,6 @@
 from .llm_client import LlmClient, LlmResponse, ToolCall
 from .claude_llm_client import ClaudeLlmClient
+from .openai_llm_client import OpenAILlmClient
 from .tool import Tool, ToolResult
 from .tool_router import ToolRouter
 from .safety_guard import SafetyGuard, SafetyConfig, SafetyResult

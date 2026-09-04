@@ -55,6 +55,7 @@ from .trader.trader_factory import TraderFactory
 from .controller.telegram import TelegramController
 from .llm.llm_client import LlmClient
 from .llm.claude_llm_client import ClaudeLlmClient
+from .llm.openai_llm_client import OpenAILlmClient
 from .llm.safety_guard import SafetyGuard, SafetyConfig
 from .llm.system_monitor import SystemMonitor
 from .analyzer import Analyzer

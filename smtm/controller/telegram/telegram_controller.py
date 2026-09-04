@@ -11,6 +11,7 @@ from ...config import Config
 from ...log_manager import LogManager
 from ...llm.system_operator import SystemOperator
 from ...llm.claude_llm_client import ClaudeLlmClient
+from ...llm.openai_llm_client import OpenAILlmClient
 from ...account_store import AccountStore
 from ...profile_store import ProfileStore
 from .message_handler import TelegramMessageHandler
@@ -23,6 +24,25 @@ BOOT_MESSAGES = (
     "default 세션은 가상거래입니다 - 실제 주문은 전송되지 않습니다",
     "실거래는 채팅으로 계좌를 등록한 뒤 세션을 만들어 시작하세요",
 )
+
+
+def create_llm_client_from_env():
+    """Create the configured LLM client without exposing provider credentials."""
+    provider = os.environ.get("SMTM_LLM_PROVIDER", "claude").strip().lower()
+    if provider == "claude":
+        api_key = os.environ.get("SMTM_LLM_API_KEY", "")
+        if not api_key:
+            raise ValueError("SMTM_LLM_API_KEY 환경변수를 설정해주세요")
+        return ClaudeLlmClient(api_key=api_key)
+    if provider == "openai":
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY 환경변수를 설정해주세요")
+        return OpenAILlmClient(
+            api_key=api_key,
+            model=os.environ.get("SMTM_OPENAI_MODEL", "gpt-5.6-luna"),
+        )
+    raise ValueError("SMTM_LLM_PROVIDER는 claude 또는 openai여야 합니다")
 
 
 class TelegramController:
@@ -41,12 +61,11 @@ class TelegramController:
     def main(self, exchange="UPB", currency="BTC", budget=500000) -> None:
         print("##### smtm telegram LLM controller is started #####")
 
-        api_key = os.environ.get("SMTM_LLM_API_KEY", "")
-        if not api_key:
-            print("SMTM_LLM_API_KEY 환경변수를 설정해주세요")
+        try:
+            llm_client = create_llm_client_from_env()
+        except ValueError as err:
+            print(str(err))
             return
-
-        llm_client = ClaudeLlmClient(api_key=api_key)
         config = {
             "exchange": exchange,
             "currency": currency,
