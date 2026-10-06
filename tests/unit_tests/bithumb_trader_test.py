@@ -128,16 +128,20 @@ class BithumbTraderCancelRequestTests(unittest.TestCase):
         }
         trader.order_map["mango_request_1234"] = dummy_request
 
-        _cancel_order = MagicMock(return_value=None)
+        trader._cancel_order = MagicMock(return_value=None)
         trader._query_order = MagicMock(
             return_value={
+                "status": "0000",
                 "data": {
+                    "order_currency": "BTC", "payment_currency": "KRW", "type": "bid",
                     "order_status": "Completed",
                     "order_id": "mango_id",
                     "state": "done",
                     "transaction_date": "1572497603668315",
                     "order_price": 888000,
                     "order_qty": 0.007,
+                    "contract": [{"units": "0.007", "price": "888000",
+                                  "transaction_date": "1572497603668315"}],
                 },
             }
         )
@@ -154,30 +158,14 @@ class BithumbTraderCancelRequestTests(unittest.TestCase):
         self.assertEqual(mango_result["state"], "done")
         self.assertEqual(mango_result["amount"], 0.007)
 
-    def test_cancel_request_should_remove_request_even_when_cancel_nothing(self):
+    def test_cancel_request_unknown_id_is_noop(self):
         trader = BithumbTrader()
-        trader._call_callback = MagicMock()
-        dummy_request = {
-            "order_id": "mango_id",
-            "callback": MagicMock(),
-            "result": {
-                "state": "requested",
-                "request": {
-                    "id": "mango_request_1234",
-                    "type": "buy",
-                    "price": "888000",
-                    "amount": "0.0001234",
-                },
-                "type": "buy",
-                "price": 888000.0,
-                "amount": 0.0001234,
-                "msg": "success",
-            },
-        }
-        trader.order_map["mango_request_1234"] = dummy_request
-
-        _cancel_order = MagicMock(return_value="done")
-        self.assertTrue("mango_id" not in trader.order_map)
+        trader._cancel_order = MagicMock()
+        trader._query_order = MagicMock()
+        trader.cancel_request("unknown")
+        trader._cancel_order.assert_not_called()
+        trader._query_order.assert_not_called()
+        self.assertEqual(trader.order_map, {})
 
     def test_cancel_all_requests_should_call_cancel_request_correctly(self):
         trader = BithumbTrader()
@@ -452,45 +440,54 @@ class BithumbTraderBasicTests(unittest.TestCase):
     ):
         dummy_result = [
             {
+                "status": "0000",
                 "data": {
+                    "order_currency": "BTC", "payment_currency": "KRW", "type": "bid",
                     "order_status": "Completed",
-                    "order_id": "mango",
+                    "order_id": "mango_order",
                     "state": "done",
                     "transaction_date": "1572497603668315",
                     "order_price": 500,
                     "order_qty": 0.007,
                     "contract": [
                         {
+                            "units": "0.007", "price": "500",
                             "transaction_date": "1572497603668315",
                         }
                     ],
                 },
             },
             {
+                "status": "0000",
                 "data": {
+                    "order_currency": "BTC", "payment_currency": "KRW", "type": "bid",
                     "order_status": "Waiting",
-                    "order_id": "banana",
+                    "order_id": "banana_order",
                     "state": "cancel",
                     "transaction_date": "1572498603668315",
                     "order_price": 1500,
                     "order_qty": 0.54321,
                     "contract": [
                         {
+                            "units": "0.54321", "price": "1500",
                             "transaction_date": "1572498603668315",
                         }
                     ],
                 },
             },
             {
+                "status": "0000",
                 "data": {
+                    "order_currency": "BTC", "payment_currency": "KRW", "type": "bid",
                     "order_status": "Completed",
-                    "order_id": "apple",
+                    "order_id": "apple_order",
                     "state": "cancel",
                     "transaction_date": "1572498603668315",
                     "order_price": 1500,
                     "order_qty": 0.54321,
                     "contract": [
                         {
+                            "units": "0.54321", "price": "1500",
                             "transaction_date": "1572498603668315",
                         }
                     ],
@@ -563,23 +560,31 @@ class BithumbTraderBasicTests(unittest.TestCase):
     def test__update_order_result_should_NOT_start_timer_when_no_request_remains(self):
         dummy_result = [
             {
+                "status": "0000",
                 "data": {
+                    "order_currency": "BTC", "payment_currency": "KRW", "type": "bid",
                     "order_status": "Completed",
-                    "order_id": "mango",
+                    "order_id": "mango_order",
                     "state": "done",
                     "transaction_date": "1572497603668315",
                     "order_price": 500,
                     "order_qty": 0.007,
+                    "contract": [{"units": "0.007", "price": "500",
+                                  "transaction_date": "1572497603668315"}],
                 },
             },
             {
+                "status": "0000",
                 "data": {
+                    "order_currency": "BTC", "payment_currency": "KRW", "type": "bid",
                     "order_status": "Completed",
-                    "order_id": "apple",
+                    "order_id": "apple_order",
                     "state": "cancel",
                     "transaction_date": "1572498603668315",
                     "order_price": 1500,
                     "order_qty": 0.54321,
+                    "contract": [{"units": "0.54321", "price": "1500",
+                                  "transaction_date": "1572498603668315"}],
                 },
             },
         ]
@@ -624,6 +629,7 @@ class BithumbTraderBasicTests(unittest.TestCase):
             "price": "500",
         }
         trader.bithumb_api_call = MagicMock()
+        trader.get_trade_tick = MagicMock(return_value=None)
         trader._send_limit_order(True, 500, 0.00512)
         trader.bithumb_api_call.assert_called_once_with("/trade/place", expected_query)
 
@@ -722,6 +728,9 @@ class BithumbTraderBasicTests(unittest.TestCase):
 class BithumbTraderMarketOrderTest(unittest.TestCase):
     def _trader(self):
         trader = BithumbTrader(budget=1000000, currency="BTC")
+        # These tests assert submission payloads, not background polling. Avoid
+        # a real timer escaping the mocked API's lifetime.
+        trader._start_timer = MagicMock()
         trader.balance = 1000000
         trader.asset = (50000, 1.0)
         return trader
