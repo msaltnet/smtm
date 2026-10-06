@@ -1,5 +1,7 @@
 import uuid
 import hashlib
+import math
+import threading
 from urllib.parse import urlencode
 import requests
 import jwt  # PyJWT
@@ -37,6 +39,7 @@ class UpbitTrader(BaseExchangeTrader):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
+        self._order_lock = threading.Lock()
         super().__init__(
             budget=budget,
             currency=currency,
@@ -110,58 +113,101 @@ class UpbitTrader(BaseExchangeTrader):
         return result
 
     def cancel_request(self, request_id):
-        """거래 요청을 취소한다
-        request_id: 취소하고자 하는 request의 id
-        """
-        if request_id not in self.order_map:
+        """Cancel a known order without discarding an uncertain outcome."""
+        with self._order_lock:
+            order = self.order_map.get(request_id)
+        if order is None:
             return
 
-        order = self.order_map[request_id]
-        del self.order_map[request_id]
-        result = order["result"]
         response = self._cancel_order(order["uuid"])
+        if self._complete_order(request_id, order, response):
+            return
 
-        if response is None:
-            # 이미 체결된 경우, 취소가 안되므로 주문 정보를 조회
-            response = self._query_order_list([order["uuid"]])
-            if len(response) > 0:
-                response = response[0]
-            else:
-                return
+        with self._order_lock:
+            if self.order_map.get(request_id) is not order:
+                return  # Polling already completed it, or the entry changed.
 
-        self.logger.debug(f"canceled order {response}")
-        result["date_time"] = response["created_at"].replace("+09:00", "")
-        # 최종 체결 가격, 수량으로 업데이트
-        result["price"] = (
-            float(response["price"]) if response["price"] is not None else 0
-        )
-        result["amount"] = float(response["executed_volume"])
-        result["state"] = "done"
+        # A successful cancel request may still report `wait`. Only a matching
+        # terminal response confirms cancellation or a fill that won the race.
+        responses = self._query_order_list([order["uuid"]])
+        if isinstance(responses, list):
+            for response in responses:
+                if self._complete_order(request_id, order, response):
+                    return
+
+        # Keep the original order/result and the normal polling cadence.
+        with self._order_lock:
+            if self.order_map:
+                self._start_timer()
+
+    def _complete_order(self, request_id, order, response):
+        """Validate terminal data, then claim this exact tracked entry once."""
+        if not isinstance(response, dict):
+            return False
+        if response.get("uuid") != order["uuid"]:
+            return False
+        if response.get("state") not in ("done", "cancel"):
+            return False
+        try:
+            created_at = response["created_at"]
+            if not isinstance(created_at, str) or not created_at.strip():
+                return False
+            price = response["price"]
+            amount = response["executed_volume"]
+            if isinstance(price, bool) or isinstance(amount, bool):
+                return False
+            price = float(price) if price is not None else 0
+            amount = float(amount)
+        except (KeyError, TypeError, ValueError, OverflowError):
+            return False
+        if (not math.isfinite(price) or not math.isfinite(amount)
+                or price < 0 or amount < 0):
+            return False
+        value = price * amount
+        fee = value * self.commission_ratio
+        if not all(math.isfinite(number) for number in (value, fee, value + fee)):
+            return False
+
+        with self._order_lock:
+            if self.order_map.get(request_id) is not order:
+                return False
+            result = order["result"]
+            result.update({
+                "date_time": created_at.replace("+09:00", ""),
+                "price": price,
+                "amount": amount,
+                "state": "done",
+            })
+            del self.order_map[request_id]
+        # Never call client code under the ownership lock, and never restore a
+        # completed entry if client code raises or re-enters the trader.
         self._call_callback(order["callback"], result)
+        return True
 
     def _call_callback(self, callback, result):
-        result_value = float(result["price"]) * float(result["amount"])
-        fee = result_value * self.commission_ratio
+        with self._order_lock:
+            result_value = float(result["price"]) * float(result["amount"])
+            fee = result_value * self.commission_ratio
 
-        if result["state"] == "done" and result["type"] == "buy":
-            old_value = self.asset[0] * self.asset[1]
-            new_value = old_value + result_value
-            new_amount = self.asset[1] + float(result["amount"])
-            new_amount = round(new_amount, 6)
-            if new_amount == 0:
-                avr_price = 0
-            else:
-                avr_price = round(new_value / new_amount, 6)
-            self.asset = (avr_price, new_amount)
-            self.balance -= round(result_value + fee)
-        elif result["state"] == "done" and result["type"] == "sell":
-            old_avr_price = self.asset[0]
-            new_amount = self.asset[1] - float(result["amount"])
-            new_amount = round(new_amount, 6)
-            if new_amount == 0:
-                old_avr_price = 0
-            self.asset = (old_avr_price, new_amount)
-            self.balance += round(result_value - fee)
+            if result["state"] == "done" and result["type"] == "buy":
+                old_value = self.asset[0] * self.asset[1]
+                new_value = old_value + result_value
+                new_amount = self.asset[1] + float(result["amount"])
+                new_amount = round(new_amount, 6)
+                if new_amount == 0:
+                    avr_price = 0
+                else:
+                    avr_price = round(new_value / new_amount, 6)
+                self.asset = (avr_price, new_amount)
+                self.balance -= round(result_value + fee)
+            elif result["state"] == "done" and result["type"] == "sell":
+                old_avr_price = self.asset[0]
+                new_amount = self.asset[1] - float(result["amount"])
+                new_amount = round(new_amount, 6)
+                if new_amount == 0:
+                    old_avr_price = 0
+                self.asset = (old_avr_price, new_amount)
+                self.balance += round(result_value - fee)
 
         callback(result)
 
@@ -224,63 +270,39 @@ class UpbitTrader(BaseExchangeTrader):
             return
 
         result = self._create_success_result(request)
-        self.order_map[request["id"]] = {
-            "uuid": response["uuid"],
-            "callback": task["callback"],
-            "result": result,
-        }
+        with self._order_lock:
+            self.order_map[request["id"]] = {
+                "uuid": response["uuid"],
+                "callback": task["callback"],
+                "result": result,
+            }
         task["callback"](result)
-        self.logger.debug(f"request inserted {self.order_map[request['id']]}")
-        self._start_timer()
+        with self._order_lock:
+            self._start_timer()
 
     def _update_order_result(self, task):
         del task
-        uuids = []
-        for request_id, order in self.order_map.items():
-            uuids.append(order["uuid"])
+        with self._order_lock:
+            orders = list(self.order_map.items())
+            if not orders:
+                self._stop_timer()
+                return
 
-        if len(uuids) == 0:
-            self._stop_timer()
-            return
-
-        results = self._query_order_list(uuids)
-        if results is None:
-            # Keep pending orders and recycle the timer after a failed query.
+        results = self._query_order_list([order["uuid"] for _, order in orders])
+        if not isinstance(results, list):
             results = []
 
-        waiting_request = {}
-        self.logger.debug(f"waiting order count {len(self.order_map)}")
-        for request_id, order in self.order_map.items():
-            is_done = False
-            for query_result in results:
-                if order["uuid"] == query_result["uuid"]:
-                    self.logger.debug("Find done order! =====")
-                    self.logger.debug(order)
-                    self.logger.debug(query_result)
-                    result = order["result"]
-                    result["date_time"] = query_result["created_at"].replace(
-                        "+09:00", ""
-                    )
-                    # 최종 체결 가격, 수량으로 업데이트
-                    result["price"] = (
-                        float(query_result["price"])
-                        if query_result["price"] is not None
-                        else 0
-                    )
-                    result["amount"] = float(query_result["executed_volume"])
-                    result["state"] = "done"
-                    self._call_callback(order["callback"], result)
-                    is_done = True
+        # Process only the captured entries. A late response must not complete
+        # a replacement or overwrite orders added while the query was running.
+        for request_id, order in orders:
+            for response in results:
+                if self._complete_order(request_id, order, response):
+                    break
 
-            if is_done is False:
-                self.logger.debug(f"waiting order {order}")
-                waiting_request[request_id] = order
-        self.order_map = waiting_request
-        self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
-
-        self._stop_timer()
-        if len(self.order_map) > 0:
-            self._start_timer()
+        with self._order_lock:
+            self._stop_timer()
+            if self.order_map:
+                self._start_timer()
 
     def _send_order(self, market, is_buy, price=None, volume=None):
         """

@@ -820,6 +820,8 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
 
         dummy_response = MagicMock()
         dummy_response.json.return_value = {
+            "uuid": "mango_uuid",
+            "state": "cancel",
             "created_at": "2018-04-10T15:42:23+09:00",
             "type": "buy",
             "price": "887000",
@@ -909,6 +911,8 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         dummy_response_get = MagicMock()
         dummy_response_get.json.return_value = [
             {
+                "uuid": "mango_uuid",
+                "state": "done",
                 "created_at": "2018-04-10T15:42:23+09:00",
                 "type": "buy",
                 "price": "887000",
@@ -961,8 +965,9 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         )
         self.assertFalse("mango_request_1234" in trader.order_map)
 
-    def test_cancel_request_should_remove_request_even_when_cancel_nothing(self):
+    def test_cancel_request_should_retain_request_when_cancel_is_uncertain(self):
         trader = UpbitTrader()
+        trader._start_timer = MagicMock()
         dummy_request = {
             "uuid": "mango_uuid",
             "callback": MagicMock(),
@@ -1044,7 +1049,8 @@ class UpditTraderCancelRequestTests(unittest.TestCase):
         )
 
         dummy_request["callback"].assert_not_called()
-        self.assertFalse("mango_request_1234" in trader.order_map)
+        self.assertIs(trader.order_map["mango_request_1234"], dummy_request)
+        trader._start_timer.assert_called_once()
 
     def test_cancel_all_requests_should_call_cancel_request_correctly(self):
         trader = UpbitTrader()
