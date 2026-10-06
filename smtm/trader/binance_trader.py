@@ -1,6 +1,10 @@
 import time
 import hmac
 import hashlib
+import math
+import threading
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 import requests
 from ..http_session import request_with_retry
@@ -29,6 +33,7 @@ class BinanceTrader(BaseExchangeTrader):
     NAME = "Binance"
     CODE = "BNC"
     SUPPORTED_ORD_TYPES = frozenset({"limit", "market"})
+    TERMINAL_STATES = ("FILLED", "CANCELED", "REJECTED", "EXPIRED", "EXPIRED_IN_MATCH")
 
     def __init__(
         self, budget=50000, currency="BTC", commission_ratio=0.001, opt_mode=True,
@@ -37,6 +42,7 @@ class BinanceTrader(BaseExchangeTrader):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
+        self._order_lock = threading.Lock()
         super().__init__(
             budget=budget,
             currency=currency,
@@ -127,30 +133,18 @@ class BinanceTrader(BaseExchangeTrader):
 
     def _update_order_result(self, task):
         del task
-        waiting_request = {}
-        self.logger.debug(f"waiting order count {len(self.order_map)}")
-        for request_id, order in self.order_map.items():
-            response = self._query_order(order["order_id"])
-            if response is None:
-                waiting_request[request_id] = order
-                continue
-            if response.get("status") == "FILLED":
-                from datetime import datetime
-
-                result = order["result"]
-                result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)
-                result["price"] = self._fill_price(response)
-                result["amount"] = float(response.get("executedQty", 0))
-                result["state"] = "done"
-                self._call_callback(order["callback"], result)
-            else:
-                waiting_request[request_id] = order
-
-        self.order_map = waiting_request
-        self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
-        self._stop_timer()
-        if len(self.order_map) > 0:
-            self._start_timer()
+        with self._order_lock:
+            orders = list(self.order_map.items())
+        try:
+            for request_id, order in orders:
+                response = self._query_order(order["order_id"])
+                self._complete_order(request_id, order, response)
+        finally:
+            # Preserve timer scheduling on exit; Worker failure recovery is separate.
+            with self._order_lock:
+                self._stop_timer()
+                if self.order_map:
+                    self._start_timer()
 
     @staticmethod
     def _fill_price(response):
@@ -164,29 +158,100 @@ class BinanceTrader(BaseExchangeTrader):
         return quote / executed if executed else 0
 
     def cancel_request(self, request_id):
-        """거래 요청을 취소한다"""
-        if request_id not in self.order_map:
-            self.logger.debug(f"already canceled or unknown: {request_id}")
+        """Keep a known order until a matching terminal response settles it."""
+        with self._order_lock:
+            order = self.order_map.get(request_id)
+        if order is None:
             return
 
-        order = self.order_map[request_id]
-        del self.order_map[request_id]
-        result = order["result"]
-        response = self._cancel_order(order["order_id"])
-
-        if response is None:
-            # 이미 체결됐을 수 있으므로 조회로 확정
-            response = self._query_order(order["order_id"])
-            if response is None:
+        try:
+            response = self._cancel_order(order["order_id"])
+            if self._complete_order(request_id, order, response):
                 return
+            with self._order_lock:
+                if self.order_map.get(request_id) is not order:
+                    return  # Polling completed it, or this entry was replaced.
+            response = self._query_order(order["order_id"])
+            self._complete_order(request_id, order, response)
+        finally:
+            with self._order_lock:
+                if self.order_map:
+                    self._start_timer()
 
-        from datetime import datetime
+    def _complete_order(self, request_id, order, response):
+        """Validate settlement before claiming this exact entry once."""
+        if not isinstance(response, dict):
+            return False
+        order_id = response.get("orderId")
+        if (not isinstance(order_id, (int, str)) or isinstance(order_id, bool)
+                or order_id != order["order_id"]):
+            return False
+        if response.get("symbol") != self.market:
+            return False
+        if response.get("status") not in self.TERMINAL_STATES:
+            return False
+        try:
+            raw_price, raw_amount = response["price"], response["executedQty"]
+            if isinstance(raw_price, bool) or isinstance(raw_amount, bool):
+                return False
+            price, amount = float(raw_price), float(raw_amount)
+            if not all(math.isfinite(n) and n >= 0 for n in (price, amount)):
+                return False
+            # A positive decimal must not become a zero-price/zero-fill result
+            # through float underflow. Exchange amounts arrive as strings.
+            if ((price == 0 and Decimal(str(raw_price)) != 0)
+                    or (amount == 0 and Decimal(str(raw_amount)) != 0)):
+                return False
+            if response["status"] == "FILLED" and amount == 0:
+                return False
+            if price == 0 and amount > 0:
+                quote = response["cummulativeQuoteQty"]
+                if isinstance(quote, bool):
+                    return False
+                quote = float(quote)
+                if not math.isfinite(quote) or quote <= 0:
+                    return False
+                price = self._fill_price(response)
+            value = price * amount
+            if amount > 0 and (price <= 0 or value <= 0):
+                return False
+            fee = value * self.commission_ratio
+            if not all(math.isfinite(n) for n in (price, value, fee, value + fee)):
+                return False
+        except (KeyError, TypeError, ValueError, OverflowError, InvalidOperation):
+            return False
 
-        result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)
-        result["price"] = self._fill_price(response)
-        result["amount"] = float(response.get("executedQty", 0))
-        result["state"] = "done"
+        with self._order_lock:
+            if self.order_map.get(request_id) is not order:
+                return False
+            result = order["result"]
+            result.update({"date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
+                           "price": price, "amount": amount, "state": "done"})
+            del self.order_map[request_id]
+        # Never call client code under the lock or restore a completed entry.
         self._call_callback(order["callback"], result)
+        return True
+
+    def _call_callback(self, callback, result):
+        # Match BaseExchangeTrader accounting, serialized across cancel/poll.
+        with self._order_lock:
+            result_value = float(result["price"]) * float(result["amount"])
+            fee = result_value * self.commission_ratio
+            if result["state"] == "done" and result["type"] == "buy":
+                old_value = self.asset[0] * self.asset[1]
+                new_value = old_value + result_value
+                new_amount = round(self.asset[1] + float(result["amount"]), 6)
+                avr_price = new_value / new_amount if new_amount else 0
+                self.asset = (avr_price, new_amount)
+                self.balance -= round(result_value + fee)
+            elif result["state"] == "done" and result["type"] == "sell":
+                old_avr_price = self.asset[0]
+                new_amount = round(self.asset[1] - float(result["amount"]), 6)
+                if new_amount == 0:
+                    old_avr_price = 0
+                self.asset = (old_avr_price, new_amount)
+                self.balance += round(result_value - fee)
+        callback(result)
 
     def _cancel_order(self, order_id):
         """주문 취소 (signed DELETE /api/v3/order)"""
@@ -250,14 +315,15 @@ class BinanceTrader(BaseExchangeTrader):
             return
 
         result = self._create_success_result(request)
-        self.order_map[request["id"]] = {
-            "order_id": response["orderId"],
-            "callback": task["callback"],
-            "result": result,
-        }
+        with self._order_lock:
+            self.order_map[request["id"]] = {
+                "order_id": response["orderId"],
+                "callback": task["callback"],
+                "result": result,
+            }
         task["callback"](result)
-        self.logger.debug(f"request inserted {self.order_map[request['id']]}")
-        self._start_timer()
+        with self._order_lock:
+            self._start_timer()
 
     def _send_order(self, side, ord_type, price, amount):
         """Binance 현물 주문 전송 (signed POST /api/v3/order)
