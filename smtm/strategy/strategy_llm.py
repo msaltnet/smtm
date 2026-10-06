@@ -1,4 +1,5 @@
 import copy
+import math
 import os
 from datetime import datetime
 from .strategy import Strategy
@@ -159,11 +160,21 @@ class StrategyLlm(Strategy):
 
     def _decision_to_request(self, decision):
         """판단을 거래 요청으로 변환 + 검증. 실패 시 None(hold)"""
+        raw_price = decision.get("price")
+        raw_amount = decision.get("amount")
+        if isinstance(raw_price, bool) or isinstance(raw_amount, bool):
+            self.logger.warning("boolean price/amount, fallback to hold")
+            return None
+
         try:
-            price = float(decision.get("price") or 0)
-            amount = float(decision.get("amount") or 0)
-        except (TypeError, ValueError):
-            self.logger.warning(f"invalid price/amount: {decision}")
+            price = float(raw_price)
+            amount = float(raw_amount)
+        except (TypeError, ValueError, OverflowError):
+            self.logger.warning("invalid price/amount, fallback to hold")
+            return None
+
+        if not math.isfinite(price) or not math.isfinite(amount):
+            self.logger.warning("non-finite price/amount, fallback to hold")
             return None
 
         if price <= 0 or amount <= 0:
@@ -171,6 +182,10 @@ class StrategyLlm(Strategy):
             return None
 
         total_value = price * amount
+        if not math.isfinite(total_value):
+            self.logger.warning("non-finite total value, fallback to hold")
+            return None
+
         if decision["action"] == "buy":
             if total_value > self.balance or total_value < self.min_price:
                 self.logger.warning(
