@@ -109,7 +109,7 @@ def test_workflow_contract_still_requires_local_documents(tmp_path, monkeypatch)
     monkeypatch.setitem(globals(), "ROOT", tmp_path)
 
     with TestCase().assertRaisesRegex(
-        AssertionError, r"^missing workflow file: AGENTS\.md$"
+        AssertionError, r"^missing workflow file: AGENTS\.md(?:\n|$)"
     ):
         test_repository_exposes_issue_to_pr_qa_workflow()
 
