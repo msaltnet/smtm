@@ -240,11 +240,13 @@ class UpbitTrader(BaseExchangeTrader):
             uuids.append(order["uuid"])
 
         if len(uuids) == 0:
+            self._stop_timer()
             return
 
         results = self._query_order_list(uuids)
         if results is None:
-            return
+            # Keep pending orders and recycle the timer after a failed query.
+            results = []
 
         waiting_request = {}
         self.logger.debug(f"waiting order count {len(self.order_map)}")
