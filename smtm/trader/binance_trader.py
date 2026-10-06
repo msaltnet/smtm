@@ -222,14 +222,15 @@ class BinanceTrader(BaseExchangeTrader):
             return False
 
         with self._order_lock:
-            if self.order_map.get(request_id) is not order:
+            if (self.order_map.get(request_id) is not order
+                    or order.get("ack_pending", False)):
                 return False
             result = order["result"]
             result.update({"date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
                            "price": price, "amount": amount, "state": "done"})
             del self.order_map[request_id]
         # Never call client code under the lock or restore a completed entry.
-        self._call_callback(order["callback"], result)
+        self._settle_submission(request_id, order, result)
         return True
 
     def _call_callback(self, callback, result):
@@ -272,6 +273,7 @@ class BinanceTrader(BaseExchangeTrader):
             self.logger.error(f"cancel order fail: {err}")
             return None
 
+    @BaseExchangeTrader.track_submission
     def _execute_order(self, task):
         request = task["request"]
         if request["type"] == "cancel":
@@ -310,20 +312,12 @@ class BinanceTrader(BaseExchangeTrader):
         side = "BUY" if is_buy else "SELL"
         response = self._send_order(
             side, ord_type, request["price"], request["amount"])
-        if response is None or "orderId" not in response:
-            task["callback"]("error!")
+        if (not self._usable_order_id(response, "orderId", integer=True)
+                or "code" in response or "error" in response):
+            self._submission_unacknowledged(task)
             return
 
-        result = self._create_success_result(request)
-        with self._order_lock:
-            self.order_map[request["id"]] = {
-                "order_id": response["orderId"],
-                "callback": task["callback"],
-                "result": result,
-            }
-        task["callback"](result)
-        with self._order_lock:
-            self._start_timer()
+        self._register_submitted_order(task, response["orderId"], "order_id")
 
     def _send_order(self, side, ord_type, price, amount):
         """Binance 현물 주문 전송 (signed POST /api/v3/order)
@@ -356,4 +350,5 @@ class BinanceTrader(BaseExchangeTrader):
             self.SERVER_URL + "/api/v3/order",
             params=query_string,
             headers=self._auth_headers(),
+            creation=True,
         )

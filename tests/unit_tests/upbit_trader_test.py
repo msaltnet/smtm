@@ -559,7 +559,7 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         trader = UpbitTrader()
 
         class DummyResponse:
-            pass
+            status_code = 200
 
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = MagicMock()
@@ -584,13 +584,14 @@ class UpditTraderSendOrderTests(unittest.TestCase):
             trader.SERVER_URL + "/v1/orders",
             params="mango_query",
             headers={"Authorization": "Bearer mango_token"},
+            allow_redirects=False,
         )
 
     def test__send_order_should_send_correct_limit_order_with_opt_mode(self):
         trader = UpbitTrader()
 
         class DummyResponse:
-            pass
+            status_code = 200
 
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = MagicMock()
@@ -620,6 +621,7 @@ class UpditTraderSendOrderTests(unittest.TestCase):
             trader.SERVER_URL + "/v1/orders",
             params="mango_query",
             headers={"Authorization": "Bearer mango_token"},
+            allow_redirects=False,
         )
 
     def test__send_order_should_send_correct_limit_order_with_opt_mode_when_query_failed(
@@ -628,7 +630,7 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         trader = UpbitTrader()
 
         class DummyResponse:
-            pass
+            status_code = 200
 
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = MagicMock()
@@ -655,13 +657,14 @@ class UpditTraderSendOrderTests(unittest.TestCase):
             trader.SERVER_URL + "/v1/orders",
             params="mango_query",
             headers={"Authorization": "Bearer mango_token"},
+            allow_redirects=False,
         )
 
     def test__send_order_should_send_correct_market_price_buy_order(self):
         trader = UpbitTrader()
 
         class DummyResponse:
-            pass
+            status_code = 200
 
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = MagicMock()
@@ -681,7 +684,7 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         trader = UpbitTrader()
 
         class DummyResponse:
-            pass
+            status_code = 200
 
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = MagicMock()
@@ -734,7 +737,7 @@ class UpditTraderSendOrderTests(unittest.TestCase):
         trader = UpbitTrader()
 
         class DummyResponse:
-            pass
+            status_code = 200
 
         dummy_response = DummyResponse()
         dummy_response.raise_for_status = MagicMock()

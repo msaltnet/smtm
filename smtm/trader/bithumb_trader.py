@@ -120,6 +120,7 @@ class BithumbTrader(BaseExchangeTrader):
                 if self.order_map:
                     self._start_timer()
 
+    @BaseExchangeTrader.track_submission
     def _execute_order(self, task):
         request = task["request"]
         if request["type"] == "cancel":
@@ -140,8 +141,8 @@ class BithumbTrader(BaseExchangeTrader):
             return
 
         # NOTE: 시장가 매수는 요청에 단가가 없고(units 기준) 캐시된 시세도 없어
-        # 클라이언트단 예산 가드를 적용할 수 없다. 예산 초과 주문은 거래소가
-        # 거부하며, 그 응답은 아래 status != "0000" 경로에서 "error!"로 처리된다.
+        # 클라이언트단 예산 가드를 적용할 수 없다. 거래소 응답이 불명확하면
+        # 신규 주문을 재전송하지 않고 submission 소유권을 유지한다.
         if is_buy and not is_market and \
                 float(request["price"]) * float(request["amount"]) > self.balance:
             self.logger.warning("invalid price request. balance is too small!")
@@ -161,21 +162,12 @@ class BithumbTrader(BaseExchangeTrader):
             response = self._send_limit_order(
                 is_buy, request["price"], request["amount"])
 
-        if response is None or response["status"] != "0000":
-            self.logger.error(f"Order error {response}")
-            task["callback"]("error!")
+        if (not self._usable_order_id(response, "order_id")
+                or response.get("status") != "0000"):
+            self._submission_unacknowledged(task)
             return
 
-        result = self._create_success_result(request)
-        with self._order_lock:
-            self.order_map[request["id"]] = {
-                "order_id": response["order_id"],
-                "callback": task["callback"],
-                "result": result,
-            }
-        task["callback"](result)
-        with self._order_lock:
-            self._start_timer()
+        self._register_submitted_order(task, response["order_id"], "order_id")
 
     def _cancel_order(self, order_id):
         """Cancel a known order; status-only ACK does not describe execution.
@@ -311,14 +303,15 @@ class BithumbTrader(BaseExchangeTrader):
         if settlement is None:
             return False
         with self._order_lock:
-            if self.order_map.get(request_id) is not order:
+            if (self.order_map.get(request_id) is not order
+                    or order.get("ack_pending", False)):
                 return False
             result = order["result"]
             result.update(settlement)
             del self.order_map[request_id]
         # At-most-once accounting/callback attempt, not durable delivery. Never
         # restore a claimed entry after client code raises, or run it under lock.
-        self._call_callback(order["callback"], result)
+        self._settle_submission(request_id, order, result)
         return True
 
     def _call_callback(self, callback, result):
@@ -498,4 +491,6 @@ class BithumbTrader(BaseExchangeTrader):
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        return self._request_post(url, headers=headers, data=str_data)
+        creation = endpoint in {"/trade/place", "/trade/market_buy", "/trade/market_sell"}
+        kwargs = {"creation": True} if creation else {}
+        return self._request_post(url, headers=headers, data=str_data, **kwargs)

@@ -164,11 +164,20 @@ class OkxTrader(BaseExchangeTrader):
         if not self._validate_credentials():
             return None
         body = json.dumps(payload)
-        return self._unwrap(self._request_post(
+        creation = path == "/api/v5/trade/order"
+        kwargs = {"creation": True} if creation else {}
+        response = self._request_post(
             self.SERVER_URL + path,
             headers=self._auth_headers("POST", path, body),
-            data=body,
-        ))
+            data=body, **kwargs,
+        )
+        if creation and (not isinstance(response, dict)
+                         or not isinstance(response.get("data"), list)
+                         or len(response["data"]) != 1
+                         or not isinstance(response["data"][0], dict)
+                         or str(response["data"][0].get("sCode")) != "0"):
+            return None
+        return self._unwrap(response)
 
     @staticmethod
     def _format_number(value):
@@ -210,6 +219,7 @@ class OkxTrader(BaseExchangeTrader):
         self.logger.debug(f"account info {result}")
         return result
 
+    @BaseExchangeTrader.track_submission
     def _execute_order(self, task):
         request = task["request"]
         if request["type"] == "cancel":
@@ -248,20 +258,11 @@ class OkxTrader(BaseExchangeTrader):
         side = "buy" if is_buy else "sell"
         response = self._send_order(
             side, ord_type, request["price"], request["amount"])
-        if response is None or not response.get("ordId"):
-            task["callback"]("error!")
+        if not self._usable_order_id(response, "ordId"):
+            self._submission_unacknowledged(task)
             return
 
-        result = self._create_success_result(request)
-        with self._order_lock:
-            self.order_map[request["id"]] = {
-                "order_id": response["ordId"],
-                "callback": task["callback"],
-                "result": result,
-            }
-        task["callback"](result)
-        with self._order_lock:
-            self._start_timer()
+        self._register_submitted_order(task, response["ordId"], "order_id")
 
     def _send_order(self, side, ord_type, price, amount):
         """OKX 현물 주문 전송 (signed POST /api/v5/trade/order)
@@ -398,14 +399,15 @@ class OkxTrader(BaseExchangeTrader):
             return False
 
         with self._order_lock:
-            if self.order_map.get(request_id) is not order:
+            if (self.order_map.get(request_id) is not order
+                    or order.get("ack_pending", False)):
                 return False
             result = order["result"]
             result.update({"date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
                            "price": price, "amount": amount, "state": "done"})
             del self.order_map[request_id]
         # Never call client code under the lock or restore a completed entry.
-        self._call_callback(order["callback"], result)
+        self._settle_submission(request_id, order, result)
         return True
 
     def _call_callback(self, callback, result):
