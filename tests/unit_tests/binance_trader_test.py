@@ -221,7 +221,7 @@ class BinanceTraderPollingTest(unittest.TestCase):
     def test_filled_order_triggers_done_callback_and_clears_map(self):
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "orderId": 444, "status": "FILLED", "price": "50000.0",
+            "orderId": 444, "symbol": "BTCUSDT", "status": "FILLED", "price": "50000.0",
             "executedQty": "0.1", "cummulativeQuoteQty": "5000.0",
         })
         trader._update_order_result(None)
@@ -233,7 +233,7 @@ class BinanceTraderPollingTest(unittest.TestCase):
     def test_unfilled_order_stays_in_map(self):
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "orderId": 444, "status": "NEW", "price": "50000.0",
+            "orderId": 444, "symbol": "BTCUSDT", "status": "NEW", "price": "50000.0",
             "executedQty": "0.0", "cummulativeQuoteQty": "0.0",
         })
         trader._update_order_result(None)
@@ -243,7 +243,7 @@ class BinanceTraderPollingTest(unittest.TestCase):
         # 시장가 주문은 price가 0으로 오므로 체결총액/체결수량으로 평단 산출
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "orderId": 444, "status": "FILLED", "price": "0.0",
+            "orderId": 444, "symbol": "BTCUSDT", "status": "FILLED", "price": "0.0",
             "executedQty": "0.1", "cummulativeQuoteQty": "5000.0",
         })
         trader._update_order_result(None)
@@ -252,7 +252,10 @@ class BinanceTraderPollingTest(unittest.TestCase):
 
     def test_cancel_request_calls_delete_and_removes_order(self):
         trader, cb = self._trader_with_open_order()
-        trader._cancel_order = MagicMock(return_value={"orderId": 444, "status": "CANCELED"})
+        trader._cancel_order = MagicMock(return_value={
+            "orderId": 444, "symbol": "BTCUSDT", "status": "CANCELED",
+            "price": "50000", "executedQty": "0", "cummulativeQuoteQty": "0",
+        })
         trader.cancel_request("ok")
         trader._cancel_order.assert_called_once_with(444)
         self.assertNotIn("ok", trader.order_map)
