@@ -105,7 +105,8 @@ These records are lost when the process/trader is discarded. There is no
 exactly-once exchange guarantee, exchange idempotency key, durable callback
 delivery, automatic unknown-order recovery, manual resolution command, or
 fail-closed session lifecycle activation. Those require separate integration.
-The Worker completion work in #67 is independent and is not included here.
+The Worker completion work in merged #67 is present in the base; this
+creation-policy patch adds no Worker lifecycle changes.
 
 ## Safe verification
 
