@@ -1,6 +1,7 @@
-import copy
 import time
 import math
+import threading
+from decimal import Decimal, DecimalException, Inexact, Rounded, localcontext
 from datetime import datetime
 from urllib.parse import urlencode
 import base64
@@ -48,6 +49,7 @@ class BithumbTrader(BaseExchangeTrader):
                 "BITHUMB_API_SERVER_URL",
             ),
         )
+        self._order_lock = threading.Lock()
         currency_info = self.AVAILABLE_CURRENCY[currency]
         self.market = currency_info[0]
         self.market_currency = currency_info[1]
@@ -93,45 +95,30 @@ class BithumbTrader(BaseExchangeTrader):
         )
         return result
 
+    def cancel_all_requests(self):
+        # Snapshot IDs without copying callback owners or a changing dictionary.
+        with self._order_lock:
+            request_ids = list(self.order_map)
+        for request_id in request_ids:
+            self.cancel_request(request_id)
+
     def cancel_request(self, request_id):
-        """
-        거래 요청을 취소한다
-
-        Cancel trading requests
-        request_id: 취소하고자 하는 request의 id
-        """
-        if request_id not in self.order_map:
-            self.logger.debug(f"already canceled: {request_id}")
+        """A cancellation ACK has no fill totals; always query terminal detail."""
+        with self._order_lock:
+            order = self.order_map.get(request_id)
+        if order is None:
             return
-
-        order = self.order_map[request_id]
-        result = copy.deepcopy(order["result"])
-        response = self._cancel_order(order["order_id"])
-
-        result["state"] = "done"
-        result["date_time"] = datetime.now().strftime(BithumbTrader.ISO_DATEFORMAT)
-        result["amount"] = 0
-
-        if response is None or response["status"] != "0000":
-            # 이미 체결된 경우, 취소가 안되므로 주문 정보를 조회
+        try:
+            self._cancel_order(order["order_id"])
+            with self._order_lock:
+                if self.order_map.get(request_id) is not order:
+                    return
             response = self._query_order(order["order_id"])
-            self.logger.debug(f"cancel query: {response}")
-            if response is None or response["data"]["order_status"] != "Completed":
-                self.logger.warning(
-                    f"can't cancel and query {request_id}, {order['order_id']}"
-                )
-                return
-
-            result["amount"] = float(response["data"]["order_qty"])
-            result["date_time"] = self._convert_timestamp(
-                int(response["data"]["transaction_date"])
-            )
-            if "price" not in result or result["price"] is None:
-                result["price"] = float(response["data"]["order_price"])
-
-        del self.order_map[request_id]
-        self.logger.debug(f"canceled: {request_id}")
-        self._call_callback(order["callback"], result)
+            self._complete_order(request_id, order, response)
+        finally:
+            with self._order_lock:
+                if self.order_map:
+                    self._start_timer()
 
     def _execute_order(self, task):
         request = task["request"]
@@ -180,26 +167,20 @@ class BithumbTrader(BaseExchangeTrader):
             return
 
         result = self._create_success_result(request)
-        self.order_map[request["id"]] = {
-            "order_id": response["order_id"],
-            "callback": task["callback"],
-            "result": result,
-        }
+        with self._order_lock:
+            self.order_map[request["id"]] = {
+                "order_id": response["order_id"],
+                "callback": task["callback"],
+                "result": result,
+            }
         task["callback"](result)
-        self.logger.debug(f"request inserted {self.order_map[request['id']]}")
-        self._start_timer()
+        with self._order_lock:
+            self._start_timer()
 
     def _cancel_order(self, order_id):
-        """
-        거래 요청 취소 api 호출
-        Returns:
-            status: 결과 상태 코드 (정상: 0000, 그 외 에러 코드 참조), String
-            total_{currency}: 전체 가상자산 수량, Number (String)
-            total_krw: 전체 원화(KRW) 금액, Number (String)
-            in_use_{currency}: 주문 중 묶여있는 가상자산 수량, Number (String)
-            in_use_krw: 주문 중 묶여있는 원화(KRW) 금액, Number (String)
-            available_{currency}: 주문 가능 가상자산 수량, Number (String)
-            available_krw: 주문 가능 원화(KRW) 금액, Number (String)
+        """Cancel a known order; status-only ACK does not describe execution.
+
+        Confirm the canceled remainder and cumulative fills via /info/order_detail.
         """
         query = {
             "order_currency": self.market,
@@ -210,32 +191,158 @@ class BithumbTrader(BaseExchangeTrader):
 
     def _update_order_result(self, task):
         del task
-        waiting_request = {}
-        self.logger.debug(f"waiting order count {len(self.order_map)}")
-        for request_id, order in self.order_map.items():
-            try:
+        with self._order_lock:
+            orders = list(self.order_map.items())
+        try:
+            for request_id, order in orders:
                 response = self._query_order(order["order_id"])
-                self.logger.debug(f"try to find order {order} : response {response}")
-                if response["data"]["order_status"] == "Completed":
-                    result = order["result"]
-                    result["amount"] = float(response["data"]["order_qty"])
-                    result["date_time"] = self._convert_timestamp(
-                        int(response["data"]["contract"][0]["transaction_date"])
-                    )
-                    if "price" not in result or result["price"] is None:
-                        result["price"] = float(response["data"]["order_price"])
-                    result["state"] = "done"
-                    self._call_callback(order["callback"], result)
-                else:
-                    waiting_request[request_id] = order
-            except KeyError as err:
-                self.logger.error(f"query_order fail! request_id {request_id}: {err}")
+                self._complete_order(request_id, order, response)
+        finally:
+            with self._order_lock:
+                self._stop_timer()
+                if self.order_map:
+                    self._start_timer()
 
-        self.order_map = waiting_request
-        self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
-        self._stop_timer()
-        if len(self.order_map) > 0:
-            self._start_timer()
+    @staticmethod
+    def _settlement_number(value):
+        """Reject unusable numbers, including nonzero decimals lost as float zero."""
+        if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+            raise ValueError("invalid settlement number")
+        number = Decimal(str(value))
+        converted = float(number)
+        if (not number.is_finite() or number < 0 or not math.isfinite(converted)
+                or (number != 0 and converted == 0)):
+            raise ValueError("unusable settlement number")
+        return number
+
+    def _settlement_time(self, value):
+        timestamp = self._settlement_number(value)
+        if timestamp <= 0 or timestamp != timestamp.to_integral_value():
+            raise ValueError("invalid settlement timestamp")
+        return self._convert_timestamp(int(timestamp))
+
+    def _terminal_result(self, order, response):
+        """Validate legacy /info/order_detail without mutating the pending result.
+
+        The documented single-order response has no echoed order_id. Its identity
+        comes from the captured order-scoped query, currency/side checks, and the
+        exact-entry claim below. Accept legacy object data or one documented item;
+        never select an arbitrary item from an ambiguous multi-order response.
+        """
+        if not isinstance(response, dict) or response.get("status") != "0000":
+            return None
+        data = response.get("data")
+        if isinstance(data, list):
+            if len(data) != 1:
+                return None
+            data = data[0]
+        if not isinstance(data, dict):
+            return None
+        if "order_id" in data and data["order_id"] != order["order_id"]:
+            return None
+        if (data.get("order_currency") != self.market
+                or data.get("payment_currency") != self.market_currency):
+            return None
+        result_type = order["result"].get("type")
+        if result_type not in ("buy", "sell"):
+            return None
+        if data.get("type") != ("bid" if result_type == "buy" else "ask"):
+            return None
+        state = data.get("order_status")
+        if state not in ("Completed", "Cancel"):
+            return None
+        contracts = data.get("contract")
+        if not isinstance(contracts, list):
+            return None
+        try:
+            requested = self._settlement_number(data["order_qty"])
+            if requested <= 0:
+                return None
+            amount, execution_value = Decimal(0), Decimal(0)
+            date_time = None
+            # Never accept a quantity bound after silently rounding away a fill.
+            # Unusually precise totals remain unresolved rather than being guessed.
+            with localcontext() as context:
+                context.traps[Inexact] = True
+                context.traps[Rounded] = True
+                for contract in contracts:
+                    if not isinstance(contract, dict):
+                        return None
+                    units = self._settlement_number(contract["units"])
+                    price = self._settlement_number(contract["price"])
+                    if units <= 0 or price <= 0:
+                        return None
+                    fill_time = self._settlement_time(contract["transaction_date"])
+                    if date_time is None:
+                        date_time = fill_time  # Preserve the first-contract convention.
+                    amount += units
+                    execution_value += units * price
+            if amount > requested or (state == "Completed" and amount != requested):
+                return None
+            if state == "Cancel" and data.get("cancel_date") not in (None, ""):
+                date_time = self._settlement_time(data["cancel_date"])
+            if date_time is None:
+                date_time = self._settlement_time(
+                    data.get("transaction_date", data.get("order_date")))
+
+            # Keep the existing positive-price valuation (which may be an
+            # estimate), configured fee ratio and rounding. Actual fee/valuation
+            # reconciliation is separate. Only absent/zero prices need fallback.
+            raw_price = order["result"].get("price")
+            price = Decimal(0) if raw_price is None else self._settlement_number(raw_price)
+            if price == 0:
+                raw_price = data.get("order_price")
+                price = Decimal(0) if raw_price is None else self._settlement_number(raw_price)
+            if price == 0 and amount > 0:
+                price = execution_value / amount
+            price, amount = float(price), float(amount)
+            value = price * amount
+            fee = value * self.commission_ratio
+            if not all(math.isfinite(n) for n in (price, amount, value, fee, value + fee)):
+                return None
+            if contracts and (amount <= 0 or price <= 0 or value <= 0):
+                return None
+        except (KeyError, TypeError, ValueError, OverflowError, OSError, DecimalException):
+            return None
+        return {"state": "done", "amount": amount, "price": price, "date_time": date_time}
+
+    def _complete_order(self, request_id, order, response):
+        settlement = self._terminal_result(order, response)
+        if settlement is None:
+            return False
+        with self._order_lock:
+            if self.order_map.get(request_id) is not order:
+                return False
+            result = order["result"]
+            result.update(settlement)
+            del self.order_map[request_id]
+        # At-most-once accounting/callback attempt, not durable delivery. Never
+        # restore a claimed entry after client code raises, or run it under lock.
+        self._call_callback(order["callback"], result)
+        return True
+
+    def _call_callback(self, callback, result):
+        # Serialize existing BaseExchangeTrader accounting across cancel/poll.
+        # A confirmed zero fill must not round or otherwise change held assets.
+        with self._order_lock:
+            amount = float(result["amount"])
+            result_value = float(result["price"]) * amount
+            fee = result_value * self.commission_ratio
+            if amount and result["state"] == "done" and result["type"] == "buy":
+                old_value = self.asset[0] * self.asset[1]
+                new_value = old_value + result_value
+                new_amount = round(self.asset[1] + amount, 6)
+                avr_price = new_value / new_amount if new_amount else 0
+                self.asset = (avr_price, new_amount)
+                self.balance -= round(result_value + fee)
+            elif amount and result["state"] == "done" and result["type"] == "sell":
+                old_avr_price = self.asset[0]
+                new_amount = round(self.asset[1] - amount, 6)
+                if new_amount == 0:
+                    old_avr_price = 0
+                self.asset = (old_avr_price, new_amount)
+                self.balance += round(result_value - fee)
+        callback(result)
 
     def _send_market_order(self, is_buy, volume):
         """시장가 주문 전송 (Bithumb market_buy / market_sell, units 기준)"""
@@ -302,27 +409,13 @@ class BithumbTrader(BaseExchangeTrader):
         return price
 
     def _query_order(self, order_id=None):
-        """주문 조회
+        """Query /info/order_detail for exactly one known exchange order ID.
 
-        request:
-            order_id: 매수/매도 주문 등록된 주문번호(입력 시 해당 데이터만 추출), String
-            type: 거래유형 (bid : 매수 ask : 매도), String
-            count: 1~1000 (기본값 : 100), Integer
-            after: 입력한 시간보다 나중의 데이터 추출 YYYY-MM-DD hh:mm:ss 의 UNIX Timestamp, Integer
-            order_currency: 주문 통화 (코인), String/필수
-            payment_currency: 결제 통화 (마켓)
-            입력값 : KRW 혹은 BTC, String
-        response:
-            status: 결과 상태 코드 (정상: 0000, 그 외 에러 코드 참조), String
-            order_currency: 주문 통화 (코인), String
-            payment_currency: 결제 통화 (마켓), String
-            order_id: 매수/매도 주문 등록된 주문번호, String
-            order_date: 주문일시 타임 스탬프, Integer
-            type: 주문 요청 구분 (bid : 매수 ask : 매도), String
-            watch_price: 주문 접수가 진행되는 가격 (자동주문시), String
-            units: 거래요청 Currency, String
-            units_remaining: 주문 체결 잔액, Number (String)
-            price: 1Currency당 주문 가격, Number (String)
+        Legacy v1.2 data is an object or a singleton list. It carries currencies,
+        side, order_status, requested order_qty and contract execution records;
+        an echoed order_id is not documented. Cancel's executed quantity is the
+        sum of contract.units, not order_qty or the cancellation ACK.
+        https://apidocs.bithumb.com/v1.2.0/reference/거래-주문내역-상세-조회
         """
         query = {
             "order_currency": self.market,
