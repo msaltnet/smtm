@@ -330,7 +330,7 @@ class OkxTraderCancelTest(unittest.TestCase):
         trader, cb = self._trader_with_open_order()
         trader._cancel_order = MagicMock(return_value={"ordId": "444", "sCode": "0"})
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "canceled", "avgPx": "", "accFillSz": "0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "canceled", "avgPx": "", "accFillSz": "0",
         })
         trader.cancel_request("ok")
         trader._cancel_order.assert_called_once_with("444")
@@ -343,7 +343,7 @@ class OkxTraderCancelTest(unittest.TestCase):
         trader, cb = self._trader_with_open_order()
         trader._cancel_order = MagicMock(return_value=None)
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "filled", "avgPx": "50000.0", "accFillSz": "0.1",
+            "ordId": "444", "instId": "BTC-USDT", "state": "filled", "avgPx": "50000.0", "accFillSz": "0.1",
         })
         trader.cancel_request("ok")
         done = cb.call_args[0][0]
@@ -352,13 +352,14 @@ class OkxTraderCancelTest(unittest.TestCase):
         self.assertEqual(done["amount"], 0.1)
         self.assertNotIn("ok", trader.order_map)
 
-    def test_cancel_request_without_query_result_does_not_callback(self):
+    def test_cancel_request_without_query_result_keeps_tracking(self):
         trader, cb = self._trader_with_open_order()
         trader._cancel_order = MagicMock(return_value=None)
         trader._query_order = MagicMock(return_value=None)
         trader.cancel_request("ok")
         cb.assert_not_called()
-        self.assertNotIn("ok", trader.order_map)
+        self.assertIn("ok", trader.order_map)
+        trader._start_timer.assert_called_once()
 
     def test_cancel_request_keeps_tracking_when_still_live_after_failed_cancel(self):
         # 취소 POST가 실패했는데 재조회 결과가 아직 live면 주문은 거래소에
@@ -366,7 +367,7 @@ class OkxTraderCancelTest(unittest.TestCase):
         trader, cb = self._trader_with_open_order()
         trader._cancel_order = MagicMock(return_value=None)
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "live", "avgPx": "", "accFillSz": "0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "live", "avgPx": "", "accFillSz": "0",
         })
         trader.cancel_request("ok")
         cb.assert_not_called()
@@ -380,7 +381,7 @@ class OkxTraderCancelTest(unittest.TestCase):
         trader, cb = self._trader_with_open_order()
         trader._cancel_order = MagicMock(return_value=None)
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "partially_filled",
+            "ordId": "444", "instId": "BTC-USDT", "state": "partially_filled",
             "avgPx": "50000.0", "accFillSz": "0.05",
         })
         trader.cancel_request("ok")
@@ -586,7 +587,7 @@ class OkxTraderPollingTest(unittest.TestCase):
     def test_filled_order_triggers_done_callback_and_clears_map(self):
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "filled", "avgPx": "50000.0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "filled", "avgPx": "50000.0",
             "accFillSz": "0.1", "sz": "0.1",
         })
         trader._update_order_result(None)
@@ -599,7 +600,7 @@ class OkxTraderPollingTest(unittest.TestCase):
     def test_live_order_stays_in_map(self):
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "live", "avgPx": "", "accFillSz": "0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "live", "avgPx": "", "accFillSz": "0",
         })
         trader._update_order_result(None)
         self.assertIn("ok", trader.order_map)
@@ -608,7 +609,7 @@ class OkxTraderPollingTest(unittest.TestCase):
     def test_partially_filled_order_stays_in_map(self):
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "partially_filled",
+            "ordId": "444", "instId": "BTC-USDT", "state": "partially_filled",
             "avgPx": "50000.0", "accFillSz": "0.05",
         })
         trader._update_order_result(None)
@@ -629,7 +630,7 @@ class OkxTraderPollingTest(unittest.TestCase):
         # 취소된 주문은 오더북에 없다 — 남겨두면 타이머가 영구 폴링한다
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "canceled", "avgPx": "", "accFillSz": "0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "canceled", "avgPx": "", "accFillSz": "0",
         })
         trader._update_order_result(None)
         self.assertNotIn("ok", trader.order_map)
@@ -643,7 +644,7 @@ class OkxTraderPollingTest(unittest.TestCase):
         trader.balance = 1000000
         trader.asset = (0, 0)
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "canceled", "avgPx": "", "accFillSz": "0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "canceled", "avgPx": "", "accFillSz": "0",
         })
         trader._update_order_result(None)
         self.assertEqual(trader.balance, 1000000)
@@ -652,7 +653,7 @@ class OkxTraderPollingTest(unittest.TestCase):
     def test_mmp_canceled_is_terminal(self):
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "mmp_canceled", "avgPx": "", "accFillSz": "0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "mmp_canceled", "avgPx": "", "accFillSz": "0",
         })
         trader._update_order_result(None)
         self.assertNotIn("ok", trader.order_map)
@@ -660,7 +661,7 @@ class OkxTraderPollingTest(unittest.TestCase):
     def test_partial_fill_then_cancel_reports_filled_amount(self):
         trader, cb = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "canceled",
+            "ordId": "444", "instId": "BTC-USDT", "state": "canceled",
             "avgPx": "49000.0", "accFillSz": "0.04",
         })
         trader._update_order_result(None)
@@ -671,7 +672,7 @@ class OkxTraderPollingTest(unittest.TestCase):
     def test_remaining_orders_restart_the_timer(self):
         trader, _ = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "live", "avgPx": "", "accFillSz": "0",
+            "ordId": "444", "instId": "BTC-USDT", "state": "live", "avgPx": "", "accFillSz": "0",
         })
         trader._update_order_result(None)
         trader._start_timer.assert_called_once()
@@ -679,7 +680,7 @@ class OkxTraderPollingTest(unittest.TestCase):
     def test_no_remaining_orders_does_not_restart_the_timer(self):
         trader, _ = self._trader_with_open_order()
         trader._query_order = MagicMock(return_value={
-            "ordId": "444", "state": "filled", "avgPx": "50000.0", "accFillSz": "0.1",
+            "ordId": "444", "instId": "BTC-USDT", "state": "filled", "avgPx": "50000.0", "accFillSz": "0.1",
         })
         trader._update_order_result(None)
         trader._start_timer.assert_not_called()
