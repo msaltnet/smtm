@@ -1,7 +1,7 @@
 ---
 status: active
-version: 1.1
-last-updated: 2026-09-01
+version: 1.2
+last-updated: 2026-10-06
 review-cycle: every-5-completed-issues
 ---
 
@@ -81,6 +81,20 @@ Connect the PR and Issue, confirm required source-of-truth documentation was inc
 Record workflow friction when it materially delays or weakens a task. Review accumulated candidates every five completed Issues and adopt only repeated or high-impact improvements.
 
 **Done when:** Issue, PR, documentation, and remaining work have clear states.
+
+## Public CI contract scope
+
+SMTM's public CI validates the repository-local development workflow: `AGENTS.md`,
+this document, the implementation Issue template, and both README files. It also
+checks the shared skills submodule's declared URL, path, and exact pinned gitlink.
+
+These checks must pass in a normal checkout without initializing the private
+skills submodule. They do not validate the presence or contents of
+`.agents/skills/smtm-issue/SKILL.md`, including its skill-name front matter.
+Private skill content validation belongs in an authorized workflow for the shared
+skills repository; SMTM's public CI does not provide that coverage or require
+cross-repository credentials. Missing repository-local documents or a changed
+dependency declaration/pin must still fail.
 
 ## Required user involvement
 

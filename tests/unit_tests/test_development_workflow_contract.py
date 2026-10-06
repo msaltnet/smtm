@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+from unittest import TestCase
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -14,7 +15,6 @@ def test_repository_exposes_issue_to_pr_qa_workflow():
     agents = read_repo_file("AGENTS.md")
     workflow = read_repo_file("docs/development-workflow.md")
     issue_template = read_repo_file(".github/ISSUE_TEMPLATE/implementation.md")
-    skill = read_repo_file(".agents/skills/smtm-issue/SKILL.md")
     readme = read_repo_file("README.md")
     readme_ko = read_repo_file("README-ko-kr.md")
 
@@ -74,7 +74,6 @@ def test_repository_exposes_issue_to_pr_qa_workflow():
     assert (
         "Automatic merge, deployment, release, trading, and Issue closure" in workflow
     )
-    assert "name: smtm-issue" in skill
 
     for heading in (
         "## Problem",
@@ -88,6 +87,31 @@ def test_repository_exposes_issue_to_pr_qa_workflow():
 
     assert "docs/development-workflow.md" in readme
     assert "docs/development-workflow.md" in readme_ko
+
+
+def test_workflow_contract_does_not_require_private_skill_checkout(tmp_path, monkeypatch):
+    for relative_path in (
+        "AGENTS.md",
+        "docs/development-workflow.md",
+        ".github/ISSUE_TEMPLATE/implementation.md",
+        "README.md",
+        "README-ko-kr.md",
+    ):
+        destination = tmp_path / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(read_repo_file(relative_path), encoding="utf-8")
+
+    monkeypatch.setitem(globals(), "ROOT", tmp_path)
+    test_repository_exposes_issue_to_pr_qa_workflow()
+
+
+def test_workflow_contract_still_requires_local_documents(tmp_path, monkeypatch):
+    monkeypatch.setitem(globals(), "ROOT", tmp_path)
+
+    with TestCase().assertRaisesRegex(
+        AssertionError, r"^missing workflow file: AGENTS\.md$"
+    ):
+        test_repository_exposes_issue_to_pr_qa_workflow()
 
 
 def test_shared_skill_is_pinned_as_repository_submodule():
