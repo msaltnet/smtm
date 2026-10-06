@@ -2,8 +2,11 @@ import base64
 import hashlib
 import hmac
 import json
+import math
 import os
+import threading
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 from .base_exchange_trader import BaseExchangeTrader
 from . import order_spec
@@ -46,6 +49,7 @@ class OkxTrader(BaseExchangeTrader):
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
+        self._order_lock = threading.Lock()
         super().__init__(
             budget=budget,
             currency=currency,
@@ -116,9 +120,10 @@ class OkxTrader(BaseExchangeTrader):
 
         data가 list가 아니면(dict, str 등 기형 봉투) data[0] 인덱싱 자체가
         예외거나 엉뚱한 값(문자열의 첫 글자 등)을 낼 수 있으므로, list이고
-        비어있지 않음을 먼저 확인한 뒤에만 인덱싱한다.
+        비어있지 않음을 먼저 확인한 뒤에만 인덱싱한다. 봉투와 첫 항목도
+        dict여야 후속 주문 조회가 안전하게 처리할 수 있다.
         """
-        if response is None:
+        if not isinstance(response, dict):
             return None
         data = response.get("data")
         is_list = isinstance(data, list)
@@ -128,7 +133,7 @@ class OkxTrader(BaseExchangeTrader):
             self.logger.error(
                 f"OKX error {response.get('code')}: {detail or response.get('msg')}")
             return None
-        if not is_list or not data:
+        if first is None:
             self.logger.error(f"OKX response has empty or malformed data: {data!r}")
             return None
         if first is not None:
@@ -248,14 +253,15 @@ class OkxTrader(BaseExchangeTrader):
             return
 
         result = self._create_success_result(request)
-        self.order_map[request["id"]] = {
-            "order_id": response["ordId"],
-            "callback": task["callback"],
-            "result": result,
-        }
+        with self._order_lock:
+            self.order_map[request["id"]] = {
+                "order_id": response["ordId"],
+                "callback": task["callback"],
+                "result": result,
+            }
         task["callback"](result)
-        self.logger.debug(f"request inserted {self.order_map[request['id']]}")
-        self._start_timer()
+        with self._order_lock:
+            self._start_timer()
 
     def _send_order(self, side, ord_type, price, amount):
         """OKX 현물 주문 전송 (signed POST /api/v5/trade/order)
@@ -300,34 +306,18 @@ class OkxTrader(BaseExchangeTrader):
 
     def _update_order_result(self, task):
         del task
-        waiting_request = {}
-        self.logger.debug(f"waiting order count {len(self.order_map)}")
-        # 스냅샷을 순회한다: 이 루프는 워커 스레드에서 실행되는데, 컨트롤
-        # 스레드의 cancel_request가 네트워크 왕복 도중 order_map을 삭제/재삽입
-        # 할 수 있어 원본 딕셔너리를 그대로 순회하면
-        # "dictionary changed size/keys during iteration"으로 죽을 수 있다.
-        for request_id, order in list(self.order_map.items()):
-            response = self._query_order(order["order_id"])
-            if response is None:
-                waiting_request[request_id] = order
-                continue
-            # filled 외에 canceled/mmp_canceled도 종료 상태다. 남겨두면
-            # 오더북에 없는 주문을 타이머가 영구 폴링한다.
-            if response.get("state") in self.TERMINAL_STATES:
-                result = order["result"]
-                result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)
-                result["price"] = self._fill_price(response)
-                result["amount"] = self._fill_amount(response)
-                result["state"] = "done"
-                self._call_callback(order["callback"], result)
-            else:
-                waiting_request[request_id] = order
-
-        self.order_map = waiting_request
-        self.logger.debug(f"After update, waiting order count {len(self.order_map)}")
-        self._stop_timer()
-        if len(self.order_map) > 0:
-            self._start_timer()
+        with self._order_lock:
+            orders = list(self.order_map.items())
+        try:
+            for request_id, order in orders:
+                response = self._query_order(order["order_id"])
+                self._complete_order(request_id, order, response)
+        finally:
+            # Preserve scheduling on exit; generic Worker recovery is separate.
+            with self._order_lock:
+                self._stop_timer()
+                if self.order_map:
+                    self._start_timer()
 
     @staticmethod
     def _fill_price(response):
@@ -339,50 +329,102 @@ class OkxTrader(BaseExchangeTrader):
         """누적 체결 수량. 미체결이면 0."""
         return float(response.get("accFillSz") or 0)
 
+    def cancel_all_requests(self):
+        # Do not deep-copy callback owners or iterate a concurrently changed map.
+        with self._order_lock:
+            request_ids = list(self.order_map)
+        for request_id in request_ids:
+            self.cancel_request(request_id)
+
     def cancel_request(self, request_id):
-        """거래 요청을 취소한다
+        """Keep the captured order until a matching terminal query settles it.
 
-        OKX cancel-order 응답에는 체결 정보(accFillSz/avgPx)가 없으므로 취소
-        성공/실패와 무관하게 주문 조회로 최종 상태를 확정한다. 취소 실패는
-        이미 체결됐을 가능성을 포함하므로 같은 경로로 처리된다.
-
-        단, 재조회 결과의 state가 TERMINAL_STATES(filled/canceled/mmp_canceled)가
-        아니면(예: live, partially_filled) 주문은 거래소에 여전히 살아있는
-        것이다. 취소 POST가 네트워크 오류나 sCode 오류로 실패했는데 주문이
-        아직 live 상태로 남아있거나, 취소 시도 중 부분체결만 반영된 경우가
-        이에 해당한다. 이때 done 콜백을 쏘면 이미 order_map에서 지운 주문을
-        영영 놓치고 이후 체결/잔여 수량을 반영하지 못하므로, order_map에
-        되돌리고 폴링 타이머를 재시작해 기존 폴링 루프가 정상적으로
-        재조회하도록 한다. (Binance는 취소 실패 시 재조회 결과의 상태를
-        확인하지 않고 그대로 done 처리하는데, OKX cancel-order 응답이 체결
-        정보를 전혀 담지 않아 상태 확인이 필수이므로 이 부분만 다르게
-        처리한다. BinanceTrader는 건드리지 않는다.)
+        A cancel-order acknowledgement only accepts the request. Even a failed
+        cancellation may race a fill, so query the order in either case.
         """
-        if request_id not in self.order_map:
-            self.logger.debug(f"already canceled or unknown: {request_id}")
+        with self._order_lock:
+            order = self.order_map.get(request_id)
+        if order is None:
             return
 
-        order = self.order_map[request_id]
-        del self.order_map[request_id]
-        result = order["result"]
+        try:
+            self._cancel_order(order["order_id"])
+            with self._order_lock:
+                if self.order_map.get(request_id) is not order:
+                    return  # Polling completed it, or this entry was replaced.
+            response = self._query_order(order["order_id"])
+            self._complete_order(request_id, order, response)
+        finally:
+            with self._order_lock:
+                if self.order_map:
+                    self._start_timer()
 
-        self._cancel_order(order["order_id"])
-        response = self._query_order(order["order_id"])
-        if response is None:
-            self.logger.error(
-                f"fail confirm order state after cancel: {order['order_id']}")
-            return
+    def _complete_order(self, request_id, order, response):
+        """Validate cumulative settlement before claiming this exact entry once."""
+        if not isinstance(response, dict):
+            return False
+        order_id = response.get("ordId")
+        if (not isinstance(order_id, str) or not order_id
+                or order_id != order["order_id"]):
+            return False
+        if response.get("instId") != self.market:
+            return False
+        state = response.get("state")
+        if not isinstance(state, str) or state not in self.TERMINAL_STATES:
+            return False
+        try:
+            raw_price, raw_amount = response["avgPx"], response["accFillSz"]
+            if isinstance(raw_price, bool) or isinstance(raw_amount, bool):
+                return False
+            amount = float(raw_amount)
+            # OKX explicitly permits a blank average price for an unfilled order.
+            price = 0.0 if raw_price == "" and amount == 0 else float(raw_price)
+            if not all(math.isfinite(n) and n >= 0 for n in (price, amount)):
+                return False
+            # Missing/blank quantities are not evidence of zero execution, nor
+            # may a nonzero decimal underflow to an apparent zero-price/zero-fill.
+            if ((amount == 0 and Decimal(str(raw_amount)) != 0)
+                    or (price == 0 and raw_price != "" and Decimal(str(raw_price)) != 0)):
+                return False
+            if state == "filled" and amount == 0:
+                return False
+            value = price * amount
+            if amount > 0 and (price <= 0 or value <= 0):
+                return False
+            fee = value * self.commission_ratio
+            if not all(math.isfinite(n) for n in (value, fee, value + fee)):
+                return False
+        except (KeyError, TypeError, ValueError, OverflowError, InvalidOperation):
+            return False
 
-        if response.get("state") not in self.TERMINAL_STATES:
-            self.logger.warning(
-                f"order still working after cancel attempt, keep tracking: "
-                f"{order['order_id']} state={response.get('state')}")
-            self.order_map[request_id] = order
-            self._start_timer()
-            return
-
-        result["date_time"] = datetime.now().strftime(self.ISO_DATEFORMAT)
-        result["price"] = self._fill_price(response)
-        result["amount"] = self._fill_amount(response)
-        result["state"] = "done"
+        with self._order_lock:
+            if self.order_map.get(request_id) is not order:
+                return False
+            result = order["result"]
+            result.update({"date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
+                           "price": price, "amount": amount, "state": "done"})
+            del self.order_map[request_id]
+        # Never call client code under the lock or restore a completed entry.
         self._call_callback(order["callback"], result)
+        return True
+
+    def _call_callback(self, callback, result):
+        # Match BaseExchangeTrader accounting, serialized across cancel/poll.
+        with self._order_lock:
+            result_value = float(result["price"]) * float(result["amount"])
+            fee = result_value * self.commission_ratio
+            if result["state"] == "done" and result["type"] == "buy":
+                old_value = self.asset[0] * self.asset[1]
+                new_value = old_value + result_value
+                new_amount = round(self.asset[1] + float(result["amount"]), 6)
+                avr_price = new_value / new_amount if new_amount else 0
+                self.asset = (avr_price, new_amount)
+                self.balance -= round(result_value + fee)
+            elif result["state"] == "done" and result["type"] == "sell":
+                old_avr_price = self.asset[0]
+                new_amount = round(self.asset[1] - float(result["amount"]), 6)
+                if new_amount == 0:
+                    old_avr_price = 0
+                self.asset = (old_avr_price, new_amount)
+                self.balance += round(result_value - fee)
+        callback(result)
