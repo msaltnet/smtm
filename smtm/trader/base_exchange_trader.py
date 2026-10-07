@@ -7,6 +7,7 @@ import requests
 from ..log_manager import LogManager
 from ..http_session import request_with_retry
 from .trader import Trader
+from .admission import ExchangeAdmissionControl, _AdmissionClosed
 from ..worker import Worker
 
 
@@ -47,6 +48,7 @@ class BaseExchangeTrader(Trader):
         """
         self.logger = LogManager.get_logger(logger_name)
         self.worker = Worker(worker_name)
+        self._admission = ExchangeAdmissionControl(self)
         self.worker.start()
         self.timer = None
         self.order_map = {}
@@ -72,6 +74,9 @@ class BaseExchangeTrader(Trader):
         """
         @wraps(execute)
         def tracked(self, task):
+            admission_run = task.get("_admission_run")
+            if not self._admission._allows(admission_run):
+                return  # Stale/legacy queued work is rejected, not retried.
             request = task["request"]
             if request["type"] == "cancel":
                 return execute(self, task)
@@ -84,12 +89,15 @@ class BaseExchangeTrader(Trader):
                     "request": request, "callback": task["callback"],
                     "state": "preparing", "dispatched": False,
                     "exchange_id": None, "order": None,
+                    "admission_run": admission_run,
                 }
                 self._submissions[request_id] = submission
             previous = getattr(self._submission_context, "current", None)
             self._submission_context.current = submission
             try:
                 return execute(self, task)
+            except _AdmissionClosed:
+                return  # Closure during preparation is a local rejection.
             finally:
                 self._submission_context.current = previous
                 with self._order_lock:
@@ -114,15 +122,28 @@ class BaseExchangeTrader(Trader):
 
     def _mark_creation_dispatch(self):
         submission = getattr(self._submission_context, "current", None)
-        if submission is None:
-            return  # Direct private transport calls still get one attempt.
-        with self._order_lock:
-            if submission["dispatched"]:
-                raise RuntimeError("Order creation already attempted")
-            # Set before the physical call. A raised exception or unusable ACK
-            # cannot establish non-execution, so uncertainty is the default.
-            submission["dispatched"] = True
-            submission["state"] = "unknown"
+        admission_run = None if submission is None else submission["admission_run"]
+        # Closure and this possible-dispatch mark share one linearization lock.
+        # Price reads/signing already finished; transport and callbacks run after
+        # releasing it. A close after the mark cannot revoke an in-flight order.
+        with self._admission._lock:
+            if not self._admission._allows_locked(admission_run):
+                raise _AdmissionClosed("Submission admission is closed")
+            if submission is None:
+                return  # Unmanaged private calls retain their legacy behavior.
+            with self._order_lock:
+                if submission["dispatched"]:
+                    raise RuntimeError("Order creation already attempted")
+                submission["dispatched"] = True
+                submission["state"] = "unknown"
+
+    def get_admission_control(self):
+        """Return the inactive opt-in capability; see trader-admission-contract.
+
+        Custom subclasses must uphold the decorator/final-boundary contract;
+        inheriting this accessor alone does not certify them as safe.
+        """
+        return self._admission
 
     @staticmethod
     def _usable_order_id(response, key, integer=False):
@@ -211,14 +232,18 @@ class BaseExchangeTrader(Trader):
         }]
         callback(result): 결과를 전달할 콜백함수
         """
-        for request in request_list:
-            self.worker.post_task(
-                {
-                    "runnable": self._execute_order,
-                    "request": request,
-                    "callback": callback,
-                }
-            )
+        requests = list(request_list)
+        with self._admission._lock:
+            if self._admission._managed:
+                raise RuntimeError("Managed submissions require an admission handle")
+            for request in requests:
+                self.worker.post_task(
+                    {
+                        "runnable": self._execute_order,
+                        "request": request,
+                        "callback": callback,
+                    }
+                )
 
     def cancel_all_requests(self):
         """모든 거래 요청을 취소한다

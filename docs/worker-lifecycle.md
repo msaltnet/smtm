@@ -46,3 +46,14 @@ Run `python -m pytest tests/unit_tests/worker_test.py -q`, followed by the norma
 unit suite in an isolated, dependency-ready environment without real credentials
 or outbound networking. Tests use synthetic tasks and Events/Barriers, not real
 exchange requests or sleep-based races. No account setup is needed.
+
+## Private generation observation
+
+`_capture_run()` captures an active generation, and `_observe_run(run, callback)`
+observes its first failure or task-loop termination once, outside the lifecycle
+lock. Late observers receive cached state. Notification occurs before the public
+termination callback can block and does not replace it. A clean loop-end
+notification does not establish thread exit or successful processing of any
+remaining queue prefix. Callback failures remain cached for late observers.
+The opt-in [trader admission contract](trader-admission-contract.md) uses this to
+fail pending submission fences without changing the public Worker lifecycle API.

@@ -16,6 +16,14 @@ class Trader(metaclass=ABCMeta):
     #: True인 Trader에만 TraderFactory가 passphrase_env를 전달한다.
     USES_PASSPHRASE = False
 
+    def get_admission_control(self):
+        """Optional submission-fence capability; unsupported by default.
+
+        This is deliberately non-abstract for existing custom traders.
+        SimulationTrader is unsupported until quote-driven fills are coordinated.
+        """
+        return None
+
     @abstractmethod
     def send_request(self, request_list: List[Dict[str, Any]], callback: Callable[[Dict[str, Any]], None]) -> None:
         """
