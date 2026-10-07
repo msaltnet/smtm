@@ -134,3 +134,11 @@ verification.
 - [Bithumb legacy limit order](https://apidocs.bithumb.com/v1.2.0/reference/지정가-주문하기)
 - [Bithumb legacy market buy](https://apidocs.bithumb.com/v1.2.0/reference/시장가-매수하기)
 - [Bithumb legacy market sell](https://apidocs.bithumb.com/v1.2.0/reference/시장가-매도하기)
+
+## Inactive admission capability
+
+The optional [exchange admission and submission-fence contract](trader-admission-contract.md)
+adds a separate, explicitly selected boundary on top of this ledger. It does not
+activate session lifecycle management or change unmanaged submission behavior.
+Reaching its fence still does not settle or release any known/unknown ownership
+record described above.

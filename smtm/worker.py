@@ -13,6 +13,8 @@ class _WorkerRun:
         self.thread = None
         self.stopping = False
         self.failure = None
+        self.terminal = False
+        self.observers = []
 
 
 class Worker:
@@ -52,10 +54,46 @@ class Worker:
         """Enqueue a task even while stopped; None retains its legacy stop meaning."""
         self.task_queue.put(task)
 
+    def _capture_run(self):
+        """Capture the active generation, or None when it cannot accept a fence."""
+        with self._lifecycle_lock:
+            run = self._run
+            if (run is None or run.stopping or run.terminal
+                    or run.failure is not None or not run.thread.is_alive()):
+                return None
+            return run
+
+    def _observe_run(self, run, callback):
+        """Observe one captured generation once, never under the lifecycle lock.
+
+        callback(run, error) reports its first failure or task-loop end (None).
+        Clean loop end is reported before the public termination callback and
+        does not establish fence success. Late observers receive cached state
+        synchronously, including any later termination-callback failure.
+        """
+        with self._lifecycle_lock:
+            if run is not None and not run.terminal and run.failure is None:
+                run.observers.append(callback)
+                return
+            failure = None if run is None else run.failure
+        self._notify_observers(run, [callback], failure)
+
+    def _notify_observers(self, run, observers, failure):
+        for callback in observers:
+            try:
+                callback(run, failure)
+            except BaseException:
+                # Internal observation cannot change execution outcome or
+                # prevent the public termination callback from being attempted.
+                self.logger.error(traceback.format_exc())
+
     def _record_failure(self, run, error):
+        observers = []
         with self._lifecycle_lock:
             if run.failure is None:
                 run.failure = error
+                observers, run.observers = run.observers, []
+        self._notify_observers(run, observers, error)
         self.logger.error(traceback.format_exc())
 
     def _looper(self, run):
@@ -86,7 +124,11 @@ class Worker:
         finally:
             with self._lifecycle_lock:
                 run.stopping = True
+                run.terminal = True
+                observers, run.observers = run.observers, []
+                failure = run.failure
                 callback = self.on_terminated
+            self._notify_observers(run, observers, failure)
             try:
                 if callback is not None:
                     callback()
