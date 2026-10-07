@@ -20,7 +20,6 @@ class Trader(metaclass=ABCMeta):
         """Optional submission-fence capability; unsupported by default.
 
         This is deliberately non-abstract for existing custom traders.
-        SimulationTrader is unsupported until quote-driven fills are coordinated.
         """
         return None
 

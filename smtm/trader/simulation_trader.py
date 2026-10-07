@@ -6,6 +6,8 @@ from typing import Any, Callable, Dict, List
 from ..log_manager import LogManager
 from . import order_spec
 from .trader import Trader
+from .admission import AdmissionOutcome
+from .simulation_admission import SimulationAdmissionControl
 
 
 class SimulationTrader(Trader):
@@ -27,8 +29,18 @@ class SimulationTrader(Trader):
         self.quotes = {}
         self.order_history = []
         self.pending_orders = {}
+        self._admission = SimulationAdmissionControl(self)
+        self._submissions = {}
+
+    def get_admission_control(self):
+        """Return the inactive, synchronous opt-in capability."""
+        return self._admission
 
     def update_quote(self, currency: str, price: float) -> None:
+        with self._admission._legacy():
+            self._update_quote(currency, price)
+
+    def _update_quote(self, currency, price):
         valid_price = self._positive_finite(price)
         if not isinstance(currency, str) or not currency.strip() or \
                 valid_price is None:
@@ -43,6 +55,10 @@ class SimulationTrader(Trader):
         request_list: List[Dict[str, Any]],
         callback: Callable[[Dict[str, Any]], None],
     ) -> None:
+        with self._admission._legacy():
+            self._send_request(request_list, callback)
+
+    def _send_request(self, request_list, callback):
         for request in request_list:
             if request.get("type") == "cancel":
                 self.cancel_request(request.get("id"))
@@ -60,6 +76,12 @@ class SimulationTrader(Trader):
                 self._submit_conditional(request, callback)
 
     def cancel_request(self, request_id: str) -> None:
+        with self._admission._existing() as managed:
+            if managed:
+                return self._cancel_managed(request_id)
+            return self._cancel_request(request_id)
+
+    def _cancel_request(self, request_id):
         if not isinstance(request_id, str):
             return
         entry = self.pending_orders.pop(request_id, None)
@@ -68,10 +90,21 @@ class SimulationTrader(Trader):
             self._finish(result, entry["callback"])
 
     def cancel_all_requests(self) -> None:
-        for request_id in list(self.pending_orders):
-            self.cancel_request(request_id)
+        with self._admission._existing() as managed:
+            if managed:
+                with self._admission._lock:
+                    entries = list(self.pending_orders.items())
+                for request_id, entry in entries:
+                    self._cancel_managed(request_id, entry)
+            else:
+                for request_id in list(self.pending_orders):
+                    self.cancel_request(request_id)
 
     def get_account_info(self) -> Dict[str, Any]:
+        with self._admission._lock:
+            return self._account_info()
+
+    def _account_info(self):
         return {
             "balance": self.balance,
             "available_balance": self._available_balance(),
@@ -94,6 +127,240 @@ class SimulationTrader(Trader):
             ],
             "date_time": datetime.now().strftime(self.ISO_DATEFORMAT),
         }
+
+    def get_submission_status(self):
+        """Detached managed simulation diagnostics, not safe-to-release proof.
+
+        Pending and callback-failed records retain their original owner. There
+        is no exchange transport uncertainty, retry or automatic resolution.
+        """
+        with self._admission._lock:
+            return {request_id: {
+                "state": record["state"],
+                "callback_failed": record["callback_failed"],
+            } for request_id, record in self._submissions.items()}
+
+    def _validate_managed_state(self):
+        # Opening does not adopt arbitrary legacy Python objects whose numeric,
+        # hash or copy hooks could reenter the final accounting lock.
+        def number(value):
+            return type(value) in (int, float) and math.isfinite(value) and value >= 0
+
+        valid = (type(self.currency) is str and bool(self.currency.strip())
+                 and number(self.balance) and number(self.commission_ratio)
+                 and type(self.assets) is dict and type(self.quotes) is dict
+                 and type(self.pending_orders) is dict)
+        if valid:
+            valid = all(type(key) is str and type(value) in (tuple, list)
+                        and len(value) == 2 and all(number(item) for item in value)
+                        for key, value in self.assets.items())
+        if valid:
+            valid = all(type(key) is str and number(value) and value > 0
+                        for key, value in self.quotes.items())
+        if not valid:
+            raise RuntimeError("Managed simulation requires plain finite account state")
+
+    def _submit_managed(self, run, requests, callback):
+        for original in requests:
+            # Caller copying/conversions and validation are preparation, outside
+            # the final gate. Only plain numeric values enter accounting below.
+            request = dict(original)
+            for key in ("price", "amount", "trigger"):
+                if key in request and not isinstance(request[key], bool):
+                    try:
+                        request[key] = float(request[key])
+                    except (TypeError, ValueError, OverflowError):
+                        request[key] = None
+            request = self._snapshot_managed_data(request)
+            request_id = request.get("id")
+            if request.get("type") == "cancel":
+                with self._admission._lock:
+                    allowed = self._admission._allows_locked(run)
+                if allowed:
+                    self._cancel_managed(request_id)
+                continue
+
+            record = {
+                "run": run, "request": request, "callback": callback,
+                "state": "preparing", "callback_failed": False,
+                "failure": None, "result": None, "entry": None,
+            }
+            with self._admission._lock:
+                if isinstance(request_id, str) and request_id.strip():
+                    if request_id in self._submissions:
+                        continue  # Logical IDs cannot replay, even after close.
+                    self._submissions[request_id] = record
+                if not self._admission._allows_locked(run):
+                    record.update(state="not_dispatched", request=None, callback=None)
+                    continue
+
+            try:
+                ord_type = order_spec.get_ord_type(request)
+                validation_error = self._validate_request(request, ord_type)
+            except BaseException as error:
+                with self._admission._lock:
+                    record.update(state="not_dispatched", failure=error,
+                                  request=None, callback=None)
+                raise
+            notifications = []
+            with self._admission._lock:
+                if not self._admission._allows_locked(run):
+                    record.update(state="not_dispatched", request=None, callback=None)
+                    continue
+                # This is the atomic simulation claim, not a transport mark.
+                # All accounting and reservation changes precede publication.
+                record["state"] = "settling"
+                try:
+                    if validation_error:
+                        self._reject(request, notifications.append, validation_error)
+                    elif ord_type == order_spec.MARKET:
+                        self._submit_market(request, notifications.append)
+                    elif ord_type == order_spec.LIMIT:
+                        self._submit_limit(request, notifications.append)
+                    else:
+                        self._submit_conditional(request, notifications.append)
+                except BaseException as error:
+                    record.update(state="settlement_failed", failure=error)
+                    raise
+                entry = (self.pending_orders.get(request_id)
+                         if isinstance(request_id, str) else None)
+                if entry is not None:
+                    entry.update(callback=callback, admission_run=run,
+                                 submission=record, ack_pending=True,
+                                 cancel_requested=False, deferred_quote=None)
+                    record.update(state="pending", entry=entry)
+                else:
+                    record["state"] = "settling"
+                result = notifications[0]
+                record["result"] = copy.deepcopy(result)
+            self._deliver_managed(record, result)
+
+    def _quote_managed(self, run, currency, price):
+        valid_price = self._positive_finite(price)
+        if type(currency) is not str or not currency.strip() or valid_price is None:
+            return
+        with self._admission._lock:
+            if not self._admission._allows_locked(run):
+                return
+            self.quotes[currency] = valid_price
+            entries = [
+                (request_id, entry) for request_id, entry in self.pending_orders.items()
+                if entry["currency"] == currency and entry.get("admission_run") is run
+            ]
+        for request_id, entry in entries:
+            self._fill_managed_entry(run, request_id, entry, valid_price)
+
+    def _fill_managed_entry(self, run, request_id, entry, price):
+        with self._admission._lock:
+            if not self._admission._allows_locked(run):
+                return
+            if (self.pending_orders.get(request_id) is not entry
+                    or entry.get("admission_run") is not run
+                    or entry["cancel_requested"]
+                    or not self._pending_fires(entry["request"], price)):
+                return
+            if entry["ack_pending"]:
+                if entry["deferred_quote"] is None:
+                    entry["deferred_quote"] = price
+                return  # Initial callback exits before any terminal callback.
+            # Claim one exact entry, then let its callback cancel another before
+            # examining that next entry. Never claim a fill after close.
+            record = entry["submission"]
+            record["state"] = "settling"
+            del self.pending_orders[request_id]
+            try:
+                result = self._fill(entry["request"], entry["callback"], price)
+                self.order_history.append(copy.deepcopy(result))
+                record["result"] = copy.deepcopy(result)
+            except BaseException as error:
+                record.update(state="settlement_failed", failure=error)
+                raise
+        self._deliver_managed(record, result)
+
+    def _cancel_managed(self, request_id, expected=None):
+        if type(request_id) is not str:
+            return
+        with self._admission._lock:
+            entry = self.pending_orders.get(request_id)
+            if entry is None or (expected is not None and entry is not expected):
+                return
+            run = entry["admission_run"]
+
+        def cancel():
+            with self._admission._lock:
+                if self.pending_orders.get(request_id) is not entry:
+                    return
+                if entry["ack_pending"]:
+                    entry["cancel_requested"] = True
+                    return  # Deliver requested before its terminal callback.
+                record = entry["submission"]
+                record["state"] = "settling"
+                del self.pending_orders[request_id]
+                try:
+                    result = self._result(entry["request"], "done", "canceled")
+                    self.order_history.append(copy.deepcopy(result))
+                    record["result"] = copy.deepcopy(result)
+                except BaseException as error:
+                    record.update(state="settlement_failed", failure=error)
+                    raise
+            self._deliver_managed(record, result)
+
+        self._admission._call(run, cancel, require_open=False)
+
+    def _deliver_managed(self, record, result):
+        # Accounting is already claimed. A callback failure cannot restore the
+        # pending order, retry accounting, erase ownership, or invent uncertainty.
+        error = None
+        requested = result["state"] == "requested"
+        entry = record["entry"]
+        try:
+            record["callback"](result)
+        except BaseException as caught:
+            error = caught
+            with self._admission._lock:
+                record["callback_failed"] = True
+                if record["failure"] is None:
+                    record["failure"] = caught
+                if not requested:
+                    record["state"] = "settlement_failed"
+                self._admission._finish_locked(
+                    record["run"], AdmissionOutcome.EXECUTION_FAILURE, caught)
+        finally:
+            with self._admission._lock:
+                cancel = False
+                if requested:
+                    entry["ack_pending"] = False
+                    cancel = entry["cancel_requested"]
+                    deferred_quote = entry["deferred_quote"]
+                elif error is None:
+                    record["state"] = "settled"
+                    if not record["callback_failed"]:
+                        record.update(request=None, callback=None, result=None, entry=None)
+        if cancel:
+            try:
+                self._cancel_managed(entry["request"]["id"], entry)
+            except BaseException:
+                if error is None:
+                    raise
+        elif requested and error is None and deferred_quote is not None:
+            self._fill_managed_entry(record["run"], entry["request"]["id"],
+                                     entry, deferred_quote)
+        if error is not None:
+            raise error
+
+    @classmethod
+    def _snapshot_managed_data(cls, value):
+        # Later result/history snapshots are made under the state lock. Own plain
+        # data now, so custom deepcopy/hash/equality hooks cannot run in that lock.
+        if type(value) in (str, int, float, bool, type(None)):
+            return value
+        if type(value) is dict:
+            if any(type(key) not in (str, int, float, bool, type(None)) for key in value):
+                raise TypeError("Managed simulation request keys must be plain data")
+            return {key: cls._snapshot_managed_data(item) for key, item in value.items()}
+        if type(value) in (list, tuple):
+            return [cls._snapshot_managed_data(item) for item in value]
+        raise TypeError("Managed simulation requests must contain plain data")
 
     @staticmethod
     def _positive_finite(value):

@@ -10,7 +10,6 @@ from smtm.trader.binance_trader import BinanceTrader
 from smtm.trader.bithumb_trader import BithumbTrader
 from smtm.trader.okx_trader import OkxTrader
 from smtm.trader.upbit_trader import UpbitTrader
-from smtm.trader.simulation_trader import SimulationTrader
 from smtm.trader.trader import Trader
 
 
@@ -86,9 +85,9 @@ class TraderAdmissionTest(unittest.TestCase):
         self.wait(fence._run.completed)
         return fence.wait()
 
-    def test_optional_capability_is_nonabstract_and_simulation_unsupported(self):
+    def test_optional_capability_is_nonabstract(self):
         self.assertNotIn('get_admission_control', Trader.__abstractmethods__)
-        self.assertIsNone(SimulationTrader().get_admission_control())
+        self.assertIsNone(Trader.get_admission_control(object()))
 
     def test_accessor_alone_does_not_activate_or_change_legacy_calls(self):
         trader = self.trader()
