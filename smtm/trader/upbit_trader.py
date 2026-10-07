@@ -169,7 +169,8 @@ class UpbitTrader(BaseExchangeTrader):
             return False
 
         with self._order_lock:
-            if self.order_map.get(request_id) is not order:
+            if (self.order_map.get(request_id) is not order
+                    or order.get("ack_pending", False)):
                 return False
             result = order["result"]
             result.update({
@@ -181,7 +182,7 @@ class UpbitTrader(BaseExchangeTrader):
             del self.order_map[request_id]
         # Never call client code under the ownership lock, and never restore a
         # completed entry if client code raises or re-enters the trader.
-        self._call_callback(order["callback"], result)
+        self._settle_submission(request_id, order, result)
         return True
 
     def _call_callback(self, callback, result):
@@ -218,6 +219,7 @@ class UpbitTrader(BaseExchangeTrader):
             self.SERVER_URL + "/v1/trades/ticks", params=querystring
         )
 
+    @BaseExchangeTrader.track_submission
     def _execute_order(self, task):
         request = task["request"]
         if request["type"] == "cancel":
@@ -265,20 +267,12 @@ class UpbitTrader(BaseExchangeTrader):
             response = self._send_order(
                 self.market, is_buy, request["price"], request["amount"])
 
-        if response is None:
-            task["callback"]("error!")
+        if (not self._usable_order_id(response, "uuid")
+                or "error" in response):
+            self._submission_unacknowledged(task)
             return
 
-        result = self._create_success_result(request)
-        with self._order_lock:
-            self.order_map[request["id"]] = {
-                "uuid": response["uuid"],
-                "callback": task["callback"],
-                "result": result,
-            }
-        task["callback"](result)
-        with self._order_lock:
-            self._start_timer()
+        self._register_submitted_order(task, response["uuid"], "uuid")
 
     def _update_order_result(self, task):
         del task
@@ -375,7 +369,8 @@ class UpbitTrader(BaseExchangeTrader):
         headers = {"Authorization": authorize_token}
 
         return self._request_post(
-            self.SERVER_URL + "/v1/orders", params=query_string, headers=headers
+            self.SERVER_URL + "/v1/orders", params=query_string, headers=headers,
+            creation=True
         )
 
     def _optimize_price(self, price, is_buy):
