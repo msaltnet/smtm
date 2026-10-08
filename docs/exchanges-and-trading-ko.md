@@ -40,6 +40,30 @@ smtm은 이제 **Upbit·Bithumb·Binance·OKX** 네 거래소에서 실거래가
 - 대기 매수는 현금을 예약하고, 대기 매도·손절·익절은 자산을 예약합니다.
 - OCO를 지원하지 않으므로 동일한 전체 보유 포지션에 손절과 익절을 함께 걸 수 없습니다. 실제 Trader는 손절·익절 주문 유형이 범위 밖이므로 명시적으로 거절합니다.
 
+### 가상 전략의 소수 현금 회계 (선택 사항)
+
+프로파일 최상위에 `cash_accounting: "fractional"`과 불리언 `virtual: true`를
+함께 지정하면 BNH·SMA·RSI·LLM 전략이 체결 결과를 반영할 때 현금 증감액을
+정수 단위로 반올림하지 않습니다. 생략하거나 `"legacy"`를 지정하면 기존
+반올림을 유지합니다. 거래소나 USDT 여부로 자동 선택되지 않습니다.
+
+- 허용값은 정확히 `"legacy"` 또는 `"fractional"`입니다. `null`, 불리언,
+  숫자, 다른 문자열은 거부됩니다. fractional에서 `virtual` 생략·`false`·
+  문자열 `"true"`는 허용되지 않습니다.
+- 수수료 0인 10.25 매수 체결을 현금 300에 반영하면 legacy는 290,
+  fractional은 289.75입니다. 이는 회계 예시이며 소액 주문 실행 가능성을
+  보장하지 않습니다. 가상 수수료는 계속 0입니다.
+- 프로파일 저장만으로 실행 중인 세션은 바뀌지 않습니다. 새 세션을 만들거나
+  중지된 세션을 교체해야 하며, 새 예산으로 시작합니다. 기존 잔고·보유 자산·
+  대기 주문 이관이나 과거 반올림 복원은 하지 않습니다.
+- 실거래와 OKX 거래소 데모에는 사용할 수 없습니다. 실거래 OKX의 별도 현금
+  회계는 변경되지 않습니다. `strategy_params` 안에 넣어도 활성화되지 않습니다.
+- 계산은 float이며 정확한 십진 정산이 아닙니다. 최소 주문값·주문 크기 계산·
+  수량/보유량 정밀도·표시 형식·안전 한도·거래소 규칙은 그대로입니다.
+  이 옵션만으로 USDT 소액 세션의 모든 제약이 해결되지는 않습니다.
+
+전체 계약과 예시는 [소수 현금 회계](fractional-cash-accounting.md)를 참고하세요.
+
 ## 환경변수 설정
 
 프로젝트 루트 `.env`(또는 환경변수)에 사용할 거래소의 키를 설정합니다.
@@ -127,5 +151,6 @@ sim-btc로 세션 만들고 시작해줘
 ## 관련 문서
 
 - 전체 데이터 소스·거래소 표: [README (한국어)](../README-ko-kr.md)
+- 가상 전략의 선택적 소수 현금 회계: [fractional-cash-accounting.md](fractional-cash-accounting.md)
 - 설계/구현 배경: `docs/superpowers/specs/2026-07-14-order-types-and-binance-trader-design.md`
 - OKX 지원 설계: `docs/superpowers/specs/2026-07-25-okx-exchange-support-design.md`

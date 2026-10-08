@@ -148,6 +148,12 @@ Virtual-trading limitations:
 - Pending buys reserve cash; pending sells, stop-losses, and take-profits reserve the asset.
 - OCO is unavailable, so a stop-loss and take-profit cannot both be placed against the same entire position. Real Traders reject stop-loss and take-profit orders because those order types are out of scope.
 
+For opt-in strategy cash arithmetic without whole-unit rounding, set the top-level
+profile field `cash_accounting: "fractional"` with explicit `virtual: true`.
+Omission keeps `legacy` accounting. This applies to fresh virtual sessions;
+fees remain zero and minimums, sizing, safety limits, and live accounting are
+unchanged. See the [fractional cash accounting contract](docs/fractional-cash-accounting.md).
+
 ### Supported Exchanges & Data Providers
 
 The `exchange` profile setting selects both the market data source and the order-placing trader. End-to-end trading requires a matching entry in both factories. Any code in this table can be combined with the `virtual` setting to route orders through `SimulationTrader` instead of the real exchange.

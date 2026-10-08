@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from ..cash_accounting import validate_cash_accounting
 from typing import Dict, Any, Callable, Optional, List
 
 
@@ -11,6 +12,14 @@ class Strategy(metaclass=ABCMeta):
 
     CODE = "---"
     NAME = "---"
+
+    def _initialize_cash_accounting(self, mode):
+        self.cash_accounting = validate_cash_accounting(mode)
+
+    def _cash_delta(self, delta):
+        """Retain legacy per-fill rounding unless explicitly opted in."""
+        mode = getattr(self, "cash_accounting", "legacy")
+        return delta if mode == "fractional" else round(delta)
 
     @staticmethod
     def _result_fee(result: Dict[str, Any], commission_ratio: float) -> float:
@@ -26,6 +35,7 @@ class Strategy(metaclass=ABCMeta):
         add_spot_callback: Optional[Callable[[str, float], None]] = None,
         add_line_callback: Optional[Callable[[str, float], None]] = None,
         alert_callback: Optional[Callable[[str], None]] = None,
+        cash_accounting: str = "legacy",
     ) -> None:
         """예산을 설정하고 초기화한다
 

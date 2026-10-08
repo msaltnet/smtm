@@ -6,6 +6,10 @@ PROFILE_PROPERTIES = {
     "currency": {"type": "string", "description": "거래 통화 예: BTC"},
     "budget": {"type": "number", "description": "초기 예산"},
     "virtual": {"type": "boolean", "description": "가상매매 여부"},
+    "cash_accounting": {
+        "type": "string", "enum": ["legacy", "fractional"],
+        "description": "전략 현금 정산: legacy(기본, 건별 정수 반올림), fractional(virtual: true 필수)",
+    },
     "term": {"type": "number", "description": "매매 주기(초)"},
     "strategy": {"type": "string", "description": "전략 코드 예: BNH/RSI/SMA/LLM"},
     "strategy_params": {"type": "object", "description": "전략 파라미터"},
