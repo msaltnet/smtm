@@ -87,6 +87,12 @@ class OpenAILlmClient(LlmClient):
         }
         if tools:
             kwargs["tools"] = self._convert_tools(tools)
+            if any(
+                self.model == model or self.model.startswith(model + "-")
+                for model in ("gpt-5.6-luna", "gpt-5.6-terra")
+            ):
+                # Luna and Terra require non-reasoning mode for Chat Completions tools.
+                kwargs["reasoning_effort"] = "none"
         converted_choice = self._convert_tool_choice(tool_choice)
         if converted_choice:
             kwargs["tool_choice"] = converted_choice

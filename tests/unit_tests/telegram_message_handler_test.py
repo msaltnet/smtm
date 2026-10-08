@@ -1,8 +1,43 @@
 import threading
 import unittest
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
+
+import pytest
 
 from smtm.controller.telegram.message_handler import TelegramMessageHandler
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("- **세션:** `default`\n- **예산:** **500,000원**",
+     "- <b>세션:</b> <code>default</code>\n- <b>예산:</b> <b>500,000원</b>"),
+    ("가격 < 10 & 수익 > 0", "가격 &lt; 10 &amp; 수익 &gt; 0"),
+    ("<b>raw</b> **A&B**", "&lt;b&gt;raw&lt;/b&gt; <b>A&amp;B</b>"),
+    ("`**literal** <tag> & value`", "<code>**literal** &lt;tag&gt; &amp; value</code>"),
+    ("```python\nprint('**value** < 10 & > 0')\n```",
+     "<pre>print('**value** &lt; 10 &amp; &gt; 0')\n</pre>"),
+    ("**unclosed `code < &", "**unclosed `code &lt; &amp;"),
+    ("plain_text (0.00%) - BTC!", "plain_text (0.00%) - BTC!"),
+])
+@pytest.mark.parametrize("keyboard", [None, '{"keyboard":[["status & help"]]}'])
+@patch("smtm.controller.telegram.message_handler.Worker")
+def test_send_text_formats_markdown_as_safe_telegram_html(mock_worker, text, expected, keyboard):
+    handler = TelegramMessageHandler(token="test-token", chat_id="1234")
+
+    handler.send_text_message(text, keyboard=keyboard)
+
+    task = mock_worker.return_value.post_task.call_args.args[0]
+    query = parse_qs(urlsplit(task["url"]).query)
+    assert query["text"] == [expected]
+    assert query["parse_mode"] == ["HTML"]
+    if keyboard is None:
+        assert "reply_markup" not in query
+    else:
+        assert query["reply_markup"] == [keyboard]
+    assert query["chat_id"] == ["1234"]
+    with patch.object(handler, "_send_http", return_value={"ok": True}) as send_http:
+        task["runnable"](task)
+    send_http.assert_called_once_with(task["url"])
 
 
 class TelegramMessageHandlerTokenTests(unittest.TestCase):

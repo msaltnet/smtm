@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+import pytest
+
 from smtm.llm.llm_client import ToolCall
 from smtm.llm.openai_llm_client import OpenAILlmClient
 
@@ -45,16 +47,18 @@ def test_create_message_converts_tool_schema_and_response(mock_openai):
     assert kwargs["tools"] == [{"type": "function", "function": {
         "name": "get_market_data", "description": "시장 조회", "parameters": {"type": "object"},
     }}]
+    assert kwargs["reasoning_effort"] == "none"
     assert response.tool_calls == [ToolCall("call_1", "get_market_data", {"session": "default"})]
     assert response.usage == {"input_tokens": 12, "output_tokens": 7}
 
 
+@pytest.mark.parametrize("model", ["gpt-5.6-luna", "gpt-5.6-terra"])
 @patch("smtm.llm.openai_llm_client.OpenAI")
-def test_create_message_converts_forced_tool_choice(mock_openai):
+def test_create_message_converts_forced_tool_choice(mock_openai, model):
     sdk_client = mock_openai.return_value
     sdk_client.chat.completions.create.return_value = _text_response("ok")
 
-    OpenAILlmClient("test-key").create_message(
+    OpenAILlmClient("test-key", model=model).create_message(
         "system", [{"role": "user", "content": "decide"}],
         [{"name": "submit_decision", "description": "", "input_schema": {"type": "object"}}],
         tool_choice={"type": "tool", "name": "submit_decision"},
@@ -63,6 +67,37 @@ def test_create_message_converts_forced_tool_choice(mock_openai):
     assert sdk_client.chat.completions.create.call_args.kwargs["tool_choice"] == {
         "type": "function", "function": {"name": "submit_decision"}
     }
+    assert sdk_client.chat.completions.create.call_args.kwargs["reasoning_effort"] == "none"
+
+
+@pytest.mark.parametrize("model, tools, expected_effort", [
+    ("gpt-5.6-luna", [{"name": "get_status"}], "none"),
+    ("gpt-5.6-luna-2026-09-01", [{"name": "get_status"}], "none"),
+    ("gpt-5.6-luna", [], None),
+    ("gpt-5.6-terra", [{"name": "get_status"}], "none"),
+    ("gpt-5.6-terra-2026-09-01", [{"name": "get_status"}], "none"),
+    ("gpt-5.6-terra", [], None),
+    ("gpt-5.6-terrain", [{"name": "get_status"}], None),
+    ("gpt-4o", [{"name": "get_status"}], None),
+    ("gpt-5.6-sol", [{"name": "get_status"}], None),
+    ("gpt-5.6-lunatic", [{"name": "get_status"}], None),
+])
+@patch("smtm.llm.openai_llm_client.OpenAI")
+def test_reasoning_effort_is_scoped_to_luna_and_terra_tool_requests(
+    mock_openai, model, tools, expected_effort
+):
+    sdk_client = mock_openai.return_value
+    sdk_client.chat.completions.create.return_value = _text_response("ok")
+
+    OpenAILlmClient("test-key", model=model).create_message(
+        "system", [{"role": "user", "content": "status"}], tools,
+    )
+
+    kwargs = sdk_client.chat.completions.create.call_args.kwargs
+    if expected_effort is None:
+        assert "reasoning_effort" not in kwargs
+    else:
+        assert kwargs["reasoning_effort"] == expected_effort
 
 
 def test_convert_messages_preserves_assistant_calls_and_tool_results():

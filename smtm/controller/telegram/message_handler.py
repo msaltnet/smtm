@@ -7,8 +7,10 @@ Handles Telegram API communication and message parsing.
 """
 
 import os
+import re
 import time
 import threading
+from html import escape
 from urllib import parse
 from typing import Optional, Dict, Any, Callable
 import requests
@@ -141,6 +143,29 @@ class TelegramMessageHandler:
             f"{self.API_HOST}{self.TOKEN}/getUpdates?offset={offset}&timeout={self.POLLING_TIMEOUT}"
         )
 
+    @staticmethod
+    def _format_text(text: str) -> str:
+        """Render basic LLM Markdown as escaped, Telegram-supported HTML.
+
+        Code is consumed before emphasis, so its contents stay literal. Unmatched
+        delimiters and unsupported Markdown remain visible rather than invalid HTML.
+        """
+        pattern = re.compile(
+            r"```[^\n`]*\n(?P<pre>[\s\S]*?)```"
+            r"|(?<!`)`(?P<code>[^`\n]+)`(?!`)"
+            r"|\*\*(?P<bold>[^*\n]+)\*\*"
+        )
+        parts = []
+        position = 0
+        for match in pattern.finditer(text):
+            parts.append(escape(text[position:match.start()], quote=False))
+            tag = {"pre": "pre", "code": "code", "bold": "b"}[match.lastgroup]
+            content = escape(match.group(match.lastgroup), quote=False)
+            parts.append(f"<{tag}>{content}</{tag}>")
+            position = match.end()
+        parts.append(escape(text[position:], quote=False))
+        return "".join(parts)
+
     def send_text_message(self, text: str, keyboard: Optional[str] = None) -> None:
         """
         Send text message asynchronously
@@ -150,11 +175,10 @@ class TelegramMessageHandler:
             text: Message text to send / 전송할 메시지 텍스트
             keyboard: Optional keyboard markup / 선택적 키보드 마크업
         """
-        encoded_text = parse.quote(text)
+        encoded_text = parse.quote(self._format_text(text))
+        url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}&parse_mode=HTML"
         if keyboard is not None:
-            url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}&reply_markup={keyboard}"
-        else:
-            url = f"{self.API_HOST}{self.TOKEN}/sendMessage?chat_id={self.CHAT_ID}&text={encoded_text}"
+            url += f"&reply_markup={parse.quote(keyboard)}"
 
         def send_message(task):
             if not self._send_http(task["url"]):
