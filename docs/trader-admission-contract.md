@@ -1,7 +1,8 @@
-# Opt-in exchange admission and submission fences
+# Opt-in trader admission and submission fences
 
 This is an **inactive capability**, available on the built-in Upbit, Binance,
-OKX and Bithumb traders. `TradingOperator` and `SessionManager` do not call it.
+OKX and Bithumb traders, and through a synchronous implementation on
+`SimulationTrader`. `TradingOperator` and `SessionManager` do not call it.
 Existing unmanaged callers keep their current API and behavior. There is no
 production lifecycle activation, automatic restart, cancellation sweep or
 unknown-order recovery in this change.
@@ -10,8 +11,9 @@ unknown-order recovery in this change.
 
 `Trader.get_admission_control()` is optional and non-abstract. Its default is
 `None` (unsupported), so existing custom implementations remain instantiable.
-`SimulationTrader` also returns `None`: quote-driven fills and `send_request`
-must share a real coordination boundary before simulation can participate.
+`SimulationTrader` uses its own counted-call implementation: no additional
+Worker is introduced. See the [simulation contract](simulation-admission-contract.md)
+for token-bound quotes, per-entry accounting claims and retained pending owners.
 
 For participating exchange traders, retrieving the controller is inert:
 
@@ -103,8 +105,9 @@ substitutes for those application-level checks.
 ## Before lifecycle activation
 
 Operator producer generations and minimum session restart/replacement/removal
-protections must activate together in a separate change. Simulation needs actual
-quote/fill coordination. Requiring this capability from custom traders is a
+protections must activate together in a separate change. The synchronous
+simulation capability now coordinates quote/fill claims but does not activate
+those protections. Requiring this capability from custom traders is a
 compatibility/product decision that must be made separately.
 
 A custom `BaseExchangeTrader` subclass is **not certified merely by inheriting**
