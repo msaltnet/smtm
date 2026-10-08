@@ -97,9 +97,9 @@ class StrategyBuyAndHold(Strategy):
             total = float(result["price"]) * float(result["amount"])
             fee = self._result_fee(result, self.COMMISSION_RATIO)
             if result["type"] == "buy":
-                self.balance -= round(total + fee)
+                self.balance -= self._cash_delta(total + fee)
             else:
-                self.balance += round(total - fee)
+                self.balance += self._cash_delta(total - fee)
 
             self.logger.info(f"[RESULT] id: {result['request']['id']} ================")
             self.logger.info(f"type: {result['type']}, msg: {result['msg']}")
@@ -206,10 +206,12 @@ class StrategyBuyAndHold(Strategy):
         add_spot_callback=None,
         add_line_callback=None,
         alert_callback=None,
+        cash_accounting="legacy",
     ):
         if self.is_initialized:
             return
 
+        self._initialize_cash_accounting(cash_accounting)
         self.is_initialized = True
         self.budget = budget
         self.balance = budget

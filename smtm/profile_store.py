@@ -2,6 +2,7 @@ import json
 import os
 import re
 from .log_manager import LogManager
+from .cash_accounting import validate_profile_cash_accounting
 
 
 class ProfileStore:
@@ -13,6 +14,7 @@ class ProfileStore:
     ALLOWED_FIELDS = {
         "name", "exchange", "currency", "budget", "virtual",
         "term", "strategy", "strategy_params", "safety", "account",
+        "cash_accounting",
     }
     NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
@@ -30,6 +32,8 @@ class ProfileStore:
         unknown = set(profile.keys()) - self.ALLOWED_FIELDS
         if unknown:
             raise ValueError(f"알 수 없는 프로파일 필드: {', '.join(sorted(unknown))}")
+
+        validate_profile_cash_accounting(profile)
 
     def save(self, profile: dict) -> dict:
         self.validate(profile)

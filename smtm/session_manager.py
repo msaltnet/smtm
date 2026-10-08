@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 from .log_manager import LogManager
+from .cash_accounting import validate_profile_cash_accounting
 
 
 @dataclass
@@ -52,6 +53,11 @@ class SessionManager:
         if not ProfileStore.NAME_PATTERN.match(str(name)):
             return {"success": False,
                     "error": "세션 이름은 영문/숫자/-/_ 1~64자여야 합니다"}
+
+        try:
+            validate_profile_cash_accounting(profile)
+        except ValueError as err:
+            return {"success": False, "error": str(err)}
 
         exchange = profile.get("exchange", "UPB")
         currency = profile.get("currency", "BTC")
@@ -189,8 +195,12 @@ class SessionManager:
 
         operator = TradingOperator(
             interval=profile.get("term", 60), currency=currency)
+        accounting_kwargs = {}
+        if profile.get("cash_accounting", "legacy") == "fractional":
+            accounting_kwargs["cash_accounting"] = "fractional"
         operator.initialize(
-            data_provider, strategy, trader, analyzer, guard, budget=budget)
+            data_provider, strategy, trader, analyzer, guard, budget=budget,
+            **accounting_kwargs)
         return operator, session_guard
 
     def replace_session(self, name, profile) -> dict:

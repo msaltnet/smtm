@@ -55,9 +55,10 @@ class StrategyLlm(Strategy):
         self.strategy_knowledge = self._load_strategy_knowledge(strategy_files or [])
 
     def initialize(self, budget, min_price=5000, add_spot_callback=None,
-                   add_line_callback=None, alert_callback=None):
+                   add_line_callback=None, alert_callback=None, cash_accounting="legacy"):
         if self.is_initialized:
             return
+        self._initialize_cash_accounting(cash_accounting)
         self.is_initialized = True
         self.budget = budget
         self.balance = budget
@@ -89,9 +90,9 @@ class StrategyLlm(Strategy):
             total = price * amount
             fee = self._result_fee(result, self.COMMISSION_RATIO)
             if result["type"] == "buy":
-                self.balance -= round(total + fee)
+                self.balance -= self._cash_delta(total + fee)
             else:
-                self.balance += round(total - fee)
+                self.balance += self._cash_delta(total - fee)
 
             if result["msg"] == "success":
                 if result["type"] == "buy":

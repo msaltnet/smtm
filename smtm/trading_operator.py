@@ -2,6 +2,9 @@ import math
 import threading
 from .log_manager import LogManager
 from .worker import Worker
+from .cash_accounting import validate_cash_accounting
+from .trader.simulation_trader import SimulationTrader
+from .strategy.strategy import Strategy
 
 
 class TradingOperator:
@@ -23,9 +26,23 @@ class TradingOperator:
         self.worker = Worker("TradingOperator-Worker")
 
     def initialize(self, data_provider, strategy, trader, analyzer, safety_guard,
-                   budget=500000):
+                   budget=500000, cash_accounting="legacy"):
         if self.state is not None:
             return
+        validate_cash_accounting(cash_accounting)
+        if cash_accounting == "fractional" and not isinstance(trader, SimulationTrader):
+            raise ValueError("fractional cash_accounting requires SimulationTrader")
+        # Built-in initialize is deliberately a no-op after its first call.
+        # Do not silently adopt a different existing mode (including a
+        # fractional strategy attached to a live Trader through legacy mode).
+        if (isinstance(strategy, Strategy)
+                and getattr(strategy, "is_initialized", False)
+                and hasattr(strategy, "cash_accounting")
+                and strategy.cash_accounting != cash_accounting):
+            raise ValueError("cash_accounting conflicts with initialized strategy")
+        accounting_kwargs = {}
+        if cash_accounting == "fractional":
+            accounting_kwargs["cash_accounting"] = cash_accounting
         self.data_provider = data_provider
         self.strategy = strategy
         self.trader = trader
@@ -36,6 +53,7 @@ class TradingOperator:
             add_spot_callback=analyzer.add_drawing_spot,
             add_line_callback=analyzer.add_value_for_line_graph,
             alert_callback=lambda msg: self.logger.warning(f"strategy alert: {msg}"),
+            **accounting_kwargs,
         )
         analyzer.initialize(trader.get_account_info)
         self.state = "ready"
