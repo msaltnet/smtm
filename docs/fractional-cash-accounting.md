@@ -114,7 +114,10 @@ an incompatible custom strategy fails rather than silently downgrading. Direct
 fractional operator assembly also requires a `SimulationTrader` and validates
 the mode and Trader before assigning its components. An already initialized
 built-in strategy must have the same accounting mode as the requested operator
-mode; a conflict is rejected without resetting its budget or balances.
+mode; a conflict is rejected without resetting its budget or balances. An already
+initialized custom `Strategy` without a stored accounting mode remains supported
+in legacy mode but is rejected for fractional mode, because its no-op initializer
+cannot confirm the opt-in.
 
 ## Deliberately unchanged
 

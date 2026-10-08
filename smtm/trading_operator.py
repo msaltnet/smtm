@@ -37,8 +37,7 @@ class TradingOperator:
         # fractional strategy attached to a live Trader through legacy mode).
         if (isinstance(strategy, Strategy)
                 and getattr(strategy, "is_initialized", False)
-                and hasattr(strategy, "cash_accounting")
-                and strategy.cash_accounting != cash_accounting):
+                and getattr(strategy, "cash_accounting", "legacy") != cash_accounting):
             raise ValueError("cash_accounting conflicts with initialized strategy")
         accounting_kwargs = {}
         if cash_accounting == "fractional":

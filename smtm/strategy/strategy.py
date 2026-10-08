@@ -18,7 +18,8 @@ class Strategy(metaclass=ABCMeta):
 
     def _cash_delta(self, delta):
         """Retain legacy per-fill rounding unless explicitly opted in."""
-        return delta if self.cash_accounting == "fractional" else round(delta)
+        mode = getattr(self, "cash_accounting", "legacy")
+        return delta if mode == "fractional" else round(delta)
 
     @staticmethod
     def _result_fee(result: Dict[str, Any], commission_ratio: float) -> float:

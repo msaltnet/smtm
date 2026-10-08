@@ -210,3 +210,38 @@ def test_operator_accepts_matching_preinitialized_strategy_without_reset(code, m
     assert operator.state == "ready"
     assert strategy.balance == 300
     assert strategy.cash_accounting == mode
+
+
+@pytest.mark.parametrize("requested", ["legacy", "fractional"])
+def test_initialized_custom_strategy_without_stored_mode(requested):
+    """Old custom strategies cannot silently ignore an explicit fractional opt-in."""
+    from smtm.strategy.strategy_bnh import StrategyBuyAndHold
+
+    class InitializedCustomStrategy(StrategyBuyAndHold):
+        def initialize(self, budget, **kwargs):
+            if self.is_initialized:
+                return
+            self.balance = budget
+            self.is_initialized = True
+
+    strategy = InitializedCustomStrategy()
+    strategy.initialize(300)
+    assert not hasattr(strategy, "cash_accounting")
+    operator = TradingOperator()
+    before = dict(operator.__dict__)
+    args = (Mock(), strategy, SimulationTrader(budget=300), Mock(), Mock())
+    if requested == "fractional":
+        with pytest.raises(ValueError, match="cash_accounting"):
+            operator.initialize(*args, budget=900, cash_accounting=requested)
+        assert operator.__dict__ == before
+    else:
+        operator.initialize(*args, budget=900, cash_accounting=requested)
+        assert operator.state == "ready"
+    assert strategy.balance == 300
+    if requested == "legacy":
+        strategy.update_result(dict(
+            request={"id": "legacy-custom-fill"}, type="buy", price=10.25,
+            amount=1, state="done", msg="success", fee=0,
+            date_time="2026-10-08T00:00:00"))
+        assert strategy.balance == 290
+        assert len(strategy.result) == 1
