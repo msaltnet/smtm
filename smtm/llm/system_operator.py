@@ -76,6 +76,10 @@ class SystemOperator:
         for config_key, profile_key in mapping.items():
             if cfg.get(config_key) is not None:
                 profile[profile_key] = cfg[config_key]
+        # An explicit invalid value (including None) must reach validation;
+        # silently dropping it would select legacy accounting instead.
+        if "cash_accounting" in cfg:
+            profile["cash_accounting"] = cfg["cash_accounting"]
         profile.setdefault("strategy", self.DEFAULT_STRATEGY)
         return profile
 
@@ -173,7 +177,8 @@ class SystemOperator:
         # 기존 설정을 상속한다 (가상→실거래 무언 전환 방지)
         effective = self._config_to_profile()
         for key in ("exchange", "currency", "budget", "virtual", "term",
-                    "strategy", "strategy_params", "safety", "account"):
+                    "strategy", "strategy_params", "safety", "account",
+                    "cash_accounting"):
             if key in profile:
                 effective[key] = profile[key]
         effective["name"] = "default"
@@ -181,7 +186,8 @@ class SystemOperator:
         if result.get("success"):
             # config를 유효 프로파일에 맞춰 동기화 (레거시 get_status 일관성)
             for key in ("exchange", "currency", "budget", "virtual",
-                        "strategy", "strategy_params", "safety", "account"):
+                        "strategy", "strategy_params", "safety", "account",
+                        "cash_accounting"):
                 if key in effective:
                     self.config[key] = effective[key]
             if "term" in effective:
