@@ -222,7 +222,8 @@ class TradingOperatorTickTests(unittest.TestCase):
         }])
 
         self.assertEqual(len(monitor.trade_result_log), 1)
-        self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertIsNot(monitor.trade_result_log[-1]["result"], callback_result)
         self.assertEqual(operator.safety_guard.daily_trade_count, 0)
         self.assertEqual(strategy.result, [])
 
@@ -274,7 +275,8 @@ class TradingOperatorTickTests(unittest.TestCase):
                 }])
 
                 self.assertEqual(len(monitor.trade_result_log), 1)
-                self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+                self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+                self.assertIsNot(monitor.trade_result_log[-1]["result"], callback_result)
                 strategy.update_result.assert_called_once_with(callback_result)
                 self.assertEqual(operator.safety_guard.daily_trade_count, 0)
 
