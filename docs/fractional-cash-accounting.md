@@ -94,6 +94,21 @@ Create a fresh session from the profile, or stop the existing session and use
 the existing stopped-session replacement flow. Simply stopping and starting the
 same session does not select a new mode.
 
+The default session also preserves the selection through `SystemOperator`
+setup, `switch_profile`, and subsequent strategy replacement. An explicitly
+present invalid value, including `null`, reaches the existing validation and
+fails rather than silently selecting legacy accounting.
+
+Default-session profile switching follows the existing **overlay** rule:
+omitted fields inherit the current configuration. If the current default
+session is fractional, switching a profile that omits `cash_accounting` keeps
+fractional mode. Supply `"cash_accounting": "legacy"` explicitly to reset it.
+This differs from creating an independent fresh session, where omission selects
+legacy. Switching `virtual` to `false` while fractional mode is inherited is
+rejected before account or Trader access; no live accounting mode is enabled.
+Failed replacement leaves the previous session and configuration unchanged.
+These are profile/API behaviors, not new command-line options.
+
 The fresh session starts from its configured budget. This is not a balance
 migration: historical rounding is not reconstructed or repaired, and old
 positions, pending orders, and cash are not carried into the fresh virtual
