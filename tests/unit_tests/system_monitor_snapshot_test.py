@@ -17,12 +17,14 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
     """Capture and read boundaries must not expose mutable record aliases."""
 
     def setUp(self):
+        """Use a fresh monitor and a deterministic capture timestamp."""
         self.monitor = SystemMonitor()
         self.clock = patch.object(self.monitor, "_timestamp", return_value="2026-01-02T03:04:05")
         self.clock.start()
         self.addCleanup(self.clock.stop)
 
     def _capture_cases(self, payload):
+        """Exercise every mutable payload field accepted by the capture APIs."""
         return (
             ("market_data_log", "data", lambda: self.monitor.log_market_data([payload], session="s1")),
             ("trade_request_log", "request", lambda: self.monitor.log_trade_request(payload, session="s1")),
@@ -36,6 +38,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
         )
 
     def test_every_payload_is_detached_at_capture(self):
+        """Later nested input changes must not rewrite any captured record."""
         for index in range(9):
             payload = {"nested": {"values": [1, {"value": 2}]}}
             attribute, field, capture = self._capture_cases(payload)[index]
@@ -49,6 +52,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
                 self.assertEqual(record, expected)
 
     def test_reused_payload_produces_independent_records(self):
+        """Each capture must preserve the values present at that call."""
         for index in range(9):
             payload = {"nested": [1]}
             attribute, field, capture = self._capture_cases(payload)[index]
@@ -66,12 +70,14 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
                 self.assertEqual(value, {"nested": [1, 2]})
 
     def test_market_data_outer_list_is_also_detached(self):
+        """Clearing a source batch must not discard its recorded candles."""
         data = [{"price": 10}]
         self.monitor.log_market_data(data)
         data.clear()
         self.assertEqual(self.monitor.market_data_log[0]["data"], [{"price": 10}])
 
     def test_llm_request_and_usage_capture_preserves_totals(self):
+        """Usage totals and messages must survive mutation of source objects."""
         request = {"messages": [{"role": "user", "content": [{"text": "original"}]}]}
         usage = {"input_tokens": 12, "output_tokens": 3}
         self.monitor.log_llm_interaction(request, "reply", usage)
@@ -85,6 +91,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
                          ["content"][0]["text"], "original")
 
     def test_tool_arguments_and_result_are_both_detached(self):
+        """Shared nested tool inputs and outputs must be captured by value."""
         shared = {"values": [1]}
         arguments = {"input": shared}
         result = {"output": shared}
@@ -100,6 +107,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
         })
 
     def test_trade_history_reads_do_not_expose_stored_records(self):
+        """Filtered and unfiltered result mutations must not change history."""
         for session in (None, "s1", "s2"):
             with self.subTest(session=session):
                 monitor = SystemMonitor()
@@ -116,6 +124,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
                 self.assertEqual(monitor.get_trade_log(), expected)
 
     def test_snapshot_reads_do_not_expose_stored_records(self):
+        """Nested and outer-list changes must not alter stored portfolios."""
         self.monitor.take_snapshot({"asset": {"BTC": (Decimal("10.25"), [2])}})
         expected = copy.deepcopy(self.monitor.snapshots)
         first = self.monitor.get_snapshots()
@@ -125,6 +134,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
         self.assertEqual(self.monitor.get_snapshots(), expected)
 
     def test_repeated_reads_are_independent(self):
+        """Two reads must not share mutable values with each other."""
         self.monitor.log_trade_result({"nested": [1]})
         self.monitor.take_snapshot({"nested": [1]})
         for getter, field in ((self.monitor.get_trade_log, "result"),
@@ -136,6 +146,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
                 self.assertEqual(getter(), second)
 
     def test_empty_reads_do_not_mutate_monitor(self):
+        """Appending to an empty read must not append to monitor storage."""
         for getter in (self.monitor.get_trade_log, self.monitor.get_snapshots):
             with self.subTest(getter=getter.__name__):
                 result = getter()
@@ -143,6 +154,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
                 self.assertEqual(getter(), [])
 
     def test_session_filter_and_order_remain_unchanged(self):
+        """Interleaved tagged and untagged records must retain their order."""
         for session, number in (("s1", 1), (None, 2), ("s2", 3), ("s1", 4)):
             self.monitor.log_trade_result({"n": number}, session=session)
         self.assertEqual([r["result"]["n"] for r in self.monitor.get_trade_log()], [1, 2, 3, 4])
@@ -150,6 +162,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
         self.assertEqual(self.monitor.get_trade_log(session="missing"), [])
 
     def test_record_shapes_timestamps_and_python_values_are_preserved(self):
+        """Copying must retain envelopes, Decimal values and portfolio tuples."""
         portfolio = {"asset": {"BTC": (Decimal("10.25"), 2)}}
         self.monitor.take_snapshot(portfolio)
         self.monitor.log_trade_result({"price": Decimal("10.25")}, session="s1")
@@ -163,6 +176,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
         }])
 
     def test_time_arguments_keep_existing_no_filter_behavior(self):
+        """Snapshot isolation must not activate currently unused time filters."""
         self.monitor.log_trade_result({"n": 1}, session="s1")
         self.monitor.take_snapshot({"n": 1})
         self.assertEqual(self.monitor.get_trade_log("future", "past", "s1"),
@@ -170,6 +184,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
         self.assertEqual(self.monitor.get_snapshots("future", "past"), self.monitor.get_snapshots())
 
     def test_analyzer_forwarded_records_are_detached(self):
+        """Real Analyzer forwarding must capture each session-tagged payload."""
         analyzer = Analyzer(self.monitor, session_name="s1")
         payload = {"nested": [1]}
         analyzer.put_trading_info([payload])
@@ -186,11 +201,13 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
                 self.assertEqual(record["session"], "s1")
 
     def test_router_result_mutation_does_not_rewrite_monitor(self):
+        """A mutable returned ToolResult must not expose the logged values."""
         class EchoTool(Tool):
             """Return ordinary structured data without any external work."""
             name = "echo"
 
             def execute(self, arguments):
+                """Return the supplied nested value to expose aliasing regressions."""
                 return ToolResult(success=True, data={"nested": arguments["nested"]})
 
         router = ToolRouter(self.monitor)
@@ -203,6 +220,7 @@ class SystemMonitorSnapshotTests(unittest.TestCase):
         self.assertEqual(self.monitor.tool_call_log[0]["result"], {"nested": [1]})
 
     def test_trade_history_tool_returns_detached_records(self):
+        """Mutating a history ToolResult must not affect a later tool read."""
         self.monitor.log_trade_result({"nested": [1]}, session="s1")
         tool = TradeHistoryTool(self.monitor)
         result = tool.execute({"count": 1, "session": "s1"})
