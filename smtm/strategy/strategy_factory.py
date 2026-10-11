@@ -15,12 +15,12 @@ class StrategyFactory:
     ]
 
     @staticmethod
-    def create(code, llm_client=None):
-        """code에 해당하는 Strategy 객체를 생성하여 반환. llm_client는 LLM 전략에만 주입"""
+    def create(code, llm_client=None, usage_observer=None):
+        """Create a strategy; only LLM receives the client and optional usage observer."""
         for strategy in StrategyFactory.STRATEGY_LIST:
             if strategy.CODE == code:
                 if strategy is StrategyLlm:
-                    return StrategyLlm(llm_client=llm_client)
+                    return StrategyLlm(llm_client=llm_client, usage_observer=usage_observer)
                 return strategy()
         return None
 
