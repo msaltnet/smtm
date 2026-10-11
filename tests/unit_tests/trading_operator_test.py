@@ -204,6 +204,7 @@ class TradingOperatorTickTests(unittest.TestCase):
         }])
 
     def test_missing_request_terminal_callback_is_logged_when_strategy_rejects_it(self):
+        """Malformed terminal data must be captured without consuming quota."""
         operator, _, strategy, monitor = self._make()
         callback_result = {
             "type": "buy", "state": "done", "msg": "success",
@@ -222,7 +223,8 @@ class TradingOperatorTickTests(unittest.TestCase):
         }])
 
         self.assertEqual(len(monitor.trade_result_log), 1)
-        self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+        self.assertIsNot(monitor.trade_result_log[-1]["result"], callback_result)
         self.assertEqual(operator.safety_guard.daily_trade_count, 0)
         self.assertEqual(strategy.result, [])
 
@@ -252,6 +254,7 @@ class TradingOperatorTickTests(unittest.TestCase):
         self.assertEqual(operator.safety_guard.daily_trade_count, 1)
 
     def test_invalid_terminal_prices_are_logged_without_consuming_daily_quota(self):
+        """Capture invalid prices independently while preserving quota checks."""
         for price in (float("nan"), True, float("inf"), float("-inf"), 0, -1):
             with self.subTest(price=price):
                 operator, _, _, monitor = self._make()
@@ -274,7 +277,8 @@ class TradingOperatorTickTests(unittest.TestCase):
                 }])
 
                 self.assertEqual(len(monitor.trade_result_log), 1)
-                self.assertIs(monitor.trade_result_log[-1]["result"], callback_result)
+                self.assertEqual(monitor.trade_result_log[-1]["result"], callback_result)
+                self.assertIsNot(monitor.trade_result_log[-1]["result"], callback_result)
                 strategy.update_result.assert_called_once_with(callback_result)
                 self.assertEqual(operator.safety_guard.daily_trade_count, 0)
 
