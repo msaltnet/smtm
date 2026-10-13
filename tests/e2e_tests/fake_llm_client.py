@@ -25,6 +25,7 @@ class FakeLlmClient(LlmClient):
         self.responses.extend(responses)
 
     def create_message(self, system_prompt, messages, tools, tool_choice=None) -> LlmResponse:
+        """Capture detached request arguments and return the next scripted response."""
         self.call_log.append(copy.deepcopy({
             "system_prompt": system_prompt,
             "messages": messages,
@@ -49,6 +50,7 @@ class FakeSnapshotDataProvider:
     """
 
     def __init__(self, snapshots):
+        """Validate the timeline shape and detach caller-owned fixture data."""
         if (not isinstance(snapshots, list)
                 or any(not isinstance(snapshot, list) for snapshot in snapshots)
                 or any(not isinstance(item, dict)

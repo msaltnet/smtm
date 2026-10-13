@@ -38,18 +38,21 @@ class SnapshotProviderTests(unittest.TestCase):
     """Replay complete per-call snapshots without borrowing mutable fixtures."""
 
     def test_mixed_items_are_returned_together_in_order(self):
+        """Keep every item from a mixed snapshot in its original position."""
         snapshot = mixed_snapshot()
         provider = FakeSnapshotDataProvider([snapshot])
         self.assertEqual(provider.get_info(), snapshot)
         self.assertEqual(provider.call_count, 1)
 
     def test_empty_snapshot_is_not_replaced_with_a_default_candle(self):
+        """Explicit empty snapshots remain empty, including after exhaustion."""
         provider = FakeSnapshotDataProvider([[]])
         self.assertEqual(provider.get_info(), [])
         self.assertEqual(provider.get_info(), [])
         self.assertEqual(provider.call_count, 2)
 
     def test_sequence_preserves_empty_slots_and_repeats_last_snapshot(self):
+        """Advance through complete snapshots without skipping empty slots."""
         first = mixed_snapshot()
         last = [{"type": "news", "title": "last-snapshot"}]
         provider = FakeSnapshotDataProvider([first, [], last])
@@ -58,10 +61,12 @@ class SnapshotProviderTests(unittest.TestCase):
         self.assertEqual(provider.call_count, 4)
 
     def test_empty_timeline_always_returns_empty(self):
+        """An empty timeline has no implicit market-data fallback."""
         provider = FakeSnapshotDataProvider([])
         self.assertEqual([provider.get_info() for _ in range(3)], [[], [], []])
 
     def test_constructor_detaches_nested_input_and_timeline(self):
+        """Caller mutation cannot rewrite either stored replay position."""
         snapshot = mixed_snapshot()
         expected = copy.deepcopy(snapshot)
         timeline = [snapshot, snapshot]
@@ -73,6 +78,7 @@ class SnapshotProviderTests(unittest.TestCase):
         self.assertEqual(provider.get_info(), expected)
 
     def test_returned_snapshots_are_deeply_detached_from_future_reads(self):
+        """Nested mutations of one read cannot contaminate later reads."""
         snapshot = mixed_snapshot()
         provider = FakeSnapshotDataProvider([snapshot, snapshot])
         first = provider.get_info()
@@ -84,6 +90,7 @@ class SnapshotProviderTests(unittest.TestCase):
         self.assertEqual(provider.get_info(), snapshot)
 
     def test_flat_or_malformed_timelines_fail_explicitly(self):
+        """Reject ambiguous flat input and malformed snapshot containers."""
         for value in (None, {}, "bad", mixed_snapshot(), [None], [[None]], [[1]]):
             with self.subTest(value=value):
                 with self.assertRaises(TypeError):
@@ -94,10 +101,12 @@ class LegacyProviderCompatibilityTests(unittest.TestCase):
     """Snapshot support must not reinterpret the existing candle fake API."""
 
     def test_default_and_legacy_empty_constructor_keep_the_default_candle(self):
+        """Preserve both legacy paths that select the default candle."""
         for provider in (FakeDataProvider(), FakeDataProvider([])):
             self.assertEqual(provider.get_info(), [FakeDataProvider._default_candle()])
 
     def test_existing_sequence_advances_one_candle_and_repeats_last(self):
+        """Preserve legacy single-candle sequencing and exhaustion."""
         first = {"type": "primary_candle", "closing_price": 1}
         last = {"type": "primary_candle", "closing_price": 2}
         provider = FakeDataProvider([first, last])
@@ -106,6 +115,7 @@ class LegacyProviderCompatibilityTests(unittest.TestCase):
         self.assertEqual(provider.call_count, 3)
 
     def test_existing_set_candles_and_empty_set_behavior_is_preserved(self):
+        """Legacy replacement keeps its call index and accepts an empty set."""
         provider = FakeDataProvider()
         provider.get_info()
         replacement = [{"closing_price": 10}, {"closing_price": 20}]
@@ -119,6 +129,7 @@ class FakeLlmCaptureTests(unittest.TestCase):
     """Call logs describe arguments at each call, not their later mutations."""
 
     def test_call_log_detaches_messages_tools_and_tool_choice(self):
+        """Record nested arguments as they were when the fake was called."""
         client = FakeLlmClient()
         messages = [{"role": "user", "content": [{"text": "original"}]}]
         tools = [{"name": "fixture", "input_schema": {"required": ["x"]}}]
@@ -167,6 +178,7 @@ class OfflineContextRouteTests(unittest.TestCase):
         self.assertEqual(ast.literal_eval(block["content"]), {"result": expected})
 
     def test_chat_receives_all_mixed_items_through_real_tool_and_router(self):
+        """Observe the complete tool result in the following model request."""
         snapshot = mixed_snapshot()
         provider = FakeSnapshotDataProvider([snapshot])
         operator, client, manager = self.make_chat_operator(
@@ -182,6 +194,7 @@ class OfflineContextRouteTests(unittest.TestCase):
                          {"result": snapshot})
 
     def test_chat_keeps_successive_mixed_and_empty_snapshots_separate(self):
+        """A later empty tool result cannot rewrite an earlier captured call."""
         first = mixed_snapshot()
         provider = FakeSnapshotDataProvider([first, []])
         operator, client, _ = self.make_chat_operator(
@@ -205,6 +218,7 @@ class OfflineContextRouteTests(unittest.TestCase):
         return strategy, client
 
     def test_strategy_currently_uses_only_first_primary_candle_and_holds(self):
+        """Characterize the current prompt boundary with one order-free hold."""
         snapshot = mixed_snapshot()
         later_candle = {**snapshot[1], "closing_price": 77777,
                         "date_time": "2026-10-13T00:01:00"}
@@ -229,6 +243,7 @@ class OfflineContextRouteTests(unittest.TestCase):
                           strategy.waiting_requests), before)
 
     def test_fresh_strategy_with_empty_or_non_candle_snapshot_makes_no_call(self):
+        """A fresh strategy needs a primary candle before requesting a decision."""
         for snapshot in ([], [mixed_snapshot()[0]]):
             with self.subTest(snapshot=snapshot):
                 strategy, client = self.make_hold_strategy()
@@ -238,6 +253,7 @@ class OfflineContextRouteTests(unittest.TestCase):
                 self.assertEqual(strategy.data, [])
 
     def test_empty_snapshot_after_candle_preserves_current_strategy_history(self):
+        """Characterize existing history retention without promising freshness."""
         snapshot = mixed_snapshot()
         provider = FakeSnapshotDataProvider([snapshot, []])
         strategy, client = self.make_hold_strategy()
