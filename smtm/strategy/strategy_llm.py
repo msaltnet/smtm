@@ -40,8 +40,10 @@ class StrategyLlm(Strategy):
         },
     }
 
-    def __init__(self, llm_client=None, strategy_files=None):
+    def __init__(self, llm_client=None, strategy_files=None, usage_observer=None):
+        """Optionally observe detached returned usage without affecting decisions."""
         self.llm_client = llm_client
+        self.usage_observer = usage_observer
         self.is_initialized = False
         self.is_simulation = False
         self.data = []
@@ -141,9 +143,15 @@ class StrategyLlm(Strategy):
                 [self.DECISION_TOOL],
                 tool_choice={"type": "tool", "name": "submit_decision"},
             )
-        except Exception as err:
-            self.logger.warning(f"LLM decision request failed, fallback to hold: {err}")
+        except Exception:
+            self.logger.warning("LLM decision request failed, fallback to hold")
             return None
+
+        if self.usage_observer is not None:
+            try:
+                self.usage_observer(copy.deepcopy(response.usage))
+            except Exception:
+                self.logger.warning("LLM usage observation failed")
 
         if not response.tool_calls:
             self.logger.warning("LLM returned no decision tool call, fallback to hold")

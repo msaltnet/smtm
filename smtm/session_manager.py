@@ -182,7 +182,18 @@ class SessionManager:
         if data_provider is None:
             raise ValueError(f"올바르지 않은 거래소 코드입니다: {exchange}")
 
-        strategy = StrategyFactory.create(strategy_code, llm_client=self.llm_client)
+        strategy_kwargs = {"llm_client": self.llm_client}
+        if strategy_code == "LLM" and self.system_monitor is not None:
+            monitor = self.system_monitor
+
+            def observe_usage(usage):
+                """Attribute returned usage to this session without retaining prompts."""
+                monitor.log_llm_interaction(
+                    request={"source": "strategy", "session": name},
+                    response_text="", usage=usage)
+
+            strategy_kwargs["usage_observer"] = observe_usage
+        strategy = StrategyFactory.create(strategy_code, **strategy_kwargs)
         if strategy is None:
             raise ValueError(f"올바르지 않은 전략 코드입니다: {strategy_code}")
 
