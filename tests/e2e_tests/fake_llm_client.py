@@ -6,6 +6,8 @@ E2E 테스트용 Fake LLM Client
 SystemOperator 입장에서는 실제 LLM과 동일하게 동작한다.
 """
 
+import copy
+
 from smtm.llm.llm_client import LlmClient, LlmResponse, ToolCall
 
 
@@ -23,12 +25,13 @@ class FakeLlmClient(LlmClient):
         self.responses.extend(responses)
 
     def create_message(self, system_prompt, messages, tools, tool_choice=None) -> LlmResponse:
-        self.call_log.append({
+        """Capture detached request arguments and return the next scripted response."""
+        self.call_log.append(copy.deepcopy({
             "system_prompt": system_prompt,
             "messages": messages,
             "tools": tools,
             "tool_choice": tool_choice,
-        })
+        }))
         if not self.responses:
             return LlmResponse(
                 text="(no more scripted responses)",
@@ -37,6 +40,33 @@ class FakeLlmClient(LlmClient):
                 usage={"input_tokens": 0, "output_tokens": 0},
             )
         return self.responses.pop(0)
+
+class FakeSnapshotDataProvider:
+    """Replay complete typed snapshots; repeat the last, or [] for no snapshots.
+
+    Each input element is one get_info() result, including an empty list.
+    The timeline and every returned snapshot are deeply detached. This explicit
+    API does not reinterpret FakeDataProvider's legacy candle-sequence input.
+    """
+
+    def __init__(self, snapshots):
+        """Validate the timeline shape and detach caller-owned fixture data."""
+        if (not isinstance(snapshots, list)
+                or any(not isinstance(snapshot, list) for snapshot in snapshots)
+                or any(not isinstance(item, dict)
+                       for snapshot in snapshots for item in snapshot)):
+            raise TypeError("snapshots must be a list of lists of typed dictionaries")
+        self._snapshots = copy.deepcopy(snapshots)
+        self.call_count = 0
+
+    def get_info(self):
+        """Return one detached snapshot and advance by exactly one call."""
+        index = self.call_count
+        self.call_count += 1
+        if not self._snapshots:
+            return []
+        return copy.deepcopy(self._snapshots[min(index, len(self._snapshots) - 1)])
+
 
 class FakeDataProvider:
     """시장 데이터를 대체하는 Fake DataProvider"""
@@ -68,3 +98,4 @@ class FakeDataProvider:
             "acc_price": 1000000000,
             "acc_volume": 200,
         }
+
