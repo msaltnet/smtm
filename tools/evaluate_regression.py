@@ -8,6 +8,7 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 from pathlib import Path
 
 try:
@@ -32,8 +33,23 @@ def semantic_report(report):
     for field in ("scenario_id", "data_kind", "fixture_sha256"):
         if not isinstance(report.get(field), str) or not report[field]:
             raise ValueError("missing report identity: " + field)
-    if not isinstance(report.get("config"), dict) or not report["config"]:
+    config = report.get("config")
+    if not isinstance(config, dict):
         raise ValueError("missing report config")
+    for field in (
+        "currency",
+        "cash_accounting",
+        "slippage",
+        "timestamp_timezone",
+        "execution",
+        "end_policy",
+    ):
+        if not isinstance(config.get(field), str) or not config[field].strip():
+            raise ValueError("config." + field + " must be a nonempty string")
+    for field in ("initial_cash", "min_order_value", "fees"):
+        value = config.get(field)
+        if type(value) not in (int, float) or not math.isfinite(value):
+            raise ValueError("config." + field + " must be a finite number")
     result = copy.deepcopy(report)
     for field in (
         "runtime",

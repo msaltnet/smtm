@@ -165,6 +165,61 @@ class OfflineRegressionTests(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 regression.compare_suites(candidate, candidate)
 
+    def test_config_requires_every_evaluator_field_and_type(self):
+        strings = (
+            "currency",
+            "cash_accounting",
+            "slippage",
+            "timestamp_timezone",
+            "execution",
+            "end_policy",
+        )
+        numbers = ("initial_cash", "min_order_value", "fees")
+        for field in strings + numbers:
+            invalid_values = (None, True, [], {})
+            if field in strings:
+                invalid_values += (0, "", "   ")
+            else:
+                invalid_values += ("0", float("nan"), float("inf"), -float("inf"))
+            for value in ("missing",) + invalid_values:
+                candidate = copy.deepcopy(self.suite)
+                config = candidate["reports"][0]["config"]
+                if value == "missing":
+                    del config[field]
+                else:
+                    config[field] = value
+                with self.subTest(field=field, value=value):
+                    with self.assertRaises(ValueError):
+                        regression.compare_suites(candidate, candidate)
+        candidate = copy.deepcopy(self.suite)
+        candidate["reports"][0]["config"] = {"currency": "BTC"}
+        with self.assertRaises(ValueError):
+            regression.compare_suites(candidate, candidate)
+
+    def test_valid_config_changes_remain_semantic_differences(self):
+        changes = {
+            "initial_cash": 2000.0,
+            "min_order_value": 20,
+            "fees": 0.001,
+            "currency": "ETH",
+            "cash_accounting": "rounded",
+            "slippage": "modeled",
+            "timestamp_timezone": "Asia/Seoul",
+            "execution": "next_close",
+            "end_policy": "keep_pending",
+        }
+        for field, value in changes.items():
+            candidate = copy.deepcopy(self.suite)
+            report = candidate["reports"][0]
+            report["config"][field] = value
+            with self.subTest(field=field):
+                result = regression.compare_suites(self.suite, candidate)
+                self.assertFalse(result["matches"])
+                self.assertEqual(
+                    result["changed_paths"][report["scenario_id"]],
+                    ['$["config"]["' + field + '"]'],
+                )
+
     def test_diff_retains_numeric_types_and_list_length(self):
         self.assertEqual(
             regression.differences({"x": [1]}, {"x": [True, 2]}),
@@ -204,6 +259,22 @@ class OfflineRegressionTests(unittest.TestCase):
             self.assertFalse(
                 json.loads((temp / "changed.json").read_text())["comparison"]["matches"]
             )
+            for index, config in enumerate(
+                (
+                    {"currency": "BTC"},
+                    dict(altered["reports"][0]["config"], initial_cash=True),
+                    dict(altered["reports"][0]["config"], fees="0"),
+                )
+            ):
+                malformed = json.loads(original)
+                malformed["reports"][0]["config"] = config
+                invalid = temp / ("invalid-" + str(index) + ".json")
+                invalid.write_text(json.dumps(malformed))
+                output = temp / ("invalid-output-" + str(index) + ".json")
+                result = run(output, invalid)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("config.", result.stderr)
+                self.assertFalse(output.exists())
             self.assertEqual(run(baseline).returncode, 2)
             self.assertEqual(baseline.read_bytes(), original)
             empty = temp / "empty"
