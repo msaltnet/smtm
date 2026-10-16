@@ -293,3 +293,8 @@ E2E 테스트는 외부 API 호출 없이 전체 흐름을 검증합니다. 시�
 - 세션마다 거래소를 독립 폴링하므로, API 호출 한도를 고려해 소수의 세션 운영을 전제로 합니다
 
 **더 많은 정보는 👉[smtm wiki](https://github.com/msaltnet/smtm/wiki)**
+
+## 오프라인 PAPER 평가
+
+`python -S tools/evaluate_offline.py --fixture tests/fixtures/evaluation/synthetic-smoke-v1.json --output /tmp/smtm-evaluation.json`으로 자격 증명 없이 동일 스냅샷의 BNH·스크립트형 fake LLM 평가를 재현할 수 있습니다.
+[입력·결과 계약과 한계](docs/offline-evaluation.md)를 참고하세요. 실제 LLM 성능이나 수익성을 입증하는 평가는 아닙니다.

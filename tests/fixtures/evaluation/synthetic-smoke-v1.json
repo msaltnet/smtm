@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "scenario_id": "synthetic-smoke-v1",
+  "data_kind": "synthetic",
+  "provenance": "Hand-authored test prices and fake decisions. No external market data or model calls.",
+  "currency": "BTC",
+  "initial_cash": 1000,
+  "min_order_value": 10,
+  "ticks": [
+    {
+      "at": "2026-01-01T00:00:00",
+      "snapshot": [
+        {
+          "type": "news",
+          "title": "Synthetic fixture tick 0"
+        },
+        {
+          "type": "primary_candle",
+          "market": "BTC",
+          "date_time": "2026-01-01T00:00:00",
+          "opening_price": 100,
+          "high_price": 100,
+          "low_price": 100,
+          "closing_price": 100,
+          "acc_price": 1000,
+          "acc_volume": 10
+        }
+      ],
+      "scripted_llm": {
+        "kind": "decision",
+        "decision": {
+          "action": "buy",
+          "price": 100,
+          "amount": 2,
+          "reason": "scripted fixture, not model inference"
+        },
+        "usage": {
+          "input_tokens": 10,
+          "output_tokens": 3
+        }
+      }
+    },
+    {
+      "at": "2026-01-01T00:01:00",
+      "snapshot": [
+        {
+          "type": "news",
+          "title": "Synthetic fixture tick 1"
+        },
+        {
+          "type": "primary_candle",
+          "market": "BTC",
+          "date_time": "2026-01-01T00:01:00",
+          "opening_price": 110,
+          "high_price": 110,
+          "low_price": 110,
+          "closing_price": 110,
+          "acc_price": 1000,
+          "acc_volume": 10
+        }
+      ],
+      "scripted_llm": {
+        "kind": "decision",
+        "decision": {
+          "action": "hold",
+          "reason": "scripted fixture, not model inference"
+        },
+        "usage": {
+          "input_tokens": 10,
+          "output_tokens": 3
+        }
+      }
+    },
+    {
+      "at": "2026-01-01T00:02:00",
+      "snapshot": [
+        {
+          "type": "news",
+          "title": "Synthetic fixture tick 2"
+        },
+        {
+          "type": "primary_candle",
+          "market": "BTC",
+          "date_time": "2026-01-01T00:02:00",
+          "opening_price": 90,
+          "high_price": 90,
+          "low_price": 90,
+          "closing_price": 90,
+          "acc_price": 1000,
+          "acc_volume": 10
+        }
+      ],
+      "scripted_llm": {
+        "kind": "decision",
+        "decision": {
+          "action": "sell",
+          "price": 90,
+          "amount": 1,
+          "reason": "scripted fixture, not model inference"
+        },
+        "usage": {
+          "input_tokens": 10,
+          "output_tokens": 3
+        }
+      }
+    },
+    {
+      "at": "2026-01-01T00:03:00",
+      "snapshot": [
+        {
+          "type": "news",
+          "title": "Synthetic fixture tick 3"
+        },
+        {
+          "type": "primary_candle",
+          "market": "BTC",
+          "date_time": "2026-01-01T00:03:00",
+          "opening_price": 95,
+          "high_price": 95,
+          "low_price": 95,
+          "closing_price": 95,
+          "acc_price": 1000,
+          "acc_volume": 10
+        }
+      ],
+      "scripted_llm": {
+        "kind": "decision",
+        "decision": {
+          "action": "buy",
+          "price": -1,
+          "amount": 1,
+          "reason": "scripted fixture, not model inference"
+        },
+        "usage": {
+          "input_tokens": 10,
+          "output_tokens": 3
+        }
+      }
+    },
+    {
+      "at": "2026-01-01T00:04:00",
+      "snapshot": [],
+      "scripted_llm": {
+        "kind": "decision",
+        "decision": {
+          "action": "hold",
+          "reason": "scripted fixture, not model inference"
+        },
+        "usage": {
+          "input_tokens": 10,
+          "output_tokens": 3
+        }
+      }
+    },
+    {
+      "at": "2026-01-01T00:05:00",
+      "snapshot": [
+        {
+          "type": "news",
+          "title": "Synthetic fixture tick 5"
+        },
+        {
+          "type": "primary_candle",
+          "market": "BTC",
+          "date_time": "2026-01-01T00:05:00",
+          "opening_price": 105,
+          "high_price": 105,
+          "low_price": 105,
+          "closing_price": 105,
+          "acc_price": 1000,
+          "acc_volume": 10
+        }
+      ],
+      "scripted_llm": {
+        "kind": "provider_error"
+      }
+    },
+    {
+      "at": "2026-01-01T00:06:00",
+      "snapshot": [
+        {
+          "type": "news",
+          "title": "Synthetic fixture tick 6"
+        },
+        {
+          "type": "primary_candle",
+          "market": "BTC",
+          "date_time": "2026-01-01T00:06:00",
+          "opening_price": 110,
+          "high_price": 110,
+          "low_price": 110,
+          "closing_price": 110,
+          "acc_price": 1000,
+          "acc_volume": 10
+        }
+      ],
+      "scripted_llm": {
+        "kind": "no_tool",
+        "usage": {
+          "input_tokens": 12,
+          "output_tokens": 2
+        }
+      }
+    },
+    {
+      "at": "2026-01-01T00:07:00",
+      "snapshot": [
+        {
+          "type": "news",
+          "title": "Synthetic fixture tick 7"
+        },
+        {
+          "type": "primary_candle",
+          "market": "BTC",
+          "date_time": "2026-01-01T00:07:00",
+          "opening_price": 100,
+          "high_price": 100,
+          "low_price": 100,
+          "closing_price": 100,
+          "acc_price": 1000,
+          "acc_volume": 10
+        }
+      ],
+      "scripted_llm": {
+        "kind": "decision",
+        "decision": {
+          "action": "buy",
+          "price": 50,
+          "amount": 1,
+          "reason": "scripted fixture, not model inference"
+        },
+        "usage": {
+          "input_tokens": 10,
+          "output_tokens": 3
+        }
+      }
+    }
+  ]
+}

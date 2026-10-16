@@ -293,3 +293,9 @@ controlled by chatting with the agent:
 - Designed for a handful of concurrent sessions — each session polls the exchange independently, so keep session count modest to respect API rate limits
 
 **More information 👉[Wiki](https://github.com/msaltnet/smtm/wiki)**
+
+## Offline PAPER evaluation
+
+Run a reproducible, credential-free BNH versus scripted-fake LLM scenario with
+`python -S tools/evaluate_offline.py --fixture tests/fixtures/evaluation/synthetic-smoke-v1.json --output /tmp/smtm-evaluation.json`.
+See [the input/report contract and limitations](docs/offline-evaluation.md). This tests plumbing, not real LLM quality or profitability.
