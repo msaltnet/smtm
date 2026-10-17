@@ -310,7 +310,7 @@ class OrderSubmissionTest(unittest.TestCase):
                     'executed_volume': '1', 'created_at': '2026-10-06T12:00:00+09:00'}
         if cls is BinanceTrader:
             return {'orderId': 123, 'symbol': 'BTCUSDT', 'status': 'FILLED',
-                    'price': '100', 'executedQty': '1'}
+                    'price': '100', 'executedQty': '1', 'cummulativeQuoteQty': '100'}
         if cls is OkxTrader:
             return {'ordId': 'exchange-id', 'instId': 'BTC-USDT', 'state': 'filled',
                     'avgPx': '100', 'accFillSz': '1'}

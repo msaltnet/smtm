@@ -148,14 +148,12 @@ class BinanceTrader(BaseExchangeTrader):
 
     @staticmethod
     def _fill_price(response):
-        """체결 단가. 시장가 주문은 price가 0으로 오므로
-        체결총액(cummulativeQuoteQty)/체결수량(executedQty)으로 평단을 산출한다."""
-        price = float(response["price"]) if response.get("price") else 0
-        if price > 0:
-            return price
-        executed = float(response.get("executedQty", 0))
-        quote = float(response.get("cummulativeQuoteQty", 0))
-        return quote / executed if executed else 0
+        """Average execution price from validated positive cumulative fill totals.
+
+        The order's ``price`` is its limit, not necessarily the execution price.
+        ``_complete_order`` validates both totals before calling this helper.
+        """
+        return float(response["cummulativeQuoteQty"]) / float(response["executedQty"])
 
     def cancel_request(self, request_id):
         """Keep a known order until a matching terminal response settles it."""
@@ -204,7 +202,7 @@ class BinanceTrader(BaseExchangeTrader):
                 return False
             if response["status"] == "FILLED" and amount == 0:
                 return False
-            if price == 0 and amount > 0:
+            if amount > 0:
                 quote = response["cummulativeQuoteQty"]
                 if isinstance(quote, bool):
                     return False

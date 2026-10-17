@@ -441,7 +441,7 @@ class TraderAdmissionTest(unittest.TestCase):
             self.complete(fence)
         order = trader.order_map['test-id']
         terminal = {'orderId': 123, 'symbol': 'BTCUSDT', 'status': 'FILLED',
-                    'price': '100', 'executedQty': '1'}
+                    'price': '100', 'executedQty': '1', 'cummulativeQuoteQty': '100'}
         self.thread(lambda: trader._complete_order('test-id', order, terminal))
         self.wait(entered)
         self.assertEqual(trader.order_map, {})

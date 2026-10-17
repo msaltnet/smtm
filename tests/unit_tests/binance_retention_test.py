@@ -115,8 +115,8 @@ class BinanceRetentionTest(unittest.TestCase):
             "executedQty": [None, True, False, "bad", "nan", "inf", "-1", "1e-400", [], 10**400],
         }.items():
             responses.extend(self.terminal(**{key: value}) for value in values)
-        responses.append(self.terminal(price="1e308", executedQty="1e308"))
-        responses.append(self.terminal(price="1.7976931348623157e308", executedQty="1"))
+        responses.append(self.terminal(executedQty="1e-300", cummulativeQuoteQty="1e308"))
+        responses.append(self.terminal(executedQty="1", cummulativeQuoteQty="1.7976931348623157e308"))
         # Market fills need usable cumulative quote, never an invented zero price.
         response = self.terminal(price="0")
         del response["cummulativeQuoteQty"]
@@ -125,7 +125,7 @@ class BinanceRetentionTest(unittest.TestCase):
                          for value in (None, True, False, "0", "bad", "nan", "inf", "-1", [], 10**400))
         responses.append(self.terminal(price="0", executedQty="1e-300", cummulativeQuoteQty="1e308"))
         responses.append(self.terminal(price="0", executedQty="1e308", cummulativeQuoteQty="1e-300"))
-        responses.append(self.terminal(price="1e-300", executedQty="1e-300"))
+        responses.append(self.terminal(executedQty="1e308", cummulativeQuoteQty="1e-300"))
         responses.append(self.terminal(status="FILLED", executedQty="0", cummulativeQuoteQty="0"))
         return responses
 
@@ -212,7 +212,7 @@ class BinanceRetentionTest(unittest.TestCase):
 
     def test_nonterminal_cancel_can_resolve_from_fallback(self):
         self.trader._cancel_order.return_value = self.terminal(status="PARTIALLY_FILLED")
-        self.trader._query_order.return_value = self.terminal(status="FILLED", executedQty="1")
+        self.trader._query_order.return_value = self.terminal(status="FILLED", executedQty="1", cummulativeQuoteQty="10000")
         self.trader.cancel_request("request")
         self.trader._query_order.assert_called_once_with(444)
         self.assertEqual(self.trader.asset, (10000, 1))
