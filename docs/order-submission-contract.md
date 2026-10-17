@@ -92,6 +92,22 @@ references but retain diagnostic ID tombstones; storage therefore grows with
 unique request IDs. There is no persistence, pruning or force-clear API in this
 patch. Unknown and failed-settlement ownership is not silently discarded.
 
+## Binance terminal fill valuation
+
+For every positive terminal fill, both limit and market orders use
+`cummulativeQuoteQty / executedQty` as the average execution price. The order's
+`price` is only its submitted limit and may differ from actual fills. This also
+applies to partially filled canceled/expired orders; settlement still claims the
+same tracked entry at most once across polling and cancellation.
+
+Missing, negative (including unavailable historical totals), zero, non-finite,
+or unrepresentable cumulative quote data for a positive fill does not fall back
+to the limit price. The original order remains pending for a later valid
+observation, without accounting or a terminal callback. Zero-fill cancellation
+continues to settle without requiring an average execution price. Existing fee
+estimation, balance rounding and asset quantity precision are unchanged; this
+is not exchange-fee reconciliation or live-trading validation.
+
 ## Explicit limits
 
 An empty `order_map` does **not** mean safe, settled, or reusable. This diagnostic
@@ -129,6 +145,7 @@ verification.
 
 - [Requests API: redirects](https://docs.python-requests.org/en/stable/api/)
 - [Upbit order API](https://docs.upbit.com/kr/reference/new-order)
+- [Binance spot order query](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/account#query-order-user_data)
 - [Binance spot new order](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/trade)
 - [OKX API v5](https://www.okx.com/docs-v5/en/)
 - [Bithumb legacy limit order](https://apidocs.bithumb.com/v1.2.0/reference/지정가-주문하기)
