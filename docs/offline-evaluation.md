@@ -206,3 +206,72 @@ Run the supplied fixture and check:
   scripted usage totals 62 input / 17 output tokens, with one missing-usage call.
 - Run again into a new file. Ignore runtime/timing fields and compare the other
   fields. Do not rank models or infer profitability from these hand-authored cases.
+
+## Deterministic scenario regression suite
+
+The fixture directory now contains five versioned synthetic cases:
+
+- `synthetic-rising-v1`: 100 → 110 → 120 → 130.
+- `synthetic-falling-v1`: 100 → 90 → 80 → 70.
+- `synthetic-sideways-v1`: four quotes at 100.
+- `synthetic-rejections-v1`: a missing first quote, boolean order size, unknown
+  action, and sell without inventory. The real LLM strategy rejects all three
+  decisions; no orders are emitted by that arm.
+- `synthetic-smoke-v1`: the original mixed-price case, including a rejected
+  decision, missing quote, fake provider error, missing decision tool, simulator
+  zero-size rejections and terminal pending-order cancellation.
+
+The three price-path cases use the same scripted buy of two units at 100 followed
+by three holds. LLM final equity is respectively 1060, 940 and 1000; BNH final equity
+is approximately 1113.028, 870.556 and 1000. These are arithmetic regression
+expectations, **not performance rankings or market forecasts**. Both arms still
+use the unchanged production strategies/simulator loaded by `evaluate_offline`.
+Malformed *fixture structure* is rejected with exit 2; deliberately malformed
+*decision values* are passed to the real strategy and captured as rejections.
+
+Capture a baseline, then compare a second run (Python standard library only):
+
+```sh
+python -S tools/evaluate_regression.py \
+  --fixtures tests/fixtures/evaluation --output /tmp/smtm-suite-before.json
+python -S tools/evaluate_regression.py \
+  --fixtures tests/fixtures/evaluation --baseline /tmp/smtm-suite-before.json \
+  --output /tmp/smtm-suite-after.json
+python -S -m unittest tests.unit_tests.offline_evaluation_test \
+  tests.unit_tests.offline_regression_test -v
+```
+
+The directory is non-recursive and must contain only fixture `*.json` files.
+Reports and baselines belong outside it. An empty/missing directory, invalid
+fixture or duplicate scenario ID fails closed. Each run writes one **new** file;
+it never overwrites a previous baseline or artifact. Capture without `--baseline`
+is explicitly a capture, **not a passing regression comparison**. Keep a reviewed
+baseline artifact when comparing a later code revision; do not silently regenerate
+it after a failure. No automatic baseline approval or replacement is provided.
+
+The suite artifact has `schema_version: 1`,
+`evaluation_kind: "offline_scripted_suite"` and `reports` containing full original
+reports, exact source and fixture hashes, runtime metadata and measured timings.
+With `--baseline`, `comparison` additionally contains:
+
+- `matches`: semantic equality across the same scenario IDs;
+- `changed_paths`: scenario IDs mapped to differing JSON paths, or `added`/
+  `removed` for scenario-set changes;
+- `source_changed_scenarios`: source hash maps changed between the two artifacts.
+
+Comparison ignores **only** per-report `runtime`, `fixture_file_sha256`,
+`source_sha256`, `source_bundle_sha256`, and the tick/summary fields named
+`local_decision_latency_ms`. Source changes remain visible separately: identical
+outcomes after a source edit do not mean identical code or a complete safety
+review. Fixture semantic hashes, config, limitations, decisions, prompt hashes,
+requests, events, token accounting, equity, outcomes and unknown report fields
+remain significant. Scenario order and JSON object key order do not matter;
+ordered ticks/events and numeric types do. There is no floating-point tolerance,
+so changes in Python arithmetic behavior can require explicit investigation.
+The comparison metadata of a previous capture is not itself compared.
+
+Exit codes: **0** means successful capture or a matching comparison (distinguish
+using `comparison`); **1** means semantic changes, with a complete new report and
+paths for investigation; **2** means invalid input or execution/file failure.
+The same offline guard as the single-fixture CLI is installed. No trading,
+provider calls, production runtime activation or deployment is added.
