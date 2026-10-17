@@ -1,7 +1,8 @@
 # Opt-in OKX spot instrument rules
 
-`OkxSpotRulesReader` is a standalone public metadata helper. No existing trader,
-factory, supported-currency list, formatting, or submission path calls it.
+`OkxSpotRulesReader` provides public metadata. `OkxTrader` has a constructor-only,
+default-off limit preflight option; existing factory/session paths do not enable it.
+Supported currencies remain BTC/ETH/DOGE/XRP-USDT.
 
 ## Injection and cache contract
 
@@ -48,10 +49,43 @@ These checks do not check eligibility and do not accept or validate quote-curren
 market-buy budgets. `lotSz` and `minSz` are base-currency quantities, so applying
 them directly to USDT budgets would be a unit error.
 
+## Strict snapshots and opt-in limit preflight
+
+`get_snapshot(instId, refresh=False)` returns an immutable `OkxRulesSnapshot`
+with rules, request-start time and expiry. Unlike legacy `get`, a slow response
+at or after expiry raises `InstrumentRulesError`, and is never cached. Invalid,
+nonfinite or backward-during-request clock readings fail closed. `require_fresh`
+rechecks the snapshot. Strict calls serialize transport/cache access using a
+separate reader lock; do not mix concurrent legacy `get` and strict calls.
+
+`OkxTrader(..., limit_preflight=True, rules_reader=reader)` opts in explicitly.
+The flag is keyword-only and must be a real boolean. A reader alone does not
+activate it. Without injection, enabling constructs a per-trader public reader
+with a monotonic clock and 60-second TTL; construction makes no requests. Public
+instrument reads are unsigned. There is no environment or factory activation.
+
+Enabled limit orders parse positive finite Decimal price/base amount once,
+check the exact matching live USDT SPOT instrument, tick, lot and independent
+minimum, and serialize those same values as fixed-point strings. No float or
+eight-decimal rounding is applied to this payload. Local balance checks use
+exact rational comparisons. Markets retain their existing formatting/units and
+never read metadata. Numeric zero-price hold, cancel and unsupported order
+handling precede metadata. Booleans and nonfinite values are rejected.
+
+A failed metadata read/validation produces one standard local rejection with no
+creation dispatch, balance/asset change, or order registration. After signing,
+freshness is checked again immediately before the existing admission/dispatch
+mark. This is a local boundary check, not an exchange-side freshness guarantee:
+time may pass between the check and exchange receipt. Admission closure still
+prevents dispatch. No order lock is held across public transport. Immutable
+prepared payload values and thread-local context isolate concurrent submissions;
+duplicate ownership and unknown-outcome retention are unchanged. A timeout after
+creation remains unknown, without rejection or automatic resend.
+
 ## Follow-on work, separately reviewable
 
-Runtime activation needs an explicit failure/refresh/rounding policy and must
-preserve submission ownership. USDT strategy work is separate: BNH, SMA, RSI,
+Factory/session activation remains a separate decision. This constructor-only
+option is not permission to enable live trading. USDT strategy work is separate: BNH, SMA, RSI,
 and LLM settlement paths round cash changes to whole units, while several
 strategies floor base quantities to four decimals. Minimum budgets (often 5000)
 and session quote-currency handling need exchange-aware policies before broader
@@ -61,7 +95,7 @@ trading are outside this slice.
 
 ## Offline verification
 
-`tests/unit_tests/okx_order_rules_test.py` uses synthetic envelopes, a fake
+`tests/unit_tests/okx_order_rules_test.py` and `okx_limit_preflight_test.py` use synthetic envelopes, a fake
 transport, and an injected deterministic clock. It needs no exchange account.
 Run it with existing OKX regressions, then `python -m pytest tests/unit_tests -q`
 in a credential-free process with network access blocked.
