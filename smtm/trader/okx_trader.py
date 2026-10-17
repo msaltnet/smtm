@@ -5,11 +5,19 @@ import json
 import math
 import os
 import threading
+import time
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 from urllib.parse import urlencode
 from .base_exchange_trader import BaseExchangeTrader
 from . import order_spec
+from .okx_order_rules import (InstrumentRulesError, OkxSpotRulesReader,
+                              OkxRulesSnapshot, _positive_decimal)
+
+
+class _PreflightExpired(RuntimeError):
+    """Local rejection before the creation dispatch mark."""
 
 
 class OkxTrader(BaseExchangeTrader):
@@ -45,7 +53,10 @@ class OkxTrader(BaseExchangeTrader):
     def __init__(
         self, budget=50000, currency="BTC", commission_ratio=0.001, opt_mode=True,
         access_key_env=None, secret_key_env=None, passphrase_env=None,
+        *, limit_preflight=False, rules_reader=None,
     ):
+        if type(limit_preflight) is not bool:
+            raise ValueError("limit_preflight must be bool")
         if currency not in self.AVAILABLE_CURRENCY:
             raise UserWarning(f"not supported currency: {currency}")
 
@@ -72,6 +83,13 @@ class OkxTrader(BaseExchangeTrader):
         currency_info = self.AVAILABLE_CURRENCY[currency]
         self.market = currency_info[0]
         self.market_currency = currency_info[1]
+        self._limit_preflight = limit_preflight
+        self._rules_reader = rules_reader
+        if limit_preflight and rules_reader is None:
+            self._rules_reader = OkxSpotRulesReader(
+                lambda path, params: self._request_get(self.SERVER_URL + path, params=params),
+                time.monotonic)
+        self._preflight_context = threading.local()
 
     @staticmethod
     def _timestamp():
@@ -235,29 +253,74 @@ class OkxTrader(BaseExchangeTrader):
         is_buy = request["type"] == "buy"
         is_market = ord_type == order_spec.MARKET
 
-        if not is_market and request["price"] == 0:
+        raw_price = request["price"]
+        if self._limit_preflight and not is_market:
+            zero_hold = (raw_price.is_zero() if isinstance(raw_price, Decimal)
+                         else type(raw_price) in (int, float) and raw_price == 0)
+        else:
+            zero_hold = raw_price == 0
+        if not is_market and zero_hold:
             # price==0 은 기존 no-op(hold) 신호 — 지정가에서는 무시
             self.logger.warning("[REJECT] limit order requires price")
             return
 
-        if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
-            self.logger.warning(
-                f"[REJECT] balance is too small! "
-                f"{float(request['price']) * float(request['amount'])} > {self.balance}"
-            )
-            task["callback"]("error!")
-            return
+        prepared = None
+        if self._limit_preflight and not is_market:
+            try:
+                price = _positive_decimal(request["price"], "price")
+                amount = _positive_decimal(request["amount"], "amount")
+                snapshot = self._rules_reader.get_snapshot(self.market)
+                if (not isinstance(snapshot, OkxRulesSnapshot)
+                        or snapshot.rules.instrument_id != self.market
+                        or not snapshot.rules.is_live_usdt_spot):
+                    raise InstrumentRulesError("ineligible instrument")
+                snapshot.rules.validate_limit_order(price, amount)
+                prepared = (snapshot, format(price, "f"), format(amount, "f"))
+            except Exception:
+                # Preparation only: neither callbacks nor POST are inside this catch.
+                task["callback"](order_spec.make_rejected_result(
+                    request, "OKX limit preflight failed"))
+                return
 
-        if is_buy is False and float(request["amount"]) > self.asset[1]:
-            self.logger.warning(
-                f"[REJECT] invalid amount {float(request['amount'])} > {self.asset[1]}"
-            )
-            task["callback"]("error!")
-            return
+        if prepared is not None:
+            # Exact rational comparisons also avoid ambient Decimal rounding.
+            insufficient = (Fraction(price) * Fraction(amount) > Fraction(str(self.balance))
+                            if is_buy else Fraction(amount) > Fraction(str(self.asset[1])))
+            if insufficient:
+                task["callback"](order_spec.make_rejected_result(
+                    request, "insufficient local balance or asset"))
+                return
+        else:
+            if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
+                self.logger.warning(
+                    f"[REJECT] balance is too small! "
+                    f"{float(request['price']) * float(request['amount'])} > {self.balance}"
+                )
+                task["callback"]("error!")
+                return
+
+            if is_buy is False and float(request["amount"]) > self.asset[1]:
+                self.logger.warning(
+                    f"[REJECT] invalid amount {float(request['amount'])} > {self.asset[1]}"
+                )
+                task["callback"]("error!")
+                return
 
         side = "buy" if is_buy else "sell"
-        response = self._send_order(
-            side, ord_type, request["price"], request["amount"])
+        previous = getattr(self._preflight_context, "prepared", None)
+        self._preflight_context.prepared = prepared
+        expired = False
+        try:
+            response = self._send_order(
+                side, ord_type, request["price"], request["amount"])
+        except _PreflightExpired:
+            expired = True
+        finally:
+            self._preflight_context.prepared = previous
+        if expired:
+            task["callback"](order_spec.make_rejected_result(
+                request, "OKX limit metadata expired before dispatch"))
+            return
         if not self._usable_order_id(response, "ordId"):
             self._submission_unacknowledged(task)
             return
@@ -284,12 +347,22 @@ class OkxTrader(BaseExchangeTrader):
             payload["sz"] = self._format_number(amount)
         else:
             payload["ordType"] = "limit"
-            payload["px"] = self._format_number(price)
-            payload["sz"] = self._format_number(amount)
+            prepared = getattr(self._preflight_context, "prepared", None)
+            payload["px"] = prepared[1] if prepared else self._format_number(price)
+            payload["sz"] = prepared[2] if prepared else self._format_number(amount)
 
         self.logger.info(f"ORDER ##### {side} {payload['ordType']}")
         self.logger.info(f"{self.market}, payload: {payload}")
         return self._signed_post("/api/v5/trade/order", payload)
+
+    def _mark_creation_dispatch(self):
+        prepared = getattr(self._preflight_context, "prepared", None)
+        if prepared is not None:
+            try:
+                self._rules_reader.require_fresh(prepared[0])
+            except Exception as exc:
+                raise _PreflightExpired("metadata freshness unavailable") from exc
+        super()._mark_creation_dispatch()
 
     def _query_order(self, order_id):
         """주문 상태 조회 (signed GET /api/v5/trade/order)"""

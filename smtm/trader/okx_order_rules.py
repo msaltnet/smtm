@@ -1,9 +1,10 @@
-"""Opt-in public OKX spot rules. No trader integration or order mutation."""
+"""Opt-in public OKX spot rules and strict freshness snapshots."""
 from collections import OrderedDict
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 import math
 import re
+import threading
 
 
 class InstrumentRulesError(ValueError):
@@ -113,6 +114,20 @@ class OkxSpotRules:
                    increments['tickSz'], increments['lotSz'], increments['minSz'])
 
 
+@dataclass(frozen=True)
+class OkxRulesSnapshot:
+    """Request-start freshness window; no account or execution guarantee."""
+    rules: OkxSpotRules
+    started_at: float
+    expires_at: float
+
+    def require_fresh(self, now):
+        if (isinstance(now, bool) or not isinstance(now, (int, float))
+                or not math.isfinite(now)
+                or not self.started_at <= now < self.expires_at):
+            raise InstrumentRulesError("instrument rules are expired or clock is invalid")
+
+
 class OkxSpotRulesReader:
     """Bounded LRU/TTL reader using only an injected public transport and clock.
 
@@ -132,6 +147,7 @@ class OkxSpotRulesReader:
         self._transport, self._clock = transport, clock
         self._ttl, self._capacity = ttl, capacity
         self._cache = OrderedDict()
+        self._strict_lock = threading.RLock()
 
     def get(self, instrument_id, refresh=False):
         _instrument_id(instrument_id)
@@ -153,3 +169,33 @@ class OkxSpotRulesReader:
             while len(self._cache) > self._capacity:
                 self._cache.popitem(last=False)
         return rules
+
+    def get_snapshot(self, instrument_id, refresh=False):
+        """Strict serialized read; unlike legacy get, slow expired reads fail."""
+        _instrument_id(instrument_id)
+        with self._strict_lock:
+            now = self._clock()
+            if (isinstance(now, bool) or not isinstance(now, (int, float))
+                    or not math.isfinite(now) or not math.isfinite(now + self._ttl)):
+                self._cache.clear()
+                raise InstrumentRulesError("invalid metadata clock")
+            cached = self._cache.pop(instrument_id, None)
+            if cached is not None and not refresh:
+                snapshot = OkxRulesSnapshot(cached[1], cached[0] - self._ttl, cached[0])
+                if snapshot.started_at <= now < snapshot.expires_at:
+                    self._cache[instrument_id] = cached
+                    return snapshot
+            response = self._transport(self.PATH, params={
+                'instType': 'SPOT', 'instId': instrument_id})
+            snapshot = OkxRulesSnapshot(OkxSpotRules.from_response(instrument_id, response),
+                                        now, now + self._ttl)
+            snapshot.require_fresh(self._clock())
+            self._cache[instrument_id] = (snapshot.expires_at, snapshot.rules)
+            while len(self._cache) > self._capacity:
+                self._cache.popitem(last=False)
+            return snapshot
+
+    def require_fresh(self, snapshot):
+        """Recheck immediately at the trader's creation-dispatch boundary."""
+        with self._strict_lock:
+            snapshot.require_fresh(self._clock())
