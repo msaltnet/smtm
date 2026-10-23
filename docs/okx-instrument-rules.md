@@ -102,3 +102,63 @@ in a credential-free process with network access blocked.
 
 References: [public instruments](https://www.okx.com/docs-v5/en/#public-data-rest-api-get-instruments)
 and [place order](https://www.okx.com/docs-v5/en/#order-book-trading-trade-post-place-order).
+
+## Implementation evidence and remaining decisions (2026-10-23)
+
+This is a code/test reconciliation of [issue #74](https://github.com/msaltnet/smtm/issues/74),
+not a change to its acceptance criteria or an assertion of live readiness.
+The standalone foundation was merged in [PR #75](https://github.com/msaltnet/smtm/pull/75)
+(`d364720860125d980a2642c565f37e8c21221fc9`). The separately reviewed constructor-only
+preflight followed in [PR #108](https://github.com/msaltnet/smtm/pull/108)
+(`891e6e96ff1c813c9c011435d2756cc319215d58`).
+
+The original #74 requirements map to the following repository evidence:
+
+- Immutable Decimal identity/type/state and numeric validation: `OkxSpotRules`
+  and the identity, direct-construction, malformed-envelope, numeric-metadata,
+  scientific-notation and immutability tests in `okx_order_rules_test.py`.
+- Lazy construction, injected public transport and exact SPOT/instrument request:
+  `OkxSpotRulesReader` and `test_constructor_does_not_call_transport_clock_or_environment`
+  / `test_exact_public_request`.
+- Valid suspended/non-USDT metadata versus live USDT eligibility:
+  `test_suspended_and_other_quote_remain_representable`.
+- Exact non-power-of-ten tick/lot and independent minimum, without input rounding:
+  `test_arbitrary_grid_and_independent_minimum`,
+  `test_precision_beyond_eight_decimals_and_ambient_context`, and
+  `test_checks_do_not_mutate_or_round_inputs`.
+- Bounded cache, expiry, failed refresh invalidation and immutable state:
+  `OkxSpotRulesReaderTest` (including explicit refresh, malformed refresh,
+  expiry, LRU eviction and slow-response cases).
+- Original submission behavior stays unchanged by default: #75 did not integrate
+  the helper; #108 added an explicitly enabled constructor path only.
+  `test_default_off_reader_injection_does_not_enable`, `test_all_existing_pairs`,
+  and `test_both_market_paths_bypass_metadata` cover the current boundary.
+- Historical independent review and exact-head Python 3.9/3.10/3.11 CI evidence is
+  recorded in #75 for `b488cddfe63f816b8738898eee7f5b921c6f567c`
+  ([run](https://github.com/msaltnet/smtm/actions/runs/37719972252)).
+  This historical evidence is not a substitute for checking a later PR's head.
+
+Additional trader-boundary regressions in `okx_limit_preflight_test.py` cover
+an aligned minimum, a minimum between lots, sub-USDT buy balances immediately
+below/at/above the exact cost, sell holdings immediately below/at/above the
+requested quantity, near-grid values that a float conversion would collapse,
+and tiny fixed-point payloads beyond eight decimal places. All metadata, HTTP
+responses and balances are synthetic; successful mocked submission is not
+exchange acceptance. No arbitrary minimum USDT budget is added by these tests.
+
+### What these checks do not establish
+
+- The public reader does not parse or enforce maximum size/notional metadata.
+  A tick/lot/minimum pass and sufficient local balance do **not** establish an
+  exchange maximum, portfolio risk limit, fee reserve or account permission.
+- No new maximum order policy is selected here. A separate implementation must
+  define authoritative fields/units, absence and invalid-value handling, and the
+  distinction between exchange limits and user risk limits before activation.
+- Automatic rounding remains forbidden in this opt-in limit preflight. Strategy
+  sizing, whole-unit cash settlement and session minimum budgets are separate
+  paths and remain unchanged. A tiny synthetic preflight order passing does not
+  mean the end-to-end session supports that USDT order correctly.
+- Market quote budgets, live/account instrument restrictions, fees, real fills,
+  model profitability and runtime activation remain unverified by this suite.
+
+Issue #74's checkboxes and open/closed state are not mutated by this document.
