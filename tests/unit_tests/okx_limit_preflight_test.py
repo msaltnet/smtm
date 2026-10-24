@@ -234,6 +234,91 @@ class LimitPreflightTest(TestCase):
         t.asset=(0,0)
         self.rejected(t,self.task(type='sell'))
 
+    def test_independent_minimum_and_lot_boundaries_do_not_round(self):
+        # minSz need not be a lot multiple: .005 is not an admissible .003 lot.
+        for minimum, amount, accepted in (
+            ('.005', '.003', False), ('.005', '.005', False),
+            ('.005', '.006', True), ('.006', '.003', False),
+            ('.006', '.006', True), ('.006', '.009', True),
+        ):
+            with self.subTest(minimum=minimum, amount=amount):
+                self.reader._cache.clear()
+                self.post.reset_mock()
+                self.transport.side_effect = lambda *a, **k: metadata(minSz=minimum)
+                t, task = self.trader(), self.task(amount=amount)
+                original = task['request'].copy()
+                if accepted:
+                    t._execute_order(task)
+                    self.post.assert_called_once()
+                    payload = json.loads(self.post.call_args.kwargs['data'])
+                    self.assertEqual(payload['sz'], format(Decimal(amount), 'f'))
+                else:
+                    self.rejected(t, task)
+                self.assertEqual(task['request'], original)
+
+    def test_sub_usdt_buy_balance_boundary_is_exact_under_low_precision(self):
+        # 100.25 * .006 = .6015 USDT. A float comparison loses the shortfall.
+        for balance, accepted in (
+            ('0.6014999999999999999999999999', False),
+            ('0.6015', True), ('0.6015000000000000000000000001', True),
+        ):
+            with self.subTest(balance=balance):
+                self.post.reset_mock()
+                t, task = self.trader(), self.task()
+                t.balance = Decimal(balance)
+                with localcontext() as ctx:
+                    ctx.prec = 2
+                    ctx.traps[Inexact] = ctx.traps[Rounded] = True
+                    if accepted:
+                        t._execute_order(task)
+                        self.post.assert_called_once()
+                    else:
+                        self.rejected(t, task)
+                self.assertEqual(t.balance, Decimal(balance))
+
+    def test_sell_asset_boundary_is_exact_not_float_rounded(self):
+        for available, accepted in (
+            ('0.0059999999999999999999999999', False),
+            ('0.006', True), ('0.0060000000000000000000000001', True),
+        ):
+            with self.subTest(available=available):
+                self.post.reset_mock()
+                t, task = self.trader(), self.task(type='sell')
+                t.asset = (100, Decimal(available))
+                if accepted:
+                    t._execute_order(task)
+                    self.post.assert_called_once()
+                    self.assertEqual(json.loads(self.post.call_args.kwargs['data'])['side'], 'sell')
+                else:
+                    self.rejected(t, task)
+                self.assertEqual(t.asset, (100, Decimal(available)))
+
+    def test_near_grid_values_are_rejected_not_rounded_to_valid_orders(self):
+        for changes in (
+            {'price': '100.2499999999999999999999999999'},
+            {'price': '100.2500000000000000000000000001'},
+            {'amount': '0.0059999999999999999999999999'},
+            {'amount': '0.0060000000000000000000000001'},
+        ):
+            with self.subTest(changes=changes):
+                task = self.task(**changes)
+                original = task['request'].copy()
+                self.rejected(self.trader(), task)
+                self.assertEqual(task['request'], original)
+
+    def test_tiny_valid_order_keeps_fixed_point_payload_without_rounding(self):
+        self.transport.side_effect = lambda *a, **k: metadata(
+            tickSz='1e-12', lotSz='3e-12', minSz='3e-12')
+        t, task = self.trader(), self.task(price='1e-12', amount='3e-12')
+        t.balance = Decimal('3e-24')
+        original = task['request'].copy()
+        t._execute_order(task)
+        self.post.assert_called_once()
+        payload = json.loads(self.post.call_args.kwargs['data'])
+        self.assertEqual((payload['px'], payload['sz']),
+                         ('0.000000000001', '0.000000000003'))
+        self.assertEqual(task['request'], original)
+
     def test_expiry_rejection_callback_exception_is_not_retried(self):
         t,task=self.trader(),self.task()
         self.reader.require_fresh=Mock(side_effect=InstrumentRulesError('expired'))
