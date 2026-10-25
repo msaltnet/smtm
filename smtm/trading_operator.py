@@ -88,6 +88,9 @@ class TradingOperator:
             return
         try:
             info = self.data_provider.get_info()
+            from .trader.exchange_paper_trader import ExchangePaperTrader
+            if isinstance(self.trader, ExchangePaperTrader):
+                self.trader.prepare_rules()
             self._sync_trader_quote(info)
             self.strategy.update_trading_info(info)
             self.analyzer.put_trading_info(info)

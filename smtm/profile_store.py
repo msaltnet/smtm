@@ -3,6 +3,7 @@ import os
 import re
 from .log_manager import LogManager
 from .cash_accounting import validate_profile_cash_accounting
+from .trader.paper_rules import validate_profile_paper_rules
 
 
 class ProfileStore:
@@ -14,7 +15,7 @@ class ProfileStore:
     ALLOWED_FIELDS = {
         "name", "exchange", "currency", "budget", "virtual",
         "term", "strategy", "strategy_params", "safety", "account",
-        "cash_accounting",
+        "cash_accounting", "paper_exchange_rules",
     }
     NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
@@ -34,6 +35,7 @@ class ProfileStore:
             raise ValueError(f"알 수 없는 프로파일 필드: {', '.join(sorted(unknown))}")
 
         validate_profile_cash_accounting(profile)
+        validate_profile_paper_rules(profile)
 
     def save(self, profile: dict) -> dict:
         self.validate(profile)
