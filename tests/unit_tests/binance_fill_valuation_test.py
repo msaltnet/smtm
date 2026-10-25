@@ -36,8 +36,8 @@ def terminal(status="FILLED", **changes):
 
 
 @pytest.mark.parametrize("side,quote,price,balance,asset", [
-    ("buy", "190", 95, 810, (85, 6)),
-    ("sell", "210", 105, 1210, (80, 2)),
+    ("buy", "190", 95, 809.81, (85, 6)),
+    ("sell", "210", 105, 1209.79, (80, 2)),
 ])
 @pytest.mark.parametrize("status", BinanceTrader.TERMINAL_STATES)
 @pytest.mark.parametrize("operation", ["poll", "cancel"])
@@ -92,7 +92,7 @@ def test_missing_quote_retained_until_valid_poll(trader):
     trader._query_order.return_value = terminal("CANCELED")
     trader._update_order_result(None)
     order["callback"].assert_called_once()
-    assert trader.balance == 810
+    assert trader.balance == 809.81
 
 
 @pytest.mark.parametrize("status", ["CANCELED", "REJECTED", "EXPIRED", "EXPIRED_IN_MATCH"])

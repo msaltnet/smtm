@@ -232,7 +232,7 @@ class BinanceTrader(BaseExchangeTrader):
         return True
 
     def _call_callback(self, callback, result):
-        # Match BaseExchangeTrader accounting, serialized across cancel/poll.
+        # Serialize settlement across cancel/poll; preserve fractional USDT cash.
         with self._order_lock:
             result_value = float(result["price"]) * float(result["amount"])
             fee = result_value * self.commission_ratio
@@ -242,14 +242,14 @@ class BinanceTrader(BaseExchangeTrader):
                 new_amount = round(self.asset[1] + float(result["amount"]), 6)
                 avr_price = new_value / new_amount if new_amount else 0
                 self.asset = (avr_price, new_amount)
-                self.balance -= round(result_value + fee)
+                self.balance -= result_value + fee
             elif result["state"] == "done" and result["type"] == "sell":
                 old_avr_price = self.asset[0]
                 new_amount = round(self.asset[1] - float(result["amount"]), 6)
                 if new_amount == 0:
                     old_avr_price = 0
                 self.asset = (old_avr_price, new_amount)
-                self.balance += round(result_value - fee)
+                self.balance += result_value - fee
         callback(result)
 
     def _cancel_order(self, order_id):
@@ -292,10 +292,14 @@ class BinanceTrader(BaseExchangeTrader):
             self.logger.warning("[REJECT] limit order requires price")
             return
 
-        if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
+        buy_cost = 0.0
+        if is_buy:
+            notional = float(request["price"]) * float(request["amount"])
+            buy_cost = notional + notional * self.commission_ratio
+        if is_buy and buy_cost > self.balance:
             self.logger.warning(
                 f"[REJECT] balance is too small! "
-                f"{float(request['price']) * float(request['amount'])} > {self.balance}"
+                f"{buy_cost} > {self.balance}"
             )
             task["callback"]("error!")
             return

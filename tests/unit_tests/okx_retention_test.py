@@ -156,7 +156,7 @@ class OkxRetentionTest(unittest.TestCase):
         self.run_poll()
         self.assertEqual(self.trader.order_map, {})
         self.assertIsNone(self.trader.timer)
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(self.trader.asset, (10000, 0.25))
         self.callback.assert_called_once()
         self.assertEqual(self.callback.call_args[0][0]["state"], "done")
@@ -193,14 +193,14 @@ class OkxRetentionTest(unittest.TestCase):
         self.trader._query_order.return_value = self.terminal()
         self.trader.cancel_request("request")
         self.assertEqual(self.trader.asset, (8000, 0.75))
-        self.assertEqual(self.trader.balance, 52498)
+        self.assertEqual(self.trader.balance, 52497.5)
         self.callback.assert_called_once()
 
     def test_average_fill_price_used_instead_of_limit_or_last_price(self):
         self.trader._query_order.return_value = self.terminal(px="0", fillPx="12000")
         self.trader.cancel_request("request")
         self.assertEqual(self.callback.call_args[0][0]["price"], 10000)
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
 
     def test_explicit_zero_fill_cancel_has_no_accounting_effect(self):
         for price in ("", "0", 0, "10000"):
@@ -299,7 +299,7 @@ class OkxRetentionTest(unittest.TestCase):
             release.set()
             self.finish(thread, errors)
         self.callback.assert_called_once()
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(self.trader.order_map, {})
         self.trader._query_order.assert_called_once()
 
@@ -336,7 +336,7 @@ class OkxRetentionTest(unittest.TestCase):
         finally:
             self.finish(thread, errors)
         self.callback.assert_called_once()
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(self.trader.asset, (10000, 0.25))
         self.assertEqual(self.trader.order_map, {})
 
@@ -352,7 +352,7 @@ class OkxRetentionTest(unittest.TestCase):
         finally:
             self.finish(thread, errors)
         self.callback.assert_called_once()
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(self.trader.order_map, {})
 
     def test_late_query_preserves_replacement_and_new_entry(self):
@@ -427,7 +427,7 @@ class OkxRetentionTest(unittest.TestCase):
                         self.trader.cancel_request("request")
                 self.assertNotIn("request", self.trader.order_map)
                 self.assertIn("new", self.trader.order_map)
-                self.assertEqual(self.trader.balance, 47498)
+                self.assertEqual(self.trader.balance, 47497.5)
                 self.assertEqual(sum(timer.active for timer in self.timers), 1)
                 self.trader.cancel_request("request")
                 self.callback.assert_called_once()
@@ -462,7 +462,7 @@ class OkxRetentionTest(unittest.TestCase):
         self.callback.assert_called_once()
         second_callback.assert_called_once()
         self.assertEqual(self.trader.asset, (10000, 0.75))
-        self.assertEqual(self.trader.balance, 42493)
+        self.assertEqual(self.trader.balance, 42492.5)
         self.assertEqual(self.trader.order_map, {})
 
     def test_accounting_failure_is_not_attempted_again(self):

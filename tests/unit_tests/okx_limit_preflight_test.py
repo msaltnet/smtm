@@ -257,10 +257,11 @@ class LimitPreflightTest(TestCase):
                 self.assertEqual(task['request'], original)
 
     def test_sub_usdt_buy_balance_boundary_is_exact_under_low_precision(self):
-        # 100.25 * .006 = .6015 USDT. A float comparison loses the shortfall.
+        # .6015 notional + .0006015 fee = .6021015 USDT.
+        # A float comparison loses the fractional shortfall.
         for balance, accepted in (
-            ('0.6014999999999999999999999999', False),
-            ('0.6015', True), ('0.6015000000000000000000000001', True),
+            ('0.6021014999999999999999999999', False),
+            ('0.6021015', True), ('0.6021015000000000000000000001', True),
         ):
             with self.subTest(balance=balance):
                 self.post.reset_mock()
@@ -310,7 +311,7 @@ class LimitPreflightTest(TestCase):
         self.transport.side_effect = lambda *a, **k: metadata(
             tickSz='1e-12', lotSz='3e-12', minSz='3e-12')
         t, task = self.trader(), self.task(price='1e-12', amount='3e-12')
-        t.balance = Decimal('3e-24')
+        t.balance = Decimal('3.003e-24')  # Notional plus the existing .001 fee.
         original = task['request'].copy()
         t._execute_order(task)
         self.post.assert_called_once()
