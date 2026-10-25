@@ -10,7 +10,13 @@ the local balance becomes 89.73975 rather than 90. A same-price round trip
 costs both configured fees. This remains float-based local bookkeeping, not an
 exact exchange ledger or a guarantee of exchange-account reconciliation.
 
-The change does not alter order submission, quantity rounding, lifecycle
+Buy admission also requires the quoted notional plus the same configured
+commission to fit the local balance. Thus a 99.95 USDT buy with a 0.1%
+commission is rejected against 100 USDT before dispatch. This is an affordability
+check, not an order resizing or concurrent-order reservation policy. The OKX
+opt-in limit preflight retains exact rational comparisons.
+
+The change does not alter order payloads, quantity rounding, lifecycle
 ownership, callback ordering, commission rates, actual fee-asset handling,
 KRW adapters, or strategy cash accounting. The PAPER-only
 cash_accounting=fractional setting has not been enabled for live profiles.

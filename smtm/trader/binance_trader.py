@@ -292,10 +292,14 @@ class BinanceTrader(BaseExchangeTrader):
             self.logger.warning("[REJECT] limit order requires price")
             return
 
-        if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
+        buy_cost = 0.0
+        if is_buy:
+            notional = float(request["price"]) * float(request["amount"])
+            buy_cost = notional + notional * self.commission_ratio
+        if is_buy and buy_cost > self.balance:
             self.logger.warning(
                 f"[REJECT] balance is too small! "
-                f"{float(request['price']) * float(request['amount'])} > {self.balance}"
+                f"{buy_cost} > {self.balance}"
             )
             task["callback"]("error!")
             return

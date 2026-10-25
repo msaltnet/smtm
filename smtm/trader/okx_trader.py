@@ -284,17 +284,23 @@ class OkxTrader(BaseExchangeTrader):
 
         if prepared is not None:
             # Exact rational comparisons also avoid ambient Decimal rounding.
-            insufficient = (Fraction(price) * Fraction(amount) > Fraction(str(self.balance))
+            insufficient = (Fraction(price) * Fraction(amount)
+                            * (1 + Fraction(str(self.commission_ratio)))
+                            > Fraction(str(self.balance))
                             if is_buy else Fraction(amount) > Fraction(str(self.asset[1])))
             if insufficient:
                 task["callback"](order_spec.make_rejected_result(
                     request, "insufficient local balance or asset"))
                 return
         else:
-            if is_buy and float(request["price"]) * float(request["amount"]) > self.balance:
+            buy_cost = 0.0
+            if is_buy:
+                notional = float(request["price"]) * float(request["amount"])
+                buy_cost = notional + notional * self.commission_ratio
+            if is_buy and buy_cost > self.balance:
                 self.logger.warning(
                     f"[REJECT] balance is too small! "
-                    f"{float(request['price']) * float(request['amount'])} > {self.balance}"
+                    f"{buy_cost} > {self.balance}"
                 )
                 task["callback"]("error!")
                 return
