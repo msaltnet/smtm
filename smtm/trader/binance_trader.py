@@ -232,7 +232,7 @@ class BinanceTrader(BaseExchangeTrader):
         return True
 
     def _call_callback(self, callback, result):
-        # Match BaseExchangeTrader accounting, serialized across cancel/poll.
+        # Serialize settlement across cancel/poll; preserve fractional USDT cash.
         with self._order_lock:
             result_value = float(result["price"]) * float(result["amount"])
             fee = result_value * self.commission_ratio
@@ -242,14 +242,14 @@ class BinanceTrader(BaseExchangeTrader):
                 new_amount = round(self.asset[1] + float(result["amount"]), 6)
                 avr_price = new_value / new_amount if new_amount else 0
                 self.asset = (avr_price, new_amount)
-                self.balance -= round(result_value + fee)
+                self.balance -= result_value + fee
             elif result["state"] == "done" and result["type"] == "sell":
                 old_avr_price = self.asset[0]
                 new_amount = round(self.asset[1] - float(result["amount"]), 6)
                 if new_amount == 0:
                     old_avr_price = 0
                 self.asset = (old_avr_price, new_amount)
-                self.balance += round(result_value - fee)
+                self.balance += result_value - fee
         callback(result)
 
     def _cancel_order(self, order_id):

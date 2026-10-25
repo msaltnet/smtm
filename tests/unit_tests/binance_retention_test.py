@@ -155,7 +155,7 @@ class BinanceRetentionTest(unittest.TestCase):
         self.run_poll()
         self.assertEqual(self.trader.order_map, {})
         self.assertIsNone(self.trader.timer)
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(self.trader.asset, (10000, 0.25))
         self.callback.assert_called_once()
         self.assertEqual(self.callback.call_args[0][0]["state"], "done")
@@ -192,7 +192,7 @@ class BinanceRetentionTest(unittest.TestCase):
         self.trader._cancel_order.return_value = self.terminal()
         self.trader.cancel_request("request")
         self.assertEqual(self.trader.asset, (8000, 0.75))
-        self.assertEqual(self.trader.balance, 52498)
+        self.assertEqual(self.trader.balance, 52497.5)
         self.callback.assert_called_once()
         self.trader._query_order.assert_not_called()
 
@@ -200,7 +200,7 @@ class BinanceRetentionTest(unittest.TestCase):
         self.trader._cancel_order.return_value = self.terminal(price="0")
         self.trader.cancel_request("request")
         self.assertEqual(self.callback.call_args[0][0]["price"], 10000)
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
 
     def test_zero_fill_cancel_has_no_accounting_effect(self):
         self.trader._cancel_order.return_value = self.terminal(price="0", executedQty="0", cummulativeQuoteQty="0")
@@ -267,7 +267,7 @@ class BinanceRetentionTest(unittest.TestCase):
             release.set()
             self.finish(thread, errors)
         self.callback.assert_called_once()
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(self.trader.order_map, {})
         self.trader._query_order.assert_called_once()
 
@@ -304,7 +304,7 @@ class BinanceRetentionTest(unittest.TestCase):
         finally:
             self.finish(thread, errors)
         self.callback.assert_called_once()
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(self.trader.asset, (10000, 0.25))
         self.assertEqual(self.trader.order_map, {})
 
@@ -366,5 +366,5 @@ class BinanceRetentionTest(unittest.TestCase):
             self.trader._update_order_result(None)
         self.assertNotIn("request", self.trader.order_map)
         self.assertIn("new", self.trader.order_map)
-        self.assertEqual(self.trader.balance, 47498)
+        self.assertEqual(self.trader.balance, 47497.5)
         self.assertEqual(sum(timer.active for timer in self.timers), 1)
