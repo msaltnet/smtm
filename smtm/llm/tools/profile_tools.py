@@ -10,6 +10,10 @@ PROFILE_PROPERTIES = {
         "type": "string", "enum": ["legacy", "fractional"],
         "description": "전략 현금 정산: legacy(기본, 건별 정수 반올림), fractional(virtual: true 필수)",
     },
+    "paper_exchange_rules": {
+        "type": "boolean",
+        "description": "공개 거래소 규칙 PAPER 검증(기본 false): true는 virtual=true, fractional, BNH 필수. 규칙 미확인 시 주문 차단",
+    },
     "term": {"type": "number", "description": "매매 주기(초)"},
     "strategy": {"type": "string", "description": "전략 코드 예: BNH/RSI/SMA/LLM"},
     "strategy_params": {"type": "object", "description": "전략 파라미터"},

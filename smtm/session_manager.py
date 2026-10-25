@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 from .log_manager import LogManager
 from .cash_accounting import validate_profile_cash_accounting
+from .trader.paper_rules import validate_profile_paper_rules
 
 
 @dataclass
@@ -56,6 +57,7 @@ class SessionManager:
 
         try:
             validate_profile_cash_accounting(profile)
+            validate_profile_paper_rules(profile)
         except ValueError as err:
             return {"success": False, "error": str(err)}
 
@@ -107,9 +109,13 @@ class SessionManager:
         # TraderFactory/Trader 생성자가 던지는 예외(예: 미지원 currency)도
         # 무부작용 보장을 위해 흡수한다 — replace_session의 원복 경로를 지키기 위함
         try:
-            trader = TraderFactory.create(
-                exchange, budget=budget, currency=currency,
-                paper=virtual, account=account)
+            if profile.get("paper_exchange_rules", False):
+                from .trader.exchange_paper_trader import ExchangePaperTrader
+                trader = ExchangePaperTrader(exchange, budget=budget, currency=currency)
+            else:
+                trader = TraderFactory.create(
+                    exchange, budget=budget, currency=currency,
+                    paper=virtual, account=account)
         except Exception as err:
             return {"success": False, "error": f"트레이더 생성 실패: {err}"}
         if trader is None:
@@ -193,7 +199,11 @@ class SessionManager:
                     response_text="", usage=usage)
 
             strategy_kwargs["usage_observer"] = observe_usage
-        strategy = StrategyFactory.create(strategy_code, **strategy_kwargs)
+        if profile.get("paper_exchange_rules", False):
+            from .strategy.strategy_paper_bnh import StrategyPaperBuyAndHold
+            strategy = StrategyPaperBuyAndHold(trader)
+        else:
+            strategy = StrategyFactory.create(strategy_code, **strategy_kwargs)
         if strategy is None:
             raise ValueError(f"올바르지 않은 전략 코드입니다: {strategy_code}")
 
