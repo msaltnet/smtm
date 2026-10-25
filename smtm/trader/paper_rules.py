@@ -6,6 +6,7 @@ import re
 import time
 import requests
 from .okx_order_rules import OkxSpotRules
+from ..log_manager import LogManager
 
 
 class PaperRulesError(ValueError):
@@ -138,7 +139,9 @@ class PublicPaperRulesReader:
         # Explicit public GET only, no keys/account configuration or redirects.
         response = requests.get(url, params=params, timeout=5, allow_redirects=False)
         if response.status_code != 200:
-            raise PaperRulesError("public metadata request failed")
+            error = PaperRulesError(f"public metadata request failed (HTTP {response.status_code})")
+            error.http_status = response.status_code
+            raise error
         return response.json()
 
     def require_fresh(self):
@@ -168,8 +171,14 @@ class PublicPaperRulesReader:
             rules = parse_rules(self.exchange, self.currency, self.transport(url, params))
             self.started, self.expires, self.rules = start, start + 60, rules
             self.require_fresh()
-        except Exception:
+        except Exception as error:
             self.rules = None
+            # Do not log raw exception text: transport errors can embed URLs or payloads.
+            status = getattr(error, "http_status", None)
+            status = status if type(status) is int and 100 <= status <= 599 else None
+            LogManager.get_logger(__name__).warning(
+                "public rules refresh failed (%s %s): category=%s http_status=%s",
+                self.exchange, self.currency, type(error).__name__, status)
             raise PaperRulesError(self.error) from None
         self.error = "metadata expired"
         return rules

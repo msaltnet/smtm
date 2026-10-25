@@ -289,3 +289,31 @@ def test_preserved_okx_public_candles_nonzero_replay(budget):
     assert len([r for r in t.order_history if r['state'] == 'done']) == 5
     assert t.assets['BTC'][1] > 0 and t.balance >= 0
     assert s.balance == pytest.approx(t.balance)
+
+
+def test_public_http_failure_is_diagnostic_but_still_fail_closed():
+    from unittest.mock import Mock
+    r = PublicPaperRulesReader('BNC', 'BTC', clock=lambda: 100.0)
+    with patch('smtm.trader.paper_rules.requests.get', return_value=Mock(status_code=451)), \
+         patch('smtm.trader.paper_rules.LogManager.get_logger') as logger:
+        with pytest.raises(PaperRulesError, match='metadata unavailable'):
+            r.refresh()
+        assert r.rules is None
+        args = logger.return_value.warning.call_args.args
+        assert args[1:4] == ('BNC', 'BTC', 'PaperRulesError')
+        assert args[4] == 451
+    with pytest.raises(PaperRulesError):
+        r.require_fresh()
+
+
+def test_refresh_diagnostics_never_log_raw_exception_payload():
+    def fail(*_):
+        raise ValueError('https://example.invalid?token=secret raw-payload')
+    r = reader(transport=fail)
+    with patch('smtm.trader.paper_rules.LogManager.get_logger') as logger:
+        with pytest.raises(PaperRulesError):
+            r.refresh()
+        args = logger.return_value.warning.call_args.args
+        assert args[3:] == ('ValueError', None)
+        assert 'secret' not in str(args) and 'raw-payload' not in str(args)
+        assert r.rules is None
