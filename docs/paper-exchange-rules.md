@@ -99,3 +99,20 @@ Upbit/Bithumb는 공개 API만으로 필수 최소 규칙을 확인할 수 없�
 자원 비교는 strict PAPER 경로에서 legacy epsilon을 사용하지 않습니다.
 유효한 작은 lot을 잔고 없이 체결하거나 잔량을 삭제하지 않으며, float 경계에서
 자원이 조금이라도 부족하면 차단합니다. 원장 자체는 기존 float 방식입니다.
+
+## PAPER 시세 조회 실패
+
+`paper_exchange_rules=true` 세션의 BNC/OKX 시세 조회도 전용 provider를 사용한다.
+기존 공식 공개 캔들 URL을 그대로 사용하며 연결/읽기 timeout 5초,
+redirect 금지, 즉시 재시도 없음으로 요청한다. 이 timeout은 전체 실행시간의
+하드 데드라인이 아니라 requests의 연결/읽기 비활성 제한이다.
+HTTP 451/429/3xx, 연결 실패, timeout, 잘못된 JSON/캔들 및 OKX 업무 오류는
+고정된 `PAPER quote blocked: <category>` 진단으로 처리한다. 응답 본문,
+서버 msg, 원본 예외 문자열은 로그에 기록하지 않는다. 실패한 tick에서는
+규칙 갱신·시세 반영·주문 생성을 건너뛰고 기존 다음 tick 스케줄을 유지한다.
+다음 정상 tick에서 다시 조회하며, 기존 pending 주문도 실패 tick에서 체결하지 않는다.
+다른 endpoint로 전환하거나 지역 제한을 우회하거나 캐시 시세로 주문하지 않는다.
+
+LIVE 및 기본 OFF 세션은 기존 provider와 공용 retry helper를 그대로 사용한다.
+이 보완은 그 경로의 timeout 동작을 바꾸지 않는다. 검증은 오프라인 mock 기준이며
+실제 지역별 API 접근성·실기기·운영 배포·실거래는 검증 범위가 아니다.

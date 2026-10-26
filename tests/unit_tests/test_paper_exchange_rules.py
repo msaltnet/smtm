@@ -317,3 +317,34 @@ def test_refresh_diagnostics_never_log_raw_exception_payload():
         assert args[3:] == ('ValueError', None)
         assert 'secret' not in str(args) and 'raw-payload' not in str(args)
         assert r.rules is None
+
+
+@pytest.mark.parametrize('exchange', ['BNC', 'OKX'])
+@pytest.mark.parametrize('failure', ['timeout', 451, 429, 302, 'invalid'])
+def test_quote_failure_preserves_pending_balance_and_assets(exchange, failure):
+    import requests
+    from unittest.mock import Mock
+    from smtm.data.paper_data_provider import create_paper_data_provider
+    from smtm.trading_operator import TradingOperator
+    trader = ExchangePaperTrader(exchange, budget=100, reader=reader(exchange))
+    trader.update_quote('BTC', 110000)
+    trader.send_request([order()], lambda result: None)
+    pending = copy.deepcopy(trader.pending_orders)
+    assert pending
+    operator = TradingOperator(currency='BTC')
+    operator.state = 'running'
+    operator.data_provider = create_paper_data_provider(exchange, 'BTC', 60)
+    operator.trader = trader
+    operator.strategy = Mock()
+    operator.analyzer = Mock()
+    operator.safety_guard = Mock()
+    operator._start_timer = Mock()
+    response = Mock(status_code=failure if type(failure) is int else 200)
+    response.json.return_value = {'bad': 'response'}
+    with patch('smtm.data.paper_data_provider.requests.get', return_value=response,
+               side_effect=requests.Timeout('secret') if failure == 'timeout' else None):
+        operator._execute_trading(None)
+    assert trader.balance == 100 and not trader.assets
+    assert trader.pending_orders == pending
+    operator.strategy.get_request.assert_not_called()
+    operator._start_timer.assert_called_once()

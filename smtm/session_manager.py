@@ -183,8 +183,13 @@ class SessionManager:
         budget = float(profile.get("budget", 500000))
         strategy_code = profile.get("strategy") or "BNH"
 
-        data_provider = DataProviderFactory.create(
-            exchange, currency=currency, interval=Config.candle_interval)
+        if profile.get("paper_exchange_rules", False):
+            from .data.paper_data_provider import create_paper_data_provider
+            data_provider = create_paper_data_provider(
+                exchange, currency=currency, interval=Config.candle_interval)
+        else:
+            data_provider = DataProviderFactory.create(
+                exchange, currency=currency, interval=Config.candle_interval)
         if data_provider is None:
             raise ValueError(f"올바르지 않은 거래소 코드입니다: {exchange}")
 
