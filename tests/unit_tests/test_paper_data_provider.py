@@ -110,3 +110,29 @@ def test_failed_tick_has_no_orders_or_quote_update_and_next_tick_recovers(provid
 def test_unsupported_exchange_cannot_fallback():
     with pytest.raises(ValueError, match='unsupported'):
         create_paper_data_provider('UPB', 'BTC', 60)
+
+
+@pytest.mark.parametrize('provider_class', PROVIDERS)
+@pytest.mark.parametrize('prices', [
+    (100, 90, 80, 100), (100, 110, 105, 100),
+    (120, 110, 90, 100), (100, 90, 110, 100)])
+def test_contradictory_candle_is_blocked(provider_class, prices):
+    provider = provider_class()
+    data = payload(provider)
+    row = (data['data'] if provider.CODE == 'OKX' else data)[0]
+    row[1:5] = prices
+    with patch('smtm.data.paper_data_provider.requests.get', return_value=Mock(
+            status_code=200, json=lambda: data)):
+        with pytest.raises(PaperQuoteError, match='invalid_response'):
+            provider.get_info()
+
+
+@pytest.mark.parametrize('provider_class', PROVIDERS)
+def test_equal_ohlc_candle_remains_valid(provider_class):
+    provider = provider_class()
+    data = payload(provider)
+    row = (data['data'] if provider.CODE == 'OKX' else data)[0]
+    row[1:5] = [100, 100, 100, 100]
+    with patch('smtm.data.paper_data_provider.requests.get', return_value=Mock(
+            status_code=200, json=lambda: data)):
+        assert provider.get_info()[0]['closing_price'] == 100

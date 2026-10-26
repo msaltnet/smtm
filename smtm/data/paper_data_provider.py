@@ -55,6 +55,8 @@ class _PaperQuoteMixin:
                 raise ValueError
             if min(opening, high, low, closing) <= 0 or min(stamp, volume, amount) < 0:
                 raise ValueError
+            if high < max(opening, closing, low) or low > min(opening, closing):
+                raise ValueError
             candle = {"type": "primary_candle", "market": self.market,
                       "date_time": self._get_kst_time_from_unix_time_ms(stamp),
                       "opening_price": opening, "high_price": high, "low_price": low,
